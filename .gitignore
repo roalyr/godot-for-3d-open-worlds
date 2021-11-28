@@ -261,6 +261,7 @@ ClientBin/
 *.publishsettings
 node_modules/
 __pycache__/
+scons_cache/
 
 # KDE
 .directory
