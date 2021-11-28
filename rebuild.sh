@@ -1,12 +1,13 @@
 #!/bin/sh
 
 # For Android templates
-export ANDROID_SDK_ROOT="/home/roalyr/Android/Sdk";
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk";
 
 # For incremental
-export SCONS_CACHE="/home/roalyr/Software archive/applications/Godot 3/Source/godot-3.4/scons_cache";
+export SCONS_CACHE="./scons_cache";
 export SCONS_CACHE_LIMIT=10000;
 
+mkdir -p $SCONS_CACHE
 
 # Editor
 scons -j8 platform=x11;
