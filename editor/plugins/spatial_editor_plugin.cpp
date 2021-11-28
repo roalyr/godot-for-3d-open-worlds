@@ -71,7 +71,10 @@
 #define ZOOM_FREELOOK_MAX 10'000
 
 #define MIN_Z 0.01
-#define MAX_Z 1000000.0
+// Changing original value to enable far plane culling extension.
+// Required for logarithmic depth buffer shader.
+//#define MAX_Z 1000000.0
+#define MAX_Z 100000000.0
 
 #define MIN_FOV 0.01
 #define MAX_FOV 179
