@@ -66,15 +66,18 @@
 
 #define ZOOM_FREELOOK_MIN 0.01
 #define ZOOM_FREELOOK_MULTIPLIER 1.08
-#define ZOOM_FREELOOK_INDICATOR_DELAY_S 1.5
+//#define ZOOM_FREELOOK_INDICATOR_DELAY_S 1.5
+#define ZOOM_FREELOOK_INDICATOR_DELAY_S 3.0
 
-#define ZOOM_FREELOOK_MAX 10'000
+// Zoom scale max value in editor.
+//#define ZOOM_FREELOOK_MAX 10'000
+#define ZOOM_FREELOOK_MAX 100'000'000
 
 #define MIN_Z 0.01
 // Changing original value to enable far plane culling extension.
 // Required for logarithmic depth buffer shader.
-//#define MAX_Z 1000000.0
-#define MAX_Z 100000000.0
+//#define MAX_Z 1'000'000.0
+#define MAX_Z 100'000'000.0
 
 #define MIN_FOV 0.01
 #define MAX_FOV 179
@@ -6650,7 +6653,8 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_zfar->set_max(MAX_Z);
 	settings_zfar->set_min(MIN_Z);
 	settings_zfar->set_step(0.01);
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 1500));
+	// Update default far value.
+	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 100'000'000.0));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; ++i) {
