@@ -160,6 +160,7 @@ class ScriptEditor : public PanelContainer {
 		DEBUG_KEEP_DEBUGGER_OPEN,
 		DEBUG_WITH_EXTERNAL_EDITOR,
 		SEARCH_IN_FILES,
+		REPLACE_IN_FILES,
 		SEARCH_HELP,
 		SEARCH_WEBSITE,
 		HELP_SEARCH_FIND,
@@ -320,6 +321,7 @@ class ScriptEditor : public PanelContainer {
 
 	void _add_callback(Object *p_obj, const String &p_function, const PoolStringArray &p_args);
 	void _res_saved_callback(const Ref<Resource> &p_res);
+	void _scene_saved_callback(const String &p_path);
 
 	bool trim_trailing_whitespace_on_save;
 	bool use_space_indentation;
@@ -399,6 +401,7 @@ class ScriptEditor : public PanelContainer {
 	Error _save_text_file(Ref<TextFile> p_text_file, const String &p_path);
 
 	void _on_find_in_files_requested(String text);
+	void _on_replace_in_files_requested(String text);
 	void _on_find_in_files_result_selected(String fpath, int line_number, int begin, int end);
 	void _start_find_in_files(bool with_replace);
 	void _on_find_in_files_modified_files(PoolStringArray paths);

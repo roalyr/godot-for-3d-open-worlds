@@ -147,9 +147,17 @@ opts.Add(
 )
 opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
-opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", False))
+opts.Add(BoolVariable("no_editor_splash", "Don't use the custom splash screen for the editor", True))
 opts.Add("system_certs_path", "Use this path as SSL certificates default for editor (for package maintainers)", "")
 opts.Add(BoolVariable("use_precise_math_checks", "Math checks use very precise epsilon (debug option)", False))
+opts.Add(
+    EnumVariable(
+        "rids",
+        "Server object management technique (debug option)",
+        "pointers",
+        ("pointers", "handles", "tracked_handles"),
+    )
+)
 
 # Thirdparty libraries
 opts.Add(BoolVariable("builtin_bullet", "Use the built-in Bullet library", True))
@@ -289,13 +297,6 @@ opts.Update(env_base)
 env_base["platform"] = selected_platform  # Must always be re-set after calling opts.Update().
 Help(opts.GenerateHelpText(env_base))
 
-# Detect and print a warning listing unknown SCons variables to ease troubleshooting.
-unknown = opts.UnknownVariables()
-if unknown:
-    print("WARNING: Unknown SCons variables were passed and will be ignored:")
-    for item in unknown.items():
-        print("    " + item[0] + "=" + item[1])
-
 # add default include paths
 
 env_base.Prepend(CPPPATH=["#"])
@@ -318,11 +319,23 @@ if env_base["target"] == "debug":
 if env_base["use_precise_math_checks"]:
     env_base.Append(CPPDEFINES=["PRECISE_MATH_CHECKS"])
 
+if not env_base.File("#main/splash_editor.png").exists():
+    # Force disabling editor splash if missing.
+    env_base["no_editor_splash"] = True
 if env_base["no_editor_splash"]:
     env_base.Append(CPPDEFINES=["NO_EDITOR_SPLASH"])
 
 if not env_base["deprecated"]:
     env_base.Append(CPPDEFINES=["DISABLE_DEPRECATED"])
+
+if env_base["rids"] == "handles":
+    env_base.Append(CPPDEFINES=["RID_HANDLES_ENABLED"])
+    print("WARNING: Building with RIDs as handles.")
+
+if env_base["rids"] == "tracked_handles":
+    env_base.Append(CPPDEFINES=["RID_HANDLES_ENABLED"])
+    env_base.Append(CPPDEFINES=["RID_HANDLE_ALLOCATION_TRACKING_ENABLED"])
+    print("WARNING: Building with RIDs as tracked handles.")
 
 if selected_platform in platform_list:
     tmppath = "./platform/" + selected_platform

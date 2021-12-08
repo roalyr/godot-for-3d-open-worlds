@@ -161,7 +161,7 @@ void AudioStreamMP3::set_data(const PoolVector<uint8_t> &p_data) {
 
 	mp3dec_ex_t mp3d;
 	int err = mp3dec_ex_open_buf(&mp3d, src_datar.ptr(), src_data_len, MP3D_SEEK_TO_SAMPLE);
-	ERR_FAIL_COND(err != 0);
+	ERR_FAIL_COND_MSG(err || mp3d.info.hz == 0, "Failed to decode mp3 file. Make sure it is a valid mp3 audio file.");
 
 	channels = mp3d.info.channels;
 	sample_rate = mp3d.info.hz;
@@ -220,8 +220,8 @@ void AudioStreamMP3::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_loop_offset"), &AudioStreamMP3::get_loop_offset);
 
 	ADD_PROPERTY(PropertyInfo(Variant::POOL_BYTE_ARRAY, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_data", "get_data");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "loop", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_loop", "has_loop");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "loop_offset", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_loop_offset", "get_loop_offset");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "loop"), "set_loop", "has_loop");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "loop_offset"), "set_loop_offset", "get_loop_offset");
 }
 
 AudioStreamMP3::AudioStreamMP3() {

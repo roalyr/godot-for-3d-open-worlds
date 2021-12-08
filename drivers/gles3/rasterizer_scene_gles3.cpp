@@ -1850,10 +1850,11 @@ void RasterizerSceneGLES3::_setup_light(RenderList::Element *e, const Transform 
 		RasterizerStorageGLES3::LightmapCapture *capture = storage->lightmap_capture_data_owner.getornull(e->instance->lightmap_capture->base);
 
 		if (lightmap && capture) {
-			glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 10);
 			if (e->instance->lightmap_slice == -1) {
+				glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 10);
 				glBindTexture(GL_TEXTURE_2D, lightmap->tex_id);
 			} else {
+				glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 11);
 				glBindTexture(GL_TEXTURE_2D_ARRAY, lightmap->tex_id);
 				state.scene_shader.set_uniform(SceneShaderGLES3::LIGHTMAP_LAYER, e->instance->lightmap_slice);
 			}
@@ -4942,25 +4943,25 @@ void RasterizerSceneGLES3::initialize() {
 	{
 		//default material and shader
 
-		default_shader = storage->shader_create();
+		default_shader = RID_PRIME(storage->shader_create());
 		storage->shader_set_code(default_shader, "shader_type spatial;\n");
-		default_material = storage->material_create();
+		default_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_material, default_shader);
 
-		default_shader_twosided = storage->shader_create();
-		default_material_twosided = storage->material_create();
+		default_shader_twosided = RID_PRIME(storage->shader_create());
+		default_material_twosided = RID_PRIME(storage->material_create());
 		storage->shader_set_code(default_shader_twosided, "shader_type spatial; render_mode cull_disabled;\n");
 		storage->material_set_shader(default_material_twosided, default_shader_twosided);
 
 		//default for shaders using world coordinates (typical for triplanar)
 
-		default_worldcoord_shader = storage->shader_create();
+		default_worldcoord_shader = RID_PRIME(storage->shader_create());
 		storage->shader_set_code(default_worldcoord_shader, "shader_type spatial; render_mode world_vertex_coords;\n");
-		default_worldcoord_material = storage->material_create();
+		default_worldcoord_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_worldcoord_material, default_worldcoord_shader);
 
-		default_worldcoord_shader_twosided = storage->shader_create();
-		default_worldcoord_material_twosided = storage->material_create();
+		default_worldcoord_shader_twosided = RID_PRIME(storage->shader_create());
+		default_worldcoord_material_twosided = RID_PRIME(storage->material_create());
 		storage->shader_set_code(default_worldcoord_shader_twosided, "shader_type spatial; render_mode cull_disabled,world_vertex_coords;\n");
 		storage->material_set_shader(default_worldcoord_material_twosided, default_worldcoord_shader_twosided);
 	}
@@ -4968,10 +4969,10 @@ void RasterizerSceneGLES3::initialize() {
 	{
 		//default material and shader
 
-		default_overdraw_shader = storage->shader_create();
+		default_overdraw_shader = RID_PRIME(storage->shader_create());
 		// Use relatively low opacity so that more "layers" of overlapping objects can be distinguished.
 		storage->shader_set_code(default_overdraw_shader, "shader_type spatial;\nrender_mode blend_add,unshaded;\n void fragment() { ALBEDO=vec3(0.4,0.8,0.8); ALPHA=0.1; }");
-		default_overdraw_material = storage->material_create();
+		default_overdraw_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_overdraw_material, default_overdraw_shader);
 	}
 
@@ -5282,18 +5283,28 @@ RasterizerSceneGLES3::RasterizerSceneGLES3() {
 }
 
 RasterizerSceneGLES3::~RasterizerSceneGLES3() {
-	memdelete(default_material.get_data());
-	memdelete(default_material_twosided.get_data());
-	memdelete(default_shader.get_data());
-	memdelete(default_shader_twosided.get_data());
+	storage->free(default_material);
+	default_material = RID();
+	storage->free(default_material_twosided);
+	default_material_twosided = RID();
+	storage->free(default_shader);
+	default_shader = RID();
+	storage->free(default_shader_twosided);
+	default_shader_twosided = RID();
 
-	memdelete(default_worldcoord_material.get_data());
-	memdelete(default_worldcoord_material_twosided.get_data());
-	memdelete(default_worldcoord_shader.get_data());
-	memdelete(default_worldcoord_shader_twosided.get_data());
+	storage->free(default_worldcoord_material);
+	default_worldcoord_material = RID();
+	storage->free(default_worldcoord_material_twosided);
+	default_worldcoord_material_twosided = RID();
+	storage->free(default_worldcoord_shader);
+	default_worldcoord_shader = RID();
+	storage->free(default_worldcoord_shader_twosided);
+	default_worldcoord_shader_twosided = RID();
 
-	memdelete(default_overdraw_material.get_data());
-	memdelete(default_overdraw_shader.get_data());
+	storage->free(default_overdraw_material);
+	default_overdraw_material = RID();
+	storage->free(default_overdraw_shader);
+	default_overdraw_shader = RID();
 
 	memfree(state.spot_array_tmp);
 	memfree(state.omni_array_tmp);

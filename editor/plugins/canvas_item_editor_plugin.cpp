@@ -3109,14 +3109,6 @@ void CanvasItemEditor::_draw_ruler_tool() {
 		Point2 corner = Point2(begin.x, end.y);
 		Vector2 length_vector = (begin - end).abs() / zoom;
 
-		bool draw_secondary_lines = !(Math::is_equal_approx(begin.y, corner.y) || Math::is_equal_approx(end.x, corner.x));
-
-		viewport->draw_line(begin, end, ruler_primary_color, Math::round(EDSCALE * 3), true);
-		if (draw_secondary_lines) {
-			viewport->draw_line(begin, corner, ruler_secondary_color, Math::round(EDSCALE));
-			viewport->draw_line(corner, end, ruler_secondary_color, Math::round(EDSCALE));
-		}
-
 		Ref<Font> font = get_font("bold", "EditorFonts");
 		Color font_color = get_color("font_color", "Editor");
 		Color font_secondary_color = font_color;
@@ -3128,7 +3120,23 @@ void CanvasItemEditor::_draw_ruler_tool() {
 		Point2 text_pos = (begin + end) / 2 - Vector2(text_width / 2, text_height / 2);
 		text_pos.x = CLAMP(text_pos.x, text_width / 2, viewport->get_rect().size.x - text_width * 1.5);
 		text_pos.y = CLAMP(text_pos.y, text_height * 1.5, viewport->get_rect().size.y - text_height * 1.5);
+
+		if (begin.is_equal_approx(end)) {
+			viewport->draw_string(font, text_pos, (String)ruler_tool_origin, font_color);
+			Ref<Texture> position_icon = get_icon("EditorPosition", "EditorIcons");
+			viewport->draw_texture(get_icon("EditorPosition", "EditorIcons"), (ruler_tool_origin - view_offset) * zoom - position_icon->get_size() / 2);
+			return;
+		}
+
 		viewport->draw_string(font, text_pos, vformat("%.1f px", length_vector.length()), font_color);
+
+		bool draw_secondary_lines = !(Math::is_equal_approx(begin.y, corner.y) || Math::is_equal_approx(end.x, corner.x));
+
+		viewport->draw_line(begin, end, ruler_primary_color, Math::round(EDSCALE * 3));
+		if (draw_secondary_lines) {
+			viewport->draw_line(begin, corner, ruler_secondary_color, Math::round(EDSCALE));
+			viewport->draw_line(corner, end, ruler_secondary_color, Math::round(EDSCALE));
+		}
 
 		if (draw_secondary_lines) {
 			const float horizontal_angle_rad = atan2(length_vector.y, length_vector.x);
@@ -5854,7 +5862,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	select_button->connect("pressed", this, "_button_tool_select", make_binds(TOOL_SELECT));
 	select_button->set_pressed(true);
 	select_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/select_mode", TTR("Select Mode"), KEY_Q));
-	select_button->set_tooltip(keycode_get_string(KEY_MASK_CMD) + TTR("Drag: Rotate selected node around pivot.") + "\n" + TTR("Alt+Drag: Move selected node.") + "\n" + TTR("V: Set selected node's pivot position.") + "\n" + TTR("Alt+RMB: Show list of all nodes at position clicked, including locked.") + "\n" + keycode_get_string(KEY_MASK_CMD) + TTR("RMB: Add node at position clicked."));
+	select_button->set_tooltip(keycode_get_string(KEY_MASK_CMD) + TTR("Drag: Rotate selected node around pivot.") + "\n" + TTR("Alt+Drag: Move selected node.") + "\n" + keycode_get_string(KEY_MASK_CMD) + TTR("Alt+Drag: Scale selected node.") + "\n" + TTR("V: Set selected node's pivot position.") + "\n" + TTR("Alt+RMB: Show list of all nodes at position clicked, including locked.") + "\n" + keycode_get_string(KEY_MASK_CMD) + TTR("RMB: Add node at position clicked."));
 
 	hb->add_child(memnew(VSeparator));
 
@@ -5877,7 +5885,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	scale_button->set_toggle_mode(true);
 	scale_button->connect("pressed", this, "_button_tool_select", make_binds(TOOL_SCALE));
 	scale_button->set_shortcut(ED_SHORTCUT("canvas_item_editor/scale_mode", TTR("Scale Mode"), KEY_S));
-	scale_button->set_tooltip(TTR("Scale Mode"));
+	scale_button->set_tooltip(TTR("Shift: Scale proportionally."));
 
 	hb->add_child(memnew(VSeparator));
 

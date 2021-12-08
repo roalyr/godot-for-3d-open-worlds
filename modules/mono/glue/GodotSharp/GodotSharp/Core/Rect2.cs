@@ -162,6 +162,16 @@ namespace Godot
         }
 
         /// <summary>
+        /// Returns the center of the <see cref="Rect2"/>, which is equal
+        /// to <see cref="Position"/> + (<see cref="Size"/> / 2).
+        /// </summary>
+        /// <returns>The center.</returns>
+        public Vector2 GetCenter()
+        {
+            return _position + (_size * 0.5f);
+        }
+
+        /// <summary>
         /// Returns a copy of the <see cref="Rect2"/> grown a given amount of units towards
         /// all the sides.
         /// </summary>
@@ -383,11 +393,29 @@ namespace Godot
             _size = new Vector2(width, height);
         }
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the
+        /// <see cref="Rect2"/>s are exactly equal.
+        /// Note: Due to floating-point precision errors, consider using
+        /// <see cref="IsEqualApprox"/> instead, which is more reliable.
+        /// </summary>
+        /// <param name="left">The left rect.</param>
+        /// <param name="right">The right rect.</param>
+        /// <returns>Whether or not the rects are exactly equal.</returns>
         public static bool operator ==(Rect2 left, Rect2 right)
         {
             return left.Equals(right);
         }
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the
+        /// <see cref="Rect2"/>s are not equal.
+        /// Note: Due to floating-point precision errors, consider using
+        /// <see cref="IsEqualApprox"/> instead, which is more reliable.
+        /// </summary>
+        /// <param name="left">The left rect.</param>
+        /// <param name="right">The right rect.</param>
+        /// <returns>Whether or not the rects are not equal.</returns>
         public static bool operator !=(Rect2 left, Rect2 right)
         {
             return !left.Equals(right);
@@ -397,7 +425,7 @@ namespace Godot
         /// Returns <see langword="true"/> if this rect and <paramref name="obj"/> are equal.
         /// </summary>
         /// <param name="obj">The other object to compare.</param>
-        /// <returns>Whether or not the rect and the other object are equal.</returns>
+        /// <returns>Whether or not the rect and the other object are exactly equal.</returns>
         public override bool Equals(object obj)
         {
             if (obj is Rect2)
@@ -412,7 +440,7 @@ namespace Godot
         /// Returns <see langword="true"/> if this rect and <paramref name="other"/> are equal.
         /// </summary>
         /// <param name="other">The other rect to compare.</param>
-        /// <returns>Whether or not the rects are equal.</returns>
+        /// <returns>Whether or not the rects are exactly equal.</returns>
         public bool Equals(Rect2 other)
         {
             return _position.Equals(other._position) && _size.Equals(other._size);

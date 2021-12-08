@@ -3875,6 +3875,7 @@ bool RasterizerSceneGLES2::free(RID p_rid) {
 		shadow_atlas_set_size(p_rid, 0);
 		shadow_atlas_owner.free(p_rid);
 		memdelete(shadow_atlas);
+
 	} else if (reflection_probe_instance_owner.owns(p_rid)) {
 		ReflectionProbeInstance *reflection_instance = reflection_probe_instance_owner.get(p_rid);
 
@@ -3891,6 +3892,12 @@ bool RasterizerSceneGLES2::free(RID p_rid) {
 		reflection_probe_release_atlas_index(p_rid);
 		reflection_probe_instance_owner.free(p_rid);
 		memdelete(reflection_instance);
+
+	} else if (environment_owner.owns(p_rid)) {
+		Environment *environment = environment_owner.get(p_rid);
+
+		environment_owner.free(p_rid);
+		memdelete(environment);
 
 	} else {
 		return false;
@@ -3919,25 +3926,25 @@ void RasterizerSceneGLES2::initialize() {
 	{
 		//default material and shader
 
-		default_shader = storage->shader_create();
+		default_shader = RID_PRIME(storage->shader_create());
 		storage->shader_set_code(default_shader, "shader_type spatial;\n");
-		default_material = storage->material_create();
+		default_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_material, default_shader);
 
-		default_shader_twosided = storage->shader_create();
-		default_material_twosided = storage->material_create();
+		default_shader_twosided = RID_PRIME(storage->shader_create());
+		default_material_twosided = RID_PRIME(storage->material_create());
 		storage->shader_set_code(default_shader_twosided, "shader_type spatial; render_mode cull_disabled;\n");
 		storage->material_set_shader(default_material_twosided, default_shader_twosided);
 	}
 
 	{
-		default_worldcoord_shader = storage->shader_create();
+		default_worldcoord_shader = RID_PRIME(storage->shader_create());
 		storage->shader_set_code(default_worldcoord_shader, "shader_type spatial; render_mode world_vertex_coords;\n");
-		default_worldcoord_material = storage->material_create();
+		default_worldcoord_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_worldcoord_material, default_worldcoord_shader);
 
-		default_worldcoord_shader_twosided = storage->shader_create();
-		default_worldcoord_material_twosided = storage->material_create();
+		default_worldcoord_shader_twosided = RID_PRIME(storage->shader_create());
+		default_worldcoord_material_twosided = RID_PRIME(storage->material_create());
 		storage->shader_set_code(default_worldcoord_shader_twosided, "shader_type spatial; render_mode cull_disabled,world_vertex_coords;\n");
 		storage->material_set_shader(default_worldcoord_material_twosided, default_worldcoord_shader_twosided);
 	}
@@ -3945,10 +3952,10 @@ void RasterizerSceneGLES2::initialize() {
 	{
 		//default material and shader
 
-		default_overdraw_shader = storage->shader_create();
+		default_overdraw_shader = RID_PRIME(storage->shader_create());
 		// Use relatively low opacity so that more "layers" of overlapping objects can be distinguished.
 		storage->shader_set_code(default_overdraw_shader, "shader_type spatial;\nrender_mode blend_add,unshaded;\n void fragment() { ALBEDO=vec3(0.4,0.8,0.8); ALPHA=0.1; }");
-		default_overdraw_material = storage->material_create();
+		default_overdraw_material = RID_PRIME(storage->material_create());
 		storage->material_set_shader(default_overdraw_material, default_overdraw_shader);
 	}
 
@@ -4076,4 +4083,29 @@ void RasterizerSceneGLES2::finalize() {
 
 RasterizerSceneGLES2::RasterizerSceneGLES2() {
 	_light_counter = 0;
+}
+
+RasterizerSceneGLES2::~RasterizerSceneGLES2() {
+	storage->free(default_material);
+	default_material = RID();
+	storage->free(default_material_twosided);
+	default_material_twosided = RID();
+	storage->free(default_shader);
+	default_shader = RID();
+	storage->free(default_shader_twosided);
+	default_shader_twosided = RID();
+
+	storage->free(default_worldcoord_material);
+	default_worldcoord_material = RID();
+	storage->free(default_worldcoord_material_twosided);
+	default_worldcoord_material_twosided = RID();
+	storage->free(default_worldcoord_shader);
+	default_worldcoord_shader = RID();
+	storage->free(default_worldcoord_shader_twosided);
+	default_worldcoord_shader_twosided = RID();
+
+	storage->free(default_overdraw_material);
+	default_overdraw_material = RID();
+	storage->free(default_overdraw_shader);
+	default_overdraw_shader = RID();
 }

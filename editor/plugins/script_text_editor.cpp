@@ -524,15 +524,21 @@ void ScriptTextEditor::ensure_focus() {
 String ScriptTextEditor::get_name() {
 	String name;
 
-	if (script->get_path().find("local://") == -1 && script->get_path().find("::") == -1) {
-		name = script->get_path().get_file();
-		if (is_unsaved()) {
-			name += "(*)";
+	name = script->get_path().get_file();
+	if (name.empty()) {
+		// This appears for newly created built-in scripts before saving the scene.
+		name = TTR("[unsaved]");
+	} else if (script->get_path().find("local://") == -1 || script->get_path().find("::") == -1) {
+		const String &script_name = script->get_name();
+		if (script_name != "") {
+			// If the built-in script has a custom resource name defined,
+			// display the built-in script name as follows: `ResourceName (scene_file.tscn)`
+			name = vformat("%s (%s)", script_name, name.get_slice("::", 0));
 		}
-	} else if (script->get_name() != "") {
-		name = script->get_name();
-	} else {
-		name = script->get_class() + "(" + itos(script->get_instance_id()) + ")";
+	}
+
+	if (is_unsaved()) {
+		name += "(*)";
 	}
 
 	return name;
@@ -1235,6 +1241,11 @@ void ScriptTextEditor::_edit_option(int p_op) {
 			// So this will be delegated to the ScriptEditor.
 			emit_signal("search_in_files_requested", selected_text);
 		} break;
+		case REPLACE_IN_FILES: {
+			String selected_text = code_editor->get_text_edit()->get_selection_text();
+
+			emit_signal("replace_in_files_requested", selected_text);
+		} break;
 		case SEARCH_LOCATE_FUNCTION: {
 			quick_open->popup_dialog(get_functions());
 			quick_open->set_title(TTR("Go to Function"));
@@ -1805,6 +1816,7 @@ void ScriptTextEditor::_enable_code_editor() {
 	search_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/replace"), SEARCH_REPLACE);
 	search_menu->get_popup()->add_separator();
 	search_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/find_in_files"), SEARCH_IN_FILES);
+	search_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/replace_in_files"), REPLACE_IN_FILES);
 	search_menu->get_popup()->add_separator();
 	search_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("script_text_editor/contextual_help"), HELP_CONTEXTUAL);
 	search_menu->get_popup()->connect("id_pressed", this, "_edit_option");
@@ -2020,6 +2032,7 @@ void ScriptTextEditor::register_editor() {
 #endif
 
 	ED_SHORTCUT("script_text_editor/find_in_files", TTR("Find in Files..."), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_F);
+	ED_SHORTCUT("script_text_editor/replace_in_files", TTR("Replace in Files..."), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_R);
 
 #ifdef OSX_ENABLED
 	ED_SHORTCUT("script_text_editor/contextual_help", TTR("Contextual Help"), KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_SPACE);

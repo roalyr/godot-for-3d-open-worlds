@@ -61,6 +61,7 @@ void ScriptEditorBase::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("go_to_help", PropertyInfo(Variant::STRING, "what")));
 	// TODO: This signal is no use for VisualScript.
 	ADD_SIGNAL(MethodInfo("search_in_files_requested", PropertyInfo(Variant::STRING, "text")));
+	ADD_SIGNAL(MethodInfo("replace_in_files_requested", PropertyInfo(Variant::STRING, "text")));
 }
 
 static bool _is_built_in_script(Script *p_script) {
@@ -769,10 +770,6 @@ void ScriptEditor::_res_saved_callback(const Ref<Resource> &p_res) {
 
 		RES script = se->get_edited_resource();
 
-		if (script->get_path() == "" || script->get_path().find("local://") != -1 || script->get_path().find("::") != -1) {
-			continue; //internal script, who cares
-		}
-
 		if (script == p_res) {
 			se->tag_saved_version();
 		}
@@ -780,6 +777,31 @@ void ScriptEditor::_res_saved_callback(const Ref<Resource> &p_res) {
 
 	_update_script_names();
 	_trigger_live_script_reload();
+}
+
+void ScriptEditor::_scene_saved_callback(const String &p_path) {
+	// If scene was saved, mark all built-in scripts from that scene as saved.
+	for (int i = 0; i < tab_container->get_child_count(); i++) {
+		ScriptEditorBase *se = Object::cast_to<ScriptEditorBase>(tab_container->get_child(i));
+		if (!se) {
+			continue;
+		}
+
+		RES edited_res = se->get_edited_resource();
+
+		if (!edited_res->get_path().empty() && edited_res->get_path().find("::") == -1) {
+			continue; // External script, who cares.
+		}
+
+		if (edited_res->get_path().get_slice("::", 0) == p_path) {
+			se->tag_saved_version();
+		}
+
+		Ref<Script> scr = edited_res;
+		if (scr.is_valid() && scr->is_tool()) {
+			scr->reload(true);
+		}
+	}
 }
 
 void ScriptEditor::_trigger_live_script_reload() {
@@ -1037,6 +1059,9 @@ void ScriptEditor::_menu_option(int p_option) {
 		case SEARCH_IN_FILES: {
 			_on_find_in_files_requested("");
 		} break;
+		case REPLACE_IN_FILES: {
+			_on_replace_in_files_requested("");
+		} break;
 		case SEARCH_HELP: {
 			help_search_dialog->popup_dialog();
 		} break;
@@ -1173,8 +1198,12 @@ void ScriptEditor::_menu_option(int p_option) {
 			} break;
 			case SHOW_IN_FILE_SYSTEM: {
 				const RES script = current->get_edited_resource();
-				const String path = script->get_path();
+				String path = script->get_path();
 				if (!path.empty()) {
+					if (path.find("::") != -1) { // Built-in.
+						path = path.get_slice("::", 0); // Show the scene instead.
+					}
+
 					FileSystemDock *file_system_dock = EditorNode::get_singleton()->get_filesystem_dock();
 					file_system_dock->navigate_to_path(path);
 					// Ensure that the FileSystem dock is visible.
@@ -1341,6 +1370,7 @@ void ScriptEditor::_notification(int p_what) {
 			editor->connect("stop_pressed", this, "_editor_stop");
 			editor->connect("script_add_function_request", this, "_add_callback");
 			editor->connect("resource_saved", this, "_res_saved_callback");
+			editor->connect("scene_saved", this, "_scene_saved_callback");
 			script_list->connect("item_selected", this, "_script_selected");
 
 			members_overview->connect("item_selected", this, "_members_overview_selected");
@@ -1423,7 +1453,7 @@ void ScriptEditor::close_builtin_scripts_from_scene(const String &p_scene) {
 			}
 
 			if (script->get_path().find("::") != -1 && script->get_path().begins_with(p_scene)) { //is an internal script and belongs to scene being closed
-				_close_tab(i);
+				_close_tab(i, false);
 				i--;
 			}
 		}
@@ -1724,20 +1754,7 @@ void ScriptEditor::_update_script_names() {
 		if (se) {
 			Ref<Texture> icon = se->get_icon();
 			String path = se->get_edited_resource()->get_path();
-			bool built_in = !path.is_resource_file();
-			String name;
-
-			if (built_in) {
-				name = path.get_file();
-				const String &resource_name = se->get_edited_resource()->get_name();
-				if (resource_name != "") {
-					// If the built-in script has a custom resource name defined,
-					// display the built-in script name as follows: `ResourceName (scene_file.tscn)`
-					name = vformat("%s (%s)", resource_name, name.substr(0, name.find("::", 0)));
-				}
-			} else {
-				name = se->get_name();
-			}
+			String name = se->get_name();
 
 			_ScriptEditorItemData sd;
 			sd.icon = icon;
@@ -2132,6 +2149,7 @@ bool ScriptEditor::edit(const RES &p_resource, int p_line, int p_col, bool p_gra
 	se->connect("go_to_help", this, "_help_class_goto");
 	se->connect("request_save_history", this, "_save_history");
 	se->connect("search_in_files_requested", this, "_on_find_in_files_requested");
+	se->connect("replace_in_files_requested", this, "_on_replace_in_files_requested");
 
 	//test for modification, maybe the script was not edited but was loaded
 
@@ -2175,10 +2193,22 @@ void ScriptEditor::save_current_script() {
 		return;
 	}
 
-	editor->save_resource(resource);
+	if (resource->get_path().empty() || resource->get_path().find("::") != -1) {
+		// If built-in script, save the scene instead.
+		const String scene_path = resource->get_path().get_slice("::", 0);
+		if (!scene_path.empty()) {
+			Vector<String> scene_to_save;
+			scene_to_save.push_back(scene_path);
+			editor->save_scene_list(scene_to_save);
+		}
+	} else {
+		editor->save_resource(resource);
+	}
 }
 
 void ScriptEditor::save_all_scripts() {
+	Vector<String> scenes_to_save;
+
 	for (int i = 0; i < tab_container->get_child_count(); i++) {
 		ScriptEditorBase *se = Object::cast_to<ScriptEditorBase>(tab_container->get_child(i));
 		if (!se) {
@@ -2215,7 +2245,17 @@ void ScriptEditor::save_all_scripts() {
 				continue;
 			}
 			editor->save_resource(edited_res); //external script, save it
+		} else {
+			// For built-in scripts, save their scenes instead.
+			const String scene_path = edited_res->get_path().get_slice("::", 0);
+			if (scenes_to_save.find(scene_path) > -1) {
+				scenes_to_save.push_back(scene_path);
+			}
 		}
+	}
+
+	if (!scenes_to_save.empty()) {
+		editor->save_scene_list(scenes_to_save);
 	}
 
 	_update_script_names();
@@ -2842,10 +2882,12 @@ void ScriptEditor::_update_selected_editor_menu() {
 		script_search_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/find_previous", TTR("Find Previous"), KEY_MASK_SHIFT | KEY_F3), HELP_SEARCH_FIND_PREVIOUS);
 		script_search_menu->get_popup()->add_separator();
 		script_search_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/find_in_files", TTR("Find in Files"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_F), SEARCH_IN_FILES);
+		script_search_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/replace_in_files", TTR("Replace in Files"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_R), REPLACE_IN_FILES);
 		script_search_menu->show();
 	} else {
 		if (tab_container->get_child_count() == 0) {
 			script_search_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/find_in_files", TTR("Find in Files"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_F), SEARCH_IN_FILES);
+			script_search_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/replace_in_files", TTR("Replace in Files"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_R), REPLACE_IN_FILES);
 			script_search_menu->show();
 		} else {
 			script_search_menu->hide();
@@ -2986,7 +3028,15 @@ void ScriptEditor::_script_changed() {
 }
 
 void ScriptEditor::_on_find_in_files_requested(String text) {
+	find_in_files_dialog->set_find_in_files_mode(FindInFilesDialog::SEARCH_MODE);
 	find_in_files_dialog->set_search_text(text);
+	find_in_files_dialog->popup_centered_minsize();
+}
+
+void ScriptEditor::_on_replace_in_files_requested(String text) {
+	find_in_files_dialog->set_find_in_files_mode(FindInFilesDialog::REPLACE_MODE);
+	find_in_files_dialog->set_search_text(text);
+	find_in_files_dialog->set_replace_text("");
 	find_in_files_dialog->popup_centered_minsize();
 }
 
@@ -3040,6 +3090,7 @@ void ScriptEditor::_start_find_in_files(bool with_replace) {
 	f->set_filter(find_in_files_dialog->get_filter());
 
 	find_in_files->set_with_replace(with_replace);
+	find_in_files->set_replace_text(find_in_files_dialog->get_replace_text());
 	find_in_files->start_search();
 
 	editor->make_bottom_panel_item_visible(find_in_files);
@@ -3077,6 +3128,7 @@ void ScriptEditor::_bind_methods() {
 	ClassDB::bind_method("_reload_scripts", &ScriptEditor::_reload_scripts);
 	ClassDB::bind_method("_resave_scripts", &ScriptEditor::_resave_scripts);
 	ClassDB::bind_method("_res_saved_callback", &ScriptEditor::_res_saved_callback);
+	ClassDB::bind_method("_scene_saved_callback", &ScriptEditor::_scene_saved_callback);
 	ClassDB::bind_method("_goto_script_line", &ScriptEditor::_goto_script_line);
 	ClassDB::bind_method("_goto_script_line2", &ScriptEditor::_goto_script_line2);
 	ClassDB::bind_method("_set_execution", &ScriptEditor::_set_execution);
@@ -3115,6 +3167,7 @@ void ScriptEditor::_bind_methods() {
 	ClassDB::bind_method("_filter_methods_text_changed", &ScriptEditor::_filter_methods_text_changed);
 	ClassDB::bind_method("_update_recent_scripts", &ScriptEditor::_update_recent_scripts);
 	ClassDB::bind_method("_on_find_in_files_requested", &ScriptEditor::_on_find_in_files_requested);
+	ClassDB::bind_method("_on_replace_in_files_requested", &ScriptEditor::_on_replace_in_files_requested);
 	ClassDB::bind_method("_start_find_in_files", &ScriptEditor::_start_find_in_files);
 	ClassDB::bind_method("_on_find_in_files_result_selected", &ScriptEditor::_on_find_in_files_result_selected);
 	ClassDB::bind_method("_on_find_in_files_modified_files", &ScriptEditor::_on_find_in_files_modified_files);
@@ -3263,7 +3316,7 @@ ScriptEditor::ScriptEditor(EditorNode *p_editor) {
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/save_as", TTR("Save As...")), FILE_SAVE_AS);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/save_all", TTR("Save All"), KEY_MASK_SHIFT | KEY_MASK_ALT | KEY_S), FILE_SAVE_ALL);
 	file_menu->get_popup()->add_separator();
-	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/reload_script_soft", TTR("Soft Reload Script"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_R), FILE_TOOL_RELOAD_SOFT);
+	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/reload_script_soft", TTR("Soft Reload Script"), KEY_MASK_CMD | KEY_MASK_ALT | KEY_R), FILE_TOOL_RELOAD_SOFT);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/copy_path", TTR("Copy Script Path")), FILE_COPY_PATH);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/show_in_file_system", TTR("Show in FileSystem")), SHOW_IN_FILE_SYSTEM);
 	file_menu->get_popup()->add_separator();
