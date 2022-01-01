@@ -76,6 +76,7 @@
 #include "editor/doc/doc_data_class_path.gen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
+#include "editor/editor_translation.h"
 #include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
 #ifndef NO_EDITOR_SPLASH
@@ -1311,6 +1312,22 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	}
 #endif
 
+	if (GLOBAL_GET("debug/settings/stdout/print_fps") || print_fps) {
+		// Print requested V-Sync mode at startup to diagnose the printed FPS not going above the monitor refresh rate.
+		if (OS::get_singleton()->_use_vsync && OS::get_singleton()->_vsync_via_compositor) {
+#ifdef WINDOWS_ENABLED
+			// V-Sync via compositor is only supported on Windows.
+			print_line("Requested V-Sync mode: Enabled (via compositor) - FPS will likely be capped to the monitor refresh rate.");
+#else
+			print_line("Requested V-Sync mode: Enabled - FPS will likely be capped to the monitor refresh rate.");
+#endif
+		} else if (OS::get_singleton()->_use_vsync) {
+			print_line("Requested V-Sync mode: Enabled - FPS will likely be capped to the monitor refresh rate.");
+		} else {
+			print_line("Requested V-Sync mode: Disabled");
+		}
+	}
+
 #ifdef UNIX_ENABLED
 	// Print warning before initializing audio.
 	if (OS::get_singleton()->get_environment("USER") == "root" && !OS::get_singleton()->has_environment("GODOT_SILENCE_ROOT_WARNING")) {
@@ -1523,7 +1540,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	VisualServer::get_singleton()->callbacks_register(visual_server_callbacks);
 
 	_start_success = true;
-	locale = String();
 
 	ClassDB::set_current_api(ClassDB::API_NONE); //no more api is registered at this point
 
@@ -1630,6 +1646,11 @@ bool Main::start() {
 #ifdef TOOLS_ENABLED
 	if (doc_tool_path != "") {
 		Engine::get_singleton()->set_editor_hint(true); // Needed to instance editor-only classes for their default values
+
+		// Translate the class reference only when `-l LOCALE` parameter is given.
+		if (!locale.empty() && locale != "en") {
+			load_doc_translations(locale);
+		}
 
 		{
 			DirAccessRef da = DirAccess::open(doc_tool_path);

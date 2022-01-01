@@ -14,6 +14,29 @@ from collections import OrderedDict
 # $DOCS_URL/path/to/page.html(#fragment-tag)
 GODOT_DOCS_PATTERN = re.compile(r"^\$DOCS_URL/(.*)\.html(#.*)?$")
 
+# Based on reStructedText inline markup recognition rules
+# https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#inline-markup-recognition-rules
+MARKUP_ALLOWED_PRECEDENT = " -:/'\"<([{"
+MARKUP_ALLOWED_SUBSEQUENT = " -.,:;!?\\/'\")]}>"
+
+# Used to translate the section headings when required with --lang argument.
+# The HEADINGS list should be synced with what we actually write with `make_heading`,
+# and also hardcoded in `doc/translations/extract.py`.
+HEADINGS = [
+    "Description",
+    "Tutorials",
+    "Properties",
+    "Methods",
+    "Theme Properties",
+    "Signals",
+    "Enumerations",
+    "Constants",
+    "Property Descriptions",
+    "Method Descriptions",
+    "Theme Property Descriptions",
+]
+headings_l10n = {}
+
 
 def print_error(error, state):  # type: (str, State) -> None
     print("ERROR: {}".format(error))
@@ -40,15 +63,15 @@ class TypeName:
 
 class PropertyDef:
     def __init__(
-        self, name, type_name, setter, getter, text, default_value, overridden
-    ):  # type: (str, TypeName, Optional[str], Optional[str], Optional[str], Optional[str], Optional[bool]) -> None
+        self, name, type_name, setter, getter, text, default_value, overrides
+    ):  # type: (str, TypeName, Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]) -> None
         self.name = name
         self.type_name = type_name
         self.setter = setter
         self.getter = getter
         self.text = text
         self.default_value = default_value
-        self.overridden = overridden
+        self.overrides = overrides
 
 
 class ParameterDef:
@@ -160,10 +183,10 @@ class State:
                 default_value = property.get("default") or None
                 if default_value is not None:
                     default_value = "``{}``".format(default_value)
-                overridden = property.get("override") or False
+                overrides = property.get("overrides") or None
 
                 property_def = PropertyDef(
-                    property_name, type_name, setter, getter, property.text, default_value, overridden
+                    property_name, type_name, setter, getter, property.text, default_value, overrides
                 )
                 class_def.properties[property_name] = property_def
 
@@ -304,6 +327,7 @@ def main():  # type: () -> None
     parser = argparse.ArgumentParser()
     parser.add_argument("path", nargs="+", help="A path to an XML file or a directory containing XML files to parse.")
     parser.add_argument("--filter", default="", help="The filepath pattern for XML files to filter.")
+    parser.add_argument("--lang", "-l", default="en", help="Language to use for section headings.")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--output", "-o", default=".", help="The directory to save output .rst files in.")
     group.add_argument(
@@ -312,6 +336,25 @@ def main():  # type: () -> None
         help="If passed, no output will be generated and XML files are only checked for errors.",
     )
     args = parser.parse_args()
+
+    # Retrieve heading translations for the given language.
+    if not args.dry_run and args.lang != "en":
+        lang_file = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "..", "translations", "{}.po".format(args.lang)
+        )
+        if os.path.exists(lang_file):
+            try:
+                import polib
+            except ImportError:
+                print("Section heading localization requires `polib`.")
+                exit(1)
+
+            pofile = polib.pofile(lang_file)
+            for entry in pofile.translated_entries():
+                if entry.msgid in HEADINGS:
+                    headings_l10n[entry.msgid] = entry.msgstr
+        else:
+            print("No PO file at '{}' for language '{}'.".format(lang_file, args.lang))
 
     print("Checking for errors in the XML class reference...")
 
@@ -404,7 +447,7 @@ def make_rst_class(class_def, state, dry_run, output_dir):  # type: (ClassDef, S
     f.write(".. The source is found in doc/classes or modules/<name>/doc_classes.\n\n")
 
     f.write(".. _class_" + class_name + ":\n\n")
-    f.write(make_heading(class_name, "="))
+    f.write(make_heading(class_name, "=", False))
 
     # Inheritance tree
     # Ascendants
@@ -462,8 +505,9 @@ def make_rst_class(class_def, state, dry_run, output_dir):  # type: (ClassDef, S
         for property_def in class_def.properties.values():
             type_rst = property_def.type_name.to_rst(state)
             default = property_def.default_value
-            if default is not None and property_def.overridden:
-                ml.append((type_rst, property_def.name, default + " *(parent override)*"))
+            if default is not None and property_def.overrides:
+                ref = ":ref:`{1}<class_{1}_property_{0}>`".format(property_def.name, property_def.overrides)
+                ml.append((type_rst, property_def.name, default + " (overrides " + ref + ")"))
             else:
                 ref = ":ref:`{0}<class_{1}_property_{0}>`".format(property_def.name, class_name)
                 ml.append((type_rst, ref, default))
@@ -550,12 +594,12 @@ def make_rst_class(class_def, state, dry_run, output_dir):  # type: (ClassDef, S
             f.write("\n\n")
 
     # Property descriptions
-    if any(not p.overridden for p in class_def.properties.values()) > 0:
+    if any(not p.overrides for p in class_def.properties.values()) > 0:
         f.write(make_heading("Property Descriptions", "-"))
         index = 0
 
         for property_def in class_def.properties.values():
-            if property_def.overridden:
+            if property_def.overrides:
                 continue
 
             if index != 0:
@@ -714,12 +758,12 @@ def rstize_text(text, state):  # type: (str, State) -> str
                     code_pos += 5 - to_skip
 
             text = pre_text + "\n[codeblock]" + code_text + post_text
-            pos += len("\n[codeblock]" + code_text)
+            pos += len("\n[codeblock]" + code_text) - indent_level
 
         # Handle normal text
         else:
             text = pre_text + "\n\n" + post_text
-            pos += 2
+            pos += 2 - indent_level
 
     next_brac_pos = text.find("[")
     text = escape_rst(text, next_brac_pos)
@@ -742,6 +786,7 @@ def rstize_text(text, state):  # type: (str, State) -> str
         post_text = text[endq_pos + 1 :]
         tag_text = text[pos + 1 : endq_pos]
 
+        escape_pre = False
         escape_post = False
 
         if tag_text in state.classes:
@@ -750,6 +795,7 @@ def rstize_text(text, state):  # type: (str, State) -> str
                 tag_text = "``{}``".format(tag_text)
             else:
                 tag_text = make_type(tag_text, state)
+            escape_pre = True
             escape_post = True
         else:  # command
             cmd = tag_text
@@ -845,6 +891,7 @@ def rstize_text(text, state):  # type: (str, State) -> str
                 if class_param != state.current_class:
                     repl_text = "{}.{}".format(class_param, method_param)
                 tag_text = ":ref:`{}<class_{}{}_{}>`".format(repl_text, class_param, ref_type, method_param)
+                escape_pre = True
                 escape_post = True
             elif cmd.find("image=") == 0:
                 tag_text = ""  # '![](' + cmd[6:] + ')'
@@ -862,7 +909,14 @@ def rstize_text(text, state):  # type: (str, State) -> str
                 tag_text = make_link(link_url, link_title)
 
                 pre_text = text[:pos]
-                text = pre_text + tag_text + text[endurl_pos + 6 :]
+                post_text = text[endurl_pos + 6 :]
+
+                if pre_text and pre_text[-1] not in MARKUP_ALLOWED_PRECEDENT:
+                    pre_text += "\ "
+                if post_text and post_text[0] not in MARKUP_ALLOWED_SUBSEQUENT:
+                    post_text = "\ " + post_text
+
+                text = pre_text + tag_text + post_text
                 pos = len(pre_text) + len(tag_text)
                 previous_pos = pos
                 continue
@@ -885,34 +939,45 @@ def rstize_text(text, state):  # type: (str, State) -> str
             elif cmd == "i" or cmd == "/i":
                 if cmd == "/i":
                     tag_depth -= 1
+                    escape_post = True
                 else:
                     tag_depth += 1
+                    escape_pre = True
                 tag_text = "*"
             elif cmd == "b" or cmd == "/b":
                 if cmd == "/b":
                     tag_depth -= 1
+                    escape_post = True
                 else:
                     tag_depth += 1
+                    escape_pre = True
                 tag_text = "**"
             elif cmd == "u" or cmd == "/u":
                 if cmd == "/u":
                     tag_depth -= 1
+                    escape_post = True
                 else:
                     tag_depth += 1
+                    escape_pre = True
                 tag_text = ""
             elif cmd == "code":
                 tag_text = "``"
                 tag_depth += 1
                 inside_code = True
+                escape_pre = True
             elif cmd.startswith("enum "):
                 tag_text = make_enum(cmd[5:], state)
+                escape_pre = True
                 escape_post = True
             else:
                 tag_text = make_type(tag_text, state)
+                escape_pre = True
                 escape_post = True
 
         # Properly escape things like `[Node]s`
-        if escape_post and post_text and (post_text[0].isalnum() or post_text[0] == "("):  # not punctuation, escape
+        if escape_pre and pre_text and pre_text[-1] not in MARKUP_ALLOWED_PRECEDENT:
+            pre_text += "\ "
+        if escape_post and post_text and post_text[0] not in MARKUP_ALLOWED_SUBSEQUENT:
             post_text = "\ " + post_text
 
         next_brac_pos = post_text.find("[", 0)
@@ -1057,7 +1122,11 @@ def make_method_signature(
     return ret_type, out
 
 
-def make_heading(title, underline):  # type: (str, str) -> str
+def make_heading(title, underline, l10n=True):  # type: (str, str, bool) -> str
+    if l10n:
+        if title in headings_l10n:
+            title = headings_l10n.get(title)
+            underline *= 2  # Double length to handle wide chars.
     return title + "\n" + (underline * len(title)) + "\n\n"
 
 
