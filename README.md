@@ -1,4 +1,49 @@
-# Godot Engine
+# Godot for 3D open worlds
+
+<p align="center">
+    <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
+</p>
+
+This flavor of Godot engine is made to accomodate large open-world 3D games which require
+much further view distance than original Godot offers while still relying on single-precision
+floats. In order to achieve this a few tweaks were made.
+
+This fork is regularly synchronized with [3.x branch](https://github.com/godotengine/godot/tree/3.x).
+
+Implemented tweaks:
+* Increased camera far plane distance (was 1 000 000, now 100 000 000).
+* Increased editor zoom out distance (was 10 000, now 100 000 000).
+* Increased editor zoom increment twice for faster zooming.
+
+To-do:
+* Switch depth buffer encoding and decoding to logarithmic globally throughout engine. 
+* Possibly an origin rebase Node addon to keep floating-point precision caused jitter in check.
+
+Current implementation requires all materials to be
+custom shaders as follows:
+```
+// For logarithmic depth buffer.
+const float c = 0.001; // Tested at 500 M units.
+varying vec4 gl_Position;
+
+void vertex()
+{
+	// For logarithmic depth buffer.
+	gl_Position = MODELVIEW_MATRIX*vec4(VERTEX, 1.0);
+}
+
+void fragment()
+{
+	// Logarithmic depth buffer.
+	DEPTH = log2(max(1e-6, 1.0 -gl_Position.z)) * c;
+
+	// Remaining frag code below ...
+```
+
+More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
+
+
+# Godot Engine original readme
 
 <p align="center">
   <a href="https://godotengine.org">
