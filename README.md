@@ -42,6 +42,14 @@ void fragment()
 
 More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 
+## Installation
+
+Currently I do not publish a release with export templates because I want to implement the abovementioned
+`to-do`s, so you have to build it from source. Refer to [rebuild script](rebuild.sh) for convenience.
+
+<br/><br/>
+<br/><br/>
+<br/><br/>
 
 # Godot Engine original readme
 
