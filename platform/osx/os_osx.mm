@@ -2277,7 +2277,7 @@ String OS_OSX::get_cache_path() const {
 		if (get_environment("XDG_CACHE_HOME").is_abs_path()) {
 			return get_environment("XDG_CACHE_HOME");
 		} else {
-			WARN_PRINT_ONCE("`XDG_CACHE_HOME` is a relative path. Ignoring its value and falling back to `$HOME/Libary/Caches` or `get_config_path()` per the XDG Base Directory specification.");
+			WARN_PRINT_ONCE("`XDG_CACHE_HOME` is a relative path. Ignoring its value and falling back to `$HOME/Library/Caches` or `get_config_path()` per the XDG Base Directory specification.");
 		}
 	}
 	if (has_environment("HOME")) {
@@ -2970,7 +2970,7 @@ String OS_OSX::get_executable_path() const {
 	}
 }
 
-Error OS_OSX::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
+Error OS_OSX::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex, bool p_open_console) {
 	if (@available(macOS 10.15, *)) {
 		NSString *nsappname = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 		// If executable is bundled, always execute editor instances using NSWorkspace to ensure app window is registered and activated correctly.
@@ -3017,10 +3017,10 @@ Error OS_OSX::execute(const String &p_path, const List<String> &p_arguments, boo
 
 			return err;
 		} else {
-			return OS_Unix::execute(p_path, p_arguments, p_blocking, r_child_id, r_pipe, r_exitcode, read_stderr, p_pipe_mutex);
+			return OS_Unix::execute(p_path, p_arguments, p_blocking, r_child_id, r_pipe, r_exitcode, read_stderr, p_pipe_mutex, p_open_console);
 		}
 	} else {
-		return OS_Unix::execute(p_path, p_arguments, p_blocking, r_child_id, r_pipe, r_exitcode, read_stderr, p_pipe_mutex);
+		return OS_Unix::execute(p_path, p_arguments, p_blocking, r_child_id, r_pipe, r_exitcode, read_stderr, p_pipe_mutex, p_open_console);
 	}
 }
 
@@ -3352,7 +3352,7 @@ void OS_OSX::run() {
 				quit = true;
 			}
 		} @catch (NSException *exception) {
-			ERR_PRINT("NSException: " + String([exception reason].UTF8String));
+			ERR_PRINT("NSException: " + String::utf8([exception reason].UTF8String));
 		}
 	};
 
@@ -3431,7 +3431,7 @@ Error OS_OSX::move_to_trash(const String &p_path) {
 	NSError *err;
 
 	if (![fm trashItemAtURL:url resultingItemURL:nil error:&err]) {
-		ERR_PRINT("trashItemAtURL error: " + String(err.localizedDescription.UTF8String));
+		ERR_PRINT("trashItemAtURL error: " + String::utf8(err.localizedDescription.UTF8String));
 		return FAILED;
 	}
 

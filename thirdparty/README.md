@@ -8,7 +8,7 @@ readability.
 ## bullet
 
 - Upstream: https://github.com/bulletphysics/bullet3
-- Version: 3.17 (ebe1916b90acae8b13cd8c6b637d8327cdc64e94, 2021)
+- Version: 3.21 (6a59241074720e9df119f2f86bc01765917feb1e, 2021)
 - License: zlib
 
 Files extracted from upstream source:
@@ -486,6 +486,22 @@ Files extracted from upstream source:
 
 - `Recast/` folder without `CMakeLists.txt`
 - License.txt
+
+
+## rvo2
+
+- Upstream: https://github.com/snape/RVO2-3D
+- Version: 1.0.1 (e3883f288a9e55ecfed3633a01af3e12778c6acf, 2016)
+- License: Apache 2.0
+
+Files extracted from upstream source:
+
+- All .cpp and .h files in the `src/` folder except for RVO.h, RVOSimulator.cpp and RVOSimulator.h
+- LICENSE
+
+Important: Some files have Godot-made changes; so to enrich the features
+originally proposed by this library and better integrate this library with
+Godot. Please check the file to know what's new.
 
 
 ## squish

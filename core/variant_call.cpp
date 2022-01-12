@@ -215,6 +215,8 @@ struct _VariantCall {
 	static void _call_##m_type##_##m_method(Variant &r_ret, Variant &p_self, const Variant **p_args) { reinterpret_cast<m_type *>(p_self._data._mem)->m_method(); }
 #define VCALL_LOCALMEM0R(m_type, m_method) \
 	static void _call_##m_type##_##m_method(Variant &r_ret, Variant &p_self, const Variant **p_args) { r_ret = reinterpret_cast<m_type *>(p_self._data._mem)->m_method(); }
+#define VCALL_LOCALMEM0RI(m_type, m_method, m_internal_method) \
+	static void _call_##m_type##_##m_method(Variant &r_ret, Variant &p_self, const Variant **p_args) { r_ret = reinterpret_cast<m_type *>(p_self._data._mem)->m_internal_method(); }
 #define VCALL_LOCALMEM1(m_type, m_method) \
 	static void _call_##m_type##_##m_method(Variant &r_ret, Variant &p_self, const Variant **p_args) { reinterpret_cast<m_type *>(p_self._data._mem)->m_method(*p_args[0]); }
 #define VCALL_LOCALMEM1R(m_type, m_method) \
@@ -268,6 +270,7 @@ struct _VariantCall {
 	VCALL_LOCALMEM3R(String, split);
 	VCALL_LOCALMEM3R(String, rsplit);
 	VCALL_LOCALMEM2R(String, split_floats);
+	VCALL_LOCALMEM1R(String, join);
 	VCALL_LOCALMEM0R(String, to_upper);
 	VCALL_LOCALMEM0R(String, to_lower);
 	VCALL_LOCALMEM1R(String, left);
@@ -314,9 +317,9 @@ struct _VariantCall {
 	VCALL_LOCALMEM0R(String, is_valid_html_color);
 	VCALL_LOCALMEM0R(String, is_valid_ip_address);
 	VCALL_LOCALMEM0R(String, is_valid_filename);
-	VCALL_LOCALMEM0R(String, to_int);
+	VCALL_LOCALMEM0RI(String, to_int, to_int64);
 	VCALL_LOCALMEM0R(String, to_float);
-	VCALL_LOCALMEM0R(String, hex_to_int);
+	VCALL_LOCALMEM0RI(String, hex_to_int, hex_to_int64);
 	VCALL_LOCALMEM1R(String, pad_decimals);
 	VCALL_LOCALMEM1R(String, pad_zeros);
 	VCALL_LOCALMEM1R(String, trim_prefix);
@@ -1397,6 +1400,7 @@ bool Variant::has_method(const StringName &p_method) const {
 }
 
 Vector<Variant::Type> Variant::get_method_argument_types(Variant::Type p_type, const StringName &p_method) {
+	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, Vector<Variant::Type>());
 	const _VariantCall::TypeFunc &tf = _VariantCall::type_funcs[p_type];
 
 	const Map<StringName, _VariantCall::FuncData>::Element *E = tf.functions.find(p_method);
@@ -1408,6 +1412,7 @@ Vector<Variant::Type> Variant::get_method_argument_types(Variant::Type p_type, c
 }
 
 bool Variant::is_method_const(Variant::Type p_type, const StringName &p_method) {
+	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, false);
 	const _VariantCall::TypeFunc &tf = _VariantCall::type_funcs[p_type];
 
 	const Map<StringName, _VariantCall::FuncData>::Element *E = tf.functions.find(p_method);
@@ -1419,6 +1424,7 @@ bool Variant::is_method_const(Variant::Type p_type, const StringName &p_method) 
 }
 
 Vector<StringName> Variant::get_method_argument_names(Variant::Type p_type, const StringName &p_method) {
+	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, Vector<StringName>());
 	const _VariantCall::TypeFunc &tf = _VariantCall::type_funcs[p_type];
 
 	const Map<StringName, _VariantCall::FuncData>::Element *E = tf.functions.find(p_method);
@@ -1430,6 +1436,7 @@ Vector<StringName> Variant::get_method_argument_names(Variant::Type p_type, cons
 }
 
 Variant::Type Variant::get_method_return_type(Variant::Type p_type, const StringName &p_method, bool *r_has_return) {
+	ERR_FAIL_INDEX_V(p_type, Variant::VARIANT_MAX, Variant::NIL);
 	const _VariantCall::TypeFunc &tf = _VariantCall::type_funcs[p_type];
 
 	const Map<StringName, _VariantCall::FuncData>::Element *E = tf.functions.find(p_method);
@@ -1669,6 +1676,7 @@ void register_variant_methods() {
 	ADDFUNC3R(STRING, POOL_STRING_ARRAY, String, split, STRING, "delimiter", BOOL, "allow_empty", INT, "maxsplit", varray(true, 0));
 	ADDFUNC3R(STRING, POOL_STRING_ARRAY, String, rsplit, STRING, "delimiter", BOOL, "allow_empty", INT, "maxsplit", varray(true, 0));
 	ADDFUNC2R(STRING, POOL_REAL_ARRAY, String, split_floats, STRING, "delimiter", BOOL, "allow_empty", varray(true));
+	ADDFUNC1R(STRING, STRING, String, join, POOL_STRING_ARRAY, "parts", varray());
 
 	ADDFUNC0R(STRING, STRING, String, to_upper, varray());
 	ADDFUNC0R(STRING, STRING, String, to_lower, varray());

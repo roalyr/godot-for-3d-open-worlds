@@ -46,6 +46,7 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
+#include "servers/navigation_server.h"
 #include "servers/physics_2d_server.h"
 #include "servers/physics_server.h"
 #include "viewport.h"
@@ -894,6 +895,7 @@ void SceneTree::set_pause(bool p_enabled) {
 		return;
 	}
 	pause = p_enabled;
+	NavigationServer::get_singleton()->set_active(!p_enabled);
 	PhysicsServer::get_singleton()->set_active(!p_enabled);
 	Physics2DServer::get_singleton()->set_active(!p_enabled);
 	if (get_root()) {
@@ -2077,11 +2079,16 @@ SceneTree::SceneTree() {
 	const float sharpen_intensity = GLOBAL_GET("rendering/quality/filters/sharpen_intensity");
 	root->set_sharpen_intensity(sharpen_intensity);
 
-	GLOBAL_DEF_RST("rendering/quality/depth/hdr", true);
+	GLOBAL_DEF("rendering/quality/depth/hdr", true);
 	GLOBAL_DEF("rendering/quality/depth/hdr.mobile", false);
 
-	bool hdr = GLOBAL_GET("rendering/quality/depth/hdr");
+	const bool hdr = GLOBAL_GET("rendering/quality/depth/hdr");
 	root->set_hdr(hdr);
+
+	GLOBAL_DEF("rendering/quality/depth/use_32_bpc_depth", false);
+
+	const bool use_32_bpc_depth = GLOBAL_GET("rendering/quality/depth/use_32_bpc_depth");
+	root->set_use_32_bpc_depth(use_32_bpc_depth);
 
 	VS::get_singleton()->scenario_set_reflection_atlas_size(root->get_world()->get_scenario(), ref_atlas_size, ref_atlas_subdiv);
 

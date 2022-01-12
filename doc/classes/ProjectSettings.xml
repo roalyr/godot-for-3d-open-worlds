@@ -525,6 +525,12 @@
 		<member name="editor/search_in_file_extensions" type="PoolStringArray" setter="" getter="" default="PoolStringArray( &quot;gd&quot;, &quot;gdshader&quot;, &quot;shader&quot; )">
 			Text-based file extensions to include in the script editor's "Find in Files" feature. You can add e.g. [code]tscn[/code] if you wish to also parse your scene files, especially if you use built-in scripts which are serialized in the scene files.
 		</member>
+		<member name="editor/version_control/autoload_on_startup" type="bool" setter="" getter="" default="false">
+			Load the previously opened VCS plugin when the editor starts up. This is set to [code]true[/code] whenever a new VCS plugin is initialized.
+		</member>
+		<member name="editor/version_control/plugin_name" type="String" setter="" getter="" default="&quot;&quot;">
+			Last loaded VCS plugin name. Used to autoload the plugin when the editor starts up.
+		</member>
 		<member name="gui/common/default_scroll_deadzone" type="int" setter="" getter="" default="0">
 			Default value for [member ScrollContainer.scroll_deadzone], which will be used for all [ScrollContainer]s unless overridden.
 		</member>
@@ -1330,7 +1336,7 @@
 		<member name="rendering/portals/advanced/flip_imported_portals" type="bool" setter="" getter="" default="false">
 			The default convention is for portal normals to point outward (face outward) from the source room.
 			If you accidentally build your level with portals facing the wrong way, this setting can fix the problem.
-			It will flip named portal meshes (i.e. [code]-portal[/code]) on the initial convertion to [Portal] nodes.
+			It will flip named portal meshes (i.e. [code]-portal[/code]) on the initial conversion to [Portal] nodes.
 		</member>
 		<member name="rendering/portals/debug/logging" type="bool" setter="" getter="" default="true">
 			Show conversion logs.
@@ -1352,11 +1358,16 @@
 			[b]Note:[/b] Generally you should only use this option if you encounter bugs when it is set to [code]false[/code], i.e. there are problems with the default method.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
-			If [code]true[/code], allocates the main framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1.
+			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1.
 			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth/hdr.mobile" type="bool" setter="" getter="" default="false">
 			Lower-end override for [member rendering/quality/depth/hdr] on mobile devices, due to performance concerns or driver support.
+		</member>
+		<member name="rendering/quality/depth/use_32_bpc_depth" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], allocates the root [Viewport]'s framebuffer with full floating-point precision (32-bit) instead of half floating-point precision (16-bit). Only effective when [member rendering/quality/depth/hdr] is also enabled.
+			[b]Note:[/b] Enabling this setting does not improve rendering quality. Using full floating-point precision is slower, and is generally only needed for advanced shaders that require a high level of precision. To reduce banding, enable [member rendering/quality/filters/use_debanding] instead.
+			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth_prepass/disable_for_vendors" type="String" setter="" getter="" default="&quot;PowerVR,Mali,Adreno,Apple&quot;">
 			Disables depth pre-pass for some GPU vendors (usually mobile), as their architecture already does this.
