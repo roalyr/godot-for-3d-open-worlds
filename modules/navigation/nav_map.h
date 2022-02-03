@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -50,8 +50,9 @@ class NavMap : public NavRid {
 	Vector3 up;
 
 	/// To find the polygons edges the vertices are displaced in a grid where
-	/// each cell has the following cell_size.
+	/// each cell has the following cell_size and cell_height.
 	real_t cell_size;
+	real_t cell_height;
 
 	/// This value is used to detect the near edges to connect.
 	real_t edge_connection_margin;
@@ -93,6 +94,11 @@ public:
 	void set_cell_size(float p_cell_size);
 	float get_cell_size() const {
 		return cell_size;
+	}
+
+	void set_cell_height(float p_cell_height);
+	float get_cell_height() const {
+		return cell_height;
 	}
 
 	void set_edge_connection_margin(float p_edge_connection_margin);

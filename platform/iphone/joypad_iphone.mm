@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -292,24 +292,22 @@ void JoypadIPhone::start_processing() {
 						gamepad.dpad.right.isPressed);
 			};
 
-			InputDefault::JoyAxis jx;
-			jx.min = -1;
 			if (element == gamepad.leftThumbstick) {
-				jx.value = gamepad.leftThumbstick.xAxis.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_LX, jx);
-				jx.value = -gamepad.leftThumbstick.yAxis.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_LY, jx);
+				float value = gamepad.leftThumbstick.xAxis.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_LX, value);
+				value = -gamepad.leftThumbstick.yAxis.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_LY, value);
 			} else if (element == gamepad.rightThumbstick) {
-				jx.value = gamepad.rightThumbstick.xAxis.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_RX, jx);
-				jx.value = -gamepad.rightThumbstick.yAxis.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_RY, jx);
+				float value = gamepad.rightThumbstick.xAxis.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_RX, value);
+				value = -gamepad.rightThumbstick.yAxis.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_RY, value);
 			} else if (element == gamepad.leftTrigger) {
-				jx.value = gamepad.leftTrigger.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_L2, jx);
+				float value = gamepad.leftTrigger.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_L2, value);
 			} else if (element == gamepad.rightTrigger) {
-				jx.value = gamepad.rightTrigger.value;
-				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_R2, jx);
+				float value = gamepad.rightTrigger.value;
+				OSIPhone::get_singleton()->joy_axis(joy_id, JOY_ANALOG_R2, value);
 			}
 		};
 	} else if (controller.microGamepad != nil) {

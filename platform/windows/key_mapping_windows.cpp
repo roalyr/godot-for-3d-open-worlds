@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -345,6 +345,16 @@ unsigned int KeyMappingWindows::get_keysym(unsigned int p_code) {
 	}
 
 	return KEY_UNKNOWN;
+}
+
+unsigned int KeyMappingWindows::get_scancode(unsigned int p_keycode) {
+	for (int i = 0; _scancode_to_keycode[i].keysym != KEY_UNKNOWN; i++) {
+		if (_scancode_to_keycode[i].keysym == p_keycode) {
+			return _scancode_to_keycode[i].keycode;
+		}
+	}
+
+	return 0;
 }
 
 unsigned int KeyMappingWindows::get_scansym(unsigned int p_code, bool p_extended) {

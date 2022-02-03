@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -212,11 +212,23 @@ bool Particles::get_fractional_delta() const {
 }
 
 String Particles::get_configuration_warning() const {
+	String warnings = GeometryInstance::get_configuration_warning();
+
 	if (OS::get_singleton()->get_current_video_driver() == OS::VIDEO_DRIVER_GLES2) {
-		return TTR("GPU-based particles are not supported by the GLES2 video driver.\nUse the CPUParticles node instead. You can use the \"Convert to CPUParticles\" option for this purpose.");
+		if (warnings != String()) {
+			warnings += "\n\n";
+		}
+		warnings += "- " + TTR("GPU-based particles are not supported by the GLES2 video driver.\nUse the CPUParticles node instead. You can use the \"Convert to CPUParticles\" toolbar option for this purpose.");
+		return warnings;
 	}
 
-	String warnings = GeometryInstance::get_configuration_warning();
+#ifdef OSX_ENABLED
+	if (warnings != String()) {
+		warnings += "\n\n";
+	}
+
+	warnings += "- " + TTR("On macOS, Particles rendering is much slower than CPUParticles due to transform feedback being implemented on the CPU instead of the GPU.\nConsider using CPUParticles instead when targeting macOS.\nYou can use the \"Convert to CPUParticles\" toolbar option for this purpose.");
+#endif
 
 	bool meshes_found = false;
 	bool anim_material_found = false;

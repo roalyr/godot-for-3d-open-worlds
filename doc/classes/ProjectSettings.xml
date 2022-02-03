@@ -163,6 +163,7 @@
 				[codeblock]
 				ProjectSettings.set_setting("application/config/name", "Example")
 				[/codeblock]
+				This can also be used to erase custom project settings. To do this change the setting value to [code]null[/code].
 			</description>
 		</method>
 	</methods>
@@ -1290,8 +1291,8 @@
 			That means that when a shader is first used under some new rendering situation, the game won't stall while such shader is being compiled. Instead, a fallback will be used and the real shader will be compiled in the background. Once the actual shader is compiled, it will be used the next times it's used to draw a frame.
 			Depending on the async mode configured for a given material/shader, the fallback will be an "ubershader" (the default) or just skip rendering any item it is applied to.
 			An ubershader is a very complex shader, slow but suited to any rendering situation, that the engine generates internally so it can be used from the beginning while the traditional conditioned, optimized version of it is being compiled.
-			In order to save some loading time, you can use [code]Asynchronous + Cache[/code], which also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
-			[b]Warning:[/b] Async. compilation is currently only supported for spatial and particle materials/shaders.
+			To reduce loading times after the project has been launched at least once, you can use [code]Asynchronous + Cache[/code]. This also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
+			[b]Note:[/b] Asynchronous compilation is currently only supported for spatial (3D) and particle materials/shaders. CanvasItem (2D) shaders will not use asynchronous compilation even if this setting is set to [code]Asynchronous[/code] or [code]Asynchronous + Cache[/code].
 		</member>
 		<member name="rendering/limits/buffers/blend_shape_max_buffer_size_kb" type="int" setter="" getter="" default="4096">
 			Max buffer size for blend shapes. Any blend shape bigger than this will not work.
@@ -1328,6 +1329,11 @@
 		</member>
 		<member name="rendering/misc/mesh_storage/split_stream" type="bool" setter="" getter="" default="false">
 			On import, mesh vertex data will be split into two streams within a single vertex buffer, one for position data and the other for interleaved attributes data. Recommended to be enabled if targeting mobile devices. Requires manual reimport of meshes after toggling.
+		</member>
+		<member name="rendering/misc/occlusion_culling/max_active_polygons" type="int" setter="" getter="" default="8">
+			Determines the maximum number of polygon occluders that will be used at any one time.
+			Although you can have many occluders in a scene, each frame the system will choose from these the most relevant based on a screen space metric, in order to give the best overall performance.
+			A greater number of polygons can potentially cull more objects, however the cost of culling calculations scales with the number of occluders.
 		</member>
 		<member name="rendering/misc/occlusion_culling/max_active_spheres" type="int" setter="" getter="" default="8">
 			Determines the maximum number of sphere occluders that will be used at any one time.
@@ -1376,7 +1382,7 @@
 			If [code]true[/code], performs a previous depth pass before rendering materials. This increases performance in scenes with high overdraw, when complex materials and lighting are used.
 		</member>
 		<member name="rendering/quality/directional_shadow/size" type="int" setter="" getter="" default="4096">
-			The directional shadow's size in pixels. Higher values will result in sharper shadows, at the cost of performance. The value will be rounded up to the nearest power of 2.
+			The directional shadow's size in pixels. Higher values will result in sharper shadows, at the cost of performance. The value will be rounded up to the nearest power of 2. This setting can be changed at run-time; the change will be applied immediately.
 		</member>
 		<member name="rendering/quality/directional_shadow/size.mobile" type="int" setter="" getter="" default="2048">
 			Lower-end override for [member rendering/quality/directional_shadow/size] on mobile devices, due to performance concerns or driver support.

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -41,6 +41,7 @@
 //#define PORTAL_RENDERER_STORE_MOVING_RIDS
 #endif
 
+struct CameraMatrix;
 class PortalRenderer;
 struct VSRoom;
 
@@ -113,7 +114,10 @@ public:
 
 	// special function for occlusion culling only that does not use portals / rooms,
 	// but allows using occluders with the main scene
-	int occlusion_cull(PortalRenderer &p_portal_renderer, const Vector3 &p_point, const Vector<Plane> &p_convex, VSInstance **p_result_array, int p_num_results);
+	int occlusion_cull(PortalRenderer &p_portal_renderer, const Vector3 &p_point, const Vector3 &p_cam_dir, const CameraMatrix &p_cam_matrix, const Vector<Plane> &p_convex, VSInstance **p_result_array, int p_num_results);
+
+	PortalOcclusionCuller &get_occlusion_culler() { return _occlusion_culler; }
+	const PortalOcclusionCuller &get_occlusion_culler() const { return _occlusion_culler; }
 
 private:
 	// main tracing function is recursive

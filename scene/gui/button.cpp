@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -151,8 +151,9 @@ void Button::_notification(int p_what) {
 					color = get_color("font_color_disabled");
 					if (has_color("icon_color_disabled")) {
 						color_icon = get_color("icon_color_disabled");
+					} else {
+						color_icon.a = 0.4;
 					}
-
 				} break;
 			}
 
@@ -172,9 +173,6 @@ void Button::_notification(int p_what) {
 			Rect2 icon_region = Rect2();
 			if (!_icon.is_null()) {
 				int valign = size.height - style->get_minimum_size().y;
-				if (is_disabled()) {
-					color_icon.a = 0.4;
-				}
 
 				float icon_ofs_region = 0;
 				if (_internal_margin[MARGIN_LEFT] > 0) {

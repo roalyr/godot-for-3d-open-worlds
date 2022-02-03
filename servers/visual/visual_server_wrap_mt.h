@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -508,9 +508,11 @@ public:
 	FUNCRID(occluder)
 	FUNC3(occluder_set_scenario, RID, RID, OccluderType)
 	FUNC2(occluder_spheres_update, RID, const Vector<Plane> &)
+	FUNC2(occluder_mesh_update, RID, const Geometry::OccluderMeshData &)
 	FUNC2(occluder_set_transform, RID, const Transform &)
 	FUNC2(occluder_set_active, RID, bool)
 	FUNC1(set_use_occlusion_culling, bool)
+	FUNC1RC(Geometry::MeshData, occlusion_debug_get_current_polys, RID)
 
 	// Rooms
 	FUNCRID(room)

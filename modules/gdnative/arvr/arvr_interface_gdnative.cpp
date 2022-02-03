@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -409,10 +409,12 @@ void GDAPI godot_arvr_set_controller_axis(godot_int p_controller_id, godot_int p
 	if (tracker.is_valid()) {
 		int joyid = tracker->get_joy_id();
 		if (joyid != -1) {
-			InputDefault::JoyAxis jx;
-			jx.min = p_can_be_negative ? -1 : 0;
-			jx.value = p_value;
-			input->joy_axis(joyid, p_axis, jx);
+			float value = p_value;
+			if (!p_can_be_negative) {
+				// Convert to a value between -1.0f and 1.0f.
+				value = p_value * 2.0f - 1.0f;
+			}
+			input->joy_axis(joyid, p_axis, value);
 		}
 	}
 }

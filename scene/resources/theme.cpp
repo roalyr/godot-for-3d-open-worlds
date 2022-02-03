@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -470,7 +470,7 @@ Ref<Font> Theme::get_font(const StringName &p_name, const StringName &p_node_typ
 }
 
 bool Theme::has_font(const StringName &p_name, const StringName &p_node_type) const {
-	return (font_map.has(p_node_type) && font_map[p_node_type].has(p_name) && font_map[p_node_type][p_name].is_valid());
+	return ((font_map.has(p_node_type) && font_map[p_node_type].has(p_name) && font_map[p_node_type][p_name].is_valid()) || has_default_theme_font());
 }
 
 bool Theme::has_font_nocheck(const StringName &p_name, const StringName &p_node_type) const {
@@ -921,6 +921,17 @@ void Theme::get_type_list(List<StringName> *p_list) const {
 
 	for (Set<StringName>::Element *E = types.front(); E; E = E->next()) {
 		p_list->push_back(E->get());
+	}
+}
+
+void Theme::get_type_dependencies(const StringName &p_base_type, List<StringName> *p_list) {
+	ERR_FAIL_NULL(p_list);
+
+	// Build the dependency chain using native class hierarchy.
+	StringName class_name = p_base_type;
+	while (class_name != StringName()) {
+		p_list->push_back(class_name);
+		class_name = ClassDB::get_parent_class_nocheck(class_name);
 	}
 }
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -220,6 +220,7 @@
 #include "scene/resources/environment.h"
 #include "scene/resources/mesh_library.h"
 #include "scene/resources/occluder_shape.h"
+#include "scene/resources/occluder_shape_polygon.h"
 #endif
 
 #include "modules/modules_enabled.gen.h" // For freetype.
@@ -668,6 +669,7 @@ void register_scene_types() {
 	ClassDB::register_class<ConcavePolygonShape>();
 	ClassDB::register_virtual_class<OccluderShape>();
 	ClassDB::register_class<OccluderShapeSphere>();
+	ClassDB::register_class<OccluderShapePolygon>();
 
 	OS::get_singleton()->yield(); //may take time to init
 

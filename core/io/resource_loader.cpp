@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -732,7 +732,7 @@ String ResourceLoader::_path_remap(const String &p_path, bool *r_translation_rem
 		bool near_match = false;
 
 		for (int i = 0; i < res_remaps.size(); i++) {
-			int split = res_remaps[i].find_last(":");
+			int split = res_remaps[i].rfind(":");
 			if (split == -1) {
 				continue;
 			}

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1203,25 +1203,14 @@ bool Space2DSW::test_body_motion(Body2DSW *p_body, const Transform2D &p_from, co
 	return collided;
 }
 
+// Assumes a valid collision pair, this should have been checked beforehand in the BVH or octree.
 void *Space2DSW::_broadphase_pair(CollisionObject2DSW *p_object_A, int p_subindex_A, CollisionObject2DSW *p_object_B, int p_subindex_B, void *p_pair_data, void *p_self) {
-	bool valid_collision_pair = p_object_A->test_collision_mask(p_object_B);
-
+	// An existing pair - nothing to do, pair is still valid.
 	if (p_pair_data) {
-		// Checking an existing pair.
-		if (valid_collision_pair) {
-			// Nothing to do, pair is still valid.
-			return p_pair_data;
-		} else {
-			// Logical collision not valid anymore, unpair.
-			_broadphase_unpair(p_object_A, p_subindex_A, p_object_B, p_subindex_B, p_pair_data, p_self);
-			return nullptr;
-		}
+		return p_pair_data;
 	}
 
-	if (!valid_collision_pair) {
-		return nullptr;
-	}
-
+	// New pair
 	CollisionObject2DSW::Type type_A = p_object_A->get_type();
 	CollisionObject2DSW::Type type_B = p_object_B->get_type();
 	if (type_A > type_B) {

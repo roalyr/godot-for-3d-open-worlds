@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -175,14 +175,12 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 #endif
 			}
 		} else {
-			Object *obj = nullptr;
+			//node belongs to this scene and must be created
+			Object *obj = ClassDB::instance(snames[n.type]);
 
-			if (ClassDB::is_class_enabled(snames[n.type])) {
-				//node belongs to this scene and must be created
-				obj = ClassDB::instance(snames[n.type]);
-			}
+			node = Object::cast_to<Node>(obj);
 
-			if (!Object::cast_to<Node>(obj)) {
+			if (!node) {
 				if (obj) {
 					memdelete(obj);
 					obj = nullptr;
@@ -201,9 +199,9 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 				if (!obj) {
 					obj = memnew(Node);
 				}
-			}
 
-			node = Object::cast_to<Node>(obj);
+				node = Object::cast_to<Node>(obj);
+			}
 		}
 
 		if (node) {

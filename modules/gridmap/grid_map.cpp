@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -35,6 +35,7 @@
 #include "scene/3d/light.h"
 #include "scene/resources/mesh_library.h"
 #include "scene/resources/physics_material.h"
+#include "scene/resources/primitive_meshes.h"
 #include "scene/resources/surface_tool.h"
 #include "scene/scene_string_names.h"
 #include "servers/navigation_server.h"
@@ -191,6 +192,24 @@ void GridMap::set_physics_material(Ref<PhysicsMaterial> p_material) {
 
 Ref<PhysicsMaterial> GridMap::get_physics_material() const {
 	return physics_material;
+}
+
+Array GridMap::get_collision_shapes() const {
+	Array shapes;
+	for (Map<OctantKey, Octant *>::Element *E = octant_map.front(); E; E = E->next()) {
+		Octant *g = E->get();
+		RID body = g->static_body;
+		Transform body_xform = PhysicsServer::get_singleton()->body_get_state(body, PhysicsServer::BODY_STATE_TRANSFORM);
+		int nshapes = PhysicsServer::get_singleton()->body_get_shape_count(body);
+		for (int i = 0; i < nshapes; i++) {
+			RID shape = PhysicsServer::get_singleton()->body_get_shape(body, i);
+			Transform xform = PhysicsServer::get_singleton()->body_get_shape_transform(body, i);
+			shapes.push_back(body_xform * xform);
+			shapes.push_back(shape);
+		}
+	}
+
+	return shapes;
 }
 
 void GridMap::set_mesh_library(const Ref<MeshLibrary> &p_mesh_library) {
@@ -939,7 +958,7 @@ Array GridMap::get_used_cells() const {
 	return a;
 }
 
-Array GridMap::get_meshes() {
+Array GridMap::get_meshes() const {
 	if (mesh_library.is_null()) {
 		return Array();
 	}

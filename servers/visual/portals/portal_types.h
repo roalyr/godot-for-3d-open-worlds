@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -39,6 +39,7 @@
 #include "core/math/vector3.h"
 #include "core/object_id.h"
 #include "core/rid.h"
+#include "portal_defines.h"
 
 // visual server scene instance.
 // we can't have a pointer to nested class outside of visual server scene...
@@ -227,7 +228,7 @@ struct VSRoomGroup {
 	}
 
 	// used for calculating gameplay notifications
-	uint32_t last_gameplay_tick_hit = 0;
+	uint32_t last_room_tick_hit = 0;
 
 	ObjectID _godot_instance_ID = 0;
 
@@ -257,6 +258,7 @@ struct VSRoom {
 		_secondary_pvs_size = 0;
 		_priority = 0;
 		_contains_internal_rooms = false;
+		last_room_tick_hit = 0;
 	}
 
 	void cleanup_after_conversion() {
@@ -353,7 +355,7 @@ struct VSRoom {
 	uint16_t _secondary_pvs_size = 0;
 
 	// used for calculating gameplay notifications
-	uint32_t last_gameplay_tick_hit = 0;
+	uint32_t last_room_tick_hit = 0;
 
 	// convex hull of the room, either determined by geometry or manual bound
 	LocalVector<Plane, int32_t> _planes;
@@ -390,6 +392,7 @@ struct VSOccluder {
 	enum Type : uint32_t {
 		OT_UNDEFINED,
 		OT_SPHERE,
+		OT_MESH,
 		OT_NUM_TYPES,
 	} type;
 
@@ -443,6 +446,30 @@ struct Sphere {
 		return true;
 	}
 };
+
+struct Poly {
+	static const int MAX_POLY_VERTS = PortalDefines::OCCLUSION_POLY_MAX_VERTS;
+	void create() {
+		num_verts = 0;
+	}
+	void flip() {
+		for (int n = 0; n < num_verts / 2; n++) {
+			SWAP(verts[n], verts[num_verts - n - 1]);
+		}
+	}
+
+	int num_verts;
+	Vector3 verts[MAX_POLY_VERTS];
+};
+
+struct PolyPlane : public Poly {
+	void flip() {
+		plane = -plane;
+		Poly::flip();
+	}
+	Plane plane;
+};
+
 } // namespace Occlusion
 
 struct VSOccluder_Sphere {
@@ -453,6 +480,34 @@ struct VSOccluder_Sphere {
 
 	Occlusion::Sphere local;
 	Occlusion::Sphere world;
+};
+
+struct VSOccluder_Mesh {
+	static const int MAX_POLY_HOLES = PortalDefines::OCCLUSION_POLY_MAX_HOLES;
+	void create() {
+		poly_local.create();
+		poly_world.create();
+		num_holes = 0;
+		two_way = false;
+		for (int n = 0; n < MAX_POLY_HOLES; n++) {
+			hole_pool_ids[n] = UINT32_MAX;
+		}
+	}
+	Occlusion::PolyPlane poly_local;
+	Occlusion::PolyPlane poly_world;
+	bool two_way;
+
+	int num_holes;
+	uint32_t hole_pool_ids[MAX_POLY_HOLES];
+};
+
+struct VSOccluder_Hole {
+	void create() {
+		poly_local.create();
+		poly_world.create();
+	}
+	Occlusion::Poly poly_local;
+	Occlusion::Poly poly_world;
 };
 
 #endif

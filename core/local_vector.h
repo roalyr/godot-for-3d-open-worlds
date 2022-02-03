@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -38,7 +38,7 @@
 
 template <class T, class U = uint32_t, bool force_trivial = false>
 class LocalVector {
-private:
+protected:
 	U count = 0;
 	U capacity = 0;
 	T *data = nullptr;
@@ -253,6 +253,11 @@ public:
 			reset();
 		}
 	}
+};
+
+// Integer default version
+template <class T, class I = int32_t, bool force_trivial = false>
+class LocalVectori : public LocalVector<T, I, force_trivial> {
 };
 
 #endif // LOCAL_VECTOR_H

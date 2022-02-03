@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -63,6 +63,64 @@ static const GLenum _cube_side_enum[6] = {
 	GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
 
 };
+
+void RasterizerSceneGLES2::directional_shadow_create() {
+	if (directional_shadow.fbo) {
+		// Erase existing directional shadow texture to recreate it.
+		glDeleteTextures(1, &directional_shadow.depth);
+		glDeleteFramebuffers(1, &directional_shadow.fbo);
+
+		directional_shadow.depth = 0;
+		directional_shadow.fbo = 0;
+	}
+
+	directional_shadow.light_count = 0;
+	directional_shadow.size = next_power_of_2(directional_shadow_size);
+
+	if (directional_shadow.size > storage->config.max_viewport_dimensions[0] || directional_shadow.size > storage->config.max_viewport_dimensions[1]) {
+		WARN_PRINT("Cannot set directional shadow size larger than maximum hardware supported size of (" + itos(storage->config.max_viewport_dimensions[0]) + ", " + itos(storage->config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
+		directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[0]);
+		directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[1]);
+	}
+
+	glGenFramebuffers(1, &directional_shadow.fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, directional_shadow.fbo);
+
+	if (storage->config.use_rgba_3d_shadows) {
+		//maximum compatibility, renderbuffer and RGBA shadow
+		glGenRenderbuffers(1, &directional_shadow.depth);
+		glBindRenderbuffer(GL_RENDERBUFFER, directional_shadow.depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_buffer_internalformat, directional_shadow.size, directional_shadow.size);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, directional_shadow.depth);
+
+		glGenTextures(1, &directional_shadow.color);
+		glBindTexture(GL_TEXTURE_2D, directional_shadow.color);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, directional_shadow.size, directional_shadow.size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, directional_shadow.color, 0);
+	} else {
+		//just a depth buffer
+		glGenTextures(1, &directional_shadow.depth);
+		glBindTexture(GL_TEXTURE_2D, directional_shadow.depth);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, storage->config.depth_internalformat, directional_shadow.size, directional_shadow.size, 0, GL_DEPTH_COMPONENT, storage->config.depth_type, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directional_shadow.depth, 0);
+	}
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		ERR_PRINT("Directional shadow framebuffer status invalid");
+	}
+}
 
 /* SHADOW ATLAS API */
 
@@ -4014,56 +4072,7 @@ void RasterizerSceneGLES2::initialize() {
 		}
 	}
 
-	{
-		// directional shadows
-
-		directional_shadow.light_count = 0;
-		directional_shadow.size = next_power_of_2(GLOBAL_GET("rendering/quality/directional_shadow/size"));
-
-		if (directional_shadow.size > storage->config.max_viewport_dimensions[0] || directional_shadow.size > storage->config.max_viewport_dimensions[1]) {
-			WARN_PRINT("Cannot set directional shadow size larger than maximum hardware supported size of (" + itos(storage->config.max_viewport_dimensions[0]) + ", " + itos(storage->config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
-			directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[0]);
-			directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[1]);
-		}
-
-		glGenFramebuffers(1, &directional_shadow.fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, directional_shadow.fbo);
-
-		if (storage->config.use_rgba_3d_shadows) {
-			//maximum compatibility, renderbuffer and RGBA shadow
-			glGenRenderbuffers(1, &directional_shadow.depth);
-			glBindRenderbuffer(GL_RENDERBUFFER, directional_shadow.depth);
-			glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_buffer_internalformat, directional_shadow.size, directional_shadow.size);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, directional_shadow.depth);
-
-			glGenTextures(1, &directional_shadow.color);
-			glBindTexture(GL_TEXTURE_2D, directional_shadow.color);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, directional_shadow.size, directional_shadow.size, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, directional_shadow.color, 0);
-		} else {
-			//just a depth buffer
-			glGenTextures(1, &directional_shadow.depth);
-			glBindTexture(GL_TEXTURE_2D, directional_shadow.depth);
-
-			glTexImage2D(GL_TEXTURE_2D, 0, storage->config.depth_internalformat, directional_shadow.size, directional_shadow.size, 0, GL_DEPTH_COMPONENT, storage->config.depth_type, nullptr);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directional_shadow.depth, 0);
-		}
-
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (status != GL_FRAMEBUFFER_COMPLETE) {
-			ERR_PRINT("Directional shadow framebuffer status invalid");
-		}
-	}
+	directional_shadow_create();
 
 	if (storage->config.use_lightmap_filter_bicubic) {
 		state.scene_shader.add_custom_define("#define USE_LIGHTMAP_FILTER_BICUBIC\n");
@@ -4076,6 +4085,12 @@ void RasterizerSceneGLES2::initialize() {
 
 void RasterizerSceneGLES2::iteration() {
 	shadow_filter_mode = ShadowFilterMode(int(GLOBAL_GET("rendering/quality/shadows/filter_mode")));
+
+	const int directional_shadow_size_new = next_power_of_2(int(GLOBAL_GET("rendering/quality/directional_shadow/size")));
+	if (directional_shadow_size != directional_shadow_size_new) {
+		directional_shadow_size = directional_shadow_size_new;
+		directional_shadow_create();
+	}
 }
 
 void RasterizerSceneGLES2::finalize() {
@@ -4083,6 +4098,7 @@ void RasterizerSceneGLES2::finalize() {
 
 RasterizerSceneGLES2::RasterizerSceneGLES2() {
 	_light_counter = 0;
+	directional_shadow_size = next_power_of_2(int(GLOBAL_GET("rendering/quality/directional_shadow/size")));
 }
 
 RasterizerSceneGLES2::~RasterizerSceneGLES2() {

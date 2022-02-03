@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1544,7 +1544,7 @@ void EditorInspector::update_tree() {
 			basename = group + "/" + basename;
 		}
 
-		String name = (basename.find("/") != -1) ? basename.right(basename.find_last("/") + 1) : basename;
+		String name = (basename.find("/") != -1) ? basename.right(basename.rfind("/") + 1) : basename;
 
 		if (capitalize_paths) {
 			int dot = name.find(".");
@@ -1559,7 +1559,7 @@ void EditorInspector::update_tree() {
 			}
 		}
 
-		String path = basename.left(basename.find_last("/"));
+		String path = basename.left(basename.rfind("/"));
 
 		if (use_filter && filter != "") {
 			String cat = path;

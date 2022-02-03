@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -275,7 +275,7 @@ godot_int GDAPI godot_string_find_last(const godot_string *p_self, godot_string 
 	const String *self = (const String *)p_self;
 	String *what = (String *)&p_what;
 
-	return self->find_last(*what);
+	return self->rfind(*what);
 }
 
 godot_string GDAPI godot_string_format(const godot_string *p_self, const godot_variant *p_values) {

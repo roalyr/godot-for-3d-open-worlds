@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -567,6 +567,7 @@ void FileDialog::clear_filters() {
 	invalidate();
 }
 void FileDialog::add_filter(const String &p_filter) {
+	ERR_FAIL_COND_MSG(p_filter.begins_with("."), "Filter must be \"filename.extension\", can't start with dot.");
 	filters.push_back(p_filter);
 	update_filters();
 	invalidate();
@@ -600,7 +601,7 @@ void FileDialog::set_current_file(const String &p_file) {
 	file->set_text(p_file);
 	update_dir();
 	invalidate();
-	int lp = p_file.find_last(".");
+	int lp = p_file.rfind(".");
 	if (lp != -1) {
 		file->select(0, lp);
 		if (file->is_inside_tree() && !get_tree()->is_node_being_edited(file)) {
@@ -612,7 +613,7 @@ void FileDialog::set_current_path(const String &p_path) {
 	if (!p_path.size()) {
 		return;
 	}
-	int pos = MAX(p_path.find_last("/"), p_path.find_last("\\"));
+	int pos = MAX(p_path.rfind("/"), p_path.rfind("\\"));
 	if (pos == -1) {
 		set_current_file(p_path);
 	} else {

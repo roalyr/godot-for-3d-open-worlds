@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -722,11 +722,11 @@ void AnimationPlayerEditor::_dialog_action(String p_file) {
 			Ref<Resource> res = ResourceLoader::load(p_file, "Animation");
 			ERR_FAIL_COND_MSG(res.is_null(), "Cannot load Animation from file '" + p_file + "'.");
 			ERR_FAIL_COND_MSG(!res->is_class("Animation"), "Loaded resource from file '" + p_file + "' is not Animation.");
-			if (p_file.find_last("/") != -1) {
-				p_file = p_file.substr(p_file.find_last("/") + 1, p_file.length());
+			if (p_file.rfind("/") != -1) {
+				p_file = p_file.substr(p_file.rfind("/") + 1, p_file.length());
 			}
-			if (p_file.find_last("\\") != -1) {
-				p_file = p_file.substr(p_file.find_last("\\") + 1, p_file.length());
+			if (p_file.rfind("\\") != -1) {
+				p_file = p_file.substr(p_file.rfind("\\") + 1, p_file.length());
 			}
 
 			if (p_file.find(".") != -1) {

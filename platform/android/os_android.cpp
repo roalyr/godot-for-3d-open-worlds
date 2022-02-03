@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -421,6 +421,15 @@ String OS_Android::get_clipboard() const {
 	}
 
 	return OS_Unix::get_clipboard();
+}
+
+bool OS_Android::has_clipboard() const {
+	// DO we really need the fallback to OS_Unix here?!
+	if (godot_java->has_has_clipboard()) {
+		return godot_java->has_clipboard();
+	}
+
+	return OS_Unix::has_clipboard();
 }
 
 String OS_Android::get_model_name() const {

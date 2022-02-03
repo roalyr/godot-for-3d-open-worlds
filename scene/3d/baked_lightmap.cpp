@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -389,7 +389,7 @@ void BakedLightmap::_find_meshes_and_lights(Node *p_at_node, Vector<MeshesFound>
 
 			GeometryInstance *gi = Object::cast_to<GeometryInstance>(p_at_node);
 			if (gi) {
-				all_override = mi->get_material_override();
+				all_override = gi->get_material_override();
 			}
 
 			for (int i = 0; i < bmeshes.size(); i += 2) {
@@ -414,8 +414,8 @@ void BakedLightmap::_find_meshes_and_lights(Node *p_at_node, Vector<MeshesFound>
 				mf.mesh = mesh;
 
 				if (gi) {
-					mf.cast_shadows = mi->get_cast_shadows_setting() != GeometryInstance::SHADOW_CASTING_SETTING_OFF;
-					mf.generate_lightmap = mi->get_generate_lightmap();
+					mf.cast_shadows = gi->get_cast_shadows_setting() != GeometryInstance::SHADOW_CASTING_SETTING_OFF;
+					mf.generate_lightmap = gi->get_generate_lightmap();
 				} else {
 					mf.cast_shadows = true;
 					mf.generate_lightmap = true;

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -258,7 +258,7 @@ void ProjectSettingsEditor::_device_input_add() {
 	int idx = edit_idx;
 	Dictionary old_val = ProjectSettings::get_singleton()->get(name);
 	Dictionary action = old_val.duplicate();
-	Array events = action["events"];
+	Array events = action["events"].duplicate();
 
 	switch (add_type) {
 		case INPUT_MOUSE_BUTTON: {
@@ -383,7 +383,7 @@ void ProjectSettingsEditor::_press_a_key_confirm() {
 
 	Dictionary old_val = ProjectSettings::get_singleton()->get(name);
 	Dictionary action = old_val.duplicate();
-	Array events = action["events"];
+	Array events = action["events"].duplicate();
 
 	for (int i = 0; i < events.size(); i++) {
 		Ref<InputEventKey> aie = events[i];
@@ -654,7 +654,7 @@ void ProjectSettingsEditor::_action_button_pressed(Object *p_obj, int p_column, 
 			Dictionary action = old_val.duplicate();
 			int idx = ti->get_metadata(0);
 
-			Array events = action["events"];
+			Array events = action["events"].duplicate();
 			ERR_FAIL_INDEX(idx, events.size());
 			events.remove(idx);
 			action["events"] = events;
@@ -1655,7 +1655,7 @@ void ProjectSettingsEditor::_update_translations() {
 				PoolStringArray selected = remaps[keys[i]];
 				for (int j = 0; j < selected.size(); j++) {
 					String s2 = selected[j];
-					int qp = s2.find_last(":");
+					int qp = s2.rfind(":");
 					String path = s2.substr(0, qp);
 					String locale = s2.substr(qp + 1, s2.length());
 

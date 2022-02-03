@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -185,8 +185,8 @@ void AudioStreamOGGVorbis::set_data(const PoolVector<uint8_t> &p_data) {
 			w.release();
 			alloc_try *= 2;
 		} else {
-			ERR_FAIL_COND(alloc_try == MAX_TEST_MEM);
-			ERR_FAIL_COND(ogg_stream == nullptr);
+			ERR_FAIL_COND_MSG(alloc_try == MAX_TEST_MEM, "Failed allocating memory for OGG Vorbis stream.");
+			ERR_FAIL_COND_MSG(!ogg_stream, "OGG Vorbis decoding failed. Check that your data is a valid OGG Vorbis audio stream.");
 
 			stb_vorbis_info info = stb_vorbis_get_info(ogg_stream);
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -270,6 +270,9 @@ class ScriptEditor : public PanelContainer {
 	void _update_debug_options();
 	void _theme_option(int p_option);
 	void _show_save_theme_as_dialog();
+	bool _has_docs_tab() const;
+	bool _has_script_tab() const;
+	void _prepare_file_menu();
 
 	Tree *disk_changed_list;
 	ConfirmationDialog *disk_changed;

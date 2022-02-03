@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1667,6 +1667,7 @@ void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_sub
 			_remove_item(p_item->subitems.front()->get(), p_line, p_subitem_line);
 		}
 	}
+	memdelete(p_item);
 }
 
 void RichTextLabel::add_image(const Ref<Texture> &p_image, const int p_width, const int p_height) {
@@ -2164,6 +2165,12 @@ Error RichTextLabel::append_bbcode(const String &p_bbcode) {
 			push_strikethrough();
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
+		} else if (tag == "lb") {
+			add_text("[");
+			pos = brk_end + 1;
+		} else if (tag == "rb") {
+			add_text("]");
+			pos = brk_end + 1;
 		} else if (tag == "center") {
 			push_align(ALIGN_CENTER);
 			pos = brk_end + 1;
@@ -2698,6 +2705,7 @@ void RichTextLabel::install_effect(const Variant effect) {
 
 int RichTextLabel::get_content_height() const {
 	int total_height = 0;
+	const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
 	if (main->lines.size()) {
 		total_height = main->lines[main->lines.size() - 1].height_accum_cache + get_stylebox("normal")->get_minimum_size().height;
 	}
@@ -2879,7 +2887,6 @@ Size2 RichTextLabel::get_minimum_size() const {
 	}
 
 	if (fixed_width != -1 || fit_content_height) {
-		const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
 		size.y = get_content_height();
 	}
 

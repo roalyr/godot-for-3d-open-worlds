@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -81,6 +81,25 @@ int BroadPhaseOctree::cull_aabb(const AABB &p_aabb, CollisionObjectSW **p_result
 void *BroadPhaseOctree::_pair_callback(void *self, OctreeElementID p_A, CollisionObjectSW *p_object_A, int subindex_A, OctreeElementID p_B, CollisionObjectSW *p_object_B, int subindex_B) {
 	BroadPhaseOctree *bpo = (BroadPhaseOctree *)(self);
 	if (!bpo->pair_callback) {
+		return nullptr;
+	}
+
+	bool valid_collision_pair = p_object_A->test_collision_mask(p_object_B);
+	void *pair_data = bpo->pair_userdata;
+
+	if (pair_data) {
+		// Checking an existing pair.
+		if (valid_collision_pair) {
+			// Nothing to do, pair is still valid.
+			return pair_data;
+		} else {
+			// Logical collision not valid anymore, unpair.
+			_unpair_callback(self, p_A, p_object_A, subindex_A, p_B, p_object_B, subindex_B, pair_data);
+			return nullptr;
+		}
+	}
+
+	if (!valid_collision_pair) {
 		return nullptr;
 	}
 

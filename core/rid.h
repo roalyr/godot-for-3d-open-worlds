@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -93,8 +93,7 @@ protected:
 	static SafeRefCount refcount;
 	_FORCE_INLINE_ void _set_data(RID &p_rid, RID_Data *p_data) {
 		p_rid._data = p_data;
-		refcount.ref();
-		p_data->_id = refcount.get();
+		p_data->_id = refcount.refval();
 #ifndef DEBUG_ENABLED
 		p_data->_owner = this;
 #endif

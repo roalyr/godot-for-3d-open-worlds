@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -2616,7 +2616,7 @@ VisualServer::VisualServer() {
 	GLOBAL_DEF("rendering/limits/time/time_rollover_secs", 3600);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/limits/time/time_rollover_secs", PropertyInfo(Variant::REAL, "rendering/limits/time/time_rollover_secs", PROPERTY_HINT_RANGE, "0,10000,1,or_greater"));
 
-	GLOBAL_DEF_RST("rendering/quality/directional_shadow/size", 4096);
+	GLOBAL_DEF("rendering/quality/directional_shadow/size", 4096);
 	GLOBAL_DEF("rendering/quality/directional_shadow/size.mobile", 2048);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/quality/directional_shadow/size", PropertyInfo(Variant::INT, "rendering/quality/directional_shadow/size", PROPERTY_HINT_RANGE, "256,16384"));
 	GLOBAL_DEF_RST("rendering/quality/shadow_atlas/size", 4096);
@@ -2718,6 +2718,8 @@ VisualServer::VisualServer() {
 	// Occlusion culling
 	GLOBAL_DEF("rendering/misc/occlusion_culling/max_active_spheres", 8);
 	ProjectSettings::get_singleton()->set_custom_property_info("rendering/misc/occlusion_culling/max_active_spheres", PropertyInfo(Variant::INT, "rendering/misc/occlusion_culling/max_active_spheres", PROPERTY_HINT_RANGE, "0,64"));
+	GLOBAL_DEF("rendering/misc/occlusion_culling/max_active_polygons", 8);
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/misc/occlusion_culling/max_active_polygons", PropertyInfo(Variant::INT, "rendering/misc/occlusion_culling/max_active_polygons", PROPERTY_HINT_RANGE, "0,64"));
 
 	// Async. compilation and caching
 #ifdef DEBUG_ENABLED

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -212,11 +212,23 @@ struct BVH_ABB {
 		return true;
 	}
 
+	// Very hot in profiling, make sure optimized
 	bool intersects(const BVH_ABB &p_o) const {
 		if (_any_morethan(p_o.min, -neg_max)) {
 			return false;
 		}
 		if (_any_morethan(min, -p_o.neg_max)) {
+			return false;
+		}
+		return true;
+	}
+
+	// for pre-swizzled tester (this object)
+	bool intersects_swizzled(const BVH_ABB &p_o) const {
+		if (_any_lessthan(min, p_o.min)) {
+			return false;
+		}
+		if (_any_lessthan(neg_max, p_o.neg_max)) {
 			return false;
 		}
 		return true;

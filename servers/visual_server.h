@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -901,15 +901,18 @@ public:
 	enum OccluderType {
 		OCCLUDER_TYPE_UNDEFINED,
 		OCCLUDER_TYPE_SPHERE,
+		OCCLUDER_TYPE_MESH,
 		OCCLUDER_TYPE_NUM_TYPES,
 	};
 
 	virtual RID occluder_create() = 0;
 	virtual void occluder_set_scenario(RID p_occluder, RID p_scenario, VisualServer::OccluderType p_type) = 0;
 	virtual void occluder_spheres_update(RID p_occluder, const Vector<Plane> &p_spheres) = 0;
+	virtual void occluder_mesh_update(RID p_occluder, const Geometry::OccluderMeshData &p_mesh_data) = 0;
 	virtual void occluder_set_transform(RID p_occluder, const Transform &p_xform) = 0;
 	virtual void occluder_set_active(RID p_occluder, bool p_active) = 0;
 	virtual void set_use_occlusion_culling(bool p_enable) = 0;
+	virtual Geometry::MeshData occlusion_debug_get_current_polys(RID p_scenario) const = 0;
 
 	// Rooms
 	enum RoomsDebugFeature {

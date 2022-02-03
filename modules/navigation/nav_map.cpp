@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -44,6 +44,7 @@
 NavMap::NavMap() :
 		up(0, 1, 0),
 		cell_size(0.3),
+		cell_height(0.2),
 		edge_connection_margin(5.0),
 		regenerate_polygons(true),
 		regenerate_links(true),
@@ -61,15 +62,20 @@ void NavMap::set_cell_size(float p_cell_size) {
 	regenerate_polygons = true;
 }
 
+void NavMap::set_cell_height(float p_cell_height) {
+	cell_height = p_cell_height;
+	regenerate_polygons = true;
+}
+
 void NavMap::set_edge_connection_margin(float p_edge_connection_margin) {
 	edge_connection_margin = p_edge_connection_margin;
 	regenerate_links = true;
 }
 
 gd::PointKey NavMap::get_point_key(const Vector3 &p_pos) const {
-	const int x = int(Math::floor(p_pos.x / cell_size));
-	const int y = int(Math::floor(p_pos.y / cell_size));
-	const int z = int(Math::floor(p_pos.z / cell_size));
+	const int x = static_cast<int>(Math::round(p_pos.x / cell_size));
+	const int y = static_cast<int>(Math::round(p_pos.y / cell_height));
+	const int z = static_cast<int>(Math::round(p_pos.z / cell_size));
 
 	gd::PointKey p;
 	p.key = 0;
@@ -92,9 +98,13 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 		const gd::Polygon &p = polygons[i];
 
 		// For each point cast a face and check the distance between the origin/destination
-		for (size_t point_id = 2; point_id < p.points.size(); point_id++) {
-			Face3 f(p.points[point_id - 2].pos, p.points[point_id - 1].pos, p.points[point_id].pos);
-			Vector3 spoint = f.get_closest_point_to(p_origin);
+		for (size_t point_id = 0; point_id < p.points.size(); point_id++) {
+			const Vector3 p1 = p.points[point_id].pos;
+			const Vector3 p2 = p.points[(point_id + 1) % p.points.size()].pos;
+			const Vector3 p3 = p.points[(point_id + 2) % p.points.size()].pos;
+			const Face3 face(p1, p2, p3);
+
+			Vector3 spoint = face.get_closest_point_to(p_origin);
 			float dpoint = spoint.distance_to(p_origin);
 			if (dpoint < begin_d) {
 				begin_d = dpoint;
@@ -102,7 +112,7 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 				begin_point = spoint;
 			}
 
-			spoint = f.get_closest_point_to(p_destination);
+			spoint = face.get_closest_point_to(p_destination);
 			dpoint = spoint.distance_to(p_destination);
 			if (dpoint < end_d) {
 				end_d = dpoint;
@@ -636,7 +646,7 @@ void NavMap::sync() {
 					connection->get().B->edges[connection->get().B_edge].other_edge = connection->get().A_edge;
 				} else {
 					// The edge is already connected with another edge, skip.
-					ERR_PRINT("Attempted to merge a navigation mesh triangle edge with another already-merged edge. This happens when the Navigation's `cell_size` is different from the one used to generate the navigation mesh. This will cause navigation problem.");
+					ERR_PRINT("Attempted to merge a navigation mesh triangle edge with another already-merged edge. Either the Navigation's `cell_size` is different from the one used to generate the navigation mesh or `detail/sample_max_error` is too small. This will cause navigation problem.");
 				}
 			}
 		}
