@@ -1812,7 +1812,7 @@ void main() {
 		discard;
 #endif //ubershader-runtime
 
-	//lay out everything, whathever is unused is optimized away anyway
+	//lay out everything, whatever is unused is optimized away anyway
 	highp vec3 vertex = vertex_interp;
 	vec3 view = -normalize(vertex_interp);
 	vec3 albedo = vec3(1.0);
@@ -1902,11 +1902,13 @@ FRAGMENT_SHADER_CODE
 #endif // ALPHA_SCISSOR_USED
 
 #ifdef USE_OPAQUE_PREPASS //ubershader-runtime
+#if !defined(ALPHA_SCISSOR_USED)
 
 	if (alpha < opaque_prepass_threshold) {
 		discard;
 	}
 
+#endif // not ALPHA_SCISSOR_USED
 #endif // USE_OPAQUE_PREPASS //ubershader-runtime
 
 #endif // !USE_SHADOW_TO_OPACITY
@@ -2282,10 +2284,13 @@ FRAGMENT_SHADER_CODE
 #endif // ALPHA_SCISSOR_USED
 
 #ifdef USE_OPAQUE_PREPASS //ubershader-runtime
+#if !defined(ALPHA_SCISSOR_USED)
+
 	if (alpha < opaque_prepass_threshold) {
 		discard;
 	}
 
+#endif // not ALPHA_SCISSOR_USED
 #endif // USE_OPAQUE_PREPASS //ubershader-runtime
 
 #endif // USE_SHADOW_TO_OPACITY
