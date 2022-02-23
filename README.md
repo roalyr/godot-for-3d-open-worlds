@@ -33,9 +33,8 @@ coordinate system (3D space) into smaller ones and put scene objects into them.
 More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 
 ## Installation
-
-Currently I do not publish a release with export templates because I want to implement the abovementioned
-`to-do`s, so you have to build it from source. Refer to [rebuild script](rebuild.sh) for convenience.
+You can download binaries and templates (not all of them were made) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
+You can build it from source. Refer to [rebuild script](rebuild.sh) for convenience.
 
 <br/><br/>
 <br/><br/>
