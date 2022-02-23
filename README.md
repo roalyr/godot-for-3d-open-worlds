@@ -11,34 +11,24 @@ floats. In order to achieve this a few tweaks were made.
 This fork is regularly synchronized with [3.x branch](https://github.com/godotengine/godot/tree/3.x).
 
 Implemented tweaks:
-* Increased camera far plane distance (was 1 000 000, now 100 000 000).
-* Increased editor zoom out distance (was 10 000, now 100 000 000).
-* Increased editor zoom increment twice for faster zooming.
+* Logarithmic depth is written in fragment shader as only reliable option with minor FPS sacrifice.
+* Near plane is fixed at 0.01 (not adjustable).
+* Far plane is fixed at 1e15 (not adjustable).
+* Increased editor zoom out distance to 1e15.
+* Increased editor zoom increment for faster zooming.
+
+Requirements:
+* LOD add-on is welcomed since no object will be culled from rendering at distance.
 
 To-do:
-* Switch depth buffer encoding and decoding to logarithmic globally throughout engine. 
-* Possibly an origin rebase Node addon to keep floating-point precision caused jitter in check.
+* Implement logarithmic depth for all shaders, post-processes, shadows and light.
 
-Current implementation requires all materials to be
-custom shaders as follows:
-```
-// For logarithmic depth buffer.
-const float c = 0.001; // Tested at 500 M units.
-varying vec4 gl_Position;
+Not working (properly) as of yet:
+* Shadows, post-processes, lights may (and most likely will) misbehave. It will be fixed.
+* Editor controls jitter and jump around due to single-precision floats being used.  
+In order to tackle this you may want to avoid ortho view and split your global  
+coordinate system (3D space) into smaller ones and put scene objects into them.
 
-void vertex()
-{
-	// For logarithmic depth buffer.
-	gl_Position = MODELVIEW_MATRIX*vec4(VERTEX, 1.0);
-}
-
-void fragment()
-{
-	// Logarithmic depth buffer.
-	DEPTH = log2(max(1e-6, 1.0 -gl_Position.z)) * c;
-
-	// Remaining frag code below ...
-```
 
 More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 

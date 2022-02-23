@@ -10,7 +10,8 @@ export SCONS_CACHE_LIMIT=10000;
 mkdir -p $SCONS_CACHE
 
 # Editor
-scons -j1 platform=x11;
+scons -j2 platform=x11;
+# scons -j2 target=release_debug platform=x11;
 
 # Template(s)
 # Linux, removing debug symbols

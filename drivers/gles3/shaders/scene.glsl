@@ -104,6 +104,7 @@ layout(std140) uniform SceneData { // ubo:0
 
 	highp float time;
 	highp float z_far;
+
 	mediump float reflection_multiplier;
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
@@ -360,6 +361,14 @@ out highp vec4 position_interp;
 // See GH-13450 and https://bugs.freedesktop.org/show_bug.cgi?id=100316
 //invariant gl_Position;
 
+
+
+// LOG DEPTH
+out float vertex_pos_out;
+
+
+
+
 void main() {
 	highp vec4 vertex = vertex_attrib; // vec4(vertex_attrib.xyz * data_attrib.x,1.0);
 
@@ -589,7 +598,16 @@ VERTEX_SHADER_CODE
 #if defined(OVERRIDE_POSITION)
 	gl_Position = position;
 #else
+
+	// Original code. Normal depth calculation, used as preliminary step for logarithmic.
 	gl_Position = projection_matrix * vec4(vertex_interp, 1.0);
+
+	// LOG DEPTH.
+	// https://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
+	// Position passed to fragment shader.
+    vertex_pos_out = gl_Position.w;
+
+
 #endif
 
 	position_interp = gl_Position;
@@ -643,6 +661,7 @@ VERTEX_SHADER_CODE
 
 /* clang-format off */
 [fragment]
+
 
 #if defined(IS_UBERSHADER)
 uniform highp int ubershader_flags;
@@ -1805,7 +1824,20 @@ void gi_probes_compute(vec3 pos, vec3 normal, float roughness, inout vec3 out_sp
 
 #endif //ubershader-skip
 
+
+
+
+// LOG DEPTH
+in float vertex_pos_out;
+const float FC = 0.03; // With Z_MAX around 1e15.
+
+
 void main() {
+
+	// LOG DEPTH
+	gl_FragDepth = log(vertex_pos_out)*FC;
+
+
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID //ubershader-runtime
 
 	if (dp_clip > 0.0)

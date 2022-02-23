@@ -66,18 +66,18 @@
 
 #define ZOOM_FREELOOK_MIN 0.01
 #define ZOOM_FREELOOK_MULTIPLIER 1.08
-//#define ZOOM_FREELOOK_INDICATOR_DELAY_S 1.5
-#define ZOOM_FREELOOK_INDICATOR_DELAY_S 3.0
 
-// Zoom scale max value in editor.
-//#define ZOOM_FREELOOK_MAX 10'000
-#define ZOOM_FREELOOK_MAX 100'000'000
+// New value (for convenience to let one know the current scale).
+#define ZOOM_FREELOOK_INDICATOR_DELAY_S 5.0
 
+// MIN_Z should be fixed.
 #define MIN_Z 0.01
-// Changing original value to enable far plane culling extension.
-// Required for logarithmic depth buffer shader.
-//#define MAX_Z 1'000'000.0
-#define MAX_Z 100'000'000.0
+
+// Required for logarithmic depth buffer vertex shader z_far.
+////////////// Also synchronize with camera MAX_Z///////////////////////
+#define MAX_Z 1e15             // Far plane
+#define ZOOM_FREELOOK_MAX 1e15 // Editor zoom out.
+
 
 #define MIN_FOV 0.01
 #define MAX_FOV 179
@@ -6825,20 +6825,38 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_fov->set_value(EDITOR_DEF("editors/3d/default_fov", 70.0));
 	settings_vbc->add_margin_child(TTR("Perspective FOV (deg.):"), settings_fov);
 
+
+
+
+
+
+
+
+	// This is a crude solutions. Maybe not entirely optimal, but is required to ensure no issues with logarithmic depth.
+	// Near plane setting is fixed in place at 0.01 (Z_MIN).
 	settings_znear = memnew(SpinBox);
-	settings_znear->set_max(MAX_Z);
+	settings_znear->set_max(MIN_Z);
 	settings_znear->set_min(MIN_Z);
-	settings_znear->set_step(0.01);
-	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", 0.05));
+	settings_znear->set_step(MIN_Z);
+	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", MIN_Z));
 	settings_vbc->add_margin_child(TTR("View Z-Near:"), settings_znear);
 
+	// Far plane setting is fixed in place at whatever Z_MAX is.
 	settings_zfar = memnew(SpinBox);
 	settings_zfar->set_max(MAX_Z);
-	settings_zfar->set_min(MIN_Z);
-	settings_zfar->set_step(0.01);
-	// Update default far value.
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 100'000'000.0));
+	settings_zfar->set_min(MAX_Z);
+	settings_zfar->set_step(MAX_Z);
+	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", MAX_Z));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
+
+
+
+
+
+
+
+
+
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; ++i) {
 		settings_dialog->connect("confirmed", viewports[i], "_view_settings_confirmed", varray(0.0));
