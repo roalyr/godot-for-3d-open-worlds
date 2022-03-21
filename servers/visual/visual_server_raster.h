@@ -280,6 +280,11 @@ public:
 
 	BIND2(multimesh_set_as_bulk_array, RID, const PoolVector<float> &)
 
+	BIND3(multimesh_set_as_bulk_array_interpolated, RID, const PoolVector<float> &, const PoolVector<float> &)
+	BIND2(multimesh_set_physics_interpolated, RID, bool)
+	BIND2(multimesh_set_physics_interpolation_quality, RID, int)
+	BIND2(multimesh_instance_reset_physics_interpolation, RID, int)
+
 	BIND2(multimesh_set_visible_instances, RID, int)
 	BIND1RC(int, multimesh_get_visible_instances, RID)
 
@@ -446,10 +451,13 @@ public:
 	/* CAMERA API */
 
 	BIND0R(RID, camera_create)
+	BIND2(camera_set_scenario, RID, RID)
 	BIND4(camera_set_perspective, RID, float, float, float)
 	BIND4(camera_set_orthogonal, RID, float, float, float)
 	BIND5(camera_set_frustum, RID, float, Vector2, float, float)
 	BIND2(camera_set_transform, RID, const Transform &)
+	BIND2(camera_set_interpolated, RID, bool)
+	BIND1(camera_reset_physics_interpolation, RID)
 	BIND2(camera_set_cull_mask, RID, uint32_t)
 	BIND2(camera_set_environment, RID, RID)
 	BIND2(camera_set_use_vertical_aspect, RID, bool)
@@ -551,6 +559,7 @@ public:
 	BIND2(scenario_set_environment, RID, RID)
 	BIND3(scenario_set_reflection_atlas_size, RID, int, int)
 	BIND2(scenario_set_fallback_environment, RID, RID)
+	BIND2(scenario_set_physics_interpolation_enabled, RID, bool)
 
 	/* INSTANCING API */
 	BIND0R(RID, instance_create)
@@ -559,6 +568,8 @@ public:
 	BIND2(instance_set_scenario, RID, RID)
 	BIND2(instance_set_layer_mask, RID, uint32_t)
 	BIND2(instance_set_transform, RID, const Transform &)
+	BIND2(instance_set_interpolated, RID, bool)
+	BIND1(instance_reset_physics_interpolation, RID)
 	BIND2(instance_attach_object_instance_id, RID, ObjectID)
 	BIND3(instance_set_blend_shape_weight, RID, int, float)
 	BIND3(instance_set_surface_material, RID, int, RID)
@@ -592,12 +603,16 @@ public:
 	BIND2(roomgroup_add_room, RID, RID)
 
 	// Occluders
-	BIND0R(RID, occluder_create)
-	BIND3(occluder_set_scenario, RID, RID, OccluderType)
-	BIND2(occluder_spheres_update, RID, const Vector<Plane> &)
-	BIND2(occluder_mesh_update, RID, const Geometry::OccluderMeshData &)
-	BIND2(occluder_set_transform, RID, const Transform &)
-	BIND2(occluder_set_active, RID, bool)
+	BIND0R(RID, occluder_instance_create)
+	BIND2(occluder_instance_set_scenario, RID, RID)
+	BIND2(occluder_instance_link_resource, RID, RID)
+	BIND2(occluder_instance_set_transform, RID, const Transform &)
+	BIND2(occluder_instance_set_active, RID, bool)
+
+	BIND0R(RID, occluder_resource_create)
+	BIND2(occluder_resource_prepare, RID, OccluderType)
+	BIND2(occluder_resource_spheres_update, RID, const Vector<Plane> &)
+	BIND2(occluder_resource_mesh_update, RID, const Geometry::OccluderMeshData &)
 	BIND1(set_use_occlusion_culling, bool)
 	BIND1RC(Geometry::MeshData, occlusion_debug_get_current_polys, RID)
 
@@ -749,6 +764,8 @@ public:
 	virtual bool has_changed(ChangedPriority p_priority = CHANGED_PRIORITY_ANY) const;
 	virtual void init();
 	virtual void finish();
+	virtual void scenario_tick(RID p_scenario);
+	virtual void scenario_pre_draw(RID p_scenario, bool p_will_draw);
 
 	/* STATUS INFORMATION */
 

@@ -31,11 +31,13 @@
 #include "line_edit.h"
 
 #include "core/message_queue.h"
+#include "core/os/input.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
 #include "core/print_string.h"
 #include "core/translation.h"
 #include "label.h"
+#include "scene/main/viewport.h"
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_scale.h"
@@ -65,6 +67,26 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 			return;
 		}
 
+		if (is_middle_mouse_paste_enabled() && b->is_pressed() && b->get_button_index() == BUTTON_MIDDLE && is_editable() && OS::get_singleton()->has_feature("primary_clipboard")) {
+			String paste_buffer = OS::get_singleton()->get_clipboard_primary().strip_escapes();
+
+			selection.enabled = false;
+			set_cursor_at_pixel_pos(b->get_position().x);
+			if (!paste_buffer.empty()) {
+				append_at_cursor(paste_buffer);
+
+				if (!text_changed_dirty) {
+					if (is_inside_tree()) {
+						MessageQueue::get_singleton()->push_call(this, "_text_changed");
+					}
+					text_changed_dirty = true;
+				}
+			}
+
+			grab_focus();
+			return;
+		}
+
 		if (b->get_button_index() != BUTTON_LEFT) {
 			return;
 		}
@@ -79,7 +101,9 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 				return;
 			}
 
-			shift_selection_check_pre(b->get_shift());
+			if (b->get_shift()) {
+				shift_selection_check_pre(true);
+			}
 
 			set_cursor_at_pixel_pos(b->get_position().x);
 
@@ -96,6 +120,9 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 						selection.end = text.length();
 						selection.doubleclick = true;
 						selection.last_dblclk = 0;
+						if (!pass && OS::get_singleton()->has_feature("primary_clipboard")) {
+							OS::get_singleton()->set_clipboard_primary(text);
+						}
 					} else if (b->is_doubleclick()) {
 						// Double-click select word.
 						selection.enabled = true;
@@ -115,6 +142,9 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 						selection.end = end;
 						selection.doubleclick = true;
 						selection.last_dblclk = OS::get_singleton()->get_ticks_msec();
+						if (!pass && OS::get_singleton()->has_feature("primary_clipboard")) {
+							OS::get_singleton()->set_clipboard_primary(text.substr(selection.begin, selection.end - selection.begin));
+						}
 					}
 				}
 
@@ -124,7 +154,7 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 					deselect();
 					selection.cursor_start = cursor_pos;
 					selection.creating = true;
-				} else if (selection.enabled) {
+				} else if (selection.enabled && !selection.doubleclick) {
 					selection.drag_attempt = true;
 				}
 			}
@@ -132,6 +162,9 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 			update();
 
 		} else {
+			if (selection.enabled && !pass && b->get_button_index() == BUTTON_LEFT && OS::get_singleton()->has_feature("primary_clipboard")) {
+				OS::get_singleton()->set_clipboard_primary(text.substr(selection.begin, selection.end - selection.begin));
+			}
 			if (!text.empty() && is_editable() && clear_button_enabled) {
 				bool press_attempt = clear_button_status.press_attempt;
 				clear_button_status.press_attempt = false;
@@ -146,6 +179,9 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 			}
 			selection.creating = false;
 			selection.doubleclick = false;
+			if (!drag_action) {
+				selection.drag_attempt = false;
+			}
 
 			show_virtual_keyboard();
 		}
@@ -169,6 +205,11 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 				set_cursor_at_pixel_pos(m->get_position().x);
 				selection_fill_at_cursor();
 			}
+		}
+
+		if (drag_action && can_drop_data(m->get_position(), get_viewport()->gui_get_drag_data())) {
+			drag_caret_force_displayed = true;
+			set_cursor_at_pixel_pos(m->get_position().x);
 		}
 	}
 
@@ -641,28 +682,50 @@ bool LineEdit::can_drop_data(const Point2 &p_point, const Variant &p_data) const
 		return drop_override;
 	}
 
-	return p_data.get_type() == Variant::STRING;
+	return is_editable() && p_data.get_type() == Variant::STRING;
 }
 
 void LineEdit::drop_data(const Point2 &p_point, const Variant &p_data) {
 	Control::drop_data(p_point, p_data);
 
-	if (p_data.get_type() == Variant::STRING) {
+	if (p_data.get_type() == Variant::STRING && is_editable()) {
 		set_cursor_at_pixel_pos(p_point.x);
-		int selected = selection.end - selection.begin;
-
-		Ref<Font> font = get_font("font");
-		if (font != nullptr) {
-			for (int i = selection.begin; i < selection.end; i++) {
-				cached_width -= font->get_char_size(pass ? secret_character[0] : text[i]).width;
-			}
+		int caret_column_tmp = cursor_pos;
+		bool is_inside_sel = selection.enabled && cursor_pos >= selection.begin && cursor_pos <= selection.end;
+		if (Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+			is_inside_sel = selection.enabled && cursor_pos > selection.begin && cursor_pos < selection.end;
 		}
+		if (selection.drag_attempt) {
+			selection.drag_attempt = false;
+			if (!is_inside_sel) {
+				if (!Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+					if (caret_column_tmp > selection.end) {
+						caret_column_tmp = caret_column_tmp - (selection.end - selection.begin);
+					}
+					selection_delete();
+				}
 
-		text.erase(selection.begin, selected);
-
-		append_at_cursor(p_data);
-		selection.begin = cursor_pos - selected;
-		selection.end = cursor_pos;
+				set_cursor_position(caret_column_tmp);
+				append_at_cursor(p_data);
+			}
+		} else if (selection.enabled && cursor_pos >= selection.begin && cursor_pos <= selection.end) {
+			caret_column_tmp = selection.begin;
+			selection_delete();
+			set_cursor_position(caret_column_tmp);
+			append_at_cursor(p_data);
+			grab_focus();
+		} else {
+			append_at_cursor(p_data);
+			grab_focus();
+		}
+		select(caret_column_tmp, cursor_pos);
+		if (!text_changed_dirty) {
+			if (is_inside_tree()) {
+				MessageQueue::get_singleton()->push_call(this, "_text_changed");
+			}
+			text_changed_dirty = true;
+		}
+		update();
 	}
 }
 
@@ -918,7 +981,7 @@ void LineEdit::_notification(int p_what) {
 				}
 			}
 
-			if ((char_ofs == cursor_pos || using_placeholder) && draw_caret) { // May be at the end, or placeholder.
+			if ((char_ofs == cursor_pos || using_placeholder || drag_caret_force_displayed) && draw_caret) { // May be at the end, or placeholder.
 				if (ime_text.length() == 0) {
 					int caret_x_ofs = x_ofs;
 					if (using_placeholder) {
@@ -977,6 +1040,9 @@ void LineEdit::_notification(int p_what) {
 				OS::get_singleton()->hide_virtual_keyboard();
 			}
 
+			if (deselect_on_focus_loss_enabled) {
+				deselect();
+			}
 		} break;
 		case MainLoop::NOTIFICATION_OS_IME_UPDATE: {
 			if (has_focus()) {
@@ -984,6 +1050,25 @@ void LineEdit::_notification(int p_what) {
 				ime_selection = OS::get_singleton()->get_ime_selection();
 				update();
 			}
+		} break;
+		case Control::NOTIFICATION_DRAG_BEGIN: {
+			drag_action = true;
+		} break;
+		case Control::NOTIFICATION_DRAG_END: {
+			if (is_drag_successful()) {
+				if (selection.drag_attempt) {
+					selection.drag_attempt = false;
+					if (is_editable() && !Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+						selection_delete();
+						// } else if (deselect_on_focus_loss_enabled) {
+						// 	deselect();
+					}
+				}
+			} else {
+				selection.drag_attempt = false;
+			}
+			drag_action = false;
+			drag_caret_force_displayed = false;
 		} break;
 	}
 }
@@ -1041,6 +1126,9 @@ void LineEdit::undo() {
 	} else if (undo_stack_pos == undo_stack.front()) {
 		return;
 	}
+
+	deselect();
+
 	undo_stack_pos = undo_stack_pos->prev();
 	TextOperation op = undo_stack_pos->get();
 	text = op.text;
@@ -1062,6 +1150,9 @@ void LineEdit::redo() {
 	if (undo_stack_pos == undo_stack.back()) {
 		return;
 	}
+
+	deselect();
+
 	undo_stack_pos = undo_stack_pos->next();
 	TextOperation op = undo_stack_pos->get();
 	text = op.text;
@@ -1717,6 +1808,14 @@ bool LineEdit::is_virtual_keyboard_enabled() const {
 	return virtual_keyboard_enabled;
 }
 
+void LineEdit::set_middle_mouse_paste_enabled(bool p_enabled) {
+	middle_mouse_paste_enabled = p_enabled;
+}
+
+bool LineEdit::is_middle_mouse_paste_enabled() const {
+	return middle_mouse_paste_enabled;
+}
+
 void LineEdit::set_selecting_enabled(bool p_enabled) {
 	selecting_enabled = p_enabled;
 
@@ -1729,6 +1828,17 @@ void LineEdit::set_selecting_enabled(bool p_enabled) {
 
 bool LineEdit::is_selecting_enabled() const {
 	return selecting_enabled;
+}
+
+void LineEdit::set_deselect_on_focus_loss_enabled(const bool p_enabled) {
+	deselect_on_focus_loss_enabled = p_enabled;
+	if (p_enabled && selection.enabled && !has_focus()) {
+		deselect();
+	}
+}
+
+bool LineEdit::is_deselect_on_focus_loss_enabled() const {
+	return deselect_on_focus_loss_enabled;
 }
 
 void LineEdit::set_right_icon(const Ref<Texture> &p_icon) {
@@ -1882,8 +1992,12 @@ void LineEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_clear_button_enabled"), &LineEdit::is_clear_button_enabled);
 	ClassDB::bind_method(D_METHOD("set_shortcut_keys_enabled", "enable"), &LineEdit::set_shortcut_keys_enabled);
 	ClassDB::bind_method(D_METHOD("is_shortcut_keys_enabled"), &LineEdit::is_shortcut_keys_enabled);
+	ClassDB::bind_method(D_METHOD("set_middle_mouse_paste_enabled", "enable"), &LineEdit::set_middle_mouse_paste_enabled);
+	ClassDB::bind_method(D_METHOD("is_middle_mouse_paste_enabled"), &LineEdit::is_middle_mouse_paste_enabled);
 	ClassDB::bind_method(D_METHOD("set_selecting_enabled", "enable"), &LineEdit::set_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_selecting_enabled"), &LineEdit::is_selecting_enabled);
+	ClassDB::bind_method(D_METHOD("set_deselect_on_focus_loss_enabled", "enable"), &LineEdit::set_deselect_on_focus_loss_enabled);
+	ClassDB::bind_method(D_METHOD("is_deselect_on_focus_loss_enabled"), &LineEdit::is_deselect_on_focus_loss_enabled);
 	ClassDB::bind_method(D_METHOD("set_right_icon", "icon"), &LineEdit::set_right_icon);
 	ClassDB::bind_method(D_METHOD("get_right_icon"), &LineEdit::get_right_icon);
 
@@ -1916,7 +2030,9 @@ void LineEdit::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "virtual_keyboard_enabled"), "set_virtual_keyboard_enabled", "is_virtual_keyboard_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "clear_button_enabled"), "set_clear_button_enabled", "is_clear_button_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "shortcut_keys_enabled"), "set_shortcut_keys_enabled", "is_shortcut_keys_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "middle_mouse_paste_enabled"), "set_middle_mouse_paste_enabled", "is_middle_mouse_paste_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "selecting_enabled"), "set_selecting_enabled", "is_selecting_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "deselect_on_focus_loss_enabled"), "set_deselect_on_focus_loss_enabled", "is_deselect_on_focus_loss_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "right_icon", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_right_icon", "get_right_icon");
 	ADD_GROUP("Placeholder", "placeholder_");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "placeholder_text"), "set_placeholder", "get_placeholder");
@@ -1943,7 +2059,9 @@ LineEdit::LineEdit() {
 	clear_button_status.press_attempt = false;
 	clear_button_status.pressing_inside = false;
 	shortcut_keys_enabled = true;
+	middle_mouse_paste_enabled = true;
 	selecting_enabled = true;
+	deselect_on_focus_loss_enabled = true;
 
 	undo_stack_pos = nullptr;
 	_create_undo_state();

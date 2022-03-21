@@ -33,6 +33,20 @@
 #include "core/os/os.h"
 #include "core/resource.h"
 
+void UndoRedo::Operation::delete_reference() {
+	if (type != Operation::TYPE_REFERENCE) {
+		return;
+	}
+	if (ref.is_valid()) {
+		ref.unref();
+	} else {
+		Object *obj = ObjectDB::get_instance(object);
+		if (obj) {
+			memdelete(obj);
+		}
+	}
+}
+
 void UndoRedo::_discard_redo() {
 	if (current_action == actions.size() - 1) {
 		return;
@@ -40,16 +54,7 @@ void UndoRedo::_discard_redo() {
 
 	for (int i = current_action + 1; i < actions.size(); i++) {
 		for (List<Operation>::Element *E = actions.write[i].do_ops.front(); E; E = E->next()) {
-			if (E->get().type == Operation::TYPE_REFERENCE) {
-				if (E->get().ref.is_valid()) {
-					E->get().ref.unref();
-				} else {
-					Object *obj = ObjectDB::get_instance(E->get().object);
-					if (obj) {
-						memdelete(obj);
-					}
-				}
-			}
+			E->get().delete_reference();
 		}
 		//ERASE do data
 	}
@@ -72,14 +77,7 @@ void UndoRedo::create_action(const String &p_name, MergeMode p_mode) {
 				List<Operation>::Element *E = actions.write[current_action + 1].do_ops.front();
 
 				while (E) {
-					if (E->get().type == Operation::TYPE_REFERENCE) {
-						Object *obj = ObjectDB::get_instance(E->get().object);
-
-						if (obj) {
-							memdelete(obj);
-						}
-					}
-
+					E->get().delete_reference();
 					E = E->next();
 					actions.write[current_action + 1].do_ops.pop_front();
 				}
@@ -224,16 +222,7 @@ void UndoRedo::_pop_history_tail() {
 	}
 
 	for (List<Operation>::Element *E = actions.write[0].undo_ops.front(); E; E = E->next()) {
-		if (E->get().type == Operation::TYPE_REFERENCE) {
-			if (E->get().ref.is_valid()) {
-				E->get().ref.unref();
-			} else {
-				Object *obj = ObjectDB::get_instance(E->get().object);
-				if (obj) {
-					memdelete(obj);
-				}
-			}
-		}
+		E->get().delete_reference();
 	}
 
 	actions.remove(0);
@@ -456,7 +445,8 @@ Variant UndoRedo::_add_do_method(const Variant **p_args, int p_argcount, Variant
 		v[i] = *p_args[i + 2];
 	}
 
-	add_do_method(object, method, v[0], v[1], v[2], v[3], v[4]);
+	static_assert(VARIANT_ARG_MAX == 8, "This code needs to be updated if VARIANT_ARG_MAX != 8");
+	add_do_method(object, method, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
 	return Variant();
 }
 
@@ -492,7 +482,8 @@ Variant UndoRedo::_add_undo_method(const Variant **p_args, int p_argcount, Varia
 		v[i] = *p_args[i + 2];
 	}
 
-	add_undo_method(object, method, v[0], v[1], v[2], v[3], v[4]);
+	static_assert(VARIANT_ARG_MAX == 8, "This code needs to be updated if VARIANT_ARG_MAX != 8");
+	add_undo_method(object, method, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
 	return Variant();
 }
 

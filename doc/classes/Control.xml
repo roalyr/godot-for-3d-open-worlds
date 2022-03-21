@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Control" inherits="CanvasItem" version="3.5">
+<class name="Control" inherits="CanvasItem" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		All user interface nodes inherit from Control. A control's anchors and margins adapt its position and size relative to its parent.
 	</brief_description>
@@ -231,7 +231,7 @@
 			<argument index="0" name="name" type="String" />
 			<argument index="1" name="theme_type" type="String" default="&quot;&quot;" />
 			<description>
-				Returns a [Color] from the first matching [Theme] in the tree if that [Theme] has a color item with the specified [code]name[/code] and [code]theme_type[/code]. If [code]theme_type[/code] is omitted the class name of the current control is used as the type. If the type is a class name its parent classes are also checked, in order of inheritance.
+				Returns a [Color] from the first matching [Theme] in the tree if that [Theme] has a color item with the specified [code]name[/code] and [code]theme_type[/code]. If [code]theme_type[/code] is omitted the class name of the current control is used as the type, or [member theme_type_variation] if it is defined. If the type is a class name its parent classes are also checked, in order of inheritance.
 				For the current control its local overrides are considered first (see [method add_color_override]), then its assigned [member theme]. After the current control, each parent control and its assigned [member theme] are considered; controls without a [member theme] assigned are skipped. If no matching [Theme] is found in the tree, a custom project [Theme] (see [member ProjectSettings.gui/theme/custom]) and the default [Theme] are used.
 				[codeblock]
 				func _ready():
@@ -503,6 +503,12 @@
 			<description>
 				Returns [code]true[/code] if there is a local override for a theme [StyleBox] with the specified [code]name[/code] in this [Control] node.
 				See [method add_stylebox_override].
+			</description>
+		</method>
+		<method name="is_drag_successful" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if drag operation is successful.
 			</description>
 		</method>
 		<method name="minimum_size_changed">
@@ -827,7 +833,7 @@
 			The minimum size of the node's bounding rectangle. If you set it to a value greater than (0, 0), the node's bounding rectangle will always have at least this size, even if its content is smaller. If it's set to (0, 0), the node sizes automatically to fit its content, be it a texture or child nodes.
 		</member>
 		<member name="rect_pivot_offset" type="Vector2" setter="set_pivot_offset" getter="get_pivot_offset" default="Vector2( 0, 0 )">
-			By default, the node's pivot is its top-left corner. When you change its [member rect_scale], it will scale around this pivot. Set this property to [member rect_size] / 2 to center the pivot in the node's rectangle.
+			By default, the node's pivot is its top-left corner. When you change its [member rect_rotation] or [member rect_scale], it will rotate or scale around this pivot. Set this property to [member rect_size] / 2 to pivot around the Control's center.
 		</member>
 		<member name="rect_position" type="Vector2" setter="_set_position" getter="get_position" default="Vector2( 0, 0 )">
 			The node's position, relative to its parent. It corresponds to the rectangle's top-left corner. The property is not affected by [member rect_pivot_offset].
@@ -854,6 +860,12 @@
 		</member>
 		<member name="theme" type="Theme" setter="set_theme" getter="get_theme">
 			Changing this property replaces the current [Theme] resource this node and all its [Control] children use.
+		</member>
+		<member name="theme_type_variation" type="String" setter="set_theme_type_variation" getter="get_theme_type_variation" default="&quot;&quot;">
+			The name of a theme type variation used by this [Control] to look up its own theme items. When empty, the class name of the node is used (e.g. [code]Button[/code] for the [Button] control), as well as the class names of all parent classes (in order of inheritance).
+			When set, this property gives the highest priority to the type of the specified name. This type can in turn extend another type, forming a dependency chain. See [method Theme.set_type_variation]. If the theme item cannot be found using this type or its base types, lookup falls back on the class names.
+			[b]Note:[/b] To look up [Control]'s own items use various [code]get_*[/code] methods without specifying [code]theme_type[/code].
+			[b]Note:[/b] Theme items are looked for in the tree order, from branch to root, where each [Control] node is checked for its [member theme] property. The earliest match against any type/class name is returned. The project-level Theme and the default Theme are checked last.
 		</member>
 	</members>
 	<signals>

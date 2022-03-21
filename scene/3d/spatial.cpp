@@ -31,6 +31,7 @@
 #include "spatial.h"
 
 #include "core/engine.h"
+#include "core/math/transform_interpolator.h"
 #include "core/message_queue.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
@@ -180,6 +181,7 @@ void Spatial::_notification(int p_what) {
 			data.parent = nullptr;
 			data.C = nullptr;
 			data.toplevel_active = false;
+			_disable_client_physics_interpolation();
 		} break;
 		case NOTIFICATION_ENTER_WORLD: {
 			data.inside_world = true;
@@ -236,6 +238,11 @@ void Spatial::_notification(int p_what) {
 			}
 #endif
 		} break;
+		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION: {
+			if (data.client_physics_interpolation_data) {
+				data.client_physics_interpolation_data->global_xform_prev = data.client_physics_interpolation_data->global_xform_curr;
+			}
+		} break;
 
 		default: {
 		}
@@ -268,6 +275,112 @@ Transform Spatial::get_transform() const {
 
 	return data.local_transform;
 }
+
+// Return false to timeout and remove from the client interpolation list.
+bool Spatial::update_client_physics_interpolation_data() {
+	if (!is_inside_tree() || !_is_physics_interpolated_client_side()) {
+		return false;
+	}
+	ERR_FAIL_NULL_V(data.client_physics_interpolation_data, false);
+	ClientPhysicsInterpolationData &pid = *data.client_physics_interpolation_data;
+
+	uint64_t tick = Engine::get_singleton()->get_physics_frames();
+
+	// Has this update been done already this tick?
+	// (for instance, get_global_transform_interpolated() could be called multiple times)
+	if (pid.current_physics_tick != tick) {
+		// timeout?
+		if (tick >= pid.timeout_physics_tick) {
+			return false;
+		}
+
+		if (pid.current_physics_tick == (tick - 1)) {
+			// normal interpolation situation, there is a continuous flow of data
+			// from one tick to the next...
+			pid.global_xform_prev = pid.global_xform_curr;
+		} else {
+			// there has been a gap, we cannot sensibly offer interpolation over
+			// a multitick gap, so we will teleport
+			pid.global_xform_prev = get_global_transform();
+		}
+		pid.current_physics_tick = tick;
+	}
+
+	pid.global_xform_curr = get_global_transform();
+	return true;
+}
+
+void Spatial::_disable_client_physics_interpolation() {
+	// Disable any current client side interpolation
+	// (this can always restart as normal if you later re-attach the node to the SceneTree)
+	if (data.client_physics_interpolation_data) {
+		memdelete(data.client_physics_interpolation_data);
+		data.client_physics_interpolation_data = nullptr;
+
+		SceneTree *tree = get_tree();
+		if (tree && _client_physics_interpolation_spatials_list.in_list()) {
+			tree->client_physics_interpolation_remove_spatial(&_client_physics_interpolation_spatials_list);
+		}
+	}
+	_set_physics_interpolated_client_side(false);
+}
+
+Transform Spatial::_get_global_transform_interpolated(real_t p_interpolation_fraction) {
+	ERR_FAIL_NULL_V(is_inside_tree(), Transform());
+
+	// set in motion the mechanisms for client side interpolation if not already active
+	if (!_is_physics_interpolated_client_side()) {
+		_set_physics_interpolated_client_side(true);
+
+		ERR_FAIL_COND_V(data.client_physics_interpolation_data, Transform());
+		data.client_physics_interpolation_data = memnew(ClientPhysicsInterpolationData);
+		data.client_physics_interpolation_data->global_xform_curr = get_global_transform();
+		data.client_physics_interpolation_data->global_xform_prev = data.client_physics_interpolation_data->global_xform_curr;
+		data.client_physics_interpolation_data->current_physics_tick = Engine::get_singleton()->get_physics_frames();
+	}
+
+	// Storing the last tick we requested client interpolation allows us to timeout
+	// and remove client interpolated nodes from the list to save processing.
+	// We use some arbitrary timeout here, but this could potentially be user defined.
+
+	// Note: This timeout has to be larger than the number of ticks in a frame, otherwise the interpolated
+	// data will stop flowing before the next frame is drawn. This should only be relevant at high tick rates.
+	// We could alternatively do this by frames rather than ticks and avoid this problem, but then the behaviour
+	// would be machine dependent.
+	data.client_physics_interpolation_data->timeout_physics_tick = Engine::get_singleton()->get_physics_frames() + 256;
+
+	// make sure data is up to date
+	update_client_physics_interpolation_data();
+
+	// interpolate the current data
+	const Transform &xform_curr = data.client_physics_interpolation_data->global_xform_curr;
+	const Transform &xform_prev = data.client_physics_interpolation_data->global_xform_prev;
+
+	Transform res;
+	TransformInterpolator::interpolate_transform(xform_prev, xform_curr, res, p_interpolation_fraction);
+
+	SceneTree *tree = get_tree();
+
+	// This should not happen, as is_inside_tree() is checked earlier
+	ERR_FAIL_NULL_V(tree, res);
+	if (!_client_physics_interpolation_spatials_list.in_list()) {
+		tree->client_physics_interpolation_add_spatial(&_client_physics_interpolation_spatials_list);
+	}
+
+	return res;
+}
+
+Transform Spatial::get_global_transform_interpolated() {
+	// Pass through if physics interpolation is switched off.
+	// This is a convenience, as it allows you to easy turn off interpolation
+	// without changing any code.
+	if (Engine::get_singleton()->is_in_physics_frame() || !is_physics_interpolated_and_enabled()) {
+		return get_global_transform();
+	}
+
+	return _get_global_transform_interpolated(Engine::get_singleton()->get_physics_interpolation_fraction());
+}
+
 Transform Spatial::get_global_transform() const {
 	ERR_FAIL_COND_V(!is_inside_tree(), Transform());
 
@@ -310,6 +423,10 @@ AABB Spatial::get_fallback_gizmo_aabb() const {
 
 Spatial *Spatial::get_parent_spatial() const {
 	return data.parent;
+}
+
+void Spatial::_set_vi_visible(bool p_visible) {
+	data.vi_visible = p_visible;
 }
 
 Transform Spatial::get_relative_transform(const Node *p_parent) const {
@@ -733,6 +850,7 @@ void Spatial::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_scale"), &Spatial::get_scale);
 	ClassDB::bind_method(D_METHOD("set_global_transform", "global"), &Spatial::set_global_transform);
 	ClassDB::bind_method(D_METHOD("get_global_transform"), &Spatial::get_global_transform);
+	ClassDB::bind_method(D_METHOD("get_global_transform_interpolated"), &Spatial::get_global_transform_interpolated);
 	ClassDB::bind_method(D_METHOD("get_parent_spatial"), &Spatial::get_parent_spatial);
 	ClassDB::bind_method(D_METHOD("set_ignore_transform_notification", "enabled"), &Spatial::set_ignore_transform_notification);
 	ClassDB::bind_method(D_METHOD("set_as_toplevel", "enable"), &Spatial::set_as_toplevel);
@@ -807,7 +925,7 @@ void Spatial::_bind_methods() {
 }
 
 Spatial::Spatial() :
-		xform_change(this) {
+		xform_change(this), _client_physics_interpolation_spatials_list(this) {
 	data.dirty = DIRTY_NONE;
 	data.children_lock = 0;
 
@@ -819,8 +937,9 @@ Spatial::Spatial() :
 	data.inside_world = false;
 	data.visible = true;
 	data.disable_scale = false;
+	data.vi_visible = true;
 
-	data.spatial_flags = SPATIAL_FLAG_VI_VISIBLE;
+	data.client_physics_interpolation_data = nullptr;
 
 #ifdef TOOLS_ENABLED
 	data.gizmo_disabled = false;
@@ -833,4 +952,5 @@ Spatial::Spatial() :
 }
 
 Spatial::~Spatial() {
+	_disable_client_physics_interpolation();
 }

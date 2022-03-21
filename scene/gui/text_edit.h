@@ -192,6 +192,8 @@ private:
 		int to_line, to_column;
 
 		bool shiftclick_left;
+		bool drag_attempt;
+
 		Selection() {
 			selecting_mode = MODE_NONE;
 			selecting_line = 0;
@@ -206,6 +208,7 @@ private:
 			to_line = 0;
 			to_column = 0;
 			shiftclick_left = false;
+			drag_attempt = false;
 		}
 	} selection;
 
@@ -434,11 +437,14 @@ private:
 	int search_result_col;
 
 	bool selecting_enabled;
+	bool deselect_on_focus_loss_enabled;
 
 	bool context_menu_enabled;
 	bool shortcut_keys_enabled;
 
 	bool virtual_keyboard_enabled = true;
+
+	bool middle_mouse_paste_enabled;
 
 	int executing_line;
 
@@ -472,6 +478,9 @@ private:
 	int get_column_x_offset_for_line(int p_char, int p_line) const;
 	int get_char_pos_for(int p_px, String p_str) const;
 	int get_column_x_offset(int p_char, String p_str) const;
+
+	bool drag_action = false;
+	bool drag_caret_force_displayed = false;
 
 	void adjust_viewport_to_cursor();
 	void _scroll_moved(double);
@@ -587,6 +596,9 @@ public:
 	};
 
 	virtual CursorShape get_cursor_shape(const Point2 &p_pos = Point2i()) const;
+	virtual Variant get_drag_data(const Point2 &p_point);
+	virtual bool can_drop_data(const Point2 &p_point, const Variant &p_data) const;
+	virtual void drop_data(const Point2 &p_point, const Variant &p_data);
 
 	void _get_mouse_pos(const Point2i &p_mouse, int &r_row, int &r_col) const;
 	void _get_minimap_mouse_row(const Point2i &p_mouse, int &r_row) const;
@@ -723,6 +735,7 @@ public:
 	int get_selection_to_line() const;
 	int get_selection_to_column() const;
 	String get_selection_text() const;
+	bool is_mouse_over_selection(bool p_edges = true) const;
 
 	String get_word_under_cursor() const;
 	String get_word_at_pos(const Vector2 &p_pos) const;
@@ -844,11 +857,17 @@ public:
 	void set_selecting_enabled(bool p_enabled);
 	bool is_selecting_enabled() const;
 
+	void set_deselect_on_focus_loss_enabled(const bool p_enabled);
+	bool is_deselect_on_focus_loss_enabled() const;
+
 	void set_shortcut_keys_enabled(bool p_enabled);
 	bool is_shortcut_keys_enabled() const;
 
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
+
+	void set_middle_mouse_paste_enabled(bool p_enabled);
+	bool is_middle_mouse_paste_enabled() const;
 
 	PopupMenu *get_menu() const;
 

@@ -104,6 +104,27 @@ SceneTreeTimer::SceneTreeTimer() {
 	process_pause = true;
 }
 
+// This should be called once per physics tick, to make sure the transform previous and current
+// is kept up to date on the few spatials that are using client side physics interpolation
+void SceneTree::ClientPhysicsInterpolation::physics_process() {
+	for (SelfList<Spatial> *E = _spatials_list.first(); E;) {
+		Spatial *spatial = E->self();
+
+		SelfList<Spatial> *current = E;
+
+		// get the next element here BEFORE we potentially delete one
+		E = E->next();
+
+		// This will return false if the spatial has timed out ..
+		// i.e. If get_global_transform_interpolated() has not been called
+		// for a few seconds, we can delete from the list to keep processing
+		// to a minimum.
+		if (!spatial->update_client_physics_interpolation_data()) {
+			_spatials_list.remove(current);
+		}
+	}
+}
+
 void SceneTree::tree_changed() {
 	tree_version++;
 	emit_signal(tree_changed_name);
@@ -179,7 +200,8 @@ void SceneTree::_flush_ugc() {
 			v[i] = E->get()[i];
 		}
 
-		call_group_flags(GROUP_CALL_REALTIME, E->key().group, E->key().call, v[0], v[1], v[2], v[3], v[4]);
+		static_assert(VARIANT_ARG_MAX == 8, "This code needs to be updated if VARIANT_ARG_MAX != 8");
+		call_group_flags(GROUP_CALL_REALTIME, E->key().group, E->key().call, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
 
 		unique_group_calls.erase(E);
 	}
@@ -474,10 +496,56 @@ void SceneTree::init() {
 	MainLoop::init();
 }
 
+void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
+	// disallow interpolation in editor
+	if (Engine::get_singleton()->is_editor_hint()) {
+		p_enabled = false;
+	}
+
+	if (p_enabled == _physics_interpolation_enabled) {
+		return;
+	}
+
+	_physics_interpolation_enabled = p_enabled;
+
+	if (root->get_world().is_valid()) {
+		RID scenario = root->get_world()->get_scenario();
+		if (scenario.is_valid()) {
+			VisualServer::get_singleton()->scenario_set_physics_interpolation_enabled(scenario, p_enabled);
+		}
+	}
+}
+
+bool SceneTree::is_physics_interpolation_enabled() const {
+	return _physics_interpolation_enabled;
+}
+
+void SceneTree::client_physics_interpolation_add_spatial(SelfList<Spatial> *p_elem) {
+	// This ensures that _update_physics_interpolation_data() will be called at least once every
+	// physics tick, to ensure the previous and current transforms are kept up to date.
+	_client_physics_interpolation._spatials_list.add(p_elem);
+}
+
+void SceneTree::client_physics_interpolation_remove_spatial(SelfList<Spatial> *p_elem) {
+	_client_physics_interpolation._spatials_list.remove(p_elem);
+}
+
 bool SceneTree::iteration(float p_time) {
 	root_lock++;
 
 	current_frame++;
+
+	if (root->get_world().is_valid()) {
+		RID scenario = root->get_world()->get_scenario();
+		if (scenario.is_valid()) {
+			VisualServer::get_singleton()->scenario_tick(scenario);
+		}
+	}
+
+	// Any objects performing client physics interpolation
+	// should be given an opportunity to keep their previous transforms
+	// up to take before each new physics tick.
+	_client_physics_interpolation.physics_process();
 
 	flush_transform_notifications();
 
@@ -618,6 +686,13 @@ bool SceneTree::idle(float p_time) {
 
 #endif
 
+	if (root->get_world().is_valid()) {
+		RID scenario = root->get_world()->get_scenario();
+		if (scenario.is_valid()) {
+			VisualServer::get_singleton()->scenario_pre_draw(scenario, true);
+		}
+	}
+
 	return _quit;
 }
 
@@ -632,7 +707,7 @@ void SceneTree::finish() {
 
 	if (root) {
 		root->_set_tree(nullptr);
-		root->_propagate_after_exit_tree();
+		root->_propagate_after_exit_branch(true);
 		memdelete(root); //delete root
 		root = nullptr;
 	}
@@ -1025,11 +1100,12 @@ Variant SceneTree::_call_group_flags(const Variant **p_args, int p_argcount, Var
 	StringName method = *p_args[2];
 	Variant v[VARIANT_ARG_MAX];
 
-	for (int i = 0; i < MIN(p_argcount - 3, 5); i++) {
+	for (int i = 0; i < MIN(p_argcount - 3, VARIANT_ARG_MAX); i++) {
 		v[i] = *p_args[i + 3];
 	}
 
-	call_group_flags(flags, group, method, v[0], v[1], v[2], v[3], v[4]);
+	static_assert(VARIANT_ARG_MAX == 8, "This code needs to be updated if VARIANT_ARG_MAX != 8");
+	call_group_flags(flags, group, method, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
 	return Variant();
 }
 
@@ -1840,6 +1916,9 @@ void SceneTree::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_screen_stretch", "mode", "aspect", "minsize", "scale"), &SceneTree::set_screen_stretch, DEFVAL(1));
 
+	ClassDB::bind_method(D_METHOD("set_physics_interpolation_enabled", "enabled"), &SceneTree::set_physics_interpolation_enabled);
+	ClassDB::bind_method(D_METHOD("is_physics_interpolation_enabled"), &SceneTree::is_physics_interpolation_enabled);
+
 	ClassDB::bind_method(D_METHOD("queue_delete", "obj"), &SceneTree::queue_delete);
 
 	MethodInfo mi;
@@ -1909,6 +1988,7 @@ void SceneTree::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "root", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "", "get_root");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "multiplayer", PROPERTY_HINT_RESOURCE_TYPE, "MultiplayerAPI", 0), "set_multiplayer", "get_multiplayer");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "multiplayer_poll"), "set_multiplayer_poll_enabled", "is_multiplayer_poll_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_interpolation"), "set_physics_interpolation_enabled", "is_physics_interpolation_enabled");
 
 	ADD_SIGNAL(MethodInfo("tree_changed"));
 	ADD_SIGNAL(MethodInfo("node_added", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_RESOURCE_TYPE, "Node")));
@@ -2045,6 +2125,7 @@ SceneTree::SceneTree() {
 	call_lock = 0;
 	root_lock = 0;
 	node_count = 0;
+	_physics_interpolation_enabled = false;
 
 	//create with mainloop
 
@@ -2053,6 +2134,14 @@ SceneTree::SceneTree() {
 	root->set_handle_input_locally(false);
 	if (!root->get_world().is_valid()) {
 		root->set_world(Ref<World>(memnew(World)));
+	}
+
+	set_physics_interpolation_enabled(GLOBAL_DEF("physics/common/physics_interpolation", false));
+	// Always disable jitter fix if physics interpolation is enabled -
+	// Jitter fix will interfere with interpolation, and is not necessary
+	// when interpolation is active.
+	if (is_physics_interpolation_enabled()) {
+		Engine::get_singleton()->set_physics_jitter_fix(0);
 	}
 
 	// Initialize network state
@@ -2157,7 +2246,7 @@ SceneTree::SceneTree() {
 SceneTree::~SceneTree() {
 	if (root) {
 		root->_set_tree(nullptr);
-		root->_propagate_after_exit_tree();
+		root->_propagate_after_exit_branch(true);
 		memdelete(root);
 	}
 

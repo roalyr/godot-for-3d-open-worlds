@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Environment" inherits="Resource" version="3.5">
+<class name="Environment" inherits="Resource" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Resource for environment nodes (like [WorldEnvironment]) that define multiple rendering options.
 	</brief_description>
@@ -62,7 +62,8 @@
 			The ambient light's energy. The higher the value, the stronger the light.
 		</member>
 		<member name="ambient_light_sky_contribution" type="float" setter="set_ambient_light_sky_contribution" getter="get_ambient_light_sky_contribution" default="1.0">
-			Defines the amount of light that the sky brings on the scene. A value of 0 means that the sky's light emission has no effect on the scene illumination, thus all ambient illumination is provided by the ambient light. On the contrary, a value of 1 means that all the light that affects the scene is provided by the sky, thus the ambient light parameter has no effect on the scene.
+			Defines the amount of light that the sky brings on the scene. A value of [code]0.0[/code] means that the sky's light emission has no effect on the scene illumination, thus all ambient illumination is provided by the ambient light. On the contrary, a value of [code]1.0[/code] means that [i]all[/i] the light that affects the scene is provided by the sky, thus the ambient light parameter has no effect on the scene.
+			[b]Note:[/b] [member ambient_light_sky_contribution] is internally clamped between [code]0.0[/code] and [code]1.0[/code] (inclusive).
 		</member>
 		<member name="auto_exposure_enabled" type="bool" setter="set_tonemap_auto_exposure" getter="get_tonemap_auto_exposure" default="false">
 			If [code]true[/code], enables the tonemapping auto exposure mode of the scene renderer. If [code]true[/code], the renderer will automatically determine the exposure setting to adapt to the scene's illumination and the observed light.
@@ -193,6 +194,8 @@
 		</member>
 		<member name="glow_enabled" type="bool" setter="set_glow_enabled" getter="is_glow_enabled" default="false">
 			If [code]true[/code], the glow effect is enabled.
+			[b]Note:[/b] Only effective if [member ProjectSettings.rendering/quality/intended_usage/framebuffer_allocation] is [b]3D[/b] ([i]not[/i] [b]3D Without Effects[/b]). On mobile, [member ProjectSettings.rendering/quality/intended_usage/framebuffer_allocation] defaults to [b]3D Without Effects[/b] by default, so its [code].mobile[/code] override needs to be changed to [b]3D[/b].
+			[b]Note:[/b] When using GLES3 on mobile, HDR rendering is disabled by default for performance reasons. This means glow will only be visible if [member glow_hdr_threshold] is decreased below [code]1.0[/code] or if [member glow_bloom] is increased above [code]0.0[/code]. Also consider increasing [member glow_intensity] to [code]1.5[/code]. If you want glow to behave on mobile like it does on desktop (at a performance cost), enable [member ProjectSettings.rendering/quality/depth/hdr]'s [code].mobile[/code] override.
 		</member>
 		<member name="glow_hdr_luminance_cap" type="float" setter="set_glow_hdr_luminance_cap" getter="get_glow_hdr_luminance_cap" default="12.0">
 			The higher threshold of the HDR glow. Areas brighter than this threshold will be clamped for the purposes of the glow effect.
@@ -299,7 +302,8 @@
 	</members>
 	<constants>
 		<constant name="BG_KEEP" value="5" enum="BGMode">
-			Keeps on screen every pixel drawn in the background. This is the fastest background mode, but it can only be safely used in fully-interior scenes (no visible sky or sky reflections). If enabled in a scene where the background is visible, "ghost trail" artifacts will be visible when moving the camera.
+			Keeps on screen every pixel drawn in the background. Only select this mode if you really need to keep the old data. On modern GPUs it will generally not be faster than clearing the background, and can be significantly slower, particularly on mobile.
+			It can only be safely used in fully-interior scenes (no visible sky or sky reflections). If enabled in a scene where the background is visible, "ghost trail" artifacts will be visible when moving the camera.
 		</constant>
 		<constant name="BG_CLEAR_COLOR" value="0" enum="BGMode">
 			Clears the background using the clear color defined in [member ProjectSettings.rendering/environment/default_clear_color].

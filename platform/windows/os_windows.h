@@ -445,6 +445,7 @@ public:
 	virtual Point2 get_screen_position(int p_screen = -1) const;
 	virtual Size2 get_screen_size(int p_screen = -1) const;
 	virtual int get_screen_dpi(int p_screen = -1) const;
+	virtual float get_screen_refresh_rate(int p_screen = -1) const;
 
 	virtual Point2 get_window_position() const;
 	virtual void set_window_position(const Point2 &p_position);
@@ -520,6 +521,7 @@ public:
 	virtual String get_locale() const;
 
 	virtual int get_processor_count() const;
+	virtual String get_processor_name() const;
 
 	virtual LatinKeyboardVariant get_latin_keyboard_variant() const;
 	virtual int keyboard_get_layout_count() const;

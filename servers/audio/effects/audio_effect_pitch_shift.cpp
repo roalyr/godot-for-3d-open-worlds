@@ -125,7 +125,6 @@ void SMBPitchShift::PitchShift(float pitchShift, long numSampsToProcess, long ff
 
 			/* this is the analysis step */
 			for (k = 0; k <= fftFrameSize2; k++) {
-
 				/* de-interlace FFT buffer */
 				real = gFFTworksp[2*k];
 				imag = gFFTworksp[2*k+1];
@@ -224,10 +223,8 @@ void SMBPitchShift::PitchShift(float pitchShift, long numSampsToProcess, long ff
 }
 		}
 	}
-
-
-
 }
+
 
 
 void SMBPitchShift::smbFft(float *fftBuffer, long fftFrameSize, long sign)
@@ -365,4 +362,7 @@ AudioEffectPitchShift::AudioEffectPitchShift() {
 	pitch_scale = 1.0;
 	oversampling = 4;
 	fft_size = FFT_SIZE_2048;
+	wet = 0.0;
+	dry = 0.0;
+	filter = false;
 }

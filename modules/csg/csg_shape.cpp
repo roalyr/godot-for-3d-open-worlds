@@ -118,7 +118,7 @@ bool CSGShape::get_collision_layer_bit(int p_bit) const {
 }
 
 bool CSGShape::is_root_shape() const {
-	return !parent;
+	return !parent_shape;
 }
 
 void CSGShape::set_snap(float p_snap) {
@@ -129,13 +129,13 @@ float CSGShape::get_snap() const {
 	return snap;
 }
 
-void CSGShape::_make_dirty() {
-	if (!is_inside_tree()) {
-		return;
+void CSGShape::_make_dirty(bool p_parent_removing) {
+	if ((p_parent_removing || is_root_shape()) && !dirty) {
+		call_deferred("_update_shape"); // Must be deferred; otherwise, is_root_shape() will use the previous parent
 	}
 
-	if (parent) {
-		parent->_make_dirty();
+	if (!is_root_shape()) {
+		parent_shape->_make_dirty();
 	} else if (!dirty) {
 		call_deferred("_update_shape");
 	}
@@ -157,7 +157,7 @@ CSGBrush *CSGShape::_get_brush() {
 			if (!child) {
 				continue;
 			}
-			if (!child->is_visible_in_tree()) {
+			if (!child->is_visible()) {
 				continue;
 			}
 
@@ -273,7 +273,7 @@ void CSGShape::mikktSetTSpaceDefault(const SMikkTSpaceContext *pContext, const f
 }
 
 void CSGShape::_update_shape() {
-	if (parent || !is_inside_tree()) {
+	if (!is_root_shape()) {
 		return;
 	}
 
@@ -296,17 +296,19 @@ void CSGShape::_update_shape() {
 		ERR_CONTINUE(mat < -1 || mat >= face_count.size());
 		int idx = mat == -1 ? face_count.size() - 1 : mat;
 
-		Plane p(n->faces[i].vertices[0], n->faces[i].vertices[1], n->faces[i].vertices[2]);
+		if (n->faces[i].smooth) {
+			Plane p(n->faces[i].vertices[0], n->faces[i].vertices[1], n->faces[i].vertices[2]);
 
-		for (int j = 0; j < 3; j++) {
-			Vector3 v = n->faces[i].vertices[j];
-			Vector3 add;
-			if (vec_map.lookup(v, add)) {
-				add += p.normal;
-			} else {
-				add = p.normal;
+			for (int j = 0; j < 3; j++) {
+				Vector3 v = n->faces[i].vertices[j];
+				Vector3 add;
+				if (vec_map.lookup(v, add)) {
+					add += p.normal;
+				} else {
+					add = p.normal;
+				}
+				vec_map.set(v, add);
 			}
-			vec_map.set(v, add);
 		}
 
 		face_count.write[idx]++;
@@ -336,27 +338,6 @@ void CSGShape::_update_shape() {
 		if (calculate_tangents) {
 			surfaces.write[i].tansw = surfaces.write[i].tans.write();
 		}
-	}
-
-	// Update collision faces.
-	if (root_collision_shape.is_valid()) {
-		PoolVector<Vector3> physics_faces;
-		physics_faces.resize(n->faces.size() * 3);
-		PoolVector<Vector3>::Write physicsw = physics_faces.write();
-
-		for (int i = 0; i < n->faces.size(); i++) {
-			int order[3] = { 0, 1, 2 };
-
-			if (n->faces[i].invert) {
-				SWAP(order[1], order[2]);
-			}
-
-			physicsw[i * 3 + 0] = n->faces[i].vertices[order[0]];
-			physicsw[i * 3 + 1] = n->faces[i].vertices[order[1]];
-			physicsw[i * 3 + 2] = n->faces[i].vertices[order[2]];
-		}
-
-		root_collision_shape->set_faces(physics_faces);
 	}
 
 	//fill arrays
@@ -457,7 +438,34 @@ void CSGShape::_update_shape() {
 	}
 
 	set_base(root_mesh->get_rid());
+
+	_update_collision_faces();
 }
+
+void CSGShape::_update_collision_faces() {
+	if (use_collision && is_root_shape() && root_collision_shape.is_valid()) {
+		CSGBrush *n = _get_brush();
+		ERR_FAIL_COND_MSG(!n, "Cannot get CSGBrush.");
+		PoolVector<Vector3> physics_faces;
+		physics_faces.resize(n->faces.size() * 3);
+		PoolVector<Vector3>::Write physicsw = physics_faces.write();
+
+		for (int i = 0; i < n->faces.size(); i++) {
+			int order[3] = { 0, 1, 2 };
+
+			if (n->faces[i].invert) {
+				SWAP(order[1], order[2]);
+			}
+
+			physicsw[i * 3 + 0] = n->faces[i].vertices[order[0]];
+			physicsw[i * 3 + 1] = n->faces[i].vertices[order[1]];
+			physicsw[i * 3 + 2] = n->faces[i].vertices[order[2]];
+		}
+
+		root_collision_shape->set_faces(physics_faces);
+	}
+}
+
 AABB CSGShape::get_aabb() const {
 	return node_aabb;
 }
@@ -489,60 +497,74 @@ PoolVector<Face3> CSGShape::get_faces(uint32_t p_usage_flags) const {
 }
 
 void CSGShape::_notification(int p_what) {
-	if (p_what == NOTIFICATION_ENTER_TREE) {
-		Node *parentn = get_parent();
-		if (parentn) {
-			parent = Object::cast_to<CSGShape>(parentn);
-			if (parent) {
-				set_base(RID());
-				root_mesh.unref();
+	switch (p_what) {
+		case NOTIFICATION_PARENTED: {
+			Node *parentn = get_parent();
+			if (parentn) {
+				parent_shape = Object::cast_to<CSGShape>(parentn);
+				if (parent_shape) {
+					set_base(RID());
+					root_mesh.unref();
+				}
 			}
-		}
+			if (!brush || parent_shape) {
+				// Update this node if uninitialized, or both this node and its new parent if it gets added to another CSG shape
+				_make_dirty();
+			}
+			last_visible = is_visible();
+		} break;
 
-		if (use_collision && is_root_shape()) {
-			root_collision_shape.instance();
-			root_collision_instance = RID_PRIME(PhysicsServer::get_singleton()->body_create(PhysicsServer::BODY_MODE_STATIC));
-			PhysicsServer::get_singleton()->body_set_state(root_collision_instance, PhysicsServer::BODY_STATE_TRANSFORM, get_global_transform());
-			PhysicsServer::get_singleton()->body_add_shape(root_collision_instance, root_collision_shape->get_rid());
-			PhysicsServer::get_singleton()->body_set_space(root_collision_instance, get_world()->get_space());
-			PhysicsServer::get_singleton()->body_attach_object_instance_id(root_collision_instance, get_instance_id());
-			set_collision_layer(collision_layer);
-			set_collision_mask(collision_mask);
-		}
+		case NOTIFICATION_UNPARENTED: {
+			if (!is_root_shape()) {
+				// Update this node and its previous parent only if it's currently being removed from another CSG shape
+				_make_dirty(true); // Must be forced since is_root_shape() uses the previous parent
+			}
+			parent_shape = nullptr;
+		} break;
 
-		_make_dirty();
-	}
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (!is_root_shape() && last_visible != is_visible()) {
+				// Update this node's parent only if its own visibility has changed, not the visibility of parent nodes
+				parent_shape->_make_dirty();
+			}
+			last_visible = is_visible();
+		} break;
 
-	if (p_what == NOTIFICATION_TRANSFORM_CHANGED) {
-		if (use_collision && is_root_shape() && root_collision_instance.is_valid()) {
-			PhysicsServer::get_singleton()->body_set_state(root_collision_instance, PhysicsServer::BODY_STATE_TRANSFORM, get_global_transform());
-		}
-	}
+		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
+			if (!is_root_shape()) {
+				// Update this node's parent only if its own transformation has changed, not the transformation of parent nodes
+				parent_shape->_make_dirty();
+			}
+		} break;
 
-	if (p_what == NOTIFICATION_LOCAL_TRANSFORM_CHANGED) {
-		if (parent) {
-			parent->_make_dirty();
-		}
-	}
+		case NOTIFICATION_ENTER_TREE: {
+			if (use_collision && is_root_shape()) {
+				root_collision_shape.instance();
+				root_collision_instance = PhysicsServer::get_singleton()->body_create();
+				PhysicsServer::get_singleton()->body_set_mode(root_collision_instance, PhysicsServer::BODY_MODE_STATIC);
+				PhysicsServer::get_singleton()->body_set_state(root_collision_instance, PhysicsServer::BODY_STATE_TRANSFORM, get_global_transform());
+				PhysicsServer::get_singleton()->body_add_shape(root_collision_instance, root_collision_shape->get_rid());
+				PhysicsServer::get_singleton()->body_set_space(root_collision_instance, get_world()->get_space());
+				PhysicsServer::get_singleton()->body_attach_object_instance_id(root_collision_instance, get_instance_id());
+				set_collision_layer(collision_layer);
+				set_collision_mask(collision_mask);
+				_update_collision_faces();
+			}
+		} break;
 
-	if (p_what == NOTIFICATION_VISIBILITY_CHANGED) {
-		if (parent) {
-			parent->_make_dirty();
-		}
-	}
+		case NOTIFICATION_EXIT_TREE: {
+			if (use_collision && is_root_shape() && root_collision_instance.is_valid()) {
+				PhysicsServer::get_singleton()->free(root_collision_instance);
+				root_collision_instance = RID();
+				root_collision_shape.unref();
+			}
+		} break;
 
-	if (p_what == NOTIFICATION_EXIT_TREE) {
-		if (parent) {
-			parent->_make_dirty();
-		}
-		parent = nullptr;
-
-		if (use_collision && is_root_shape() && root_collision_instance.is_valid()) {
-			PhysicsServer::get_singleton()->free(root_collision_instance);
-			root_collision_instance = RID();
-			root_collision_shape.unref();
-		}
-		_make_dirty();
+		case NOTIFICATION_TRANSFORM_CHANGED: {
+			if (use_collision && is_root_shape() && root_collision_instance.is_valid()) {
+				PhysicsServer::get_singleton()->body_set_state(root_collision_instance, PhysicsServer::BODY_STATE_TRANSFORM, get_global_transform());
+			}
+		} break;
 	}
 }
 
@@ -643,7 +665,7 @@ void CSGShape::_bind_methods() {
 
 CSGShape::CSGShape() {
 	operation = OPERATION_UNION;
-	parent = nullptr;
+	parent_shape = nullptr;
 	brush = nullptr;
 	dirty = false;
 	snap = 0.001;
@@ -973,6 +995,10 @@ CSGBrush *CSGSphere::_build_brush() {
 				double u0 = double(j) / radial_segments;
 
 				double longitude1 = longitude_step * (j + 1);
+				if (j == radial_segments - 1) {
+					longitude1 = 0;
+				}
+
 				double x1 = Math::sin(longitude1);
 				double z1 = Math::cos(longitude1);
 				double u1 = double(j + 1) / radial_segments;
@@ -1328,6 +1354,9 @@ CSGBrush *CSGCylinder::_build_brush() {
 			for (int i = 0; i < sides; i++) {
 				float inc = float(i) / sides;
 				float inc_n = float((i + 1)) / sides;
+				if (i == sides - 1) {
+					inc_n = 0;
+				}
 
 				float ang = inc * Math_PI * 2.0;
 				float ang_n = inc_n * Math_PI * 2.0;
@@ -1570,6 +1599,9 @@ CSGBrush *CSGTorus::_build_brush() {
 			for (int i = 0; i < sides; i++) {
 				float inci = float(i) / sides;
 				float inci_n = float((i + 1)) / sides;
+				if (i == sides - 1) {
+					inci_n = 0;
+				}
 
 				float angi = inci * Math_PI * 2.0;
 				float angi_n = inci_n * Math_PI * 2.0;
@@ -1580,6 +1612,9 @@ CSGBrush *CSGTorus::_build_brush() {
 				for (int j = 0; j < ring_sides; j++) {
 					float incj = float(j) / ring_sides;
 					float incj_n = float((j + 1)) / ring_sides;
+					if (j == ring_sides - 1) {
+						incj_n = 0;
+					}
 
 					float angj = incj * Math_PI * 2.0;
 					float angj_n = incj_n * Math_PI * 2.0;

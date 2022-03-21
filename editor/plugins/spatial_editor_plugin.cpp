@@ -1377,6 +1377,7 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 					int gizmo_handle = -1;
 
 					clicked = _select_ray(b->get_position(), b->get_shift(), clicked_includes_current, &gizmo_handle, b->get_shift());
+					selection_in_progress = true;
 
 					//clicking is always deferred to either move or release
 
@@ -1429,6 +1430,7 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 						surface->update();
 					}
 
+					selection_in_progress = false;
 					if (_edit.mode != TRANSFORM_NONE) {
 						static const char *_transform_name[4] = {
 							TTRC("None"),
@@ -1519,22 +1521,24 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 				nav_mode = NAVIGATION_ORBIT;
 			} else {
 				const bool movement_threshold_passed = _edit.original_mouse_pos.distance_to(_edit.mouse_pos) > 8 * EDSCALE;
-				if (clicked && movement_threshold_passed) {
-					if (!clicked_includes_current) {
-						_select_clicked(clicked_wants_append, true);
-						// Processing was deferred.
+				if (selection_in_progress && movement_threshold_passed) {
+					if (get_selected_count() == 0 || clicked_wants_append) {
+						cursor.region_select = true;
+						cursor.region_begin = _edit.original_mouse_pos;
+						clicked = 0;
 					}
-
-					_compute_edit(_edit.mouse_pos);
-					clicked = 0;
-
-					_edit.mode = TRANSFORM_TRANSLATE;
 				}
 
 				if (cursor.region_select) {
 					cursor.region_end = m->get_position();
 					surface->update();
 					return;
+				}
+
+				if (clicked && movement_threshold_passed) {
+					_compute_edit(_edit.mouse_pos);
+					clicked = 0;
+					_edit.mode = TRANSFORM_TRANSLATE;
 				}
 
 				if (_edit.mode == TRANSFORM_NONE) {
@@ -2034,6 +2038,13 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 	if (k.is_valid()) {
 		if (!k->is_pressed()) {
 			return;
+		}
+
+		if (_edit.mode == TRANSFORM_NONE && !cursor.region_select) {
+			if (k->get_scancode() == KEY_ESCAPE) {
+				_clear_selected();
+				return;
+			}
 		}
 
 		if (EditorSettings::get_singleton()->get("editors/3d/navigation/emulate_numpad")) {
@@ -2681,10 +2692,13 @@ void SpatialEditorViewport::_notification(int p_what) {
 		fps_label->set_visible(show_fps);
 
 		if (show_fps) {
-			String text;
-			const float temp_fps = Engine::get_singleton()->get_frames_per_second();
-			text += vformat(TTR("FPS: %d (%s ms)"), temp_fps, rtos(1000.0f / temp_fps).pad_decimals(2));
-			fps_label->set_text(text);
+			const float fps = Engine::get_singleton()->get_frames_per_second();
+			fps_label->set_text(vformat(TTR("FPS: %d (%s ms)"), fps, rtos(1000.0f / fps).pad_decimals(2)));
+			// Middle point is at 60 FPS.
+			fps_label->add_color_override(
+					"font_color",
+					frame_time_gradient->get_color_at_offset(
+							Math::range_lerp(fps, 110, 10, 0, 1)));
 		}
 
 		bool show_cinema = view_menu->get_popup()->is_item_checked(view_menu->get_popup()->get_item_index(VIEW_CINEMATIC_PREVIEW));
@@ -2742,30 +2756,36 @@ void SpatialEditorViewport::_notification(int p_what) {
 		fps_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
 		cinema_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
 		locked_label->add_style_override("normal", editor->get_gui_base()->get_stylebox("Information3dViewport", "EditorStyles"));
+
+		frame_time_gradient->set_color(0, get_color("success_color", "Editor"));
+		frame_time_gradient->set_color(1, get_color("warning_color", "Editor"));
+		frame_time_gradient->set_color(2, get_color("error_color", "Editor"));
 	}
 }
 
-static void draw_indicator_bar(Control &surface, real_t fill, const Ref<Texture> icon, const Ref<Font> font, const String &text) {
+static void draw_indicator_bar(Control &p_surface, real_t p_fill, const Ref<Texture> p_icon, const Ref<Font> p_font, const String &p_text, const Color &p_color) {
 	// Adjust bar size from control height
-	const Vector2 surface_size = surface.get_size();
+	const Vector2 surface_size = p_surface.get_size();
 	const real_t h = surface_size.y / 2.0;
 	const real_t y = (surface_size.y - h) / 2.0;
 
 	const Rect2 r(10 * EDSCALE, y, 6 * EDSCALE, h);
-	const real_t sy = r.size.y * fill;
+	const real_t sy = r.size.y * p_fill;
 
 	// Note: because this bar appears over the viewport, it has to stay readable for any background color
 	// Draw both neutral dark and bright colors to account this
-	surface.draw_rect(r, Color(1, 1, 1, 0.2));
-	surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), Color(1, 1, 1, 0.6));
-	surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
+	p_surface.draw_rect(r, p_color * Color(1, 1, 1, 0.2));
+	p_surface.draw_rect(Rect2(r.position.x, r.position.y + r.size.y - sy, r.size.x, sy), p_color * Color(1, 1, 1, 0.6));
+	p_surface.draw_rect(r.grow(1), Color(0, 0, 0, 0.7), false, Math::round(EDSCALE));
 
-	const Vector2 icon_size = icon->get_size();
+	const Vector2 icon_size = p_icon->get_size();
 	const Vector2 icon_pos = Vector2(r.position.x - (icon_size.x - r.size.x) / 2, r.position.y + r.size.y + 2 * EDSCALE);
-	surface.draw_texture(icon, icon_pos);
+	p_surface.draw_texture(p_icon, icon_pos, p_color);
 
+	// Draw a shadow for the text to make it easier to read.
+	p_surface.draw_string(p_font, Vector2(icon_pos.x + EDSCALE, icon_pos.y + icon_size.y + 17 * EDSCALE), p_text, Color(0, 0, 0));
 	// Draw text below the bar (for speed/zoom information).
-	surface.draw_string(font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), text);
+	p_surface.draw_string(p_font, Vector2(icon_pos.x, icon_pos.y + icon_size.y + 16 * EDSCALE), p_text, p_color);
 }
 
 void SpatialEditorViewport::_draw() {
@@ -2882,7 +2902,8 @@ void SpatialEditorViewport::_draw() {
 							1.0 - logscale_t,
 							get_icon("ViewportSpeed", "EditorIcons"),
 							get_font("font", "Label"),
-							vformat("%s u/s", String::num(freelook_speed).pad_decimals(precision)));
+							vformat("%s u/s", String::num(freelook_speed).pad_decimals(precision)),
+							Color(1.0, 0.95, 0.7));
 				}
 
 			} else {
@@ -2903,7 +2924,8 @@ void SpatialEditorViewport::_draw() {
 							logscale_t,
 							get_icon("ViewportZoom", "EditorIcons"),
 							get_font("font", "Label"),
-							vformat("%s u", String::num(cursor.distance).pad_decimals(precision)));
+							vformat("%s u", String::num(cursor.distance).pad_decimals(precision)),
+							Color(0.7, 0.95, 1.0));
 				}
 			}
 		}
@@ -4099,15 +4121,21 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 		const int wireframe_idx = view_menu->get_popup()->get_item_index(VIEW_DISPLAY_WIREFRAME);
 		const int overdraw_idx = view_menu->get_popup()->get_item_index(VIEW_DISPLAY_OVERDRAW);
 		const int shadeless_idx = view_menu->get_popup()->get_item_index(VIEW_DISPLAY_SHADELESS);
-		const String unsupported_tooltip = TTR("Not available when using the GLES2 renderer.");
+		const String unsupported_suffix = " " + TTR("(Not in GLES2)");
+		const String unsupported_tooltip = TTR("Debug draw modes are only available when using the GLES3 renderer, not GLES2.");
 
-		view_menu->get_popup()->set_item_disabled(normal_idx, true);
 		view_menu->get_popup()->set_item_tooltip(normal_idx, unsupported_tooltip);
+
 		view_menu->get_popup()->set_item_disabled(wireframe_idx, true);
+		view_menu->get_popup()->set_item_text(wireframe_idx, TTR("Display Wireframe") + unsupported_suffix);
 		view_menu->get_popup()->set_item_tooltip(wireframe_idx, unsupported_tooltip);
+
 		view_menu->get_popup()->set_item_disabled(overdraw_idx, true);
+		view_menu->get_popup()->set_item_text(overdraw_idx, TTR("Display Overdraw") + unsupported_suffix);
 		view_menu->get_popup()->set_item_tooltip(overdraw_idx, unsupported_tooltip);
+
 		view_menu->get_popup()->set_item_disabled(shadeless_idx, true);
+		view_menu->get_popup()->set_item_text(shadeless_idx, TTR("Display Unshaded") + unsupported_suffix);
 		view_menu->get_popup()->set_item_tooltip(shadeless_idx, unsupported_tooltip);
 	}
 
@@ -4181,6 +4209,10 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	rotation_control->set_viewport(this);
 	top_right_vbox->add_child(rotation_control);
 
+	frame_time_gradient = memnew(Gradient);
+	// The color is set when the theme changes.
+	frame_time_gradient->add_point(0.5, Color());
+
 	fps_label = memnew(Label);
 	fps_label->set_anchor_and_margin(MARGIN_LEFT, ANCHOR_END, -90 * EDSCALE);
 	fps_label->set_anchor_and_margin(MARGIN_TOP, ANCHOR_BEGIN, 10 * EDSCALE);
@@ -4213,6 +4245,10 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	_update_name();
 
 	EditorSettings::get_singleton()->connect("settings_changed", this, "update_transform_gizmo_view");
+}
+
+SpatialEditorViewport::~SpatialEditorViewport() {
+	memdelete(frame_time_gradient);
 }
 
 //////////////////////////////////////////////////////////////

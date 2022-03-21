@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TextEdit" inherits="Control" version="3.5">
+<class name="TextEdit" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Multiline text editing control.
 	</brief_description>
@@ -239,6 +239,18 @@
 				Returns the total width of all gutters and internal padding.
 			</description>
 		</method>
+		<method name="get_total_visible_rows" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the total amount of lines that could be drawn.
+			</description>
+		</method>
+		<method name="get_visible_rows" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the number of visible lines, including wrapped text.
+			</description>
+		</method>
 		<method name="get_word_under_cursor" qualifiers="const">
 			<return type="String" />
 			<description>
@@ -311,6 +323,13 @@
 			<argument index="0" name="line" type="int" />
 			<description>
 				Returns if the given line is wrapped.
+			</description>
+		</method>
+		<method name="is_mouse_over_selection" qualifiers="const">
+			<return type="bool" />
+			<argument index="0" name="edges" type="bool" />
+			<description>
+				Returns whether the mouse is over selection. If [code]edges[/code] is [code]true[/code], the edges are considered part of the selection.
 			</description>
 		</method>
 		<method name="is_selection_active" qualifiers="const">
@@ -473,6 +492,9 @@
 		<member name="context_menu_enabled" type="bool" setter="set_context_menu_enabled" getter="is_context_menu_enabled" default="true">
 			If [code]true[/code], a right-click displays the context menu.
 		</member>
+		<member name="deselect_on_focus_loss_enabled" type="bool" setter="set_deselect_on_focus_loss_enabled" getter="is_deselect_on_focus_loss_enabled" default="true">
+			If [code]true[/code], the selected text will be deselected when focus is lost.
+		</member>
 		<member name="draw_spaces" type="bool" setter="set_draw_spaces" getter="is_drawing_spaces" default="false">
 			If [code]true[/code], the "space" character will have a visible representation.
 		</member>
@@ -491,6 +513,10 @@
 		</member>
 		<member name="highlight_current_line" type="bool" setter="set_highlight_current_line" getter="is_highlight_current_line_enabled" default="false">
 			If [code]true[/code], the line containing the cursor is highlighted.
+		</member>
+		<member name="middle_mouse_paste_enabled" type="bool" setter="set_middle_mouse_paste_enabled" getter="is_middle_mouse_paste_enabled" default="true">
+			If [code]false[/code], using middle mouse button to paste clipboard will be disabled.
+			[b]Note:[/b] This method is only implemented on Linux.
 		</member>
 		<member name="minimap_draw" type="bool" setter="draw_minimap" getter="is_drawing_minimap" default="false">
 			If [code]true[/code], a minimap is shown, providing an outline of your source code.
@@ -641,7 +667,7 @@
 		</theme_item>
 		<theme_item name="completion_font_color" data_type="color" type="Color" default="Color( 0.67, 0.67, 0.67, 1 )">
 		</theme_item>
-		<theme_item name="completion_scroll_color" data_type="color" type="Color" default="Color( 1, 1, 1, 1 )">
+		<theme_item name="completion_scroll_color" data_type="color" type="Color" default="Color( 1, 1, 1, 0.29 )">
 		</theme_item>
 		<theme_item name="completion_selected_color" data_type="color" type="Color" default="Color( 0.26, 0.26, 0.27, 1 )">
 		</theme_item>
@@ -684,7 +710,7 @@
 		</theme_item>
 		<theme_item name="completion_max_width" data_type="constant" type="int" default="50">
 		</theme_item>
-		<theme_item name="completion_scroll_width" data_type="constant" type="int" default="3">
+		<theme_item name="completion_scroll_width" data_type="constant" type="int" default="6">
 		</theme_item>
 		<theme_item name="line_spacing" data_type="constant" type="int" default="4">
 			Sets the spacing between the lines.

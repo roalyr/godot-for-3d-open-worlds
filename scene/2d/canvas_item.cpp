@@ -350,19 +350,45 @@ Transform2D CanvasItem::_edit_get_transform() const {
 #endif
 
 bool CanvasItem::is_visible_in_tree() const {
-	return visible && parent_visible_in_tree;
+	if (!is_inside_tree()) {
+		return false;
+	}
+
+	const CanvasItem *p = this;
+
+	while (p) {
+		if (!p->visible) {
+			return false;
+		}
+		p = p->get_parent_item();
+	}
+
+	if (canvas_layer) {
+		return canvas_layer->is_visible();
+	}
+
+	return true;
 }
 
-void CanvasItem::_propagate_visibility_changed(bool p_visible, bool p_was_visible) {
+void CanvasItem::_toplevel_visibility_changed(bool p_visible) {
+	VisualServer::get_singleton()->canvas_item_set_visible(canvas_item, visible && p_visible);
+
+	if (visible) {
+		_propagate_visibility_changed(p_visible);
+	} else {
+		notification(NOTIFICATION_VISIBILITY_CHANGED);
+	}
+}
+
+void CanvasItem::_propagate_visibility_changed(bool p_visible) {
 	if (p_visible && first_draw) { //avoid propagating it twice
 		first_draw = false;
 	}
-	parent_visible_in_tree = p_visible;
 	notification(NOTIFICATION_VISIBILITY_CHANGED);
 
-	if (visible && p_visible) {
-		update();
-	} else if (!p_visible && (visible || p_was_visible)) {
+	if (p_visible) {
+		update(); // Todo optimize.
+	} else {
 		emit_signal(SceneStringNames::get_singleton()->hide);
 	}
 	_block();
@@ -370,8 +396,8 @@ void CanvasItem::_propagate_visibility_changed(bool p_visible, bool p_was_visibl
 	for (int i = 0; i < get_child_count(); i++) {
 		CanvasItem *c = Object::cast_to<CanvasItem>(get_child(i));
 
-		if (c && c->visible) { //should the toplevels stop propagation? i think so but..
-			c->_propagate_visibility_changed(p_visible, !p_visible);
+		if (c && c->visible && !c->toplevel) {
+			c->_propagate_visibility_changed(p_visible);
 		}
 	}
 
@@ -390,7 +416,7 @@ void CanvasItem::set_visible(bool p_visible) {
 		return;
 	}
 
-	_propagate_visibility_changed(p_visible, !p_visible);
+	_propagate_visibility_changed(p_visible);
 	_change_notify("visible");
 }
 
@@ -419,7 +445,7 @@ void CanvasItem::_update_callback() {
 
 	VisualServer::get_singleton()->canvas_item_clear(get_canvas_item());
 	//todo updating = true - only allow drawing here
-	if (is_visible_in_tree()) {
+	if (is_visible_in_tree()) { // Todo optimize this!!
 		if (first_draw) {
 			notification(NOTIFICATION_VISIBILITY_CHANGED);
 			first_draw = false;
@@ -545,15 +571,7 @@ void CanvasItem::_notification(int p_what) {
 			if (parent) {
 				CanvasItem *ci = Object::cast_to<CanvasItem>(parent);
 				if (ci) {
-					parent_visible_in_tree = ci->is_visible_in_tree();
 					C = ci->children_items.push_back(this);
-				} else {
-					CanvasLayer *cl = Object::cast_to<CanvasLayer>(parent);
-					if (cl) {
-						parent_visible_in_tree = cl->is_visible();
-					} else {
-						parent_visible_in_tree = true;
-					}
 				}
 			}
 			_enter_canvas();
@@ -585,7 +603,6 @@ void CanvasItem::_notification(int p_what) {
 				C = nullptr;
 			}
 			global_invalid = true;
-			parent_visible_in_tree = false;
 		} break;
 		case NOTIFICATION_DRAW:
 		case NOTIFICATION_TRANSFORM_CHANGED: {
@@ -1050,6 +1067,7 @@ void CanvasItem::force_update_transform() {
 }
 
 void CanvasItem::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("_toplevel_visibility_changed", "visible"), &CanvasItem::_toplevel_visibility_changed);
 	ClassDB::bind_method(D_METHOD("_toplevel_raise_self"), &CanvasItem::_toplevel_raise_self);
 	ClassDB::bind_method(D_METHOD("_update_callback"), &CanvasItem::_update_callback);
 
@@ -1251,7 +1269,6 @@ CanvasItem::CanvasItem() :
 		xform_change(this) {
 	canvas_item = RID_PRIME(VisualServer::get_singleton()->canvas_item_create());
 	visible = true;
-	parent_visible_in_tree = false;
 	pending_update = false;
 	modulate = Color(1, 1, 1, 1);
 	self_modulate = Color(1, 1, 1, 1);

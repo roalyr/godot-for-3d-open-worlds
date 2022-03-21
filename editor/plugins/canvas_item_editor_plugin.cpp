@@ -477,12 +477,12 @@ void CanvasItemEditor::_unhandled_key_input(const Ref<InputEvent> &p_ev) {
 		viewport->update();
 	}
 
-	if (k->is_pressed() && !k->get_control() && !k->is_echo()) {
-		if ((grid_snap_active || show_grid) && multiply_grid_step_shortcut.is_valid() && multiply_grid_step_shortcut->is_shortcut(p_ev)) {
+	if (k->is_pressed() && !k->get_control() && !k->is_echo() && (grid_snap_active || _is_grid_visible())) {
+		if (multiply_grid_step_shortcut.is_valid() && multiply_grid_step_shortcut->is_shortcut(p_ev)) {
 			// Multiply the grid size
 			grid_step_multiplier = MIN(grid_step_multiplier + 1, 12);
 			viewport->update();
-		} else if ((grid_snap_active || show_grid) && divide_grid_step_shortcut.is_valid() && divide_grid_step_shortcut->is_shortcut(p_ev)) {
+		} else if (divide_grid_step_shortcut.is_valid() && divide_grid_step_shortcut->is_shortcut(p_ev)) {
 			// Divide the grid size
 			Point2 new_grid_step = grid_step * Math::pow(2.0, grid_step_multiplier - 1);
 			if (new_grid_step.x >= 1.0 && new_grid_step.y >= 1.0) {
@@ -1040,6 +1040,60 @@ void CanvasItemEditor::_reset_create_position() {
 	node_create_position = Point2();
 }
 
+bool CanvasItemEditor::_is_grid_visible() const {
+	switch (grid_visibility) {
+		case GRID_VISIBILITY_SHOW:
+			return true;
+		case GRID_VISIBILITY_SHOW_WHEN_SNAPPING:
+			return grid_snap_active;
+		case GRID_VISIBILITY_HIDE:
+			return false;
+	}
+	ERR_FAIL_V_MSG(true, "Unexpected grid_visibility value");
+}
+
+void CanvasItemEditor::_prepare_grid_menu() {
+	for (int i = GRID_VISIBILITY_SHOW; i <= GRID_VISIBILITY_HIDE; i++) {
+		grid_menu->set_item_checked(i, i == grid_visibility);
+	}
+}
+
+void CanvasItemEditor::_on_grid_menu_id_pressed(int p_id) {
+	switch (p_id) {
+		case GRID_VISIBILITY_SHOW:
+		case GRID_VISIBILITY_SHOW_WHEN_SNAPPING:
+		case GRID_VISIBILITY_HIDE:
+			grid_visibility = (GridVisibility)p_id;
+			viewport->update();
+			view_menu->get_popup()->hide();
+			return;
+	}
+
+	// Toggle grid: go to the least restrictive option possible.
+	if (grid_snap_active) {
+		switch (grid_visibility) {
+			case GRID_VISIBILITY_SHOW:
+			case GRID_VISIBILITY_SHOW_WHEN_SNAPPING:
+				grid_visibility = GRID_VISIBILITY_HIDE;
+				break;
+			case GRID_VISIBILITY_HIDE:
+				grid_visibility = GRID_VISIBILITY_SHOW_WHEN_SNAPPING;
+				break;
+		}
+	} else {
+		switch (grid_visibility) {
+			case GRID_VISIBILITY_SHOW:
+				grid_visibility = GRID_VISIBILITY_SHOW_WHEN_SNAPPING;
+				break;
+			case GRID_VISIBILITY_SHOW_WHEN_SNAPPING:
+			case GRID_VISIBILITY_HIDE:
+				grid_visibility = GRID_VISIBILITY_SHOW;
+				break;
+		}
+	}
+	viewport->update();
+}
+
 bool CanvasItemEditor::_gui_input_rulers_and_guides(const Ref<InputEvent> &p_event) {
 	Ref<InputEventMouseButton> b = p_event;
 	Ref<InputEventMouseMotion> m = p_event;
@@ -1241,6 +1295,8 @@ bool CanvasItemEditor::_gui_input_rulers_and_guides(const Ref<InputEvent> &p_eve
 					}
 				}
 			}
+			snap_target[0] = SNAP_TARGET_NONE;
+			snap_target[1] = SNAP_TARGET_NONE;
 			drag_type = DRAG_NONE;
 			viewport->update();
 			return true;
@@ -2951,7 +3007,7 @@ void CanvasItemEditor::_draw_rulers() {
 
 	// The rule transform
 	Transform2D ruler_transform = Transform2D();
-	if (show_grid || grid_snap_active) {
+	if (grid_snap_active || _is_grid_visible()) {
 		List<CanvasItem *> selection = _get_edited_canvas_items();
 		if (snap_relative && selection.size() > 0) {
 			ruler_transform.translate(_get_encompassing_rect_from_list(selection).position);
@@ -3031,7 +3087,7 @@ void CanvasItemEditor::_draw_rulers() {
 }
 
 void CanvasItemEditor::_draw_grid() {
-	if (show_grid || grid_snap_active) {
+	if (_is_grid_visible()) {
 		// Draw the grid
 		Vector2 real_grid_offset;
 		const List<CanvasItem *> selection = _get_edited_canvas_items();
@@ -3756,7 +3812,7 @@ void CanvasItemEditor::_draw_invisible_nodes_positions(Node *p_node, const Trans
 	}
 
 	CanvasItem *canvas_item = Object::cast_to<CanvasItem>(p_node);
-	if (canvas_item && !canvas_item->is_visible()) {
+	if (canvas_item && !canvas_item->is_visible_in_tree()) {
 		return;
 	}
 
@@ -3825,7 +3881,7 @@ void CanvasItemEditor::_draw_locks_and_groups(Node *p_node, const Transform2D &p
 		return;
 	}
 	CanvasItem *canvas_item = Object::cast_to<CanvasItem>(p_node);
-	if (canvas_item && !canvas_item->is_visible()) {
+	if (canvas_item && !canvas_item->is_visible_in_tree()) {
 		return;
 	}
 
@@ -4529,9 +4585,13 @@ void CanvasItemEditor::_set_anchors_and_margins_to_keep_ratio() {
 			undo_redo->add_do_method(control, "set_anchor", MARGIN_BOTTOM, bottom_right_anchor.y, false, true);
 			undo_redo->add_do_method(control, "set_meta", "_edit_use_anchors_", true);
 
-			bool use_anchors = control->has_meta("_edit_use_anchors_") && control->get_meta("_edit_use_anchors_");
+			const bool use_anchors = control->has_meta("_edit_use_anchors_") && control->get_meta("_edit_use_anchors_");
 			undo_redo->add_undo_method(control, "_edit_set_state", control->_edit_get_state());
-			undo_redo->add_undo_method(control, "set_meta", "_edit_use_anchors_", use_anchors);
+			if (use_anchors) {
+				undo_redo->add_undo_method(control, "set_meta", "_edit_use_anchors_", true);
+			} else {
+				undo_redo->add_undo_method(control, "remove_meta", "_edit_use_anchors_");
+			}
 
 			anchors_mode = true;
 			anchor_mode_button->set_pressed(anchors_mode);
@@ -4686,7 +4746,7 @@ void CanvasItemEditor::_button_zoom_plus() {
 }
 
 void CanvasItemEditor::_shortcut_zoom_set(float p_zoom) {
-	_zoom_on_position(p_zoom * MAX(1, EDSCALE), viewport_scrollable->get_size() / 2.0);
+	_zoom_on_position(p_zoom * MAX(1, EDSCALE), viewport->get_local_mouse_position());
 }
 
 void CanvasItemEditor::_button_toggle_smart_snap(bool p_status) {
@@ -4803,7 +4863,11 @@ void CanvasItemEditor::_button_toggle_anchor_mode(bool p_status) {
 			continue;
 		}
 
-		control->set_meta("_edit_use_anchors_", p_status);
+		if (p_status) {
+			control->set_meta("_edit_use_anchors_", true);
+		} else {
+			control->remove_meta("_edit_use_anchors_");
+		}
 	}
 
 	anchors_mode = p_status;
@@ -4824,12 +4888,6 @@ void CanvasItemEditor::_update_override_camera_button(bool p_game_running) {
 void CanvasItemEditor::_popup_callback(int p_op) {
 	last_option = MenuOption(p_op);
 	switch (p_op) {
-		case SHOW_GRID: {
-			show_grid = !show_grid;
-			int idx = view_menu->get_popup()->get_item_index(SHOW_GRID);
-			view_menu->get_popup()->set_item_checked(idx, show_grid);
-			viewport->update();
-		} break;
 		case SHOW_ORIGIN: {
 			show_origin = !show_origin;
 			int idx = view_menu->get_popup()->get_item_index(SHOW_ORIGIN);
@@ -5429,6 +5487,8 @@ void CanvasItemEditor::_bind_methods() {
 	ClassDB::bind_method("_update_scroll", &CanvasItemEditor::_update_scroll);
 	ClassDB::bind_method("_update_scrollbars", &CanvasItemEditor::_update_scrollbars);
 	ClassDB::bind_method("_popup_callback", &CanvasItemEditor::_popup_callback);
+	ClassDB::bind_method("_prepare_grid_menu", &CanvasItemEditor::_prepare_grid_menu);
+	ClassDB::bind_method("_on_grid_menu_id_pressed", &CanvasItemEditor::_on_grid_menu_id_pressed);
 	ClassDB::bind_method("_get_editor_data", &CanvasItemEditor::_get_editor_data);
 	ClassDB::bind_method("_button_tool_select", &CanvasItemEditor::_button_tool_select);
 	ClassDB::bind_method("_keying_changed", &CanvasItemEditor::_keying_changed);
@@ -5474,7 +5534,7 @@ Dictionary CanvasItemEditor::get_state() const {
 	state["snap_node_center"] = snap_node_center;
 	state["snap_other_nodes"] = snap_other_nodes;
 	state["snap_guides"] = snap_guides;
-	state["show_grid"] = show_grid;
+	state["grid_visibility"] = grid_visibility;
 	state["show_origin"] = show_origin;
 	state["show_viewport"] = show_viewport;
 	state["show_rulers"] = show_rulers;
@@ -5576,10 +5636,8 @@ void CanvasItemEditor::set_state(const Dictionary &p_state) {
 		smartsnap_config_popup->set_item_checked(idx, snap_guides);
 	}
 
-	if (state.has("show_grid")) {
-		show_grid = state["show_grid"];
-		int idx = view_menu->get_popup()->get_item_index(SHOW_GRID);
-		view_menu->get_popup()->set_item_checked(idx, show_grid);
+	if (state.has("grid_visibility")) {
+		grid_visibility = (GridVisibility)(int)(state["grid_visibility"]);
 	}
 
 	if (state.has("show_origin")) {
@@ -5738,7 +5796,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	key_rot = true;
 	key_scale = false;
 
-	show_grid = false;
+	grid_visibility = GRID_VISIBILITY_SHOW_WHEN_SNAPPING;
 	show_origin = true;
 	show_viewport = true;
 	show_helpers = false;
@@ -6075,7 +6133,19 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 
 	p = view_menu->get_popup();
 	p->set_hide_on_checkable_item_selection(false);
-	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_grid", TTR("Always Show Grid"), KEY_NUMBERSIGN), SHOW_GRID);
+
+	grid_menu = memnew(PopupMenu);
+	grid_menu->connect("about_to_show", this, "_prepare_grid_menu");
+	grid_menu->connect("id_pressed", this, "_on_grid_menu_id_pressed");
+	grid_menu->set_name("GridMenu");
+	grid_menu->add_radio_check_item(TTR("Show"), GRID_VISIBILITY_SHOW);
+	grid_menu->add_radio_check_item(TTR("Show When Snapping"), GRID_VISIBILITY_SHOW_WHEN_SNAPPING);
+	grid_menu->add_radio_check_item(TTR("Hide"), GRID_VISIBILITY_HIDE);
+	grid_menu->add_separator();
+	grid_menu->add_shortcut(ED_SHORTCUT("canvas_item_editor/toggle_grid", TTR("Toggle Grid"), KEY_MASK_CMD | KEY_APOSTROPHE));
+	p->add_child(grid_menu);
+	p->add_submenu_item(TTR("Grid"), "GridMenu");
+
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_helpers", TTR("Show Helpers"), KEY_H), SHOW_HELPERS);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_rulers", TTR("Show Rulers")), SHOW_RULERS);
 	p->add_check_shortcut(ED_SHORTCUT("canvas_item_editor/show_guides", TTR("Show Guides"), KEY_Y), SHOW_GUIDES);
@@ -6467,16 +6537,18 @@ bool CanvasItemEditorViewport::_create_instance(Node *parent, String &path, cons
 	editor_data->get_undo_redo().add_do_method(sed, "live_debug_instance_node", editor->get_edited_scene()->get_path_to(parent), path, new_name);
 	editor_data->get_undo_redo().add_undo_method(sed, "live_debug_remove_node", NodePath(String(editor->get_edited_scene()->get_path_to(parent)) + "/" + new_name));
 
-	CanvasItem *parent_ci = Object::cast_to<CanvasItem>(parent);
-	if (parent_ci) {
+	CanvasItem *instance_ci = Object::cast_to<CanvasItem>(instanced_scene);
+	if (instance_ci) {
 		Vector2 target_pos = canvas_item_editor->get_canvas_transform().affine_inverse().xform(p_point);
 		target_pos = canvas_item_editor->snap_point(target_pos);
-		target_pos = parent_ci->get_global_transform_with_canvas().affine_inverse().xform(target_pos);
-		// Preserve instance position of the original scene.
-		CanvasItem *instance_ci = Object::cast_to<CanvasItem>(instanced_scene);
-		if (instance_ci) {
-			target_pos += instance_ci->_edit_get_position();
+
+		CanvasItem *parent_ci = Object::cast_to<CanvasItem>(parent);
+		if (parent_ci) {
+			target_pos = parent_ci->get_global_transform_with_canvas().affine_inverse().xform(target_pos);
 		}
+		// Preserve instance position of the original scene.
+		target_pos += instance_ci->_edit_get_position();
+
 		editor_data->get_undo_redo().add_do_method(instanced_scene, "set_position", target_pos);
 	}
 

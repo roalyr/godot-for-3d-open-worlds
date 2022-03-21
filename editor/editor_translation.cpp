@@ -56,12 +56,13 @@ void load_editor_translations(const String &p_locale) {
 		if (etl->lang == p_locale) {
 			Vector<uint8_t> data;
 			data.resize(etl->uncomp_size);
-			Compression::decompress(data.ptrw(), etl->uncomp_size, etl->data, etl->comp_size, Compression::MODE_DEFLATE);
+			int ret = Compression::decompress(data.ptrw(), etl->uncomp_size, etl->data, etl->comp_size, Compression::MODE_DEFLATE);
+			ERR_FAIL_COND_MSG(ret == -1, "Compressed file is corrupt.");
 
 			FileAccessMemory *fa = memnew(FileAccessMemory);
 			fa->open_custom(data.ptr(), data.size());
 
-			Ref<Translation> tr = TranslationLoaderPO::load_translation(fa);
+			Ref<Translation> tr = TranslationLoaderPO::load_translation(fa, true);
 
 			if (tr.is_valid()) {
 				tr->set_locale(etl->lang);
@@ -80,12 +81,13 @@ void load_doc_translations(const String &p_locale) {
 		if (dtl->lang == p_locale) {
 			Vector<uint8_t> data;
 			data.resize(dtl->uncomp_size);
-			Compression::decompress(data.ptrw(), dtl->uncomp_size, dtl->data, dtl->comp_size, Compression::MODE_DEFLATE);
+			int ret = Compression::decompress(data.ptrw(), dtl->uncomp_size, dtl->data, dtl->comp_size, Compression::MODE_DEFLATE);
+			ERR_FAIL_COND_MSG(ret == -1, "Compressed file is corrupt.");
 
 			FileAccessMemory *fa = memnew(FileAccessMemory);
 			fa->open_custom(data.ptr(), data.size());
 
-			Ref<Translation> tr = TranslationLoaderPO::load_translation(fa);
+			Ref<Translation> tr = TranslationLoaderPO::load_translation(fa, false);
 
 			if (tr.is_valid()) {
 				tr->set_locale(dtl->lang);

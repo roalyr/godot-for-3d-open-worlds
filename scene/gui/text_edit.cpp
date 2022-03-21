@@ -36,6 +36,7 @@
 #include "core/os/os.h"
 #include "core/project_settings.h"
 #include "core/script_language.h"
+#include "label.h"
 #include "scene/main/viewport.h"
 
 #ifdef TOOLS_ENABLED
@@ -432,6 +433,7 @@ void TextEdit::_click_selection_held() {
 }
 
 void TextEdit::_update_selection_mode_pointer() {
+	selection.drag_attempt = false;
 	dragging_selection = true;
 	Point2 mp = get_local_mouse_position();
 
@@ -448,6 +450,7 @@ void TextEdit::_update_selection_mode_pointer() {
 }
 
 void TextEdit::_update_selection_mode_word() {
+	selection.drag_attempt = false;
 	dragging_selection = true;
 	Point2 mp = get_local_mouse_position();
 
@@ -499,12 +502,17 @@ void TextEdit::_update_selection_mode_word() {
 		}
 	}
 
+	if (OS::get_singleton()->has_feature("primary_clipboard")) {
+		OS::get_singleton()->set_clipboard_primary(get_selection_text());
+	}
+
 	update();
 
 	click_select_held->start();
 }
 
 void TextEdit::_update_selection_mode_line() {
+	selection.drag_attempt = false;
 	dragging_selection = true;
 	Point2 mp = get_local_mouse_position();
 
@@ -525,6 +533,9 @@ void TextEdit::_update_selection_mode_line() {
 	cursor_set_column(0);
 
 	select(selection.selecting_line, selection.selecting_column, row, col);
+	if (OS::get_singleton()->has_feature("primary_clipboard")) {
+		OS::get_singleton()->set_clipboard_primary(get_selection_text());
+	}
 	update();
 
 	click_select_held->start();
@@ -1504,7 +1515,7 @@ void TextEdit::_notification(int p_what) {
 								}
 							}
 							if (ime_text.length() == 0) {
-								if (draw_caret) {
+								if (draw_caret || drag_caret_force_displayed) {
 									if (insert_mode) {
 #ifdef TOOLS_ENABLED
 										int caret_h = (block_caret) ? 4 : 2 * EDSCALE;
@@ -1610,7 +1621,7 @@ void TextEdit::_notification(int p_what) {
 							}
 						}
 						if (ime_text.length() == 0) {
-							if (draw_caret) {
+							if (draw_caret || drag_caret_force_displayed) {
 								if (insert_mode) {
 									int char_w = cache.font->get_char_size(' ').width;
 #ifdef TOOLS_ENABLED
@@ -1885,6 +1896,10 @@ void TextEdit::_notification(int p_what) {
 			if (OS::get_singleton()->has_virtual_keyboard() && virtual_keyboard_enabled) {
 				OS::get_singleton()->hide_virtual_keyboard();
 			}
+
+			if (deselect_on_focus_loss_enabled) {
+				deselect();
+			}
 		} break;
 		case MainLoop::NOTIFICATION_OS_IME_UPDATE: {
 			if (has_focus()) {
@@ -1892,6 +1907,39 @@ void TextEdit::_notification(int p_what) {
 				ime_selection = OS::get_singleton()->get_ime_selection();
 				update();
 			}
+		} break;
+		case Control::NOTIFICATION_DRAG_BEGIN: {
+			selection.selecting_mode = Selection::MODE_NONE;
+			drag_action = true;
+			dragging_minimap = false;
+			dragging_selection = false;
+			can_drag_minimap = false;
+			click_select_held->stop();
+		} break;
+		case Control::NOTIFICATION_DRAG_END: {
+			if (is_drag_successful()) {
+				if (selection.drag_attempt) {
+					selection.drag_attempt = false;
+					if (!readonly && !Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+						_remove_text(selection.from_line, selection.from_column, selection.to_line, selection.to_column);
+						cursor_set_line(selection.from_line, false);
+						cursor_set_column(selection.from_column);
+						selection.active = false;
+						selection.selecting_mode = Selection::MODE_NONE;
+						update();
+					} else if (deselect_on_focus_loss_enabled) {
+						deselect();
+					}
+				}
+			} else {
+				selection.drag_attempt = false;
+			}
+			drag_action = false;
+			drag_caret_force_displayed = false;
+			dragging_minimap = false;
+			dragging_selection = false;
+			can_drag_minimap = false;
+			click_select_held->stop();
 		} break;
 	}
 }
@@ -2486,6 +2534,7 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 
 				cursor_set_line(row, false, false);
 				cursor_set_column(col);
+				selection.drag_attempt = false;
 
 				if (mb->get_shift() && (cursor.column != prev_col || cursor.line != prev_line)) {
 					if (!selection.active) {
@@ -2531,7 +2580,9 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 
 						update();
 					}
-
+				} else if (is_mouse_over_selection()) {
+					selection.selecting_mode = Selection::MODE_NONE;
+					selection.drag_attempt = true;
 				} else {
 					selection.active = false;
 					selection.selecting_mode = Selection::MODE_POINTER;
@@ -2555,6 +2606,25 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 					last_dblclk_pos = mb->get_position();
 				}
 
+				update();
+			}
+
+			if (is_middle_mouse_paste_enabled() && mb->get_button_index() == BUTTON_MIDDLE && !readonly && OS::get_singleton()->has_feature("primary_clipboard")) {
+				String paste_buffer = OS::get_singleton()->get_clipboard_primary();
+
+				int row, col;
+				_get_mouse_pos(Point2i(mb->get_position().x, mb->get_position().y), row, col);
+				begin_complex_operation();
+
+				deselect();
+				cursor_set_line(row, true, false);
+				cursor_set_column(col);
+				if (!paste_buffer.empty()) {
+					_insert_text_at_cursor(paste_buffer);
+				}
+				end_complex_operation();
+
+				grab_focus();
 				update();
 			}
 
@@ -2595,6 +2665,9 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 			}
 		} else {
 			if (mb->get_button_index() == BUTTON_LEFT) {
+				if (selection.drag_attempt && selection.selecting_mode == Selection::MODE_NONE && is_mouse_over_selection()) {
+					selection.active = false;
+				}
 				if (mb->get_command() && highlighted_word != String()) {
 					int row, col;
 					_get_mouse_pos(Point2i(mb->get_position().x, mb->get_position().y), row, col);
@@ -2607,6 +2680,12 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 				dragging_selection = false;
 				can_drag_minimap = false;
 				click_select_held->stop();
+				if (!drag_action) {
+					selection.drag_attempt = false;
+				}
+				if (OS::get_singleton()->has_feature("primary_clipboard")) {
+					OS::get_singleton()->set_clipboard_primary(get_selection_text());
+				}
 			}
 
 			// Notify to show soft keyboard.
@@ -2675,6 +2754,22 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 					}
 				}
 			}
+		}
+
+		if (drag_action && can_drop_data(mm->get_position(), get_viewport()->gui_get_drag_data())) {
+			drag_caret_force_displayed = true;
+			Point2 mp = get_local_mouse_position();
+			int row, col;
+			_get_mouse_pos(Point2i(mp.x, mp.y), row, col);
+			cursor_set_line(row, true);
+			cursor_set_column(col);
+			if (row <= get_first_visible_line()) {
+				_scroll_lines_up();
+			} else if (row >= get_last_full_visible_line()) {
+				_scroll_lines_down();
+			}
+			dragging_selection = true;
+			update();
 		}
 	}
 
@@ -4364,8 +4459,10 @@ void TextEdit::_generate_context_menu() {
 	if (!readonly) {
 		menu->add_item(RTR("Paste"), MENU_PASTE, is_shortcut_keys_enabled() ? KEY_MASK_CMD | KEY_V : 0);
 	}
-	menu->add_separator();
-	if (is_selecting_enabled()) {
+	if (selecting_enabled || !readonly) {
+		menu->add_separator();
+	}
+	if (selecting_enabled) {
 		menu->add_item(RTR("Select All"), MENU_SELECT_ALL, is_shortcut_keys_enabled() ? KEY_MASK_CMD | KEY_A : 0);
 	}
 	if (!readonly) {
@@ -4963,6 +5060,104 @@ void TextEdit::insert_text_at_cursor(const String &p_text) {
 
 	_insert_text_at_cursor(p_text);
 	update();
+}
+
+Variant TextEdit::get_drag_data(const Point2 &p_point) {
+	if (selection.active && selection.drag_attempt) {
+		String t = get_selection_text();
+		Label *l = memnew(Label);
+		l->set_text(t);
+		set_drag_preview(l);
+		return t;
+	}
+
+	return Variant();
+}
+
+bool TextEdit::can_drop_data(const Point2 &p_point, const Variant &p_data) const {
+	bool drop_override = Control::can_drop_data(p_point, p_data); // In case user wants to drop custom data.
+	if (drop_override) {
+		return drop_override;
+	}
+
+	return !readonly && p_data.get_type() == Variant::STRING;
+}
+
+void TextEdit::drop_data(const Point2 &p_point, const Variant &p_data) {
+	Control::drop_data(p_point, p_data);
+
+	if (p_data.get_type() == Variant::STRING && !readonly) {
+		Point2 mp = get_local_mouse_position();
+		int caret_row_tmp, caret_column_tmp;
+		_get_mouse_pos(Point2i(mp.x, mp.y), caret_row_tmp, caret_column_tmp);
+		if (selection.drag_attempt) {
+			selection.drag_attempt = false;
+			if (!is_mouse_over_selection(!Input::get_singleton()->is_key_pressed(KEY_CONTROL))) {
+				begin_complex_operation();
+				if (!Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+					if (caret_row_tmp > selection.to_line) {
+						caret_row_tmp = caret_row_tmp - (selection.to_line - selection.from_line);
+					} else if (caret_row_tmp == selection.to_line && caret_column_tmp >= selection.to_column) {
+						caret_column_tmp = caret_column_tmp - (selection.to_column - selection.from_column);
+					}
+
+					_remove_text(selection.from_line, selection.from_column, selection.to_line, selection.to_column);
+					cursor_set_line(selection.from_line, false);
+					cursor_set_column(selection.from_column);
+					selection.active = false;
+					selection.selecting_mode = Selection::MODE_NONE;
+				} else {
+					deselect();
+				}
+
+				cursor_set_line(caret_row_tmp, true, false);
+				cursor_set_column(caret_column_tmp);
+				insert_text_at_cursor(p_data);
+				end_complex_operation();
+			}
+		} else if (is_mouse_over_selection()) {
+			begin_complex_operation();
+			caret_row_tmp = selection.from_line;
+			caret_column_tmp = selection.from_column;
+
+			_remove_text(selection.from_line, selection.from_column, selection.to_line, selection.to_column);
+			cursor_set_line(selection.from_line, false);
+			cursor_set_column(selection.from_column);
+			selection.active = false;
+			selection.selecting_mode = Selection::MODE_NONE;
+
+			cursor_set_line(caret_row_tmp, true, false);
+			cursor_set_column(caret_column_tmp);
+			insert_text_at_cursor(p_data);
+			end_complex_operation();
+			grab_focus();
+		} else {
+			deselect();
+			cursor_set_line(caret_row_tmp, true, false);
+			cursor_set_column(caret_column_tmp);
+			insert_text_at_cursor(p_data);
+			grab_focus();
+		}
+
+		if (caret_row_tmp != cursor.line || caret_column_tmp != cursor.column) {
+			select(caret_row_tmp, caret_column_tmp, cursor.line, cursor.column);
+		}
+	}
+}
+
+bool TextEdit::is_mouse_over_selection(bool p_edges) const {
+	if (!selection.active) {
+		return false;
+	}
+	Point2 mp = get_local_mouse_position();
+	int row, col;
+	_get_mouse_pos(Point2i(mp.x, mp.y), row, col);
+	if (p_edges) {
+		if ((row == selection.from_line && col == selection.from_column) || (row == selection.to_line && col == selection.to_column)) {
+			return true;
+		}
+	}
+	return (row >= selection.from_line && row <= selection.to_line && (row > selection.from_line || col > selection.from_column) && (row < selection.to_line || col < selection.to_column));
 }
 
 Control::CursorShape TextEdit::get_cursor_shape(const Point2 &p_pos) const {
@@ -7133,6 +7328,10 @@ void TextEdit::set_virtual_keyboard_enabled(bool p_enable) {
 	virtual_keyboard_enabled = p_enable;
 }
 
+void TextEdit::set_middle_mouse_paste_enabled(bool p_enabled) {
+	middle_mouse_paste_enabled = p_enabled;
+}
+
 void TextEdit::set_selecting_enabled(bool p_enabled) {
 	selecting_enabled = p_enabled;
 
@@ -7147,12 +7346,27 @@ bool TextEdit::is_selecting_enabled() const {
 	return selecting_enabled;
 }
 
+void TextEdit::set_deselect_on_focus_loss_enabled(const bool p_enabled) {
+	deselect_on_focus_loss_enabled = p_enabled;
+	if (p_enabled && selection.active && !has_focus()) {
+		deselect();
+	}
+}
+
+bool TextEdit::is_deselect_on_focus_loss_enabled() const {
+	return deselect_on_focus_loss_enabled;
+}
+
 bool TextEdit::is_shortcut_keys_enabled() const {
 	return shortcut_keys_enabled;
 }
 
 bool TextEdit::is_virtual_keyboard_enabled() const {
 	return virtual_keyboard_enabled;
+}
+
+bool TextEdit::is_middle_mouse_paste_enabled() const {
+	return middle_mouse_paste_enabled;
 }
 
 PopupMenu *TextEdit::get_menu() const {
@@ -7253,8 +7467,12 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_shortcut_keys_enabled"), &TextEdit::is_shortcut_keys_enabled);
 	ClassDB::bind_method(D_METHOD("set_virtual_keyboard_enabled", "enable"), &TextEdit::set_virtual_keyboard_enabled);
 	ClassDB::bind_method(D_METHOD("is_virtual_keyboard_enabled"), &TextEdit::is_virtual_keyboard_enabled);
+	ClassDB::bind_method(D_METHOD("set_middle_mouse_paste_enabled", "enable"), &TextEdit::set_middle_mouse_paste_enabled);
+	ClassDB::bind_method(D_METHOD("is_middle_mouse_paste_enabled"), &TextEdit::is_middle_mouse_paste_enabled);
 	ClassDB::bind_method(D_METHOD("set_selecting_enabled", "enable"), &TextEdit::set_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_selecting_enabled"), &TextEdit::is_selecting_enabled);
+	ClassDB::bind_method(D_METHOD("set_deselect_on_focus_loss_enabled", "enable"), &TextEdit::set_deselect_on_focus_loss_enabled);
+	ClassDB::bind_method(D_METHOD("is_deselect_on_focus_loss_enabled"), &TextEdit::is_deselect_on_focus_loss_enabled);
 	ClassDB::bind_method(D_METHOD("is_line_set_as_safe", "line"), &TextEdit::is_line_set_as_safe);
 	ClassDB::bind_method(D_METHOD("set_line_as_safe", "line", "safe"), &TextEdit::set_line_as_safe);
 	ClassDB::bind_method(D_METHOD("is_line_set_as_bookmark", "line"), &TextEdit::is_line_set_as_bookmark);
@@ -7276,6 +7494,7 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_selection_to_line"), &TextEdit::get_selection_to_line);
 	ClassDB::bind_method(D_METHOD("get_selection_to_column"), &TextEdit::get_selection_to_column);
 	ClassDB::bind_method(D_METHOD("get_selection_text"), &TextEdit::get_selection_text);
+	ClassDB::bind_method(D_METHOD("is_mouse_over_selection", "edges"), &TextEdit::is_mouse_over_selection);
 	ClassDB::bind_method(D_METHOD("get_word_under_cursor"), &TextEdit::get_word_under_cursor);
 	ClassDB::bind_method(D_METHOD("search", "key", "flags", "from_line", "from_column"), &TextEdit::_search_bind);
 
@@ -7298,6 +7517,8 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_draw_fold_gutter"), &TextEdit::set_draw_fold_gutter);
 	ClassDB::bind_method(D_METHOD("is_drawing_fold_gutter"), &TextEdit::is_drawing_fold_gutter);
 	ClassDB::bind_method(D_METHOD("get_total_gutter_width"), &TextEdit::get_total_gutter_width);
+	ClassDB::bind_method(D_METHOD("get_visible_rows"), &TextEdit::get_visible_rows);
+	ClassDB::bind_method(D_METHOD("get_total_visible_rows"), &TextEdit::get_total_visible_rows);
 
 	ClassDB::bind_method(D_METHOD("set_hiding_enabled", "enable"), &TextEdit::set_hiding_enabled);
 	ClassDB::bind_method(D_METHOD("is_hiding_enabled"), &TextEdit::is_hiding_enabled);
@@ -7363,7 +7584,9 @@ void TextEdit::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "context_menu_enabled"), "set_context_menu_enabled", "is_context_menu_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "shortcut_keys_enabled"), "set_shortcut_keys_enabled", "is_shortcut_keys_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "virtual_keyboard_enabled"), "set_virtual_keyboard_enabled", "is_virtual_keyboard_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "middle_mouse_paste_enabled"), "set_middle_mouse_paste_enabled", "is_middle_mouse_paste_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "selecting_enabled"), "set_selecting_enabled", "is_selecting_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "deselect_on_focus_loss_enabled"), "set_deselect_on_focus_loss_enabled", "is_deselect_on_focus_loss_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "smooth_scrolling"), "set_smooth_scroll_enable", "is_smooth_scroll_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "v_scroll_speed"), "set_v_scroll_speed", "get_v_scroll_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hiding_enabled"), "set_hiding_enabled", "is_hiding_enabled");
@@ -7529,8 +7752,10 @@ TextEdit::TextEdit() {
 	minimap_line_spacing = 1;
 
 	selecting_enabled = true;
+	deselect_on_focus_loss_enabled = true;
 	context_menu_enabled = true;
 	shortcut_keys_enabled = true;
+	middle_mouse_paste_enabled = true;
 	menu = memnew(PopupMenu);
 	add_child(menu);
 	readonly = true; // Initialise to opposite first, so we get past the early-out in set_readonly.

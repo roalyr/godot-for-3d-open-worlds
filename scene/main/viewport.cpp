@@ -183,6 +183,7 @@ public:
 
 Viewport::GUI::GUI() {
 	dragging = false;
+	drag_successful = false;
 	mouse_focus = nullptr;
 	mouse_click_grabber = nullptr;
 	mouse_focus_mask = 0;
@@ -1978,8 +1979,9 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 
 			if (gui.drag_data.get_type() != Variant::NIL && mb->get_button_index() == BUTTON_LEFT) {
 				//alternate drop use (when using force_drag(), as proposed by #5342
+				gui.drag_successful = false;
 				if (gui.mouse_focus) {
-					_gui_drop(gui.mouse_focus, pos, false);
+					gui.drag_successful = _gui_drop(gui.mouse_focus, pos, false);
 				}
 
 				gui.drag_data = Variant();
@@ -1997,11 +1999,12 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 			_gui_cancel_tooltip();
 		} else {
 			if (gui.drag_data.get_type() != Variant::NIL && mb->get_button_index() == BUTTON_LEFT) {
+				gui.drag_successful = false;
 				if (gui.mouse_over) {
 					Size2 pos = mpos;
 					pos = gui.focus_inv_xform.xform(pos);
 
-					_gui_drop(gui.mouse_over, pos, false);
+					gui.drag_successful = _gui_drop(gui.mouse_over, pos, false);
 				}
 
 				Control *drag_preview = _gui_get_drag_preview();
@@ -2058,9 +2061,7 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 			}
 
 			if (gui.mouse_focus_mask == 0 && over != gui.mouse_over) {
-				if (gui.mouse_over) {
-					_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
-				}
+				_drop_mouse_over();
 
 				_gui_cancel_tooltip();
 
@@ -2177,9 +2178,7 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 		}
 
 		if (over != gui.mouse_over) {
-			if (gui.mouse_over) {
-				_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
-			}
+			_drop_mouse_over();
 
 			_gui_cancel_tooltip();
 
@@ -2497,6 +2496,17 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 	}
 }
 
+void Viewport::_gui_cleanup_internal_state(Ref<InputEvent> p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+
+	Ref<InputEventMouseButton> mb = p_event;
+	if (mb.is_valid()) {
+		if (!mb->is_pressed()) {
+			gui.mouse_focus_mask &= ~(1 << (mb->get_button_index() - 1)); // Remove from mask.
+		}
+	}
+}
+
 List<Control *>::Element *Viewport::_gui_add_root_control(Control *p_control) {
 	gui.roots_order_dirty = true;
 	return gui.roots.push_back(p_control);
@@ -2715,6 +2725,13 @@ void Viewport::_drop_mouse_focus() {
 	}
 }
 
+void Viewport::_drop_mouse_over() {
+	if (gui.mouse_over) {
+		_gui_call_notification(gui.mouse_over, Control::NOTIFICATION_MOUSE_EXIT);
+		gui.mouse_over = nullptr;
+	}
+}
+
 void Viewport::_drop_physics_mouseover(bool p_paused_only) {
 	physics_has_last_mousepos = false;
 
@@ -2845,6 +2862,8 @@ void Viewport::input(const Ref<InputEvent> &p_event) {
 
 	if (!is_input_handled()) {
 		_gui_input_event(p_event);
+	} else {
+		_gui_cleanup_internal_state(p_event);
 	}
 	//get_tree()->call_group(SceneTree::GROUP_CALL_REVERSE|SceneTree::GROUP_CALL_REALTIME|SceneTree::GROUP_CALL_MULIILEVEL,gui_input_group,"_gui_input",p_event); //special one for GUI, as controls use their own process check
 }
@@ -2958,6 +2977,14 @@ bool Viewport::gui_has_modal_stack() const {
 }
 
 void Viewport::set_disable_input(bool p_disable) {
+	if (p_disable == disable_input) {
+		return;
+	}
+	if (p_disable && GLOBAL_GET("gui/common/drop_mouse_on_gui_input_disabled")) {
+		_drop_mouse_focus();
+		_drop_mouse_over();
+		_gui_cancel_tooltip();
+	}
 	disable_input = p_disable;
 }
 
@@ -3124,6 +3151,10 @@ bool Viewport::gui_is_dragging() const {
 	return gui.dragging;
 }
 
+bool Viewport::gui_is_drag_successful() const {
+	return gui.drag_successful;
+}
+
 void Viewport::set_input_as_handled() {
 	_drop_physics_mouseover();
 	if (handle_input_locally) {
@@ -3257,6 +3288,7 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("gui_has_modal_stack"), &Viewport::gui_has_modal_stack);
 	ClassDB::bind_method(D_METHOD("gui_get_drag_data"), &Viewport::gui_get_drag_data);
 	ClassDB::bind_method(D_METHOD("gui_is_dragging"), &Viewport::gui_is_dragging);
+	ClassDB::bind_method(D_METHOD("gui_is_drag_successful"), &Viewport::gui_is_drag_successful);
 
 	ClassDB::bind_method(D_METHOD("get_modal_stack_top"), &Viewport::get_modal_stack_top);
 

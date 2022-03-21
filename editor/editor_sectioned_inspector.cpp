@@ -29,7 +29,24 @@
 /*************************************************************************/
 
 #include "editor_sectioned_inspector.h"
+
+#include "editor_property_name_processor.h"
 #include "editor_scale.h"
+
+static bool _property_path_matches(const String &p_property_path, const String &p_filter) {
+	if (p_property_path.findn(p_filter) != -1) {
+		return true;
+	}
+
+	const Vector<String> sections = p_property_path.split("/");
+	for (int i = 0; i < sections.size(); i++) {
+		if (p_filter.is_subsequence_ofi(EditorPropertyNameProcessor::get_singleton()->process_name(sections[i]))) {
+			return true;
+		}
+	}
+	return false;
+}
+
 class SectionedInspectorFilter : public Object {
 	GDCLASS(SectionedInspectorFilter, Object);
 
@@ -239,7 +256,7 @@ void SectionedInspector::update_category_list() {
 			continue;
 		}
 
-		if (!filter.empty() && pi.name.findn(filter) == -1 && pi.name.replace("/", " ").capitalize().findn(filter) == -1) {
+		if (!filter.empty() && !_property_path_matches(pi.name, filter)) {
 			continue;
 		}
 
@@ -266,7 +283,8 @@ void SectionedInspector::update_category_list() {
 			if (!section_map.has(metasection)) {
 				TreeItem *ms = sections->create_item(parent);
 				section_map[metasection] = ms;
-				ms->set_text(0, sectionarr[i].capitalize());
+				ms->set_text(0, EditorPropertyNameProcessor::get_singleton()->process_name(sectionarr[i]));
+				ms->set_tooltip(0, EditorPropertyNameProcessor::get_singleton()->make_tooltip_for_name(sectionarr[i]));
 				ms->set_metadata(0, metasection);
 				ms->set_selectable(0, false);
 			}

@@ -52,15 +52,16 @@ class Spatial : public Node {
 	GDCLASS(Spatial, Node);
 	OBJ_CATEGORY("3D");
 
-public:
-	enum SpatialFlags {
-		// this is cached, and only currently kept up to date in visual instances
-		// this is set if a visual instance is
-		// (a) in the tree AND (b) visible via is_visible_in_tree() call
-		SPATIAL_FLAG_VI_VISIBLE = 1 << 0,
+	// optionally stored if we need to do interpolation
+	// client side (i.e. not in VisualServer) so interpolated transforms
+	// can be read back with get_global_transform_interpolated()
+	struct ClientPhysicsInterpolationData {
+		Transform global_xform_curr;
+		Transform global_xform_prev;
+		uint64_t current_physics_tick = 0;
+		uint64_t timeout_physics_tick = 0;
 	};
 
-private:
 	enum TransformDirty {
 		DIRTY_NONE = 0,
 		DIRTY_VECTORS = 1,
@@ -69,11 +70,9 @@ private:
 	};
 
 	mutable SelfList<Node> xform_change;
+	SelfList<Spatial> _client_physics_interpolation_spatials_list;
 
 	struct Data {
-		// defined in Spatial::SpatialFlags
-		uint32_t spatial_flags;
-
 		mutable Transform global_transform;
 		mutable Transform local_transform;
 		mutable Vector3 rotation;
@@ -83,26 +82,33 @@ private:
 
 		Viewport *viewport;
 
-		bool toplevel_active;
-		bool toplevel;
-		bool inside_world;
+		bool toplevel_active : 1;
+		bool toplevel : 1;
+		bool inside_world : 1;
+
+		// this is cached, and only currently kept up to date in visual instances
+		// this is set if a visual instance is
+		// (a) in the tree AND (b) visible via is_visible_in_tree() call
+		bool vi_visible : 1;
+
+		bool ignore_notification : 1;
+		bool notify_local_transform : 1;
+		bool notify_transform : 1;
+
+		bool visible : 1;
+		bool disable_scale : 1;
 
 		int children_lock;
 		Spatial *parent;
 		List<Spatial *> children;
 		List<Spatial *>::Element *C;
 
-		bool ignore_notification;
-		bool notify_local_transform;
-		bool notify_transform;
-
-		bool visible;
-		bool disable_scale;
+		ClientPhysicsInterpolationData *client_physics_interpolation_data;
 
 #ifdef TOOLS_ENABLED
 		Ref<SpatialGizmo> gizmo;
-		bool gizmo_disabled;
-		bool gizmo_dirty;
+		bool gizmo_disabled : 1;
+		bool gizmo_dirty : 1;
 #endif
 
 	} data;
@@ -115,18 +121,12 @@ private:
 
 protected:
 	_FORCE_INLINE_ void set_ignore_transform_notification(bool p_ignore) { data.ignore_notification = p_ignore; }
-
 	_FORCE_INLINE_ void _update_local_transform() const;
 
-	uint32_t _get_spatial_flags() const { return data.spatial_flags; }
-	void _replace_spatial_flags(uint32_t p_flags) { data.spatial_flags = p_flags; }
-	void _set_spatial_flag(uint32_t p_flag, bool p_set) {
-		if (p_set) {
-			data.spatial_flags |= p_flag;
-		} else {
-			data.spatial_flags &= ~p_flag;
-		}
-	}
+	void _set_vi_visible(bool p_visible);
+	bool _is_vi_visible() const { return data.vi_visible; }
+	Transform _get_global_transform_interpolated(real_t p_interpolation_fraction);
+	void _disable_client_physics_interpolation();
 
 	void _notification(int p_what);
 	static void _bind_methods();
@@ -163,6 +163,8 @@ public:
 
 	Transform get_transform() const;
 	Transform get_global_transform() const;
+	Transform get_global_transform_interpolated();
+	bool update_client_physics_interpolation_data();
 
 #ifdef TOOLS_ENABLED
 	virtual Transform get_global_gizmo_transform() const;

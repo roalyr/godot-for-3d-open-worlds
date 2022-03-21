@@ -55,6 +55,7 @@ class OS {
 	bool _verbose_stdout;
 	bool _debug_stdout;
 	String _local_clipboard;
+	String _primary_clipboard;
 	uint64_t _msec_splash;
 	bool _no_window;
 	int _exit_code = EXIT_FAILURE; // unexpected exit is marked as failure
@@ -179,6 +180,8 @@ public:
 	virtual void set_clipboard(const String &p_text);
 	virtual String get_clipboard() const;
 	virtual bool has_clipboard() const;
+	virtual void set_clipboard_primary(const String &p_text);
+	virtual String get_clipboard_primary() const;
 
 	virtual void set_video_mode(const VideoMode &p_video_mode, int p_screen = 0) = 0;
 	virtual VideoMode get_video_mode(int p_screen = 0) const = 0;
@@ -209,6 +212,9 @@ public:
 	virtual void open_midi_inputs();
 	virtual void close_midi_inputs();
 
+	// Returned by get_screen_refresh_rate if the method fails.
+	const float SCREEN_REFRESH_RATE_FALLBACK = -1.0;
+
 	virtual int get_screen_count() const { return 1; }
 	virtual int get_current_screen() const { return 0; }
 	virtual void set_current_screen(int p_screen) {}
@@ -217,6 +223,7 @@ public:
 	virtual int get_screen_dpi(int p_screen = -1) const { return 72; }
 	virtual float get_screen_scale(int p_screen = -1) const { return 1.0; }
 	virtual float get_screen_max_scale() const { return 1.0; };
+	virtual float get_screen_refresh_rate(int p_screen = -1) const { return SCREEN_REFRESH_RATE_FALLBACK; };
 	virtual Point2 get_window_position() const { return Vector2(); }
 	virtual void set_window_position(const Point2 &p_position) {}
 	virtual Size2 get_max_window_size() const { return Size2(); };
@@ -519,6 +526,7 @@ public:
 	virtual bool is_custom_exit_code();
 
 	virtual int get_processor_count() const;
+	virtual String get_processor_name() const;
 
 	virtual String get_unique_id() const;
 

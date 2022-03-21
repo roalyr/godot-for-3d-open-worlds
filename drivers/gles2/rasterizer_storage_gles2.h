@@ -787,6 +787,8 @@ public:
 		bool dirty_aabb;
 		bool dirty_data;
 
+		MMInterpolator interpolator;
+
 		MultiMesh() :
 				size(0),
 				transform_format(VS::MULTIMESH_TRANSFORM_2D),
@@ -807,30 +809,31 @@ public:
 
 	SelfList<MultiMesh>::List multimesh_update_list;
 
-	virtual RID multimesh_create();
+	virtual RID _multimesh_create();
 
-	virtual void multimesh_allocate(RID p_multimesh, int p_instances, VS::MultimeshTransformFormat p_transform_format, VS::MultimeshColorFormat p_color_format, VS::MultimeshCustomDataFormat p_data = VS::MULTIMESH_CUSTOM_DATA_NONE);
-	virtual int multimesh_get_instance_count(RID p_multimesh) const;
+	virtual void _multimesh_allocate(RID p_multimesh, int p_instances, VS::MultimeshTransformFormat p_transform_format, VS::MultimeshColorFormat p_color_format, VS::MultimeshCustomDataFormat p_data = VS::MULTIMESH_CUSTOM_DATA_NONE);
+	virtual int _multimesh_get_instance_count(RID p_multimesh) const;
 
-	virtual void multimesh_set_mesh(RID p_multimesh, RID p_mesh);
-	virtual void multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform &p_transform);
-	virtual void multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform);
-	virtual void multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color);
-	virtual void multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_custom_data);
+	virtual void _multimesh_set_mesh(RID p_multimesh, RID p_mesh);
+	virtual void _multimesh_instance_set_transform(RID p_multimesh, int p_index, const Transform &p_transform);
+	virtual void _multimesh_instance_set_transform_2d(RID p_multimesh, int p_index, const Transform2D &p_transform);
+	virtual void _multimesh_instance_set_color(RID p_multimesh, int p_index, const Color &p_color);
+	virtual void _multimesh_instance_set_custom_data(RID p_multimesh, int p_index, const Color &p_custom_data);
 
-	virtual RID multimesh_get_mesh(RID p_multimesh) const;
+	virtual RID _multimesh_get_mesh(RID p_multimesh) const;
 
-	virtual Transform multimesh_instance_get_transform(RID p_multimesh, int p_index) const;
-	virtual Transform2D multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const;
-	virtual Color multimesh_instance_get_color(RID p_multimesh, int p_index) const;
-	virtual Color multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const;
+	virtual Transform _multimesh_instance_get_transform(RID p_multimesh, int p_index) const;
+	virtual Transform2D _multimesh_instance_get_transform_2d(RID p_multimesh, int p_index) const;
+	virtual Color _multimesh_instance_get_color(RID p_multimesh, int p_index) const;
+	virtual Color _multimesh_instance_get_custom_data(RID p_multimesh, int p_index) const;
 
-	virtual void multimesh_set_as_bulk_array(RID p_multimesh, const PoolVector<float> &p_array);
+	virtual void _multimesh_set_as_bulk_array(RID p_multimesh, const PoolVector<float> &p_array);
 
-	virtual void multimesh_set_visible_instances(RID p_multimesh, int p_visible);
-	virtual int multimesh_get_visible_instances(RID p_multimesh) const;
+	virtual void _multimesh_set_visible_instances(RID p_multimesh, int p_visible);
+	virtual int _multimesh_get_visible_instances(RID p_multimesh) const;
 
-	virtual AABB multimesh_get_aabb(RID p_multimesh) const;
+	virtual AABB _multimesh_get_aabb(RID p_multimesh) const;
+	virtual MMInterpolator *_multimesh_get_interpolator(RID p_multimesh) const;
 
 	void update_dirty_multimeshes();
 
@@ -1222,7 +1225,6 @@ public:
 			GLuint color;
 			GLuint depth;
 			bool depth_owned;
-			RID texture;
 
 			External() :
 					fbo(0),
@@ -1356,7 +1358,8 @@ public:
 	virtual String get_video_adapter_name() const;
 	virtual String get_video_adapter_vendor() const;
 
-	void buffer_orphan_and_upload(unsigned int p_buffer_size, unsigned int p_offset, unsigned int p_data_size, const void *p_data, GLenum p_target = GL_ARRAY_BUFFER, GLenum p_usage = GL_DYNAMIC_DRAW, bool p_optional_orphan = false) const;
+	// NOTE : THESE SIZES ARE IN BYTES. BUFFER SIZES MAY NOT BE SPECIFIED IN BYTES SO REMEMBER TO CONVERT THEM WHEN CALLING.
+	void buffer_orphan_and_upload(unsigned int p_buffer_size_bytes, unsigned int p_offset_bytes, unsigned int p_data_size_bytes, const void *p_data, GLenum p_target = GL_ARRAY_BUFFER, GLenum p_usage = GL_DYNAMIC_DRAW, bool p_optional_orphan = false) const;
 	bool safe_buffer_sub_data(unsigned int p_total_buffer_size, GLenum p_target, unsigned int p_offset, unsigned int p_data_size, const void *p_data, unsigned int &r_offset_after) const;
 
 	RasterizerStorageGLES2();
@@ -1376,17 +1379,18 @@ inline bool RasterizerStorageGLES2::safe_buffer_sub_data(unsigned int p_total_bu
 
 // standardize the orphan / upload in one place so it can be changed per platform as necessary, and avoid future
 // bugs causing pipeline stalls
-inline void RasterizerStorageGLES2::buffer_orphan_and_upload(unsigned int p_buffer_size, unsigned int p_offset, unsigned int p_data_size, const void *p_data, GLenum p_target, GLenum p_usage, bool p_optional_orphan) const {
+// NOTE : THESE SIZES ARE IN BYTES. BUFFER SIZES MAY NOT BE SPECIFIED IN BYTES SO REMEMBER TO CONVERT THEM WHEN CALLING.
+inline void RasterizerStorageGLES2::buffer_orphan_and_upload(unsigned int p_buffer_size_bytes, unsigned int p_offset_bytes, unsigned int p_data_size_bytes, const void *p_data, GLenum p_target, GLenum p_usage, bool p_optional_orphan) const {
 	// Orphan the buffer to avoid CPU/GPU sync points caused by glBufferSubData
 	// Was previously #ifndef GLES_OVER_GL however this causes stalls on desktop mac also (and possibly other)
 	if (!p_optional_orphan || (config.should_orphan)) {
-		glBufferData(p_target, p_buffer_size, nullptr, p_usage);
+		glBufferData(p_target, p_buffer_size_bytes, nullptr, p_usage);
 #ifdef RASTERIZER_EXTRA_CHECKS
 		// fill with garbage off the end of the array
-		if (p_buffer_size) {
-			unsigned int start = p_offset + p_data_size;
+		if (p_buffer_size_bytes) {
+			unsigned int start = p_offset_bytes + p_data_size_bytes;
 			unsigned int end = start + 1024;
-			if (end < p_buffer_size) {
+			if (end < p_buffer_size_bytes) {
 				uint8_t *garbage = (uint8_t *)alloca(1024);
 				for (int n = 0; n < 1024; n++) {
 					garbage[n] = Math::random(0, 255);
@@ -1396,8 +1400,8 @@ inline void RasterizerStorageGLES2::buffer_orphan_and_upload(unsigned int p_buff
 		}
 #endif
 	}
-	DEV_ASSERT((p_offset + p_data_size) <= p_buffer_size);
-	glBufferSubData(p_target, p_offset, p_data_size, p_data);
+	ERR_FAIL_COND((p_offset_bytes + p_data_size_bytes) > p_buffer_size_bytes);
+	glBufferSubData(p_target, p_offset_bytes, p_data_size_bytes, p_data);
 }
 
 #endif // RASTERIZERSTORAGEGLES2_H

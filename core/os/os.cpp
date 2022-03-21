@@ -170,6 +170,14 @@ bool OS::has_clipboard() const {
 	return !get_clipboard().empty();
 }
 
+void OS::set_clipboard_primary(const String &p_text) {
+	_primary_clipboard = p_text;
+}
+
+String OS::get_clipboard_primary() const {
+	return _primary_clipboard;
+}
+
 String OS::get_executable_path() const {
 	return _execpath;
 }
@@ -510,6 +518,10 @@ String OS::get_unique_id() const {
 
 int OS::get_processor_count() const {
 	return 1;
+}
+
+String OS::get_processor_name() const {
+	return "";
 }
 
 Error OS::native_video_play(String p_path, float p_volume, String p_audio_track, String p_subtitle_track) {

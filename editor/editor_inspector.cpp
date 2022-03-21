@@ -36,11 +36,26 @@
 #include "dictionary_property_edit.h"
 #include "editor_feature_profile.h"
 #include "editor_node.h"
+#include "editor_property_name_processor.h"
 #include "editor_scale.h"
 #include "editor_settings.h"
 #include "multi_node_edit.h"
 #include "scene/property_utils.h"
 #include "scene/resources/packed_scene.h"
+
+static bool _property_path_matches(const String &p_property_path, const String &p_filter) {
+	if (p_property_path.findn(p_filter) != -1) {
+		return true;
+	}
+
+	const Vector<String> sections = p_property_path.split("/");
+	for (int i = 0; i < sections.size(); i++) {
+		if (p_filter.is_subsequence_ofi(EditorPropertyNameProcessor::get_singleton()->process_name(sections[i]))) {
+			return true;
+		}
+	}
+	return false;
+}
 
 Size2 EditorProperty::get_minimum_size() const {
 	Size2 ms;
@@ -834,7 +849,7 @@ void EditorProperty::_menu_option(int p_option) {
 			emit_changed(property, EditorNode::get_singleton()->get_inspector()->get_property_clipboard());
 		} break;
 		case MENU_COPY_PROPERTY_PATH: {
-			OS::get_singleton()->set_clipboard(property);
+			OS::get_singleton()->set_clipboard(property_path);
 		} break;
 	}
 }
@@ -1324,6 +1339,7 @@ void EditorInspector::_parse_added_editors(VBoxContainer *current_vbox, Ref<Edit
 				if (F->get().properties.size() == 1) {
 					//since it's one, associate:
 					ep->property = F->get().properties[0];
+					ep->property_path = property_prefix + F->get().properties[0];
 					ep->property_usage = 0;
 				}
 
@@ -1545,30 +1561,23 @@ void EditorInspector::update_tree() {
 		}
 
 		String name = (basename.find("/") != -1) ? basename.right(basename.rfind("/") + 1) : basename;
+		String name_override = name;
 
 		if (capitalize_paths) {
 			int dot = name.find(".");
 			if (dot != -1) {
-				String ov = name.right(dot);
-				name = name.substr(0, dot);
-				name = name.capitalize();
-				name += ov;
-
+				name_override = name.substr(0, dot);
+				name = EditorPropertyNameProcessor::get_singleton()->process_name(name_override) + name.right(dot);
 			} else {
-				name = name.capitalize();
+				name = EditorPropertyNameProcessor::get_singleton()->process_name(name);
 			}
 		}
 
 		String path = basename.left(basename.rfind("/"));
 
-		if (use_filter && filter != "") {
-			String cat = path;
-
-			if (capitalize_paths) {
-				cat = cat.capitalize();
-			}
-
-			if (!filter.is_subsequence_ofi(cat) && !filter.is_subsequence_ofi(name) && property_prefix.to_lower().find(filter.to_lower()) == -1) {
+		if (use_filter && !filter.empty()) {
+			const String property_path = property_prefix + (path.empty() ? "" : path + "/") + name_override;
+			if (!_property_path_matches(property_path, filter)) {
 				continue;
 			}
 		}
@@ -1594,13 +1603,15 @@ void EditorInspector::update_tree() {
 					current_vbox->add_child(section);
 					sections.push_back(section);
 
+					String label = path_name;
 					if (capitalize_paths) {
-						path_name = path_name.capitalize();
+						label = EditorPropertyNameProcessor::get_singleton()->process_name(label);
 					}
 
 					Color c = sscolor;
 					c.a /= level;
-					section->setup(acc_path, path_name, object, c, use_folding);
+					section->setup(acc_path, label, object, c, use_folding);
+					section->set_tooltip(EditorPropertyNameProcessor::get_singleton()->make_tooltip_for_name(path_name));
 
 					VBoxContainer *vb = section->get_vbox();
 					item_path[acc_path] = vb;
@@ -1702,6 +1713,7 @@ void EditorInspector::update_tree() {
 						if (F->get().properties.size() == 1) {
 							//since it's one, associate:
 							ep->property = F->get().properties[0];
+							ep->property_path = property_prefix + F->get().properties[0];
 							ep->property_usage = p.usage;
 							//and set label?
 						}

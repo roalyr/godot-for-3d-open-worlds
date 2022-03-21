@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ProjectSettings" inherits="Object" version="3.5">
+<class name="ProjectSettings" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Contains global variables accessible from everywhere.
 	</brief_description>
@@ -321,6 +321,9 @@
 		<member name="debug/gdscript/warnings/exclude_addons" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], scripts in the [code]res://addons[/code] folder will not generate warnings.
 		</member>
+		<member name="debug/gdscript/warnings/export_hint_type_mistmatch" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], enables warnings when the type of the default value set to an exported variable is different than the specified export type.
+		</member>
 		<member name="debug/gdscript/warnings/function_conflicts_constant" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], enables warnings when a function is declared with the same name as a constant.
 		</member>
@@ -534,6 +537,12 @@
 		</member>
 		<member name="gui/common/default_scroll_deadzone" type="int" setter="" getter="" default="0">
 			Default value for [member ScrollContainer.scroll_deadzone], which will be used for all [ScrollContainer]s unless overridden.
+		</member>
+		<member name="gui/common/drop_mouse_on_gui_input_disabled" type="bool" setter="" getter="" default="false">
+			If enabled, the moment [member Viewport.gui_disable_input] is set to [code]false[/code] to disable GUI input in a viewport, current mouse over and mouse focus will be dropped.
+			That behavior helps to keep a robust GUI state, with no surprises when input is resumed regardless what has happened in the meantime.
+			If disabled, the legacy behavior is used, which consists in just not doing anything besides the GUI input disable itself.
+			[b]Note:[/b] This is set to [code]true[/code] by default for new projects and is the recommended setting.
 		</member>
 		<member name="gui/common/swap_ok_cancel" type="bool" setter="" getter="">
 			If [code]true[/code], swaps OK and Cancel buttons in dialogs on Windows and UWP to follow interface conventions.
@@ -1138,6 +1147,10 @@
 			Sets which physics engine to use for 3D physics.
 			"DEFAULT" is currently the [url=https://bulletphysics.org]Bullet[/url] physics engine. The "GodotPhysics" engine is still supported as an alternative.
 		</member>
+		<member name="physics/3d/smooth_trimesh_collision" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], smooths out collision with trimesh shapes ([ConcavePolygonShape]) by telling the Bullet physics engine to generate internal edge information for every trimesh shape created.
+			[b]Note:[/b] Only effective if [member physics/3d/physics_engine] is set to [code]DEFAULT[/code] or [code]Bullet[/code], [i]not[/i] [code]GodotPhysics[/code].
+		</member>
 		<member name="physics/common/enable_object_picking" type="bool" setter="" getter="" default="true">
 			Enables [member Viewport.physics_object_picking] on the root viewport.
 		</member>
@@ -1152,10 +1165,15 @@
 			[b]Note:[/b] This property is only read when the project starts. To change the physics FPS at runtime, set [member Engine.iterations_per_second] instead.
 			[b]Note:[/b] Only 8 physics ticks may be simulated per rendered frame at most. If more than 8 physics ticks have to be simulated per rendered frame to keep up with rendering, the game will appear to slow down (even if [code]delta[/code] is used consistently in physics calculations). Therefore, it is recommended not to increase [member physics/common/physics_fps] above 240. Otherwise, the game will slow down when the rendering framerate goes below 30 FPS.
 		</member>
+		<member name="physics/common/physics_interpolation" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], the renderer will interpolate the transforms of physics objects between the last two transforms, such that smooth motion is seen when physics ticks do not coincide with rendered frames.
+			[b]Note:[/b] When moving objects to new positions (rather than the usual physics motion) you may want to temporarily turn off interpolation to prevent a visible glitch. You can do this using the [method Node.reset_physics_interpolation] function.
+		</member>
 		<member name="physics/common/physics_jitter_fix" type="float" setter="" getter="" default="0.5">
 			Controls how much physics ticks are synchronized with real time. For 0 or less, the ticks are synchronized. Such values are recommended for network games, where clock synchronization matters. Higher values cause higher deviation of in-game clock and real clock, but allows smoothing out framerate jitters. The default value of 0.5 should be fine for most; values above 2 could cause the game to react to dropped frames with a noticeable delay and are not recommended.
 			[b]Note:[/b] For best results, when using a custom physics interpolation solution, the physics jitter fix should be disabled by setting [member physics/common/physics_jitter_fix] to [code]0[/code].
-			[b]Note:[/b] This property is only read when the project starts. To change the physics FPS at runtime, set [member Engine.physics_jitter_fix] instead.
+			[b]Note:[/b] Jitter fix is automatically disabled at runtime when [member physics/common/physics_interpolation] is enabled.
+			[b]Note:[/b] This property is only read when the project starts. To change the value at runtime, set [member Engine.physics_jitter_fix] instead.
 		</member>
 		<member name="rendering/2d/opengl/batching_send_null" type="int" setter="" getter="" default="0">
 			[b]Experimental.[/b] Calls [code]glBufferData[/code] with NULL data prior to uploading batching data. This may not be necessary but can be used for safety.
@@ -1294,6 +1312,10 @@
 			To reduce loading times after the project has been launched at least once, you can use [code]Asynchronous + Cache[/code]. This also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
 			[b]Note:[/b] Asynchronous compilation is currently only supported for spatial (3D) and particle materials/shaders. CanvasItem (2D) shaders will not use asynchronous compilation even if this setting is set to [code]Asynchronous[/code] or [code]Asynchronous + Cache[/code].
 		</member>
+		<member name="rendering/gles3/shaders/shader_compilation_mode.mobile" type="int" setter="" getter="" default="0">
+			An override for [code]rendering/gles3/shaders/shader_compilation_mode[/code], so asynchronous compilation can be disabled for mobile.
+			You may want to do that since mobile GPUs generally won't support ubershaders due to their complexity.
+		</member>
 		<member name="rendering/limits/buffers/blend_shape_max_buffer_size_kb" type="int" setter="" getter="" default="4096">
 			Max buffer size for blend shapes. Any blend shape bigger than this will not work.
 		</member>
@@ -1364,11 +1386,12 @@
 			[b]Note:[/b] Generally you should only use this option if you encounter bugs when it is set to [code]false[/code], i.e. there are problems with the default method.
 		</member>
 		<member name="rendering/quality/depth/hdr" type="bool" setter="" getter="" default="true">
-			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1.
+			If [code]true[/code], allocates the root [Viewport]'s framebuffer with high dynamic range. High dynamic range allows the use of [Color] values greater than 1. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].
 			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth/hdr.mobile" type="bool" setter="" getter="" default="false">
-			Lower-end override for [member rendering/quality/depth/hdr] on mobile devices, due to performance concerns or driver support.
+			Lower-end override for [member rendering/quality/depth/hdr] on mobile devices, due to performance concerns or driver support. This must be set to [code]true[/code] for glow rendering to work if [member Environment.glow_hdr_threshold] is greater than or equal to [code]1.0[/code].
+			[b]Note:[/b] Only available on the GLES3 backend.
 		</member>
 		<member name="rendering/quality/depth/use_32_bpc_depth" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], allocates the root [Viewport]'s framebuffer with full floating-point precision (32-bit) instead of half floating-point precision (16-bit). Only effective when [member rendering/quality/depth/hdr] is also enabled.
@@ -1417,7 +1440,7 @@
 			If [code]true[/code], uses nearest-neighbor mipmap filtering when using mipmaps (also called "bilinear filtering"), which will result in visible seams appearing between mipmap stages. This may increase performance in mobile as less memory bandwidth is used. If [code]false[/code], linear mipmap filtering (also called "trilinear filtering") is used.
 		</member>
 		<member name="rendering/quality/intended_usage/framebuffer_allocation" type="int" setter="" getter="" default="2">
-			Strategy used for framebuffer allocation. The simpler it is, the less resources it uses (but the less features it supports). If set to "2D Without Sampling" or "3D Without Effects", sample buffers will not be allocated. This means [code]SCREEN_TEXTURE[/code] and [code]DEPTH_TEXTURE[/code] will not be available in shaders and post-processing effects will not be available in the [Environment].
+			Strategy used for framebuffer allocation. The simpler it is, the less resources it uses (but the less features it supports). If set to "2D Without Sampling" or "3D Without Effects", sample buffers will not be allocated. This means [code]SCREEN_TEXTURE[/code] and [code]DEPTH_TEXTURE[/code] will not be available in shaders and post-processing effects such as glow will not be available in [Environment].
 		</member>
 		<member name="rendering/quality/intended_usage/framebuffer_allocation.mobile" type="int" setter="" getter="" default="3">
 			Lower-end override for [member rendering/quality/intended_usage/framebuffer_allocation] on mobile devices, due to performance concerns or driver support.

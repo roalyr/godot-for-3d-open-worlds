@@ -1083,7 +1083,12 @@ Error DocData::save_classes(const String &p_default_path, const Map<String, Stri
 			header += " inherits=\"" + c.inherits + "\"";
 		}
 		header += String(" version=\"") + VERSION_BRANCH + "\"";
-		header += ">";
+		// Reference the XML schema so editors can provide error checking.
+		// Modules are nested deep, so change the path to reference the same schema everywhere.
+		const String schema_path = save_path.find("modules/") != -1 ? "../../../doc/class.xsd" : "../class.xsd";
+		header += vformat(
+				R"( xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="%s">)",
+				schema_path);
 		_write_string(f, 0, header);
 
 		_write_string(f, 1, "<brief_description>");
@@ -1097,7 +1102,7 @@ Error DocData::save_classes(const String &p_default_path, const Map<String, Stri
 		_write_string(f, 1, "<tutorials>");
 		for (int i = 0; i < c.tutorials.size(); i++) {
 			TutorialDoc tutorial = c.tutorials.get(i);
-			String title_attribute = (!tutorial.title.empty()) ? " title=\"" + tutorial.title.xml_escape() + "\"" : "";
+			String title_attribute = (!tutorial.title.empty()) ? " title=\"" + _translate_doc_string(tutorial.title).xml_escape() + "\"" : "";
 			_write_string(f, 2, "<link" + title_attribute + ">" + tutorial.link.xml_escape() + "</link>");
 		}
 		_write_string(f, 1, "</tutorials>");
@@ -1249,7 +1254,8 @@ Error DocData::save_classes(const String &p_default_path, const Map<String, Stri
 Error DocData::load_compressed(const uint8_t *p_data, int p_compressed_size, int p_uncompressed_size) {
 	Vector<uint8_t> data;
 	data.resize(p_uncompressed_size);
-	Compression::decompress(data.ptrw(), p_uncompressed_size, p_data, p_compressed_size, Compression::MODE_DEFLATE);
+	int ret = Compression::decompress(data.ptrw(), p_uncompressed_size, p_data, p_compressed_size, Compression::MODE_DEFLATE);
+	ERR_FAIL_COND_V_MSG(ret == -1, ERR_FILE_CORRUPT, "Compressed file is corrupt.");
 	class_list.clear();
 
 	Ref<XMLParser> parser = memnew(XMLParser);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="LineEdit" inherits="Control" version="3.5">
+<class name="LineEdit" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Control that provides single-line string editing.
 	</brief_description>
@@ -121,6 +121,9 @@
 		<member name="context_menu_enabled" type="bool" setter="set_context_menu_enabled" getter="is_context_menu_enabled" default="true">
 			If [code]true[/code], the context menu will appear when right-clicked.
 		</member>
+		<member name="deselect_on_focus_loss_enabled" type="bool" setter="set_deselect_on_focus_loss_enabled" getter="is_deselect_on_focus_loss_enabled" default="true">
+			If [code]true[/code], the selected text will be deselected when focus is lost.
+		</member>
 		<member name="editable" type="bool" setter="set_editable" getter="is_editable" default="true">
 			If [code]false[/code], existing text cannot be modified and new text cannot be added.
 		</member>
@@ -141,6 +144,10 @@
 			# `text` becomes "Hello good".
 			# `text_change_rejected` is emitted with "bye" as parameter.
 			[/codeblock]
+		</member>
+		<member name="middle_mouse_paste_enabled" type="bool" setter="set_middle_mouse_paste_enabled" getter="is_middle_mouse_paste_enabled" default="true">
+			If [code]false[/code], using middle mouse button to paste clipboard will be disabled.
+			[b]Note:[/b] This method is only implemented on Linux.
 		</member>
 		<member name="mouse_default_cursor_shape" type="int" setter="set_default_cursor_shape" getter="get_default_cursor_shape" overrides="Control" enum="Control.CursorShape" default="1" />
 		<member name="placeholder_alpha" type="float" setter="set_placeholder_alpha" getter="get_placeholder_alpha" default="0.6">

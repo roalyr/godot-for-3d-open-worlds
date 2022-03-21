@@ -311,6 +311,10 @@ float _OS::get_screen_max_scale() const {
 	return OS::get_singleton()->get_screen_max_scale();
 }
 
+float _OS::get_screen_refresh_rate(int p_screen) const {
+	return OS::get_singleton()->get_screen_refresh_rate();
+}
+
 Point2 _OS::get_window_position() const {
 	return OS::get_singleton()->get_window_position();
 }
@@ -960,6 +964,10 @@ int _OS::get_processor_count() const {
 	return OS::get_singleton()->get_processor_count();
 }
 
+String _OS::get_processor_name() const {
+	return OS::get_singleton()->get_processor_name();
+}
+
 bool _OS::is_stdout_verbose() const {
 	return OS::get_singleton()->is_stdout_verbose();
 }
@@ -1263,6 +1271,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_screen_dpi", "screen"), &_OS::get_screen_dpi, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_screen_scale", "screen"), &_OS::get_screen_scale, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_screen_max_scale"), &_OS::get_screen_max_scale);
+	ClassDB::bind_method(D_METHOD("get_screen_refresh_rate", "screen"), &_OS::get_screen_refresh_rate, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("get_window_position"), &_OS::get_window_position);
 	ClassDB::bind_method(D_METHOD("set_window_position", "position"), &_OS::set_window_position);
 	ClassDB::bind_method(D_METHOD("get_window_size"), &_OS::get_window_size);
@@ -1319,6 +1328,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_low_processor_usage_mode_sleep_usec"), &_OS::get_low_processor_usage_mode_sleep_usec);
 
 	ClassDB::bind_method(D_METHOD("get_processor_count"), &_OS::get_processor_count);
+	ClassDB::bind_method(D_METHOD("get_processor_name"), &_OS::get_processor_name);
 
 	ClassDB::bind_method(D_METHOD("get_executable_path"), &_OS::get_executable_path);
 	ClassDB::bind_method(D_METHOD("execute", "path", "arguments", "blocking", "output", "read_stderr", "open_console"), &_OS::execute, DEFVAL(true), DEFVAL(Array()), DEFVAL(false), DEFVAL(false));

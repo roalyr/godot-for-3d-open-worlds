@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="OS" inherits="Object" version="3.5">
+<class name="OS" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Operating System functions.
 	</brief_description>
@@ -345,7 +345,14 @@
 		<method name="get_processor_count" qualifiers="const">
 			<return type="int" />
 			<description>
-				Returns the number of threads available on the host machine.
+				Returns the number of [i]logical[/i] CPU cores available on the host machine. On CPUs with HyperThreading enabled, this number will be greater than the number of [i]physical[/i] CPU cores.
+			</description>
+		</method>
+		<method name="get_processor_name" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the name of the CPU model on the host machine (e.g. "Intel(R) Core(TM) i7-6700K CPU @ 4.00GHz").
+				[b]Note:[/b] This method is only implemented on Windows, macOS, Linux and iOS. On Android, HTML5 and UWP, [method get_processor_name] returns an empty string.
 			</description>
 		</method>
 		<method name="get_real_window_size" qualifiers="const">
@@ -399,6 +406,20 @@
 			<argument index="0" name="screen" type="int" default="-1" />
 			<description>
 				Returns the position of the specified screen by index. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
+			</description>
+		</method>
+		<method name="get_screen_refresh_rate" qualifiers="const">
+			<return type="float" />
+			<argument index="0" name="screen" type="int" default="-1" />
+			<description>
+				Returns the current refresh rate of the specified screen. If [code]screen[/code] is [code]-1[/code] (the default value), the current screen will be used.
+				[b]Note:[/b] Returns [code]-1.0[/code] if Godot fails to find the refresh rate for the specified screen. On HTML5, [method get_screen_refresh_rate] will always return [code]-1.0[/code] as there is no way to retrieve the refresh rate on that platform.
+				To fallback to a default refresh rate if the method fails, try:
+				[codeblock]
+				var refresh_rate = OS.get_screen_refresh_rate()
+				if refresh_rate &lt; 0:
+				    refresh_rate = 60.0
+				[/codeblock]
 			</description>
 		</method>
 		<method name="get_screen_scale" qualifiers="const">

@@ -45,17 +45,12 @@ protected:
 	static void _bind_methods();
 
 	RID get_shape() const { return _shape; }
-	OccluderShape(RID p_shape);
+	OccluderShape();
 
 public:
 	virtual RID get_rid() const { return _shape; }
 	~OccluderShape();
 
-	virtual void notification_enter_world(RID p_scenario) = 0;
-	virtual void update_shape_to_visual_server() = 0;
-	void update_transform_to_visual_server(const Transform &p_global_xform);
-	void update_active_to_visual_server(bool p_active);
-	void notification_exit_world();
 	virtual Transform center_node(const Transform &p_global_xform, const Transform &p_parent_xform, real_t p_snap) = 0;
 
 #ifdef TOOLS_ENABLED
@@ -87,8 +82,7 @@ public:
 	void set_sphere_position(int p_idx, const Vector3 &p_position);
 	void set_sphere_radius(int p_idx, real_t p_radius);
 
-	virtual void notification_enter_world(RID p_scenario);
-	virtual void update_shape_to_visual_server();
+	void update_shape_to_visual_server();
 	virtual Transform center_node(const Transform &p_global_xform, const Transform &p_parent_xform, real_t p_snap);
 
 #ifdef TOOLS_ENABLED

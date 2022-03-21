@@ -41,6 +41,8 @@
 #include "servers/visual/visual_server_raster.h"
 
 #include <mach-o/dyld.h>
+#include <os/log.h>
+#include <sys/sysctl.h>
 
 #include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
@@ -48,9 +50,6 @@
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hid/IOHIDKeys.h>
 #include <IOKit/hid/IOHIDLib.h>
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
-#include <os/log.h>
-#endif
 
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -1510,6 +1509,15 @@ void OS_OSX::set_ime_position(const Point2 &p_pos) {
 	im_position = p_pos;
 }
 
+String OS_OSX::get_processor_name() const {
+	char buffer[256];
+	size_t buffer_len = 256;
+	if (sysctlbyname("machdep.cpu.brand_string", &buffer, &buffer_len, NULL, 0) == 0) {
+		return String::utf8(buffer, buffer_len);
+	}
+	ERR_FAIL_V_MSG("", String("Couldn't get the CPU model name. Returning an empty string."));
+}
+
 void OS_OSX::initialize_core() {
 	crash_handler.initialize();
 
@@ -2554,6 +2562,22 @@ int OS_OSX::get_screen_dpi(int p_screen) const {
 	}
 
 	return 72;
+}
+
+float OS_OSX::get_screen_refresh_rate(int p_screen) const {
+	if (p_screen < 0) {
+		p_screen = get_current_screen();
+	}
+
+	NSArray *screenArray = [NSScreen screens];
+	if ((NSUInteger)p_screen < [screenArray count]) {
+		NSDictionary *description = [[screenArray objectAtIndex:p_screen] deviceDescription];
+		const CGDisplayModeRef displayMode = CGDisplayCopyDisplayMode([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
+		const double displayRefreshRate = CGDisplayModeGetRefreshRate(displayMode);
+		return (float)displayRefreshRate;
+	}
+	ERR_PRINT("An error occurred while trying to get the screen refresh rate.");
+	return OS::get_singleton()->SCREEN_REFRESH_RATE_FALLBACK;
 }
 
 Size2 OS_OSX::get_screen_size(int p_screen) const {

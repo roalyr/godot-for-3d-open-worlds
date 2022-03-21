@@ -470,6 +470,7 @@ private:
 					initial_settings["application/config/icon"] = "res://icon.png";
 					initial_settings["rendering/environment/default_environment"] = "res://default_env.tres";
 					initial_settings["physics/common/enable_pause_aware_picking"] = true;
+					initial_settings["gui/common/drop_mouse_on_gui_input_disabled"] = true;
 
 					if (ProjectSettings::get_singleton()->save_custom(dir.plus_file("project.godot"), initial_settings, Vector<String>(), false) != OK) {
 						set_message(TTR("Couldn't create project.godot in project path."), MESSAGE_ERROR);
@@ -2441,7 +2442,7 @@ ProjectManager::ProjectManager() {
 	String cp;
 	cp += 0xA9;
 	// TRANSLATORS: This refers to the application where users manage their Godot projects.
-	OS::get_singleton()->set_window_title(VERSION_NAME + String(" - ") + TTR("Project Manager"));
+	OS::get_singleton()->set_window_title(VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 	Control *center_box = memnew(Control);
 	center_box->set_v_size_flags(SIZE_EXPAND_FILL);
