@@ -537,7 +537,7 @@ void Camera::_bind_methods() {
 	// Fixed ranges for planes. According to Z_MIN and Z_MAX in spatial_editor_plugin.
 	// This is a crude solutions. Maybe not entirely optimal, but is required to ensure no issues with logarithmic depth.
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_RANGE, "0.01,0.01,0.01"), "set_znear", "get_znear");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_RANGE, "1e15,1e15,1e15"), "set_zfar", "get_zfar");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_RANGE, "1e19,1e19,1e19"), "set_zfar", "get_zfar");
 
 
 

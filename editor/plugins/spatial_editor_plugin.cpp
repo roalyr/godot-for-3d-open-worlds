@@ -75,8 +75,8 @@
 
 // Required for logarithmic depth buffer vertex shader z_far.
 ////////////// Also synchronize with camera MAX_Z///////////////////////
-#define MAX_Z 1e15             // Far plane
-#define ZOOM_FREELOOK_MAX 1e15 // Editor zoom out.
+#define MAX_Z 1e19             // Far plane
+#define ZOOM_FREELOOK_MAX 1e19 // Editor zoom out.
 
 
 #define MIN_FOV 0.01
