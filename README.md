@@ -11,20 +11,21 @@ floats. In order to achieve this a few tweaks were made.
 This fork is regularly synchronized with [3.x branch](https://github.com/godotengine/godot/tree/3.x).
 
 Implemented tweaks:
-* Logarithmic depth is written in fragment shader as only reliable option with minor FPS sacrifice.
+* Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
+* Implemented for both GLES2 and GLES3.
 * Near plane is fixed at 0.01 (not adjustable).
-* Far plane is fixed at 1e15 (not adjustable).
-* Increased editor zoom out distance to 1e15.
+* Far plane is fixed at 1e19 (not adjustable, further may promote making objects with sizes that cause overflow).
+* Increased editor zoom out distance to 1e19.
 * Increased editor zoom increment for faster zooming.
 
-Requirements:
+Suggested:
 * LOD add-on is welcomed since no object will be culled from rendering at distance.
 
 To-do:
 * Implement logarithmic depth for all shaders, post-processes, shadows and light.
 
 Not working (properly) as of yet:
-* Shadows, post-processes, lights may (and most likely will) misbehave. It will be fixed.
+* Shadows, post-processes, lights may (and most likely will) misbehave. Trying to fix.
 * Editor controls jitter and jump around due to single-precision floats being used.  
 In order to tackle this you may want to avoid ortho view and split your global  
 coordinate system (3D space) into smaller ones and put scene objects into them.
@@ -33,8 +34,9 @@ coordinate system (3D space) into smaller ones and put scene objects into them.
 More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 
 ## Installation
-You can download binaries and templates (not all of them were made) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
-You can build it from source. Refer to [rebuild script](rebuild.sh) for convenience.
+Binaries available for Linux, Windows and Android.
+You can download binaries and templates (debug) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
+You can build it from source. Refer to `rebuild_` scripts in root folder for convenience.
 
 <br/><br/>
 <br/><br/>
