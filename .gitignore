@@ -362,11 +362,3 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
-
-
-# GF3DOW other
-node_modules/
-__pycache__/
-scons_cache_android/
-scons_cache_x11/
-scons_cache_windows/
