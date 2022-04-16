@@ -70,6 +70,8 @@ class OS_Android : public OS_Unix {
 	bool transparency_enabled = false;
 
 public:
+	static const char *ANDROID_EXEC_PATH;
+
 	// functions used by main to initialize/deinitialize the OS
 	virtual int get_video_driver_count() const;
 	virtual const char *get_video_driver_name(int p_driver) const;
@@ -121,7 +123,7 @@ public:
 	virtual bool can_draw() const;
 
 	void main_loop_begin();
-	bool main_loop_iterate();
+	bool main_loop_iterate(bool *r_should_swap_buffers = nullptr);
 	void main_loop_end();
 	void main_loop_focusout();
 	void main_loop_focusin();
@@ -144,6 +146,7 @@ public:
 	virtual ScreenOrientation get_screen_orientation() const;
 
 	virtual Error shell_open(String p_uri);
+	virtual String get_executable_path() const;
 	virtual String get_user_data_dir() const;
 	virtual String get_data_path() const;
 	virtual String get_cache_path() const;
@@ -154,6 +157,8 @@ public:
 	virtual bool has_clipboard() const;
 	virtual String get_model_name() const;
 	virtual int get_screen_dpi(int p_screen = 0) const;
+	virtual float get_screen_scale(int p_screen = -1) const;
+	virtual float get_screen_max_scale() const;
 	virtual float get_screen_refresh_rate(int p_screen = 0) const;
 
 	virtual bool get_window_per_pixel_transparency_enabled() const { return transparency_enabled; }
@@ -173,9 +178,16 @@ public:
 	virtual String get_joy_guid(int p_device) const;
 	void vibrate_handheld(int p_duration_ms);
 
+	virtual String get_config_path() const;
+
+	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr, bool p_open_console = false);
+
 	virtual bool _check_internal_feature_support(const String &p_feature);
 	OS_Android(GodotJavaWrapper *p_godot_java, GodotIOJavaWrapper *p_godot_io_java, bool p_use_apk_expansion);
 	~OS_Android();
+
+private:
+	Error create_instance(const List<String> &p_arguments, ProcessID *r_child_id);
 };
 
 #endif

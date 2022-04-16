@@ -76,6 +76,7 @@ private:
 
 	bool selecting_enabled;
 	bool deselect_on_focus_loss_enabled;
+	bool popup_show = false;
 
 	bool context_menu_enabled;
 	PopupMenu *menu;
@@ -187,6 +188,9 @@ public:
 	void select_all();
 	void selection_delete();
 	void deselect();
+	bool has_selection() const;
+	int get_selection_from_column() const;
+	int get_selection_to_column() const;
 
 	void delete_char();
 	void delete_text(int p_from_column, int p_to_column);

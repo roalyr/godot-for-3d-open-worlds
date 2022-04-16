@@ -53,6 +53,7 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 
 	if (b.is_valid()) {
 		if (b->is_pressed() && b->get_button_index() == BUTTON_RIGHT && context_menu_enabled) {
+			popup_show = true;
 			if (editable) {
 				menu->set_item_disabled(menu->get_item_index(MENU_UNDO), !has_undo());
 				menu->set_item_disabled(menu->get_item_index(MENU_REDO), !has_redo());
@@ -62,7 +63,6 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 			menu->set_size(Vector2(1, 1));
 			menu->set_scale(get_global_transform().get_scale());
 			menu->popup();
-			grab_focus();
 			accept_event();
 			return;
 		}
@@ -608,6 +608,7 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 				} break;
 				case KEY_MENU: {
 					if (context_menu_enabled) {
+						popup_show = true;
 						if (editable) {
 							menu->set_item_disabled(menu->get_item_index(MENU_UNDO), !has_undo());
 							menu->set_item_disabled(menu->get_item_index(MENU_REDO), !has_redo());
@@ -1040,9 +1041,10 @@ void LineEdit::_notification(int p_what) {
 				OS::get_singleton()->hide_virtual_keyboard();
 			}
 
-			if (deselect_on_focus_loss_enabled) {
+			if (deselect_on_focus_loss_enabled && !popup_show) {
 				deselect();
 			}
+			popup_show = false;
 		} break;
 		case MainLoop::NOTIFICATION_OS_IME_UPDATE: {
 			if (has_focus()) {
@@ -1584,6 +1586,20 @@ void LineEdit::deselect() {
 	update();
 }
 
+bool LineEdit::has_selection() const {
+	return selection.enabled;
+}
+
+int LineEdit::get_selection_from_column() const {
+	ERR_FAIL_COND_V(!selection.enabled, -1);
+	return selection.begin;
+}
+
+int LineEdit::get_selection_to_column() const {
+	ERR_FAIL_COND_V(!selection.enabled, -1);
+	return selection.end;
+}
+
 void LineEdit::selection_delete() {
 	if (selection.enabled) {
 		delete_text(selection.begin, selection.end);
@@ -1956,6 +1972,9 @@ void LineEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("select", "from", "to"), &LineEdit::select, DEFVAL(0), DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("select_all"), &LineEdit::select_all);
 	ClassDB::bind_method(D_METHOD("deselect"), &LineEdit::deselect);
+	ClassDB::bind_method(D_METHOD("has_selection"), &LineEdit::has_selection);
+	ClassDB::bind_method(D_METHOD("get_selection_from_column"), &LineEdit::get_selection_from_column);
+	ClassDB::bind_method(D_METHOD("get_selection_to_column"), &LineEdit::get_selection_to_column);
 	ClassDB::bind_method(D_METHOD("set_text", "text"), &LineEdit::set_text);
 	ClassDB::bind_method(D_METHOD("get_text"), &LineEdit::get_text);
 	ClassDB::bind_method(D_METHOD("set_placeholder", "text"), &LineEdit::set_placeholder);

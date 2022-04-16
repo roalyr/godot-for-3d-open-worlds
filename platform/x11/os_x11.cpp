@@ -1774,8 +1774,15 @@ bool OS_X11::window_maximize_check(const char *p_atom_name) const {
 
 	if (result == Success) {
 		Atom *atoms = (Atom *)data;
-		Atom wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
-		Atom wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
+		Atom wm_act_max_horz;
+		Atom wm_act_max_vert;
+		if (strcmp(p_atom_name, "_NET_WM_STATE") == 0) {
+			wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+			wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+		} else {
+			wm_act_max_horz = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
+			wm_act_max_vert = XInternAtom(x11_display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
+		}
 		bool found_wm_act_max_horz = false;
 		bool found_wm_act_max_vert = false;
 
@@ -2222,7 +2229,7 @@ Atom OS_X11::_process_selection_request_target(Atom p_target, Window p_requestor
 		// is the owner during a selection request.
 		CharString clip;
 		static const char *target_type = "PRIMARY";
-		if (p_selection != None && String(XGetAtomName(x11_display, p_selection)) == target_type) {
+		if (p_selection != None && get_atom_name(x11_display, p_selection) == target_type) {
 			clip = OS::get_clipboard_primary().utf8();
 		} else {
 			clip = OS::get_clipboard().utf8();

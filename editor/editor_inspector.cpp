@@ -238,7 +238,7 @@ void EditorProperty::_notification(int p_what) {
 		}
 
 		int ofs = get_constant("font_offset");
-		int text_limit = text_size;
+		int text_limit = text_size - ofs;
 
 		if (checkable) {
 			Ref<Texture> checkbox;
@@ -256,8 +256,10 @@ void EditorProperty::_notification(int p_what) {
 			}
 			check_rect = Rect2(ofs, ((size.height - checkbox->get_height()) / 2), checkbox->get_width(), checkbox->get_height());
 			draw_texture(checkbox, check_rect.position, color2);
-			ofs += get_constant("hseparator", "Tree") + checkbox->get_width() + get_constant("hseparation", "CheckBox");
-			text_limit -= ofs;
+
+			int check_ofs = get_constant("hseparator", "Tree") + checkbox->get_width() + get_constant("hseparation", "CheckBox");
+			ofs += check_ofs;
+			text_limit -= check_ofs;
 		} else {
 			check_rect = Rect2();
 		}
@@ -265,7 +267,7 @@ void EditorProperty::_notification(int p_what) {
 		if (can_revert) {
 			Ref<Texture> reload_icon = get_icon("ReloadSmall", "EditorIcons");
 			text_limit -= reload_icon->get_width() + get_constant("hseparator", "Tree") * 2;
-			revert_rect = Rect2(text_limit + get_constant("hseparator", "Tree"), (size.height - reload_icon->get_height()) / 2, reload_icon->get_width(), reload_icon->get_height());
+			revert_rect = Rect2(ofs + text_limit, (size.height - reload_icon->get_height()) / 2, reload_icon->get_width(), reload_icon->get_height());
 
 			Color color2(1, 1, 1);
 			if (revert_hover) {
@@ -1612,8 +1614,22 @@ void EditorInspector::update_tree() {
 					current_vbox->add_child(section);
 					sections.push_back(section);
 
-					const String label = EditorPropertyNameProcessor::get_singleton()->process_name(path_name, property_name_style);
-					const String tooltip = EditorPropertyNameProcessor::get_singleton()->process_name(path_name, EditorPropertyNameProcessor::get_tooltip_style(property_name_style));
+					String label;
+					String tooltip;
+
+					// Only process group label if this is not the group or subgroup.
+					if ((i == 0 && path_name == group)) {
+						if (property_name_style == EditorPropertyNameProcessor::STYLE_LOCALIZED) {
+							label = TTRGET(path_name);
+							tooltip = path_name;
+						} else {
+							label = path_name;
+							tooltip = TTRGET(path_name);
+						}
+					} else {
+						label = EditorPropertyNameProcessor::get_singleton()->process_name(path_name, property_name_style);
+						tooltip = EditorPropertyNameProcessor::get_singleton()->process_name(path_name, EditorPropertyNameProcessor::get_tooltip_style(property_name_style));
+					}
 
 					Color c = sscolor;
 					c.a /= level;

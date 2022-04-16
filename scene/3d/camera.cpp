@@ -115,10 +115,6 @@ void Camera::_notification(int p_what) {
 			if (current || first_camera) {
 				viewport->_camera_set(this);
 			}
-
-			ERR_FAIL_COND(get_world().is_null());
-			VisualServer::get_singleton()->camera_set_scenario(camera, get_world()->get_scenario());
-
 		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 			_request_camera_update();
@@ -132,8 +128,6 @@ void Camera::_notification(int p_what) {
 			}
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
-			VisualServer::get_singleton()->camera_set_scenario(camera, RID());
-
 			if (!get_tree()->is_node_being_edited(this)) {
 				if (is_current()) {
 					clear_current();
@@ -481,7 +475,7 @@ void Camera::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_frustum", "size", "offset", "z_near", "z_far"), &Camera::set_frustum);
 	ClassDB::bind_method(D_METHOD("make_current"), &Camera::make_current);
 	ClassDB::bind_method(D_METHOD("clear_current", "enable_next"), &Camera::clear_current, DEFVAL(true));
-	ClassDB::bind_method(D_METHOD("set_current"), &Camera::set_current);
+	ClassDB::bind_method(D_METHOD("set_current", "enable"), &Camera::set_current);
 	ClassDB::bind_method(D_METHOD("is_current"), &Camera::is_current);
 	ClassDB::bind_method(D_METHOD("get_camera_transform"), &Camera::get_camera_transform);
 	ClassDB::bind_method(D_METHOD("get_fov"), &Camera::get_fov);
@@ -489,13 +483,13 @@ void Camera::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_size"), &Camera::get_size);
 	ClassDB::bind_method(D_METHOD("get_zfar"), &Camera::get_zfar);
 	ClassDB::bind_method(D_METHOD("get_znear"), &Camera::get_znear);
-	ClassDB::bind_method(D_METHOD("set_fov"), &Camera::set_fov);
-	ClassDB::bind_method(D_METHOD("set_frustum_offset"), &Camera::set_frustum_offset);
-	ClassDB::bind_method(D_METHOD("set_size"), &Camera::set_size);
-	ClassDB::bind_method(D_METHOD("set_zfar"), &Camera::set_zfar);
-	ClassDB::bind_method(D_METHOD("set_znear"), &Camera::set_znear);
+	ClassDB::bind_method(D_METHOD("set_fov", "fov"), &Camera::set_fov);
+	ClassDB::bind_method(D_METHOD("set_frustum_offset", "frustum_offset"), &Camera::set_frustum_offset);
+	ClassDB::bind_method(D_METHOD("set_size", "size"), &Camera::set_size);
+	ClassDB::bind_method(D_METHOD("set_zfar", "zfar"), &Camera::set_zfar);
+	ClassDB::bind_method(D_METHOD("set_znear", "znear"), &Camera::set_znear);
 	ClassDB::bind_method(D_METHOD("get_projection"), &Camera::get_projection);
-	ClassDB::bind_method(D_METHOD("set_projection"), &Camera::set_projection);
+	ClassDB::bind_method(D_METHOD("set_projection", "projection"), &Camera::set_projection);
 	ClassDB::bind_method(D_METHOD("set_h_offset", "ofs"), &Camera::set_h_offset);
 	ClassDB::bind_method(D_METHOD("get_h_offset"), &Camera::get_h_offset);
 	ClassDB::bind_method(D_METHOD("set_v_offset", "ofs"), &Camera::set_v_offset);
@@ -525,7 +519,7 @@ void Camera::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "projection", PROPERTY_HINT_ENUM, "Perspective,Orthogonal,Frustum"), "set_projection", "get_projection");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "current"), "set_current", "is_current");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fov", PROPERTY_HINT_RANGE, "1,179,0.1"), "set_fov", "get_fov");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size", PROPERTY_HINT_RANGE, "0.1,16384,0.01"), "set_size", "get_size");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size", PROPERTY_HINT_RANGE, "0.001,16384,0.001"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "frustum_offset"), "set_frustum_offset", "get_frustum_offset");
 
 
@@ -589,7 +583,7 @@ void Camera::set_fov(float p_fov) {
 }
 
 void Camera::set_size(float p_size) {
-	ERR_FAIL_COND(p_size < 0.1 || p_size > 16384);
+	ERR_FAIL_COND(p_size < 0.001 || p_size > 16384);
 	size = p_size;
 	_update_camera_mode();
 	_change_notify("size");

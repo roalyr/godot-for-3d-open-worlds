@@ -1897,9 +1897,10 @@ void TextEdit::_notification(int p_what) {
 				OS::get_singleton()->hide_virtual_keyboard();
 			}
 
-			if (deselect_on_focus_loss_enabled) {
+			if (deselect_on_focus_loss_enabled && !popup_show) {
 				deselect();
 			}
+			popup_show = false;
 		} break;
 		case MainLoop::NOTIFICATION_OS_IME_UPDATE: {
 			if (has_focus()) {
@@ -2652,6 +2653,7 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 					}
 				}
 
+				popup_show = true;
 				if (!readonly) {
 					menu->set_item_disabled(menu->get_item_index(MENU_UNDO), !has_undo());
 					menu->set_item_disabled(menu->get_item_index(MENU_REDO), !has_redo());
@@ -2661,7 +2663,6 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 				menu->set_size(Vector2(1, 1));
 				menu->set_scale(get_global_transform().get_scale());
 				menu->popup();
-				grab_focus();
 			}
 		} else {
 			if (mb->get_button_index() == BUTTON_LEFT) {
@@ -3963,6 +3964,7 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 
 			case KEY_MENU: {
 				if (context_menu_enabled) {
+					popup_show = true;
 					if (!readonly) {
 						menu->set_item_disabled(menu->get_item_index(MENU_UNDO), !has_undo());
 						menu->set_item_disabled(menu->get_item_index(MENU_REDO), !has_redo());
@@ -6474,9 +6476,6 @@ void TextEdit::undo() {
 
 	TextOperation op = undo_stack_pos->get();
 	_do_text_op(op, true);
-	if (op.type != TextOperation::TYPE_INSERT && (op.from_line != op.to_line || op.to_column != op.from_column + 1)) {
-		select(op.from_line, op.from_column, op.to_line, op.to_column);
-	}
 
 	current_op.version = op.prev_version;
 	if (undo_stack_pos->get().chain_backward) {
@@ -6490,6 +6489,10 @@ void TextEdit::undo() {
 				break;
 			}
 		}
+	}
+
+	if (op.type != TextOperation::TYPE_INSERT && (op.from_line != op.to_line || op.to_column != op.from_column + 1)) {
+		select(op.from_line, op.from_column, op.to_line, op.to_column);
 	}
 
 	_update_scrollbars();
@@ -6792,13 +6795,13 @@ void TextEdit::_confirm_completion() {
 
 	if (last_completion_char == '(') {
 		if (next_char == last_completion_char) {
-			_base_remove_text(cursor.line, cursor.column - 1, cursor.line, cursor.column);
+			_remove_text(cursor.line, cursor.column - 1, cursor.line, cursor.column);
 		} else if (auto_brace_completion_enabled) {
 			insert_text_at_cursor(")");
 			cursor.column--;
 		}
 	} else if (last_completion_char == ')' && next_char == '(') {
-		_base_remove_text(cursor.line, cursor.column - 2, cursor.line, cursor.column);
+		_remove_text(cursor.line, cursor.column - 2, cursor.line, cursor.column);
 		if (line[cursor.column + 1] != ')') {
 			cursor.column--;
 		}
@@ -7506,15 +7509,15 @@ void TextEdit::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_show_line_numbers", "enable"), &TextEdit::set_show_line_numbers);
 	ClassDB::bind_method(D_METHOD("is_show_line_numbers_enabled"), &TextEdit::is_show_line_numbers_enabled);
-	ClassDB::bind_method(D_METHOD("set_draw_tabs"), &TextEdit::set_draw_tabs);
+	ClassDB::bind_method(D_METHOD("set_draw_tabs", "enable"), &TextEdit::set_draw_tabs);
 	ClassDB::bind_method(D_METHOD("is_drawing_tabs"), &TextEdit::is_drawing_tabs);
-	ClassDB::bind_method(D_METHOD("set_draw_spaces"), &TextEdit::set_draw_spaces);
+	ClassDB::bind_method(D_METHOD("set_draw_spaces", "enable"), &TextEdit::set_draw_spaces);
 	ClassDB::bind_method(D_METHOD("is_drawing_spaces"), &TextEdit::is_drawing_spaces);
 	ClassDB::bind_method(D_METHOD("set_bookmark_gutter_enabled", "enable"), &TextEdit::set_bookmark_gutter_enabled);
 	ClassDB::bind_method(D_METHOD("is_bookmark_gutter_enabled"), &TextEdit::is_bookmark_gutter_enabled);
 	ClassDB::bind_method(D_METHOD("set_breakpoint_gutter_enabled", "enable"), &TextEdit::set_breakpoint_gutter_enabled);
 	ClassDB::bind_method(D_METHOD("is_breakpoint_gutter_enabled"), &TextEdit::is_breakpoint_gutter_enabled);
-	ClassDB::bind_method(D_METHOD("set_draw_fold_gutter"), &TextEdit::set_draw_fold_gutter);
+	ClassDB::bind_method(D_METHOD("set_draw_fold_gutter", "enable"), &TextEdit::set_draw_fold_gutter);
 	ClassDB::bind_method(D_METHOD("is_drawing_fold_gutter"), &TextEdit::is_drawing_fold_gutter);
 	ClassDB::bind_method(D_METHOD("get_total_gutter_width"), &TextEdit::get_total_gutter_width);
 	ClassDB::bind_method(D_METHOD("get_visible_rows"), &TextEdit::get_visible_rows);

@@ -73,6 +73,12 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 typedef struct {
 	int count;
 	int screen;
+	HMONITOR monitor;
+} EnumScreenData;
+
+typedef struct {
+	int count;
+	int screen;
 	Size2 size;
 } EnumSizeData;
 
@@ -81,6 +87,16 @@ typedef struct {
 	int screen;
 	Point2 pos;
 } EnumPosData;
+
+static BOOL CALLBACK _MonitorEnumProcScreen(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+	EnumScreenData *data = (EnumScreenData *)dwData;
+	if (data->monitor == hMonitor) {
+		data->screen = data->count;
+	}
+
+	data->count++;
+	return TRUE;
+}
 
 static BOOL CALLBACK _MonitorEnumProcSize(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
 	EnumSizeData *data = (EnumSizeData *)dwData;
@@ -1354,7 +1370,13 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 		*/
 
-		EnumSizeData data = { 0, 0, Size2() };
+		// Get the primary monitor without providing hwnd
+		// Solution from https://devblogs.microsoft.com/oldnewthing/20070809-00/?p=25643
+		const POINT ptZero = { 0, 0 };
+		EnumScreenData primary_data = { 0, 0, MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY) };
+		EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcScreen, (LPARAM)&primary_data);
+
+		EnumSizeData data = { 0, primary_data.screen, Size2() };
 		EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcSize, (LPARAM)&data);
 
 		WindowRect.right = data.size.width;
@@ -1605,8 +1627,11 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	set_ime_active(false);
 
-	if (!OS::get_singleton()->is_in_low_processor_usage_mode()) {
-		//SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+	if (!Engine::get_singleton()->is_editor_hint() && !OS::get_singleton()->is_in_low_processor_usage_mode()) {
+		// Increase priority for projects that are not in low-processor mode (typically games)
+		// to reduce the risk of frame stuttering.
+		// This is not done for the editor to prevent importers or resource bakers
+		// from making the system unresponsive.
 		SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 		DWORD index = 0;
 		HANDLE handle = AvSetMmThreadCharacteristics("Games", &index);
@@ -1896,22 +1921,6 @@ int OS_Windows::get_screen_count() const {
 	int data = 0;
 	EnumDisplayMonitors(NULL, NULL, _MonitorEnumProcCount, (LPARAM)&data);
 	return data;
-}
-
-typedef struct {
-	int count;
-	int screen;
-	HMONITOR monitor;
-} EnumScreenData;
-
-static BOOL CALLBACK _MonitorEnumProcScreen(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
-	EnumScreenData *data = (EnumScreenData *)dwData;
-	if (data->monitor == hMonitor) {
-		data->screen = data->count;
-	}
-
-	data->count++;
-	return TRUE;
 }
 
 int OS_Windows::get_current_screen() const {

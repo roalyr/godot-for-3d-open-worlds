@@ -156,10 +156,10 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 
 	while (found_route == false) {
 		{
+			gd::NavigationPoly *least_cost_poly = &navigation_polys[least_cost_id];
+
 			// Takes the current least_cost_poly neighbors and compute the traveled_distance of each
 			for (size_t i = 0; i < navigation_polys[least_cost_id].poly->edges.size(); i++) {
-				gd::NavigationPoly *least_cost_poly = &navigation_polys[least_cost_id];
-
 				const gd::Edge &edge = least_cost_poly->poly->edges[i];
 				if (!edge.other_polygon)
 					continue;
@@ -241,6 +241,7 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 			navigation_polys.push_back(np);
 			open_list.clear();
 			open_list.push_back(0);
+			least_cost_id = 0;
 
 			reachable_end = NULL;
 
@@ -265,6 +266,8 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 			}
 		}
 
+		ERR_BREAK(least_cost_id == -1);
+
 		// Stores the further reachable end polygon, in case our goal is not reachable.
 		if (is_reachable) {
 			float d = navigation_polys[least_cost_id].entry.distance_to(p_destination);
@@ -273,8 +276,6 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 				reachable_end = navigation_polys[least_cost_id].poly;
 			}
 		}
-
-		ERR_BREAK(least_cost_id == -1);
 
 		// Check if we reached the end
 		if (navigation_polys[least_cost_id].poly == end_poly) {
@@ -376,18 +377,15 @@ Vector<Vector3> NavMap::get_path(Vector3 p_origin, Vector3 p_destination, bool p
 
 			// Add mid points
 			int np_id = least_cost_id;
-			while (np_id != -1) {
-#ifdef USE_ENTRY_POINT
-				Vector3 point = navigation_polys[np_id].entry;
-#else
+			while (np_id != -1 && navigation_polys[np_id].prev_navigation_poly_id != -1) {
 				int prev = navigation_polys[np_id].back_navigation_edge;
 				int prev_n = (navigation_polys[np_id].back_navigation_edge + 1) % navigation_polys[np_id].poly->points.size();
 				Vector3 point = (navigation_polys[np_id].poly->points[prev].pos + navigation_polys[np_id].poly->points[prev_n].pos) * 0.5;
-#endif
-
 				path.push_back(point);
 				np_id = navigation_polys[np_id].prev_navigation_poly_id;
 			}
+
+			path.push_back(begin_point);
 
 			path.invert();
 		}

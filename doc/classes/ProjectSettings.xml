@@ -494,7 +494,7 @@
 		</member>
 		<member name="display/window/size/resizable" type="bool" setter="" getter="" default="true">
 			Allows the window to be resizable by default.
-			[b]Note:[/b] This setting is ignored on iOS and Android.
+			[b]Note:[/b] This setting is ignored on iOS.
 		</member>
 		<member name="display/window/size/test_height" type="int" setter="" getter="" default="0">
 			If greater than zero, overrides the window height when running the game. Useful for testing stretch modes.
@@ -902,7 +902,7 @@
 			Optional name for the 3D render layer 13.
 		</member>
 		<member name="layer_names/3d_render/layer_14" type="String" setter="" getter="" default="&quot;&quot;">
-			Optional name for the 3D render layer 14
+			Optional name for the 3D render layer 14.
 		</member>
 		<member name="layer_names/3d_render/layer_15" type="String" setter="" getter="" default="&quot;&quot;">
 			Optional name for the 3D render layer 15.
@@ -1486,10 +1486,12 @@
 			Lower-end override for [member rendering/quality/shading/force_lambert_over_burley] on mobile devices, due to performance concerns or driver support.
 		</member>
 		<member name="rendering/quality/shading/force_vertex_shading" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], forces vertex shading for all rendering. This can increase performance a lot, but also reduces quality immensely. Can be used to optimize performance on low-end mobile devices.
+			If [code]true[/code], forces vertex shading for all 3D [SpatialMaterial] and [ShaderMaterial] rendering. This can be used to improve performance on low-end mobile devices. The downside is that shading becomes much less accurate, with visible linear interpolation between vertices that are joined together. This can be compensated by ensuring meshes have a sufficient level of subdivision (but not too much, to avoid reducing performance). Some material features are also not supported when vertex shading is enabled.
+			See also [member SpatialMaterial.flags_vertex_lighting] which can be used to enable vertex shading on specific materials only.
+			[b]Note:[/b] This setting does not affect unshaded materials.
 		</member>
 		<member name="rendering/quality/shading/force_vertex_shading.mobile" type="bool" setter="" getter="" default="true">
-			Lower-end override for [member rendering/quality/shading/force_vertex_shading] on mobile devices, due to performance concerns or driver support.
+			Lower-end override for [member rendering/quality/shading/force_vertex_shading] on mobile devices, due to performance concerns or driver support. If lighting looks broken after exporting the project to a mobile platform, try disabling this setting.
 		</member>
 		<member name="rendering/quality/shading/use_physical_light_attenuation" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], enables new physical light attenuation for [OmniLight]s and [SpotLight]s. This results in more realistic lighting appearance with a very small performance cost. When physical light attenuation is enabled, lights will appear to be darker as a result of the new attenuation formula. This can be compensated by adjusting the lights' energy or attenuation values.
