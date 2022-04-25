@@ -65,18 +65,13 @@
 #define GIZMO_ARROW_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
 
 #define ZOOM_FREELOOK_MIN 0.01
+
+// New values.
 #define ZOOM_FREELOOK_MULTIPLIER 1.08
-
-// New value (for convenience to let one know the current scale).
 #define ZOOM_FREELOOK_INDICATOR_DELAY_S 5.0
-
-// MIN_Z should be fixed.
 #define MIN_Z 0.01
-
-// Required for logarithmic depth buffer vertex shader z_far.
-////////////// Also synchronize with camera MAX_Z///////////////////////
-#define MAX_Z 1e19             // Far plane
-#define ZOOM_FREELOOK_MAX 1e19 // Editor zoom out.
+#define MAX_Z 9e18              // Far plane
+#define ZOOM_FREELOOK_MAX 9e18  // Editor zoom out.
 
 
 #define MIN_FOV 0.01
@@ -6868,20 +6863,19 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 
 
 
-	// This is a crude solutions. Maybe not entirely optimal, but is required to ensure no issues with logarithmic depth.
-	// Near plane setting is fixed in place at 0.01 (Z_MIN).
+	// Near is from 0.01 to 8192
 	settings_znear = memnew(SpinBox);
-	settings_znear->set_max(MIN_Z);
+	settings_znear->set_max(8192.0);
 	settings_znear->set_min(MIN_Z);
-	settings_znear->set_step(MIN_Z);
+	settings_znear->set_step(0.01);
 	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", MIN_Z));
 	settings_vbc->add_margin_child(TTR("View Z-Near:"), settings_znear);
 
-	// Far plane setting is fixed in place at whatever Z_MAX is.
+	// Far is from 1.0 to 9e18.
 	settings_zfar = memnew(SpinBox);
 	settings_zfar->set_max(MAX_Z);
-	settings_zfar->set_min(MAX_Z);
-	settings_zfar->set_step(MAX_Z);
+	settings_zfar->set_min(1.0);
+	settings_zfar->set_step(1.0);
 	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", MAX_Z));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 

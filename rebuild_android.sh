@@ -18,7 +18,13 @@ mkdir -p $SCONS_CACHE
 # 		functionality and run-time checks to run.
 
 # Android templates
-scons -j1 platform=android target=release_debug debug_symbols=no android_arch=armv7;
-scons -j1 platform=android target=release_debug debug_symbols=no android_arch=arm64v8;
+scons -j1 tools=no platform=android target=release_debug debug_symbols=no android_arch=armv7;
+scons -j1 tools=no platform=android target=release_debug debug_symbols=no android_arch=arm64v8;
+
+# Android editor
+scons -j1 tools=yes platform=android target=release_debug debug_symbols=no android_arch=armv7;
+scons -j1 tools=yes platform=android target=release_debug debug_symbols=no android_arch=arm64v8;
+
 cd platform/android/java;
 ./gradlew generateGodotTemplates;
+./gradlew generateGodotEditor;

@@ -13,13 +13,14 @@ This fork is regularly synchronized with [3.x branch](https://github.com/godoten
 Implemented tweaks:
 * Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
 * Implemented for both GLES2 and GLES3.
-* Near plane is fixed at 0.01 (not adjustable).
-* Far plane is fixed at 1e19 (not adjustable, further may promote making objects with sizes that cause overflow).
-* Increased editor zoom out distance to 1e19.
+* Far plane maximum is at 9e18. Near and far planes are adjustable.
+* Increased editor zoom out distance to match far plane.
 * Increased editor zoom increment for faster zooming.
 
 Suggested:
 * LOD add-on is welcomed since no object will be culled from rendering at distance.
+* Do not make objects larger than 9e18 units (raises error: 
+Cannot represent X as 64-bit integer, provided value is too big).
 
 To-do:
 * Implement logarithmic depth for all shaders, post-processes, shadows and light.

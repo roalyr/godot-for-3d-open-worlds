@@ -523,20 +523,9 @@ void Camera::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "frustum_offset"), "set_frustum_offset", "get_frustum_offset");
 
 
-
-
-
-
-
-	// Fixed ranges for planes. According to Z_MIN and Z_MAX in spatial_editor_plugin.
-	// This is a crude solutions. Maybe not entirely optimal, but is required to ensure no issues with logarithmic depth.
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_RANGE, "0.01,0.01,0.01"), "set_znear", "get_znear");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_RANGE, "1e19,1e19,1e19"), "set_zfar", "get_zfar");
-
-
-
-
-
+	// To accomodate for large distances.
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_RANGE, "0.01,8192,0.01,or_greater"), "set_znear", "get_znear");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_RANGE, "1.0,9e18,1.0"), "set_zfar", "get_zfar");
 
 
 	BIND_ENUM_CONSTANT(PROJECTION_PERSPECTIVE);
