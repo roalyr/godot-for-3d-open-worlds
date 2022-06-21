@@ -353,7 +353,7 @@ void ShaderEditor::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE:
 		case NOTIFICATION_THEME_CHANGED: {
 			PopupMenu *popup = help_menu->get_popup();
-			popup->set_item_icon(popup->get_item_index(HELP_DOCS), get_icon("Instance", "EditorIcons"));
+			popup->set_item_icon(popup->get_item_index(HELP_DOCS), get_icon("ExternalLink", "EditorIcons"));
 		} break;
 
 		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
@@ -432,7 +432,7 @@ void ShaderEditor::_check_for_external_edit() {
 		return;
 	}
 
-	bool use_autoreload = bool(EDITOR_DEF("text_editor/files/auto_reload_scripts_on_external_change", false));
+	bool use_autoreload = EDITOR_GET("text_editor/files/auto_reload_scripts_on_external_change");
 	if (shader->get_last_modified_time() != FileAccess::get_modified_time(shader->get_path())) {
 		if (use_autoreload) {
 			_reload_shader_from_disk();

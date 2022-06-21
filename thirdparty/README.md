@@ -20,7 +20,7 @@ Files extracted from upstream source:
 ## bullet
 
 - Upstream: https://github.com/bulletphysics/bullet3
-- Version: 3.21 (6a59241074720e9df119f2f86bc01765917feb1e, 2021)
+- Version: 3.24 (7dee3436e747958e7088dfdcea0e4ae031ce619e, 2022)
 - License: zlib
 
 Files extracted from upstream source:
@@ -131,14 +131,20 @@ comments.
 ## freetype
 
 - Upstream: https://www.freetype.org
-- Version: 2.11.1 (3f83daeecb1a78d851b660eed025eeba362c0e4a, 2021)
+- Version: 2.12.1 (e8ebfe988b5f57bfb9a3ecb13c70d9791bce9ecf, 2022)
 - License: FreeType License (BSD-like)
 
 Files extracted from upstream source:
 
-- the `src/` folder, minus the `.mk` files and the `dlg` and `tools` subfolders
-- the `include/` folder, minus the `dlg` subfolder
+- `src/` folder, minus the `dlg` and `tools` subfolders
+  * These files can be removed: `.dat`, `.diff`, `.mk`, `.rc`, `README*`
+- `include/` folder, minus the `dlg` subfolder
 - `LICENSE.TXT` and `docs/FTL.TXT`
+
+Some changes have been made in order to prevent LTO from removing code.
+They are marked with `// -- GODOT start --` and `// -- GODOT end --`
+comments. Apply the patches in the `patches/` folder when syncing on newer upstream
+commits.
 
 
 ## glad
@@ -342,10 +348,6 @@ Collection of single-file libraries used in Godot components.
   * Upstream: https://sourceforge.net/projects/polyclipping
   * Version: 6.4.2 (2017) + Godot changes (added optional exceptions handling)
   * License: BSL-1.0
-- `easing_equations.cpp`
-  * Upstream: http://robertpenner.com/easing/ via https://github.com/jesusgollonet/ofpennereasing (modified to fit Godot types)
-  * Version: git (af72c147c3a74e7e872aa28c7e2abfcced04fdce, 2008) + Godot types and style changes
-  * License: BSD-3-Clause
 - `fastlz.{c,h}`
   * Upstream: https://github.com/ariya/FastLZ
   * Version: 0.5.0 (4f20f54d46f5a6dd4fae4def134933369b7602d2, 2020)
@@ -396,13 +398,16 @@ Collection of single-file libraries used in Godot components.
 ## nanosvg
 
 - Upstream: https://github.com/memononen/nanosvg
-- Version: git (ccdb1995134d340a93fb20e3a3d323ccb3838dd0, 2021)
+- Version: git (4c8f0139b62c6e7faa3b67ce1fbe6e63590ed148, 2022)
 - License: zlib
 
 Files extracted from the upstream source:
 
-- All .h files in `src/`
-- LICENSE.txt
+- All `.h` files in `src/`
+- `LICENSE.txt`
+
+`nanosvg.cc` is a custom file added to configure the build of the header only
+library.
 
 
 ## oidn
@@ -456,7 +461,7 @@ Files extracted from upstream source:
 ## pcre2
 
 - Upstream: http://www.pcre.org
-- Version: 10.39 (35fee4193b852cb504892352bd0155de10809889, 2021)
+- Version: 10.40 (3103b8f20a3b9944b177e812fde29fbfb8b90558, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -467,6 +472,9 @@ Files extracted from upstream source:
 - src/pcre2_jit_misc.c
 - src/sljit/
 - AUTHORS and LICENCE
+
+A sljit patch from upstream was backported to fix macOS < 11.0 compilation
+in 10.40, it can be found in the `patches` folder.
 
 
 ## pvrtccompressor
@@ -485,7 +493,7 @@ Files extracted from upstream source:
 ## recastnavigation
 
 - Upstream: https://github.com/recastnavigation/recastnavigation
-- Version: git (57610fa6ef31b39020231906f8c5d40eaa8294ae, 2019)
+- Version: git (5a870d427e47abd4a8e4ce58a95582ec049434d5, 2022)
 - License: zlib
 
 Files extracted from upstream source:
@@ -497,17 +505,17 @@ Files extracted from upstream source:
 ## rvo2
 
 - Upstream: https://github.com/snape/RVO2-3D
-- Version: 1.0.1 (e3883f288a9e55ecfed3633a01af3e12778c6acf, 2016)
+- Version: git (bfc048670a4e85066e86a1f923d8ea92e3add3b2, 2021)
 - License: Apache 2.0
 
 Files extracted from upstream source:
 
-- All .cpp and .h files in the `src/` folder except for RVO.h, RVOSimulator.cpp and RVOSimulator.h
+- All .cpp and .h files in the `src/` folder except for Export.h, RVO.h, RVOSimulator.cpp and RVOSimulator.h
 - LICENSE
 
 Important: Some files have Godot-made changes; so to enrich the features
 originally proposed by this library and better integrate this library with
-Godot. Please check the file to know what's new.
+Godot. See the patch in the `patches` folder for details.
 
 
 ## squish
@@ -576,7 +584,7 @@ File extracted from upstream release tarball:
 ## xatlas
 
 - Upstream: https://github.com/jpcy/xatlas
-- Version: git (ec707faeac3b95e6b416076a9509718cce105b6a, 2021)
+- Version: git (16ace528acd2cf1f16a7c0dde99c42c486488dbe, 2022)
 - License: MIT
 
 Files extracted from upstream source:

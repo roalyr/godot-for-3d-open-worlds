@@ -305,6 +305,11 @@ String OS::get_locale_language() const {
 	return get_locale().left(3).replace("_", "");
 }
 
+// Embedded PCK offset.
+uint64_t OS::get_embedded_pck_offset() const {
+	return 0;
+}
+
 // Helper function to ensure that a dir name/path will be valid on the OS
 String OS::get_safe_dir_name(const String &p_dir_name, bool p_allow_dir_separator) const {
 	Vector<String> invalid_chars = String(": * ? \" < > |").split(" ");
@@ -663,19 +668,25 @@ bool OS::has_feature(const String &p_feature) {
 	if (sizeof(void *) == 4 && p_feature == "32") {
 		return true;
 	}
-#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64__)
+#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64__) || defined(_M_X64)
 	if (p_feature == "x86_64") {
 		return true;
 	}
-#elif (defined(__i386) || defined(__i386__))
+#elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
+	if (p_feature == "x86_32") {
+		return true;
+	}
 	if (p_feature == "x86") {
 		return true;
 	}
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || defined(_M_ARM64)
 	if (p_feature == "arm64") {
 		return true;
 	}
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(_M_ARM)
+	if (p_feature == "arm32") {
+		return true;
+	}
 #if defined(__ARM_ARCH_7A__)
 	if (p_feature == "armv7a" || p_feature == "armv7") {
 		return true;
@@ -705,6 +716,19 @@ bool OS::has_feature(const String &p_feature) {
 	}
 #endif
 	if (p_feature == "ppc") {
+		return true;
+	}
+#elif defined(__wasm__)
+#if defined(__wasm64__)
+	if (p_feature == "wasm64") {
+		return true;
+	}
+#elif defined(__wasm32__)
+	if (p_feature == "wasm32") {
+		return true;
+	}
+#endif
+	if (p_feature == "wasm") {
 		return true;
 	}
 #endif

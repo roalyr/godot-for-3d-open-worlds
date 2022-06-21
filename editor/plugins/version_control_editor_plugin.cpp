@@ -84,8 +84,8 @@ void VersionControlEditorPlugin::_bind_methods() {
 
 void VersionControlEditorPlugin::_notification(int p_what) {
 	if (p_what == NOTIFICATION_READY) {
-		String installed_plugin = GLOBAL_GET("editor/version_control/plugin_name");
-		bool has_autoload_enable = GLOBAL_GET("editor/version_control/autoload_on_startup");
+		String installed_plugin = GLOBAL_GET("editor/version_control_plugin_name");
+		bool has_autoload_enable = GLOBAL_GET("editor/version_control_autoload_on_startup");
 
 		if (installed_plugin != "" && has_autoload_enable) {
 			if (_load_plugin(installed_plugin)) {
@@ -139,8 +139,8 @@ void VersionControlEditorPlugin::_initialize_vcs() {
 	if (_load_plugin(selected_plugin)) {
 		_set_up();
 
-		ProjectSettings::get_singleton()->set("editor/version_control/autoload_on_startup", true);
-		ProjectSettings::get_singleton()->set("editor/version_control/plugin_name", selected_plugin);
+		ProjectSettings::get_singleton()->set("editor/version_control_autoload_on_startup", true);
+		ProjectSettings::get_singleton()->set("editor/version_control_plugin_name", selected_plugin);
 		ProjectSettings::get_singleton()->save();
 	}
 }
@@ -194,7 +194,7 @@ void VersionControlEditorPlugin::_set_up() {
 	ERR_FAIL_COND_MSG(!EditorVCSInterface::get_singleton()->initialize(res_dir), "VCS was not initialized.");
 
 	_refresh_stage_area();
-	_refresh_commit_list();
+	_refresh_commit_list(commit_list_size_button->get_selected_metadata());
 	_refresh_branch_list();
 	_refresh_remote_list();
 }
@@ -240,7 +240,7 @@ String VersionControlEditorPlugin::_get_date_string_from(int64_t p_unix_timestam
 			Time::get_singleton()->get_offset_string_from_offset_minutes(p_offset_minutes));
 }
 
-void VersionControlEditorPlugin::_refresh_commit_list() {
+void VersionControlEditorPlugin::_refresh_commit_list(int p_index) {
 	CHECK_PLUGIN_INITIALIZED();
 
 	commit_list->get_root()->clear_children();
@@ -307,7 +307,7 @@ void VersionControlEditorPlugin::_commit() {
 	commit_message->set_text("");
 
 	_refresh_stage_area();
-	_refresh_commit_list();
+	_refresh_commit_list(commit_list_size_button->get_selected_metadata());
 	_refresh_branch_list();
 	_clear_diff();
 }
@@ -322,7 +322,7 @@ void VersionControlEditorPlugin::_branch_item_selected(int p_index) {
 	ScriptEditor::get_singleton()->reload_scripts();
 
 	_refresh_branch_list();
-	_refresh_commit_list();
+	_refresh_commit_list(commit_list_size_button->get_selected_metadata());
 	_refresh_stage_area();
 	_clear_diff();
 
@@ -410,7 +410,10 @@ void VersionControlEditorPlugin::_refresh_stage_area() {
 
 	int total_changes = status_files.size();
 	String commit_tab_title = TTR("Commit") + (total_changes > 0 ? " (" + itos(total_changes) + ")" : "");
-	dock_vbc->set_tab_title(version_commit_dock->get_index(), commit_tab_title);
+	TabContainer *dock_vbc = Object::cast_to<TabContainer>(version_commit_dock->get_parent_control());
+	if (dock_vbc) {
+		dock_vbc->set_tab_title(version_commit_dock->get_index(), commit_tab_title);
+	}
 }
 
 void VersionControlEditorPlugin::_discard_file(String p_file_path, EditorVCSInterface::ChangeType p_change) {
@@ -471,7 +474,7 @@ void VersionControlEditorPlugin::_pull() {
 	EditorVCSInterface::get_singleton()->pull(remote_select->get_selected_metadata());
 	_refresh_stage_area();
 	_refresh_branch_list();
-	_refresh_commit_list();
+	_refresh_commit_list(commit_list_size_button->get_selected_metadata());
 	_clear_diff();
 	_update_opened_tabs();
 }
@@ -932,7 +935,7 @@ void VersionControlEditorPlugin::_commit_message_gui_input(const Ref<InputEvent>
 
 void VersionControlEditorPlugin::register_editor() {
 	EditorNode::get_singleton()->add_control_to_dock(EditorNode::DOCK_SLOT_RIGHT_UL, version_commit_dock);
-	dock_vbc = (TabContainer *)version_commit_dock->get_parent_control();
+	TabContainer *dock_vbc = Object::cast_to<TabContainer>(version_commit_dock->get_parent_control());
 	dock_vbc->set_tab_title(version_commit_dock->get_index(), TTR("Commit"));
 
 	ToolButton *vc = EditorNode::get_singleton()->add_bottom_panel_item(TTR("Version Control"), version_control_dock);
@@ -1277,10 +1280,10 @@ VersionControlEditorPlugin::VersionControlEditorPlugin() {
 	commit_list_size_button->add_item("10");
 	commit_list_size_button->set_item_metadata(0, 10);
 	commit_list_size_button->add_item("20");
-	commit_list_size_button->set_item_metadata(0, 20);
+	commit_list_size_button->set_item_metadata(1, 20);
 	commit_list_size_button->add_item("30");
-	commit_list_size_button->set_item_metadata(0, 30);
-	commit_list_size_button->connect("pressed", this, "_refresh_commit_list");
+	commit_list_size_button->set_item_metadata(2, 30);
+	commit_list_size_button->connect("item_selected", this, "_refresh_commit_list");
 	commit_list_hbc->add_child(commit_list_size_button);
 
 	commit_list = memnew(Tree);

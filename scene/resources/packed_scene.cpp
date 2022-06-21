@@ -114,6 +114,7 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 		const NodeData &n = nd[i];
 
 		Node *parent = nullptr;
+		String old_parent_path;
 
 		if (i > 0) {
 			ERR_FAIL_COND_V_MSG(n.parent == -1, nullptr, vformat("Invalid scene: node %s does not specify its parent node.", snames[n.name]));
@@ -121,6 +122,8 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 #ifdef DEBUG_ENABLED
 			if (!nparent && (n.parent & FLAG_ID_IS_PATH)) {
 				WARN_PRINT(String("Parent path '" + String(node_paths[n.parent & FLAG_MASK]) + "' for node '" + String(snames[n.name]) + "' has vanished when instancing: '" + get_path() + "'.").ascii().get_data());
+				old_parent_path = String(node_paths[n.parent & FLAG_MASK]).trim_prefix("./").replace("/", "@");
+				nparent = ret_nodes[0];
 			}
 #endif
 			parent = nparent;
@@ -305,10 +308,17 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 				}
 			}
 
+			if (!old_parent_path.empty()) {
+				node->_set_name_nocheck(old_parent_path + "@" + node->get_name());
+			}
+
 			if (n.owner >= 0) {
 				NODE_FROM_ID(owner, n.owner);
 				if (owner) {
 					node->_set_owner_nocheck(owner);
+					if (node->data.unique_name_in_owner) {
+						node->_acquire_unique_name_in_owner();
+					}
 				}
 			}
 

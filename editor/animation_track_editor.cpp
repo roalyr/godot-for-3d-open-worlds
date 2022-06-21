@@ -516,16 +516,16 @@ public:
 
 		if (use_fps && animation->get_step() > 0) {
 			float max_frame = animation->get_length() / animation->get_step();
-			p_list->push_back(PropertyInfo(Variant::REAL, "frame", PROPERTY_HINT_RANGE, "0," + rtos(max_frame) + ",1"));
+			p_list->push_back(PropertyInfo(Variant::REAL, PNAME("frame"), PROPERTY_HINT_RANGE, "0," + rtos(max_frame) + ",1"));
 		} else {
-			p_list->push_back(PropertyInfo(Variant::REAL, "time", PROPERTY_HINT_RANGE, "0," + rtos(animation->get_length()) + ",0.01"));
+			p_list->push_back(PropertyInfo(Variant::REAL, PNAME("time"), PROPERTY_HINT_RANGE, "0," + rtos(animation->get_length()) + ",0.01"));
 		}
 
 		switch (animation->track_get_type(track)) {
 			case Animation::TYPE_TRANSFORM: {
-				p_list->push_back(PropertyInfo(Variant::VECTOR3, "location"));
-				p_list->push_back(PropertyInfo(Variant::QUAT, "rotation"));
-				p_list->push_back(PropertyInfo(Variant::VECTOR3, "scale"));
+				p_list->push_back(PropertyInfo(Variant::VECTOR3, PNAME("location")));
+				p_list->push_back(PropertyInfo(Variant::QUAT, PNAME("rotation")));
+				p_list->push_back(PropertyInfo(Variant::VECTOR3, PNAME("scale")));
 
 			} break;
 			case Animation::TYPE_VALUE: {
@@ -533,7 +533,7 @@ public:
 
 				if (hint.type != Variant::NIL) {
 					PropertyInfo pi = hint;
-					pi.name = "value";
+					pi.name = PNAME("value");
 					p_list->push_back(pi);
 				} else {
 					PropertyHint hint = PROPERTY_HINT_NONE;
@@ -549,15 +549,15 @@ public:
 					}
 
 					if (v.get_type() != Variant::NIL) {
-						p_list->push_back(PropertyInfo(v.get_type(), "value", hint, hint_string));
+						p_list->push_back(PropertyInfo(v.get_type(), PNAME("value"), hint, hint_string));
 					}
 				}
 
 			} break;
 			case Animation::TYPE_METHOD: {
-				p_list->push_back(PropertyInfo(Variant::STRING, "name"));
+				p_list->push_back(PropertyInfo(Variant::STRING, PNAME("name")));
 				static_assert(VARIANT_ARG_MAX == 8, "PROPERTY_HINT_RANGE needs to be updated if VARIANT_ARG_MAX != 8");
-				p_list->push_back(PropertyInfo(Variant::INT, "arg_count", PROPERTY_HINT_RANGE, "0,8,1"));
+				p_list->push_back(PropertyInfo(Variant::INT, PNAME("arg_count"), PROPERTY_HINT_RANGE, "0,8,1"));
 
 				Dictionary d = animation->track_get_key_value(track, key);
 				ERR_FAIL_COND(!d.has("args"));
@@ -571,23 +571,23 @@ public:
 				}
 
 				for (int i = 0; i < args.size(); i++) {
-					p_list->push_back(PropertyInfo(Variant::INT, "args/" + itos(i) + "/type", PROPERTY_HINT_ENUM, vtypes));
+					p_list->push_back(PropertyInfo(Variant::INT, vformat("%s/%d/%s", PNAME("args"), i, PNAME("type")), PROPERTY_HINT_ENUM, vtypes));
 					if (args[i].get_type() != Variant::NIL) {
-						p_list->push_back(PropertyInfo(args[i].get_type(), "args/" + itos(i) + "/value"));
+						p_list->push_back(PropertyInfo(args[i].get_type(), vformat("%s/%d/%s", PNAME("args"), i, PNAME("value"))));
 					}
 				}
 
 			} break;
 			case Animation::TYPE_BEZIER: {
-				p_list->push_back(PropertyInfo(Variant::REAL, "value"));
-				p_list->push_back(PropertyInfo(Variant::VECTOR2, "in_handle"));
-				p_list->push_back(PropertyInfo(Variant::VECTOR2, "out_handle"));
+				p_list->push_back(PropertyInfo(Variant::REAL, PNAME("value")));
+				p_list->push_back(PropertyInfo(Variant::VECTOR2, PNAME("in_handle")));
+				p_list->push_back(PropertyInfo(Variant::VECTOR2, PNAME("out_handle")));
 
 			} break;
 			case Animation::TYPE_AUDIO: {
-				p_list->push_back(PropertyInfo(Variant::OBJECT, "stream", PROPERTY_HINT_RESOURCE_TYPE, "AudioStream"));
-				p_list->push_back(PropertyInfo(Variant::REAL, "start_offset", PROPERTY_HINT_RANGE, "0,3600,0.01,or_greater"));
-				p_list->push_back(PropertyInfo(Variant::REAL, "end_offset", PROPERTY_HINT_RANGE, "0,3600,0.01,or_greater"));
+				p_list->push_back(PropertyInfo(Variant::OBJECT, PNAME("stream"), PROPERTY_HINT_RESOURCE_TYPE, "AudioStream"));
+				p_list->push_back(PropertyInfo(Variant::REAL, PNAME("start_offset"), PROPERTY_HINT_RANGE, "0,3600,0.01,or_greater"));
+				p_list->push_back(PropertyInfo(Variant::REAL, PNAME("end_offset"), PROPERTY_HINT_RANGE, "0,3600,0.01,or_greater"));
 
 			} break;
 			case Animation::TYPE_ANIMATION: {
@@ -613,13 +613,13 @@ public:
 				}
 				animations += "[stop]";
 
-				p_list->push_back(PropertyInfo(Variant::STRING, "animation", PROPERTY_HINT_ENUM, animations));
+				p_list->push_back(PropertyInfo(Variant::STRING, PNAME("animation"), PROPERTY_HINT_ENUM, animations));
 
 			} break;
 		}
 
 		if (animation->track_get_type(track) == Animation::TYPE_VALUE) {
-			p_list->push_back(PropertyInfo(Variant::REAL, "easing", PROPERTY_HINT_EXP_EASING));
+			p_list->push_back(PropertyInfo(Variant::REAL, PNAME("easing"), PROPERTY_HINT_EXP_EASING));
 		}
 	}
 
@@ -2495,30 +2495,29 @@ String AnimationTrackEdit::get_tooltip(const Point2 &p_pos) const {
 		}
 
 		if (key_idx != -1) {
-			String text = TTR("Time (s): ") + rtos(animation->track_get_key_time(track, key_idx)) + "\n";
+			String text = TTR("Time (s):") + " " + rtos(animation->track_get_key_time(track, key_idx)) + "\n";
 			switch (animation->track_get_type(track)) {
 				case Animation::TYPE_TRANSFORM: {
 					Dictionary d = animation->track_get_key_value(track, key_idx);
 					if (d.has("location")) {
-						text += "Pos: " + String(d["location"]) + "\n";
+						text += TTR("Position:") + " " + String(d["location"]) + "\n";
 					}
 					if (d.has("rotation")) {
-						text += "Rot: " + String(d["rotation"]) + "\n";
+						text += TTR("Rotation:") + " " + String(d["rotation"]) + "\n";
 					}
 					if (d.has("scale")) {
-						text += "Scale: " + String(d["scale"]) + "\n";
+						text += TTR("Scale:") + " " + String(d["scale"]) + "\n";
 					}
 				} break;
 				case Animation::TYPE_VALUE: {
 					const Variant &v = animation->track_get_key_value(track, key_idx);
-					text += "Type: " + Variant::get_type_name(v.get_type()) + "\n";
+					text += TTR("Type:") + " " + Variant::get_type_name(v.get_type()) + "\n";
 					Variant::Type valid_type = Variant::NIL;
+					text += TTR("Value:") + " " + String(v);
 					if (!_is_value_key_valid(v, valid_type)) {
-						text += "Value: " + String(v) + "  (Invalid, expected type: " + Variant::get_type_name(valid_type) + ")\n";
-					} else {
-						text += "Value: " + String(v) + "\n";
+						text += " " + vformat(TTR("(Invalid, expected type: %s)"), Variant::get_type_name(valid_type));
 					}
-					text += "Easing: " + rtos(animation->track_get_key_transition(track, key_idx));
+					text += "\n" + TTR("Easing:") + " " + rtos(animation->track_get_key_transition(track, key_idx));
 
 				} break;
 				case Animation::TYPE_METHOD: {
@@ -2542,11 +2541,11 @@ String AnimationTrackEdit::get_tooltip(const Point2 &p_pos) const {
 				} break;
 				case Animation::TYPE_BEZIER: {
 					float h = animation->bezier_track_get_key_value(track, key_idx);
-					text += "Value: " + rtos(h) + "\n";
+					text += TTR("Value:") + " " + rtos(h) + "\n";
 					Vector2 ih = animation->bezier_track_get_key_in_handle(track, key_idx);
-					text += "In-Handle: " + ih + "\n";
+					text += TTR("In-Handle:") + " " + ih + "\n";
 					Vector2 oh = animation->bezier_track_get_key_out_handle(track, key_idx);
-					text += "Out-Handle: " + oh + "\n";
+					text += TTR("Out-Handle:") + " " + oh + "\n";
 				} break;
 				case Animation::TYPE_AUDIO: {
 					String stream_name = "null";
@@ -2561,15 +2560,15 @@ String AnimationTrackEdit::get_tooltip(const Point2 &p_pos) const {
 						}
 					}
 
-					text += "Stream: " + stream_name + "\n";
+					text += TTR("Stream:") + " " + stream_name + "\n";
 					float so = animation->audio_track_get_key_start_offset(track, key_idx);
-					text += "Start (s): " + rtos(so) + "\n";
+					text += TTR("Start (s):") + " " + rtos(so) + "\n";
 					float eo = animation->audio_track_get_key_end_offset(track, key_idx);
-					text += "End (s): " + rtos(eo) + "\n";
+					text += TTR("End (s):") + " " + rtos(eo) + "\n";
 				} break;
 				case Animation::TYPE_ANIMATION: {
 					String name = animation->animation_track_get_key_animation(track, key_idx);
-					text += "Animation Clip: " + name + "\n";
+					text += TTR("Animation Clip:") + " " + name + "\n";
 				} break;
 			}
 			return text;
@@ -3228,7 +3227,7 @@ Ref<Animation> AnimationTrackEditor::get_current_animation() const {
 	return animation;
 }
 
-void AnimationTrackEditor::_root_removed(Node *p_root) {
+void AnimationTrackEditor::_root_removed() {
 	root = nullptr;
 }
 
@@ -4736,7 +4735,7 @@ void AnimationTrackEditor::_add_method_key(const String &p_method) {
 		}
 	}
 
-	EditorNode::get_singleton()->show_warning(TTR("Method not found in object: ") + p_method);
+	EditorNode::get_singleton()->show_warning(TTR("Method not found in object:") + " " + p_method);
 }
 
 void AnimationTrackEditor::_key_selected(int p_key, bool p_single, int p_track) {

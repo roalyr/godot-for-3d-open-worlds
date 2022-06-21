@@ -329,6 +329,7 @@ public:
 	String get_file() const;
 	static String humanize_size(uint64_t p_size);
 	String simplify_path() const;
+	bool is_network_share_path() const;
 
 	String xml_escape(bool p_escape_quotes = false) const;
 	String xml_unescape() const;
@@ -349,6 +350,7 @@ public:
 	// node functions
 	static const String invalid_node_name_characters;
 	String validate_node_name() const;
+	String validate_identifier() const;
 
 	bool is_valid_identifier() const;
 	bool is_valid_integer() const;
@@ -436,6 +438,16 @@ String DTR(const String &);
 #define TTRC(m_value) (m_value)
 #define TTRGET(m_value) (m_value)
 #endif
+
+// Use this to mark property names for editor translation.
+// Often for dynamic properties defined in _get_property_list().
+// Property names defined directly inside EDITOR_DEF, GLOBAL_DEF, and ADD_PROPERTY macros don't need this.
+#define PNAME(m_value) (m_value)
+
+// Similar to PNAME, but to mark groups, i.e. properties with PROPERTY_USAGE_GROUP.
+// Groups defined directly inside ADD_GROUP macros don't need this.
+// The arguments are the same as ADD_GROUP. m_prefix is only used for extraction.
+#define GNAME(m_value, m_prefix) (m_value)
 
 // Runtime translate for the public node API.
 String RTR(const String &);

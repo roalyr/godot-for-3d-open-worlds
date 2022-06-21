@@ -236,7 +236,7 @@
 			<argument index="0" name="a" type="Variant" />
 			<argument index="1" name="b" type="Variant" />
 			<description>
-				Compares two values by checking their actual contents, recursing into any `Array` or `Dictionary` up to its deepest level.
+				Compares two values by checking their actual contents, recursing into any [Array] or [Dictionary] up to its deepest level.
 				This compares to [code]==[/code] in a number of ways:
 				- For [code]null[/code], [code]int[/code], [code]float[/code], [code]String[/code], [code]Object[/code] and [code]RID[/code] both [code]deep_equal[/code] and [code]==[/code] work the same.
 				- For [code]Dictionary[/code], [code]==[/code] considers equality if, and only if, both variables point to the very same [code]Dictionary[/code], with no recursion or awareness of the contents at all.
@@ -521,6 +521,7 @@
 				    rotation = lerp_angle(min_angle, max_angle, elapsed)
 				    elapsed += delta
 				[/codeblock]
+				[b]Note:[/b] This method lerps through the shortest path between [code]from[/code] and [code]to[/code]. However, when these two angles are approximately [code]PI + k * TAU[/code] apart for any integer [code]k[/code], it's not obvious which way they lerp due to floating-point precision errors. For example, [code]lerp_angle(0, PI, weight)[/code] lerps counter-clockwise, while [code]lerp_angle(0, PI + 5 * TAU, weight)[/code] lerps clockwise.
 			</description>
 		</method>
 		<method name="linear2db">
@@ -803,10 +804,11 @@
 			<argument index="0" name="from" type="float" />
 			<argument index="1" name="to" type="float" />
 			<description>
-				Random range, any floating point value between [code]from[/code] and [code]to[/code].
+				Returns a random floating point value between [code]from[/code] and [code]to[/code] (both endpoints inclusive).
 				[codeblock]
 				prints(rand_range(0, 1), rand_range(0, 1)) # Prints e.g. 0.135591 0.405263
 				[/codeblock]
+				[b]Note:[/b] This is equivalent to [code]randf() * (to - from) + from[/code].
 			</description>
 		</method>
 		<method name="rand_seed">
@@ -850,26 +852,24 @@
 		<method name="range" qualifiers="vararg">
 			<return type="Array" />
 			<description>
-				Returns an array with the given range. Range can be 1 argument [code]N[/code] (0 to [code]N[/code] - 1), two arguments ([code]initial[/code], [code]final - 1[/code]) or three arguments ([code]initial[/code], [code]final - 1[/code], [code]increment[/code]). Returns an empty array if the range isn't valid (e.g. [code]range(2, 5, -1)[/code] or [code]range(5, 5, 1)[/code]).
-				Returns an array with the given range. [code]range()[/code] can have 1 argument N ([code]0[/code] to [code]N - 1[/code]), two arguments ([code]initial[/code], [code]final - 1[/code]) or three arguments ([code]initial[/code], [code]final - 1[/code], [code]increment[/code]). [code]increment[/code] can be negative. If [code]increment[/code] is negative, [code]final - 1[/code] will become [code]final + 1[/code]. Also, the initial value must be greater than the final value for the loop to run.
+				Returns an array with the given range. [method range] can be called in three ways:
+				[code]range(n: int)[/code]: Starts from 0, increases by steps of 1, and stops [i]before[/i] [code]n[/code]. The argument [code]n[/code] is [b]exclusive[/b].
+				[code]range(b: int, n: int)[/code]: Starts from [code]b[/code], increases by steps of 1, and stops [i]before[/i] [code]n[/code]. The arguments [code]b[/code] and [code]n[/code] are [b]inclusive[/b] and [b]exclusive[/b], respectively.
+				[code]range(b: int, n: int, s: int)[/code]: Starts from [code]b[/code], increases/decreases by steps of [code]s[/code], and stops [i]before[/i] [code]n[/code]. The arguments [code]b[/code] and [code]n[/code] are [b]inclusive[/b] and [b]exclusive[/b], respectively. The argument [code]s[/code] [b]can[/b] be negative, but not [code]0[/code]. If [code]s[/code] is [code]0[/code], an error message is printed.
+				[method range] converts all arguments to [int] before processing.
+				[b]Note:[/b] Returns an empty array if no value meets the value constraint (e.g. [code]range(2, 5, -1)[/code] or [code]range(5, 5, 1)[/code]).
+				Examples:
 				[codeblock]
-				print(range(4))
-				print(range(2, 5))
-				print(range(0, 6, 2))
-				[/codeblock]
-				Output:
-				[codeblock]
-				[0, 1, 2, 3]
-				[2, 3, 4]
-				[0, 2, 4]
+				print(range(4))        # Prints [0, 1, 2, 3]
+				print(range(2, 5))     # Prints [2, 3, 4]
+				print(range(0, 6, 2))  # Prints [0, 2, 4]
+				print(range(4, 1, -1)) # Prints [4, 3, 2]
 				[/codeblock]
 				To iterate over an [Array] backwards, use:
 				[codeblock]
 				var array = [3, 6, 9]
-				var i := array.size() - 1
-				while i &gt;= 0:
-				    print(array[i])
-				    i -= 1
+				for i in range(array.size(), 0, -1):
+				    print(array[i - 1])
 				[/codeblock]
 				Output:
 				[codeblock]

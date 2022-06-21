@@ -52,15 +52,18 @@ Size2 PopupMenu::get_minimum_size() const {
 
 	Size2 minsize = get_stylebox("panel")->get_minimum_size();
 	Ref<Font> font = get_font("font");
+	Ref<Font> font_separator = get_font("font_separator");
 
 	float max_w = 0;
 	float icon_w = 0;
-	int font_h = font->get_height();
 	int check_w = MAX(get_icon("checked")->get_width(), get_icon("radio_checked")->get_width()) + hseparation;
 	int accel_max_w = 0;
 	bool has_check = false;
 
 	for (int i = 0; i < items.size(); i++) {
+		String text = items[i].xl_text;
+		int font_h = items[i].separator && text != String() ? font_separator->get_height() : font->get_height();
+
 		Size2 size;
 		if (!items[i].icon.is_null()) {
 			Size2 icon_size = items[i].icon->get_size();
@@ -76,8 +79,7 @@ Size2 PopupMenu::get_minimum_size() const {
 			has_check = true;
 		}
 
-		String text = items[i].xl_text;
-		size.width += font->get_string_size(text).width;
+		size.width += items[i].separator ? font_separator->get_string_size(text).width : font->get_string_size(text).width;
 		size.height += vseparation;
 
 		if (items[i].accel || (items[i].shortcut.is_valid() && items[i].shortcut->is_valid())) {
@@ -117,10 +119,13 @@ int PopupMenu::_get_mouse_over(const Point2 &p_over) const {
 	}
 
 	Ref<Font> font = get_font("font");
+	Ref<Font> font_separator = get_font("font_separator");
 	int vseparation = get_constant("vseparation");
-	float font_h = font->get_height();
 
 	for (int i = 0; i < items.size(); i++) {
+		String text = items[i].xl_text;
+		float font_h = items[i].separator && text != String() ? font_separator->get_height() : font->get_height();
+
 		ofs.y += vseparation;
 		float h;
 
@@ -162,6 +167,7 @@ void PopupMenu::_activate_submenu(int over) {
 
 	pm->set_position(pos);
 	pm->set_scale(get_global_transform().get_scale());
+	pm->popup();
 
 	PopupMenu *pum = Object::cast_to<PopupMenu>(pm);
 	if (pum) {
@@ -170,6 +176,7 @@ void PopupMenu::_activate_submenu(int over) {
 			pum->set_current_index(0);
 		}
 
+		// Setting autohide areas *must* be done after `popup()` which can move the popup (to fit it into the viewport).
 		pr.position -= pum->get_global_position();
 		pum->clear_autohide_areas();
 		pum->add_autohide_area(Rect2(pr.position.x, pr.position.y, pr.size.x, items[over]._ofs_cache));
@@ -178,8 +185,6 @@ void PopupMenu::_activate_submenu(int over) {
 			pum->add_autohide_area(Rect2(pr.position.x, pr.position.y + from, pr.size.x, pr.size.y - from));
 		}
 	}
-
-	pm->popup();
 }
 
 void PopupMenu::_submenu_timeout() {
@@ -485,6 +490,7 @@ void PopupMenu::_notification(int p_what) {
 			Ref<StyleBox> style = get_stylebox("panel");
 			Ref<StyleBox> hover = get_stylebox("hover");
 			Ref<Font> font = get_font("font");
+			Ref<Font> font_separator = get_font("font_separator");
 			// In Item::checkable_type enum order (less the non-checkable member)
 			Ref<Texture> check[] = { get_icon("checked"), get_icon("radio_checked") };
 			Ref<Texture> uncheck[] = { get_icon("unchecked"), get_icon("radio_unchecked") };
@@ -493,7 +499,7 @@ void PopupMenu::_notification(int p_what) {
 			Ref<StyleBox> labeled_separator_left = get_stylebox("labeled_separator_left");
 			Ref<StyleBox> labeled_separator_right = get_stylebox("labeled_separator_right");
 
-			style->draw(ci, Rect2(Point2(), get_size()));
+			style->draw(ci, Rect2(Point2(), size));
 			Point2 ofs = style->get_offset();
 			int vseparation = get_constant("vseparation");
 			int hseparation = get_constant("hseparation");
@@ -502,7 +508,6 @@ void PopupMenu::_notification(int p_what) {
 			Color font_color_accel = get_color("font_color_accel");
 			Color font_color_hover = get_color("font_color_hover");
 			Color font_color_separator = get_color("font_color_separator");
-			float font_h = font->get_height();
 
 			// Add the check and the wider icon to the offset of all items.
 			float icon_ofs = 0.0;
@@ -526,6 +531,9 @@ void PopupMenu::_notification(int p_what) {
 			}
 
 			for (int i = 0; i < items.size(); i++) {
+				String text = items[i].xl_text;
+				float font_h = items[i].separator && text != String() ? font_separator->get_height() : font->get_height();
+
 				if (i == 0) {
 					ofs.y += vseparation / 2;
 				} else {
@@ -543,26 +551,26 @@ void PopupMenu::_notification(int p_what) {
 				}
 
 				if (i == mouse_over) {
-					hover->draw(ci, Rect2(item_ofs + Point2(-hseparation, -vseparation / 2), Size2(get_size().width - style->get_minimum_size().width + hseparation * 2, h + vseparation)));
+					hover->draw(ci, Rect2(item_ofs + Point2(0, -vseparation / 2), Size2(size.width - style->get_minimum_size().width, h + vseparation)));
 				}
-
-				String text = items[i].xl_text;
 
 				item_ofs.x += items[i].h_ofs;
 				if (items[i].separator) {
-					int sep_h = separator->get_center_size().height + separator->get_minimum_size().height;
 					if (text != String()) {
-						int ss = font->get_string_size(text).width;
-						int center = (get_size().width) / 2;
-						int l = center - ss / 2;
-						int r = center + ss / 2;
+						int ss = font_separator->get_string_size(text).width / 2;
+						int center = get_size().width / 2;
+						int l = center - ss;
+						int r = center + ss;
 						if (l > item_ofs.x) {
+							int sep_h = labeled_separator_left->get_center_size().height + labeled_separator_left->get_minimum_size().height;
 							labeled_separator_left->draw(ci, Rect2(item_ofs + Point2(0, Math::floor((h - sep_h) / 2.0)), Size2(MAX(0, l - item_ofs.x), sep_h)));
 						}
 						if (r < get_size().width - style->get_margin(MARGIN_RIGHT)) {
+							int sep_h = labeled_separator_right->get_center_size().height + labeled_separator_right->get_minimum_size().height;
 							labeled_separator_right->draw(ci, Rect2(Point2(r, item_ofs.y + Math::floor((h - sep_h) / 2.0)), Size2(MAX(0, get_size().width - style->get_margin(MARGIN_RIGHT) - r), sep_h)));
 						}
 					} else {
+						int sep_h = separator->get_center_size().height + separator->get_minimum_size().height;
 						separator->draw(ci, Rect2(item_ofs + Point2(0, Math::floor((h - sep_h) / 2.0)), Size2(get_size().width - style->get_minimum_size().width, sep_h)));
 					}
 				}
@@ -582,14 +590,15 @@ void PopupMenu::_notification(int p_what) {
 					submenu->draw(ci, Point2(size.width - style->get_margin(MARGIN_RIGHT) - submenu->get_width(), item_ofs.y + Math::floor(h - submenu->get_height()) / 2), icon_color);
 				}
 
-				item_ofs.y += font->get_ascent();
 				if (items[i].separator) {
 					if (text != String()) {
-						int center = (get_size().width - font->get_string_size(text).width) / 2;
-						font->draw(ci, Point2(center, item_ofs.y + Math::floor((h - font_h) / 2.0)), text, font_color_separator);
+						item_ofs.y += font_separator->get_ascent();
+						int center = (get_size().width - font_separator->get_string_size(text).width) / 2;
+						font_separator->draw(ci, Point2(center, item_ofs.y + Math::floor((h - font_h) / 2.0)), text, font_color_separator);
 					}
 				} else {
 					item_ofs.x += icon_ofs + check_ofs;
+					item_ofs.y += font->get_ascent();
 					font->draw(ci, item_ofs + Point2(0, Math::floor((h - font_h) / 2.0)), text, items[i].disabled ? font_color_disabled : (i == mouse_over ? font_color_hover : font_color));
 				}
 

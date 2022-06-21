@@ -39,6 +39,7 @@
 #include "core/math/math_funcs.h"
 #include "core/os/memory.h"
 #include "core/print_string.h"
+#include "core/string_name.h"
 #include "core/translation.h"
 #include "core/ucaps.h"
 #include "core/variant.h"
@@ -1738,7 +1739,7 @@ int String::hex_to_int(bool p_with_prefix) const {
 		}
 		// Check for overflow/underflow, with special case to ensure INT32_MIN does not result in error
 		bool overflow = ((hex > INT32_MAX / 16) && (sign == 1 || (sign == -1 && hex != (INT32_MAX >> 4) + 1))) || (sign == -1 && hex == (INT32_MAX >> 4) + 1 && c > '0');
-		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + *this + " as integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + *this + " as a 32-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 		hex *= 16;
 		hex += n;
 		s++;
@@ -1780,7 +1781,7 @@ int64_t String::hex_to_int64(bool p_with_prefix) const {
 			return 0;
 		}
 		bool overflow = ((hex > INT64_MAX / 16) && (sign == 1 || (sign == -1 && hex != (INT64_MAX >> 4) + 1))) || (sign == -1 && hex == (INT64_MAX >> 4) + 1 && c > '0');
-		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as 64-bit integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as a 64-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 		hex *= 16;
 		hex += n;
 		s++;
@@ -1822,7 +1823,7 @@ int64_t String::bin_to_int64(bool p_with_prefix) const {
 		}
 		// Check for overflow/underflow, with special case to ensure INT64_MIN does not result in error
 		bool overflow = ((binary > INT64_MAX / 2) && (sign == 1 || (sign == -1 && binary != (INT64_MAX >> 1) + 1))) || (sign == -1 && binary == (INT64_MAX >> 1) + 1 && c > '0');
-		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as 64-bit integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+		ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as a 64-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 		binary *= 2;
 		binary += n;
 		s++;
@@ -1845,7 +1846,7 @@ int String::to_int() const {
 		CharType c = operator[](i);
 		if (c >= '0' && c <= '9') {
 			bool overflow = (integer > INT32_MAX / 10) || (integer == INT32_MAX / 10 && ((sign == 1 && c > '7') || (sign == -1 && c > '8')));
-			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + *this + " as integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + *this + " as a 32-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 			integer *= 10;
 			integer += c - '0';
 
@@ -1871,7 +1872,7 @@ int64_t String::to_int64() const {
 		CharType c = operator[](i);
 		if (c >= '0' && c <= '9') {
 			bool overflow = (integer > INT64_MAX / 10) || (integer == INT64_MAX / 10 && ((sign == 1 && c > '7') || (sign == -1 && c > '8')));
-			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as 64-bit integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + *this + " as a 64-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 			integer *= 10;
 			integer += c - '0';
 
@@ -1900,7 +1901,7 @@ int String::to_int(const char *p_str, int p_len) {
 		char c = p_str[i];
 		if (c >= '0' && c <= '9') {
 			bool overflow = (integer > INT32_MAX / 10) || (integer == INT32_MAX / 10 && ((sign == 1 && c > '7') || (sign == -1 && c > '8')));
-			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + String(p_str).substr(0, to) + " as integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+			ERR_FAIL_COND_V_MSG(overflow, sign == 1 ? INT32_MAX : INT32_MIN, "Cannot represent " + String(p_str).substr(0, to) + " as a 32-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 			integer *= 10;
 			integer += c - '0';
 
@@ -2219,7 +2220,7 @@ int64_t String::to_int(const CharType *p_str, int p_len) {
 						while (*str && str != limit) {
 							number += *(str++);
 						}
-						ERR_FAIL_V_MSG(sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + number + " as integer, provided value is " + (sign == 1 ? "too big." : "too small."));
+						ERR_FAIL_V_MSG(sign == 1 ? INT64_MAX : INT64_MIN, "Cannot represent " + number + " as a 64-bit signed integer, since the value is " + (sign == 1 ? "too large." : "too small."));
 					}
 					integer *= 10;
 					integer += c - '0';
@@ -3267,6 +3268,10 @@ String String::rstrip(const String &p_chars) const {
 	return substr(0, end + 1);
 }
 
+bool String::is_network_share_path() const {
+	return begins_with("//") || begins_with("\\\\");
+}
+
 String String::simplify_path() const {
 	String s = *this;
 	String drive;
@@ -3279,6 +3284,9 @@ String String::simplify_path() const {
 	} else if (s.begins_with("user://")) {
 		drive = "user://";
 		s = s.substr(7, s.length());
+	} else if (is_network_share_path()) {
+		drive = s.substr(0, 2);
+		s = s.substr(2, s.length() - 2);
 	} else if (s.begins_with("/") || s.begins_with("\\")) {
 		drive = s.substr(0, 1);
 		s = s.substr(1, s.length() - 1);
@@ -3376,6 +3384,31 @@ bool String::is_abs_path() const {
 	}
 }
 
+static _FORCE_INLINE_ bool _is_valid_identifier_bit(int p_index, CharType p_char) {
+	if (p_index == 0 && p_char >= '0' && p_char <= '9') {
+		return false; // No start with number plz.
+	}
+	return (p_char >= '0' && p_char <= '9') || (p_char >= 'a' && p_char <= 'z') || (p_char >= 'A' && p_char <= 'Z') || p_char == '_';
+}
+
+String String::validate_identifier() const {
+	if (empty()) {
+		return "_"; // Empty string is not a valid identifier.
+	}
+
+	String result = *this;
+	int len = result.length();
+	wchar_t *buffer = result.ptrw();
+
+	for (int i = 0; i < len; i++) {
+		if (!_is_valid_identifier_bit(i, buffer[i])) {
+			buffer[i] = '_';
+		}
+	}
+
+	return result;
+}
+
 bool String::is_valid_identifier() const {
 	int len = length();
 
@@ -3386,15 +3419,7 @@ bool String::is_valid_identifier() const {
 	const wchar_t *str = &operator[](0);
 
 	for (int i = 0; i < len; i++) {
-		if (i == 0) {
-			if (str[0] >= '0' && str[0] <= '9') {
-				return false; // no start with number plz
-			}
-		}
-
-		bool valid_char = (str[i] >= '0' && str[i] <= '9') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z') || str[i] == '_';
-
-		if (!valid_char) {
+		if (!_is_valid_identifier_bit(i, str[i])) {
 			return false;
 		}
 	}
@@ -3438,21 +3463,19 @@ String String::http_escape() const {
 	const CharString temp = utf8();
 	String res;
 	for (int i = 0; i < temp.length(); ++i) {
-		char ord = temp[i];
+		uint8_t ord = temp[i];
 		if (ord == '.' || ord == '-' || ord == '_' || ord == '~' ||
 				(ord >= 'a' && ord <= 'z') ||
 				(ord >= 'A' && ord <= 'Z') ||
 				(ord >= '0' && ord <= '9')) {
 			res += ord;
 		} else {
-			char h_Val[3];
-#if defined(__GNUC__) || defined(_MSC_VER)
-			snprintf(h_Val, 3, "%02hhX", ord);
-#else
-			sprintf(h_Val, "%02hhX", ord);
-#endif
-			res += "%";
-			res += h_Val;
+			char p[4] = { '%', 0, 0, 0 };
+			static const char hex[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+			p[1] = hex[ord >> 4];
+			p[2] = hex[ord & 0xF];
+			res += p;
 		}
 	}
 	return res;
@@ -4001,13 +4024,13 @@ bool String::is_rel_path() const {
 String String::get_base_dir() const {
 	int end = 0;
 
-	// url scheme style base
+	// URL scheme style base.
 	int basepos = find("://");
 	if (basepos != -1) {
 		end = basepos + 3;
 	}
 
-	// windows top level directory base
+	// Windows top level directory base.
 	if (end == 0) {
 		basepos = find(":/");
 		if (basepos == -1) {
@@ -4018,7 +4041,24 @@ String String::get_base_dir() const {
 		}
 	}
 
-	// unix root directory base
+	// Windows UNC network share path.
+	if (end == 0) {
+		if (is_network_share_path()) {
+			basepos = find("/", 2);
+			if (basepos == -1) {
+				basepos = find("\\", 2);
+			}
+			int servpos = find("/", basepos + 1);
+			if (servpos == -1) {
+				servpos = find("\\", basepos + 1);
+			}
+			if (servpos != -1) {
+				end = servpos + 1;
+			}
+		}
+	}
+
+	// Unix root directory base.
 	if (end == 0) {
 		if (begins_with("/")) {
 			end = 1;
@@ -4140,7 +4180,8 @@ String String::property_name_encode() const {
 }
 
 // Changes made to the set of invalid characters must also be reflected in the String documentation.
-const String String::invalid_node_name_characters = ". : @ / \"";
+const String String::invalid_node_name_characters = ". : @ / \" " UNIQUE_NODE_PREFIX;
+;
 
 String String::validate_node_name() const {
 	Vector<String> chars = String::invalid_node_name_characters.split(" ");
@@ -4213,7 +4254,7 @@ String String::sprintf(const Array &values, bool *error) const {
 	int min_chars = 0;
 	int min_decimals = 0;
 	bool in_decimals = false;
-	bool pad_with_zeroes = false;
+	bool pad_with_zeros = false;
 	bool left_justified = false;
 	bool show_sign = false;
 
@@ -4264,7 +4305,7 @@ String String::sprintf(const Array &values, bool *error) const {
 
 					// Padding.
 					int pad_chars_count = (value < 0 || show_sign) ? min_chars - 1 : min_chars;
-					String pad_char = pad_with_zeroes ? String("0") : String(" ");
+					String pad_char = pad_with_zeros ? String("0") : String(" ");
 					if (left_justified) {
 						str = str.rpad(pad_chars_count, pad_char);
 					} else {
@@ -4272,10 +4313,13 @@ String String::sprintf(const Array &values, bool *error) const {
 					}
 
 					// Sign.
-					if (show_sign && value >= 0) {
-						str = str.insert(pad_with_zeroes ? 0 : str.length() - number_len, "+");
-					} else if (value < 0) {
-						str = str.insert(pad_with_zeroes ? 0 : str.length() - number_len, "-");
+					if (show_sign || value < 0) {
+						String sign_char = value < 0 ? "-" : "+";
+						if (left_justified) {
+							str = str.insert(0, sign_char);
+						} else {
+							str = str.insert(pad_with_zeros ? 0 : str.length() - number_len, sign_char);
+						}
 					}
 
 					formatted += str;
@@ -4304,13 +4348,9 @@ String String::sprintf(const Array &values, bool *error) const {
 
 					// Padding. Leave room for sign later if required.
 					int pad_chars_count = (is_negative || show_sign) ? min_chars - 1 : min_chars;
-					String pad_char = pad_with_zeroes ? String("0") : String(" ");
+					String pad_char = pad_with_zeros ? String("0") : String(" ");
 					if (left_justified) {
-						if (pad_with_zeroes) {
-							return "left justification cannot be used with zeros as the padding";
-						} else {
-							str = str.rpad(pad_chars_count, pad_char);
-						}
+						str = str.rpad(pad_chars_count, pad_char);
 					} else {
 						str = str.lpad(pad_chars_count, pad_char);
 					}
@@ -4321,7 +4361,7 @@ String String::sprintf(const Array &values, bool *error) const {
 						if (left_justified) {
 							str = str.insert(0, sign_char);
 						} else {
-							str = str.insert(pad_with_zeroes ? 0 : str.length() - initial_len, sign_char);
+							str = str.insert(pad_with_zeros ? 0 : str.length() - initial_len, sign_char);
 						}
 					}
 
@@ -4408,7 +4448,11 @@ String String::sprintf(const Array &values, bool *error) const {
 						min_decimals += n;
 					} else {
 						if (c == '0' && min_chars == 0) {
-							pad_with_zeroes = true;
+							if (left_justified) {
+								WARN_PRINT("'0' flag ignored with '-' flag in string format");
+							} else {
+								pad_with_zeros = true;
+							}
 						} else {
 							min_chars *= 10;
 							min_chars += n;
@@ -4457,7 +4501,7 @@ String String::sprintf(const Array &values, bool *error) const {
 					// Back to defaults:
 					min_chars = 0;
 					min_decimals = 6;
-					pad_with_zeroes = false;
+					pad_with_zeros = false;
 					left_justified = false;
 					show_sign = false;
 					in_decimals = false;

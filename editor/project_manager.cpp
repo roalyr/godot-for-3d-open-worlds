@@ -1769,19 +1769,34 @@ void ProjectManager::_notification(int p_what) {
 			Engine::get_singleton()->set_editor_hint(false);
 		} break;
 		case NOTIFICATION_RESIZED: {
-			if (open_templates->is_visible()) {
+			if (open_templates && open_templates->is_visible()) {
 				open_templates->popup_centered_minsize();
+			}
+			if (asset_library) {
+				real_t size = get_size().x / EDSCALE;
+				asset_library->set_columns(size < 1000 ? 1 : 2);
+				// Adjust names of tabs to fit the new size.
+				if (size < 650) {
+					local_projects_hb->set_name(TTR("Local"));
+					asset_library->set_name(TTR("Asset Library"));
+				} else {
+					local_projects_hb->set_name(TTR("Local Projects"));
+					asset_library->set_name(TTR("Asset Library Projects"));
+				}
 			}
 		} break;
 		case NOTIFICATION_READY: {
-			if (_project_list->get_project_count() == 0 && StreamPeerSSL::is_available()) {
-				open_templates->popup_centered_minsize();
-			}
-
 			if (_project_list->get_project_count() >= 1) {
 				// Focus on the search box immediately to allow the user
 				// to search without having to reach for their mouse
 				project_filter->search_box->grab_focus();
+			}
+
+			if (asset_library) {
+				// Suggest browsing asset library to get templates/demos.
+				if (open_templates && _project_list->get_project_count() == 0) {
+					open_templates->popup_centered_minsize();
+				}
 			}
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
@@ -1977,7 +1992,7 @@ void ProjectManager::_global_menu_action(const Variant &p_id, const Variant &p_m
 void ProjectManager::_open_selected_projects() {
 	// Show loading text to tell the user that the project manager is busy loading.
 	// This is especially important for the HTML5 project manager.
-	loading_label->set_modulate(Color(1, 1, 1));
+	loading_label->show();
 
 	const Set<String> &selected_list = _project_list->get_selected_project_keys();
 
@@ -2449,24 +2464,21 @@ ProjectManager::ProjectManager() {
 	tabs->set_tab_align(TabContainer::ALIGN_LEFT);
 	tabs->connect("tab_changed", this, "_on_tab_changed");
 
-	HBoxContainer *tree_hb = memnew(HBoxContainer);
-	projects_hb = tree_hb;
-
-	projects_hb->set_name(TTR("Local Projects"));
-
-	tabs->add_child(tree_hb);
+	local_projects_hb = memnew(HBoxContainer);
+	local_projects_hb->set_name(TTR("Local Projects"));
+	tabs->add_child(local_projects_hb);
 
 	VBoxContainer *search_tree_vb = memnew(VBoxContainer);
-	tree_hb->add_child(search_tree_vb);
+	local_projects_hb->add_child(search_tree_vb);
 	search_tree_vb->set_h_size_flags(SIZE_EXPAND_FILL);
 
 	HBoxContainer *sort_filters = memnew(HBoxContainer);
-	loading_label = memnew(Label(TTR("Loading, please wait...")));
-	loading_label->add_font_override("font", get_font("bold", "EditorFonts"));
-	loading_label->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	sort_filters->add_child(loading_label);
-	// Hide the label but make it still take up space. This prevents reflows when showing the label.
-	loading_label->set_modulate(Color(0, 0, 0, 0));
+
+	project_filter = memnew(ProjectListFilter);
+	project_filter->add_search_box();
+	project_filter->connect("filter_changed", this, "_on_filter_option_changed");
+	project_filter->set_h_size_flags(SIZE_EXPAND_FILL);
+	sort_filters->add_child(project_filter);
 
 	Label *sort_label = memnew(Label);
 	sort_label->set_text(TTR("Sort:"));
@@ -2478,21 +2490,20 @@ ProjectManager::ProjectManager() {
 	project_order_filter = memnew(ProjectListFilter);
 	project_order_filter->add_filter_option();
 	project_order_filter->_setup_filters(sort_filter_titles);
-	project_order_filter->set_filter_size(150);
+	project_order_filter->set_filter_size(180);
 	sort_filters->add_child(project_order_filter);
 	project_order_filter->connect("filter_changed", this, "_on_order_option_changed");
-	project_order_filter->set_custom_minimum_size(Size2(180, 10) * EDSCALE);
-
-	int projects_sorting_order = (int)EditorSettings::get_singleton()->get("project_manager/sorting_order");
+	const int projects_sorting_order = (int)EditorSettings::get_singleton()->get("project_manager/sorting_order");
 	project_order_filter->set_filter_option((ProjectListFilter::FilterOption)projects_sorting_order);
 
-	project_filter = memnew(ProjectListFilter);
-	project_filter->add_search_box();
-	project_filter->connect("filter_changed", this, "_on_filter_option_changed");
-	project_filter->set_custom_minimum_size(Size2(280, 10) * EDSCALE);
-	sort_filters->add_child(project_filter);
-
 	search_tree_vb->add_child(sort_filters);
+
+	loading_label = memnew(Label(TTR("Loading, please wait...")));
+	loading_label->add_font_override("font", get_font("bold", "EditorFonts"));
+	loading_label->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	sort_filters->add_child(loading_label);
+	// The loading label is shown later.
+	loading_label->hide();
 
 	PanelContainer *pc = memnew(PanelContainer);
 	pc->add_style_override("panel", gui_base->get_stylebox("bg", "Tree"));
@@ -2507,7 +2518,7 @@ ProjectManager::ProjectManager() {
 
 	VBoxContainer *tree_vb = memnew(VBoxContainer);
 	tree_vb->set_custom_minimum_size(Size2(120, 120));
-	tree_hb->add_child(tree_vb);
+	local_projects_hb->add_child(tree_vb);
 
 	Button *open = memnew(Button);
 	open->set_text(TTR("Edit"));
@@ -2581,6 +2592,9 @@ ProjectManager::ProjectManager() {
 	about_btn->connect("pressed", this, "_show_about");
 	tree_vb->add_child(about_btn);
 
+	// Asset Library can't work on Web editor for now as most assets are sourced
+	// directly from GitHub which does not set CORS.
+#ifndef JAVASCRIPT_ENABLED
 	if (StreamPeerSSL::is_available()) {
 		asset_library = memnew(EditorAssetLibrary(true));
 		asset_library->set_name(TTR("Asset Library Projects"));
@@ -2589,6 +2603,7 @@ ProjectManager::ProjectManager() {
 	} else {
 		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
 	}
+#endif
 
 	HBoxContainer *settings_hb = memnew(HBoxContainer);
 	settings_hb->set_alignment(BoxContainer::ALIGN_END);
@@ -2622,6 +2637,12 @@ ProjectManager::ProjectManager() {
 	language_btn = memnew(OptionButton);
 	language_btn->set_flat(true);
 	language_btn->set_focus_mode(Control::FOCUS_NONE);
+#ifdef ANDROID_ENABLED
+	// The language selection dropdown doesn't work on Android (as the setting isn't saved), see GH-60353.
+	// Also, the dropdown it spawns is very tall and can't be scrolled without a hardware mouse.
+	// Hiding the language selection dropdown also leaves more space for the version label to display.
+	language_btn->hide();
+#endif
 
 	Vector<String> editor_languages;
 	List<PropertyInfo> editor_settings_properties;
@@ -2698,7 +2719,7 @@ ProjectManager::ProjectManager() {
 	gui_base->add_child(ask_update_settings);
 
 	// Define a minimum window size to prevent UI elements from overlapping or being cut off.
-	OS::get_singleton()->set_min_window_size(Size2(750, 420) * EDSCALE);
+	OS::get_singleton()->set_min_window_size(Size2(520, 350) * EDSCALE);
 
 	// Resize the bootsplash window based on editor display scale.
 	const float scale_factor = MAX(1, EDSCALE);
@@ -2753,11 +2774,13 @@ ProjectManager::ProjectManager() {
 	dialog_error = memnew(AcceptDialog);
 	gui_base->add_child(dialog_error);
 
-	open_templates = memnew(ConfirmationDialog);
-	open_templates->set_text(TTR("You currently don't have any projects.\nWould you like to explore official example projects in the Asset Library?"));
-	open_templates->get_ok()->set_text(TTR("Open Asset Library"));
-	open_templates->connect("confirmed", this, "_open_asset_library");
-	add_child(open_templates);
+	if (asset_library) {
+		open_templates = memnew(ConfirmationDialog);
+		open_templates->set_text(TTR("You currently don't have any projects.\nWould you like to explore official example projects in the Asset Library?"));
+		open_templates->get_ok()->set_text(TTR("Open Asset Library"));
+		open_templates->connect("confirmed", this, "_open_asset_library");
+		add_child(open_templates);
+	}
 
 	about = memnew(EditorAbout);
 	add_child(about);

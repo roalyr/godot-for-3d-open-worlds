@@ -98,7 +98,6 @@ private:
 	HashMap<EditorVCSInterface::ChangeType, Color> change_type_to_color;
 	HashMap<EditorVCSInterface::ChangeType, Ref<Texture>> change_type_to_icon;
 
-	TabContainer *dock_vbc;
 	VBoxContainer *version_commit_dock;
 	Tree *staged_files;
 	Tree *unstaged_files;
@@ -158,7 +157,7 @@ private:
 	void _discard_all();
 	void _refresh_stage_area();
 	void _refresh_branch_list();
-	void _refresh_commit_list();
+	void _refresh_commit_list(int p_index);
 	void _refresh_remote_list();
 	void _display_diff(int p_idx);
 	void _move_all(Object *p_tree);

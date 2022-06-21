@@ -39,10 +39,12 @@ class Navigation : public Spatial {
 
 	RID map;
 
-	Vector3 up;
-	real_t cell_size;
-	real_t cell_height;
-	real_t edge_connection_margin;
+	Vector3 up = Vector3(0, 1, 0);
+	real_t cell_size = 0.25;
+	real_t cell_height = 0.25;
+	real_t edge_connection_margin = 0.25;
+
+	uint32_t navigation_layers = 1;
 
 protected:
 	static void _bind_methods();
@@ -66,6 +68,9 @@ public:
 		return cell_height;
 	}
 
+	void set_navigation_layers(uint32_t p_navigation_layers);
+	uint32_t get_navigation_layers() const;
+
 	void set_edge_connection_margin(float p_edge_connection_margin);
 	float get_edge_connection_margin() const {
 		return edge_connection_margin;
@@ -76,6 +81,8 @@ public:
 	Vector3 get_closest_point(const Vector3 &p_point) const;
 	Vector3 get_closest_point_normal(const Vector3 &p_point) const;
 	RID get_closest_point_owner(const Vector3 &p_point) const;
+
+	virtual String get_configuration_warning() const;
 
 	Navigation();
 	~Navigation();

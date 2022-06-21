@@ -97,19 +97,37 @@ void VisualInstance::_notification(int p_what) {
 
 		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
-			if (_is_vi_visible()) {
+			if (_is_vi_visible() || is_physics_interpolated_and_enabled()) {
 				if (!_is_using_identity_transform()) {
 					Transform gt = get_global_transform();
 					VisualServer::get_singleton()->instance_set_transform(instance, gt);
+
+					// For instance when first adding to the tree, when the previous transform is
+					// unset, to prevent streaking from the origin.
+					if (_is_physics_interpolation_reset_requested()) {
+						if (_is_vi_visible()) {
+							_notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
+						}
+						_set_physics_interpolation_reset_requested(false);
+					}
 				}
 			}
 		} break;
 		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION: {
-			if (_is_vi_visible()) {
-				if (is_physics_interpolated()) {
-					VisualServer::get_singleton()->instance_reset_physics_interpolation(instance);
+			if (_is_vi_visible() && is_physics_interpolated()) {
+				VisualServer::get_singleton()->instance_reset_physics_interpolation(instance);
+			}
+#if defined(DEBUG_ENABLED) && defined(TOOLS_ENABLED)
+			else if (GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
+				String node_name = is_inside_tree() ? String(get_path()) : String(get_name());
+				if (!_is_vi_visible()) {
+					WARN_PRINT("[Physics interpolation] NOTIFICATION_RESET_PHYSICS_INTERPOLATION only works with unhidden nodes: \"" + node_name + "\".");
+				}
+				if (!is_physics_interpolated()) {
+					WARN_PRINT("[Physics interpolation] NOTIFICATION_RESET_PHYSICS_INTERPOLATION only works with interpolated nodes: \"" + node_name + "\".");
 				}
 			}
+#endif
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
 			VisualServer::get_singleton()->instance_set_scenario(instance, RID());

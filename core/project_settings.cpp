@@ -1069,6 +1069,20 @@ ProjectSettings::ProjectSettings() {
 	GLOBAL_DEF("application/config/use_custom_user_dir", false);
 	GLOBAL_DEF("application/config/custom_user_dir_name", "");
 	GLOBAL_DEF("application/config/project_settings_override", "");
+
+	GLOBAL_DEF("display/window/size/width", 1024);
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/width", PropertyInfo(Variant::INT, "display/window/size/width", PROPERTY_HINT_RANGE, "0,7680,1,or_greater")); // 8K resolution
+	GLOBAL_DEF("display/window/size/height", 600);
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/height", PropertyInfo(Variant::INT, "display/window/size/height", PROPERTY_HINT_RANGE, "0,4320,1,or_greater")); // 8K resolution
+	GLOBAL_DEF("display/window/size/resizable", true);
+	GLOBAL_DEF("display/window/size/borderless", false);
+	GLOBAL_DEF("display/window/size/fullscreen", false);
+	GLOBAL_DEF("display/window/size/always_on_top", false);
+	GLOBAL_DEF("display/window/size/test_width", 0);
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_width", PropertyInfo(Variant::INT, "display/window/size/test_width", PROPERTY_HINT_RANGE, "0,7680,1,or_greater")); // 8K resolution
+	GLOBAL_DEF("display/window/size/test_height", 0);
+	ProjectSettings::get_singleton()->set_custom_property_info("display/window/size/test_height", PropertyInfo(Variant::INT, "display/window/size/test_height", PROPERTY_HINT_RANGE, "0,4320,1,or_greater")); // 8K resolution
+
 	GLOBAL_DEF("audio/default_bus_layout", "res://default_bus_layout.tres");
 	custom_prop_info["audio/default_bus_layout"] = PropertyInfo(Variant::STRING, "audio/default_bus_layout", PROPERTY_HINT_FILE, "*.tres");
 
@@ -1082,14 +1096,17 @@ ProjectSettings::ProjectSettings() {
 
 	GLOBAL_DEF("editor/main_run_args", "");
 
+	GLOBAL_DEF("editor/scene_naming", 0); // Sync enum values with EditorNode.
+	ProjectSettings::get_singleton()->set_custom_property_info("editor/scene_naming", PropertyInfo(Variant::INT, "editor/scene_naming", PROPERTY_HINT_ENUM, "Auto,PascalCase,snake_case"));
+
 	GLOBAL_DEF("editor/search_in_file_extensions", extensions);
 	custom_prop_info["editor/search_in_file_extensions"] = PropertyInfo(Variant::POOL_STRING_ARRAY, "editor/search_in_file_extensions");
 
 	GLOBAL_DEF("editor/script_templates_search_path", "res://script_templates");
 	custom_prop_info["editor/script_templates_search_path"] = PropertyInfo(Variant::STRING, "editor/script_templates_search_path", PROPERTY_HINT_DIR);
 
-	GLOBAL_DEF("editor/version_control/autoload_on_startup", false);
-	GLOBAL_DEF("editor/version_control/plugin_name", "");
+	GLOBAL_DEF("editor/version_control_autoload_on_startup", false);
+	GLOBAL_DEF("editor/version_control_plugin_name", "");
 
 	action = Dictionary();
 	action["deadzone"] = Variant(0.5f);

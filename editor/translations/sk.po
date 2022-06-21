@@ -86,12 +86,13 @@ msgstr "Veľkosť: "
 msgid "Screen Orientation"
 msgstr "Popis:"
 
-#: core/bind/core_bind.cpp main/main.cpp platform/uwp/os_uwp.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp main/main.cpp
+#: platform/uwp/os_uwp.cpp
 #, fuzzy
 msgid "Window"
 msgstr "Nové Okno"
 
-#: core/bind/core_bind.cpp main/main.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp
 #, fuzzy
 msgid "Borderless"
 msgstr "Ohraničené Pixely"
@@ -100,7 +101,7 @@ msgstr "Ohraničené Pixely"
 msgid "Per Pixel Transparency Enabled"
 msgstr ""
 
-#: core/bind/core_bind.cpp main/main.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp
 #, fuzzy
 msgid "Fullscreen"
 msgstr "Prepnúť na Celú Obrazovku"
@@ -113,7 +114,7 @@ msgstr ""
 msgid "Minimized"
 msgstr ""
 
-#: core/bind/core_bind.cpp main/main.cpp scene/gui/dialogs.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp scene/gui/dialogs.cpp
 #: scene/gui/graph_node.cpp
 msgid "Resizable"
 msgstr ""
@@ -122,15 +123,16 @@ msgstr ""
 #: scene/2d/physics_body_2d.cpp scene/2d/remote_transform_2d.cpp
 #: scene/3d/physics_body.cpp scene/3d/remote_transform.cpp
 #: scene/gui/control.cpp scene/gui/line_edit.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Position"
 msgstr "Pozícia Dock-u"
 
-#: core/bind/core_bind.cpp editor/editor_settings.cpp main/main.cpp
-#: modules/gdscript/gdscript_editor.cpp modules/gridmap/grid_map.cpp
-#: modules/mono/csharp_script.cpp modules/visual_script/visual_script_nodes.cpp
-#: scene/2d/tile_map.cpp scene/3d/camera.cpp scene/3d/light.cpp
-#: scene/gui/control.cpp scene/gui/graph_edit.cpp scene/main/viewport.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp editor/editor_settings.cpp
+#: main/main.cpp modules/gridmap/grid_map.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/2d/tile_map.cpp
+#: scene/3d/camera.cpp scene/3d/light.cpp scene/gui/control.cpp
+#: scene/gui/graph_edit.cpp scene/main/viewport.cpp
 #: scene/resources/dynamic_font.cpp scene/resources/navigation_mesh.cpp
 #: scene/resources/primitive_meshes.cpp scene/resources/sky.cpp
 #: scene/resources/style_box.cpp scene/resources/texture.cpp
@@ -200,6 +202,7 @@ msgstr ""
 #: drivers/gles3/rasterizer_canvas_base_gles3.cpp
 #: drivers/gles3/rasterizer_scene_gles3.cpp
 #: drivers/gles3/rasterizer_storage_gles3.cpp main/main.cpp
+#: modules/webrtc/webrtc_data_channel.h modules/websocket/websocket_macros.h
 #: servers/visual_server.cpp
 msgid "Limits"
 msgstr ""
@@ -221,20 +224,16 @@ msgstr ""
 msgid "Function"
 msgstr "Funkcie"
 
-#: core/image.cpp core/packed_data_container.cpp
-#: modules/minimp3/audio_stream_mp3.cpp
-#: modules/stb_vorbis/audio_stream_ogg_vorbis.cpp
-#: modules/visual_script/visual_script.cpp scene/2d/polygon_2d.cpp
+#: core/image.cpp core/packed_data_container.cpp scene/2d/polygon_2d.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/resources/audio_stream_sample.cpp scene/resources/bit_map.cpp
-#: scene/resources/concave_polygon_shape.cpp scene/resources/curve.cpp
-#: scene/resources/polygon_path_finder.cpp scene/resources/texture.cpp
 msgid "Data"
 msgstr ""
 
 #: core/io/file_access_network.cpp core/register_core_types.cpp
-#: editor/editor_settings.cpp main/main.cpp
+#: editor/editor_file_dialog.cpp editor/editor_settings.cpp main/main.cpp
 #: modules/gdscript/language_server/gdscript_language_server.cpp
+#: modules/webrtc/webrtc_data_channel.h modules/websocket/websocket_macros.h
+#: scene/gui/file_dialog.cpp
 #, fuzzy
 msgid "Network"
 msgstr "Vytvoriť adresár"
@@ -348,7 +347,8 @@ msgid "Not enough bytes for decoding bytes, or invalid format."
 msgstr "Nedostatok bajtov na dekódovanie, alebo chybný formát."
 
 #: core/math/expression.cpp
-msgid "Invalid input %i (not passed) in expression"
+#, fuzzy
+msgid "Invalid input %d (not passed) in expression"
 msgstr "Nesprávny vstup(input) %i (neschválený) v požiadavke"
 
 #: core/math/expression.cpp
@@ -393,37 +393,15 @@ msgstr ""
 msgid "Max Size (KB)"
 msgstr ""
 
-#: core/os/input.cpp editor/editor_help.cpp editor/editor_settings.cpp
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp
-#: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: modules/gdscript/editor/gdscript_highlighter.cpp
-#: modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: modules/mono/csharp_script.cpp scene/animation/animation_player.cpp
-#: scene/gui/control.cpp scene/gui/line_edit.cpp scene/main/node.cpp
-#: scene/resources/material.cpp
+#: core/os/input.cpp
 #, fuzzy
-msgid "Text Editor"
-msgstr "Otvorit Editor"
+msgid "Mouse Mode"
+msgstr "Move Mode"
 
-#: core/os/input.cpp editor/editor_settings.cpp
-#: editor/plugins/script_text_editor.cpp modules/gdscript/gdscript.cpp
-#: modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: scene/animation/animation_player.cpp scene/gui/control.cpp
-#: scene/main/node.cpp scene/resources/material.cpp
+#: core/os/input.cpp
 #, fuzzy
-msgid "Completion"
-msgstr "Skopírovať Výber"
-
-#: core/os/input.cpp editor/editor_settings.cpp
-#: editor/plugins/script_text_editor.cpp modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: scene/animation/animation_player.cpp scene/gui/control.cpp
-#: scene/main/node.cpp scene/resources/material.cpp
-msgid "Use Single Quotes"
-msgstr ""
+msgid "Use Accumulated Input"
+msgstr "Zmazať Vstup"
 
 #: core/os/input_event.cpp editor/project_settings_editor.cpp
 #: servers/audio_server.cpp
@@ -455,6 +433,7 @@ msgstr "Komunita"
 
 #: core/os/input_event.cpp scene/2d/touch_screen_button.cpp
 #: scene/gui/base_button.cpp scene/gui/texture_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Pressed"
 msgstr "Preset"
@@ -604,13 +583,15 @@ msgid "Project Settings Override"
 msgstr "Nastavenia Projektu..."
 
 #: core/project_settings.cpp core/resource.cpp
-#: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_plugin_settings.cpp editor/editor_profiler.cpp
+#: editor/animation_track_editor.cpp editor/editor_autoload_settings.cpp
+#: editor/editor_help_search.cpp editor/editor_plugin_settings.cpp
+#: editor/editor_profiler.cpp editor/plugins/tile_set_editor_plugin.cpp
 #: editor/project_manager.cpp editor/settings_config_dialog.cpp
 #: modules/gdnative/nativescript/nativescript.cpp
 #: platform/android/export/export_plugin.cpp platform/iphone/export/export.cpp
 #: platform/osx/export/export.cpp scene/2d/area_2d.cpp scene/3d/area.cpp
-#: scene/main/node.cpp
+#: scene/3d/skeleton.cpp scene/main/node.cpp scene/resources/mesh_library.cpp
+#: scene/resources/skin.cpp
 msgid "Name"
 msgstr "Meno"
 
@@ -622,7 +603,8 @@ msgstr "Popis"
 
 #: core/project_settings.cpp editor/editor_node.cpp editor/editor_settings.cpp
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
-#: main/main.cpp
+#: main/main.cpp platform/android/export/export_plugin.cpp
+#: platform/javascript/export/export.cpp
 msgid "Run"
 msgstr ""
 
@@ -653,6 +635,42 @@ msgstr ""
 msgid "Custom User Dir Name"
 msgstr ""
 
+#: core/project_settings.cpp main/main.cpp
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#: platform/uwp/os_uwp.cpp
+#, fuzzy
+msgid "Display"
+msgstr "Zobraziť Všetko"
+
+#: core/project_settings.cpp main/main.cpp modules/csg/csg_shape.cpp
+#: modules/opensimplex/noise_texture.cpp scene/2d/line_2d.cpp
+#: scene/3d/label_3d.cpp scene/gui/text_edit.cpp scene/resources/texture.cpp
+msgid "Width"
+msgstr ""
+
+#: core/project_settings.cpp main/main.cpp modules/csg/csg_shape.cpp
+#: modules/gltf/gltf_node.cpp modules/opensimplex/noise_texture.cpp
+#: scene/2d/light_2d.cpp scene/resources/capsule_shape.cpp
+#: scene/resources/capsule_shape_2d.cpp scene/resources/cylinder_shape.cpp
+#: scene/resources/font.cpp scene/resources/navigation_mesh.cpp
+#: scene/resources/primitive_meshes.cpp scene/resources/texture.cpp
+msgid "Height"
+msgstr ""
+
+#: core/project_settings.cpp
+msgid "Always On Top"
+msgstr ""
+
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Test Width"
+msgstr "Ľavá Šírka"
+
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Test Height"
+msgstr "Testovanie"
+
 #: core/project_settings.cpp editor/animation_track_editor.cpp
 #: editor/editor_audio_buses.cpp main/main.cpp servers/audio_server.cpp
 msgid "Audio"
@@ -675,6 +693,11 @@ msgid "Main Run Args"
 msgstr ""
 
 #: core/project_settings.cpp
+#, fuzzy
+msgid "Scene Naming"
+msgstr "Cesta Scény:"
+
+#: core/project_settings.cpp
 msgid "Search In File Extensions"
 msgstr ""
 
@@ -682,19 +705,15 @@ msgstr ""
 msgid "Script Templates Search Path"
 msgstr ""
 
-#: core/project_settings.cpp editor/editor_node.cpp
-#: editor/plugins/version_control_editor_plugin.cpp
-msgid "Version Control"
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Version Control Autoload On Startup"
 msgstr "Kontrola Verzie"
 
 #: core/project_settings.cpp
-msgid "Autoload On Startup"
-msgstr ""
-
-#: core/project_settings.cpp
 #, fuzzy
-msgid "Plugin Name"
-msgstr "Meno Pluginu:"
+msgid "Version Control Plugin Name"
+msgstr "Kontrola Verzie"
 
 #: core/project_settings.cpp scene/2d/collision_object_2d.cpp
 #: scene/3d/collision_object.cpp scene/gui/control.cpp
@@ -769,16 +788,19 @@ msgstr "Na Konci"
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
 #: servers/physics/space_sw.cpp servers/physics_2d/physics_2d_server_sw.cpp
 #: servers/physics_2d/physics_2d_server_wrap_mt.h
-#: servers/physics_2d/space_2d_sw.cpp
+#: servers/physics_2d/space_2d_sw.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
 #, fuzzy
 msgid "Physics"
 msgstr "Fyzická Snímka %"
 
 #: core/project_settings.cpp editor/editor_settings.cpp
+#: editor/import/resource_importer_layered_texture.cpp
+#: editor/import/resource_importer_texture.cpp
 #: editor/plugins/spatial_editor_plugin.cpp main/main.cpp
 #: modules/bullet/register_types.cpp modules/bullet/space_bullet.cpp
 #: scene/3d/physics_body.cpp scene/resources/world.cpp
-#: servers/physics/space_sw.cpp
+#: servers/physics/space_sw.cpp servers/physics_server.cpp
 msgid "3D"
 msgstr ""
 
@@ -808,8 +830,8 @@ msgstr ""
 msgid "Quality"
 msgstr ""
 
-#: core/project_settings.cpp scene/animation/animation_tree.cpp
-#: scene/gui/file_dialog.cpp scene/main/scene_tree.cpp
+#: core/project_settings.cpp scene/gui/file_dialog.cpp
+#: scene/main/scene_tree.cpp scene/resources/navigation_mesh.cpp
 #: servers/visual_server.cpp
 #, fuzzy
 msgid "Filters"
@@ -937,11 +959,6 @@ msgstr "Cesta"
 msgid "Source Code"
 msgstr "Prostriedok"
 
-#: core/translation.cpp
-#, fuzzy
-msgid "Messages"
-msgstr "Zmeniť"
-
 #: core/translation.cpp editor/project_settings_editor.cpp
 msgid "Locale"
 msgstr ""
@@ -1003,10 +1020,13 @@ msgstr ""
 
 #: drivers/gles2/rasterizer_canvas_base_gles2.cpp
 #: drivers/gles3/rasterizer_canvas_base_gles3.cpp editor/editor_settings.cpp
-#: main/main.cpp scene/2d/physics_body_2d.cpp scene/resources/world_2d.cpp
+#: editor/import/resource_importer_layered_texture.cpp
+#: editor/import/resource_importer_texture.cpp main/main.cpp
+#: scene/2d/physics_body_2d.cpp scene/resources/world_2d.cpp
 #: servers/physics_2d/physics_2d_server_sw.cpp
 #: servers/physics_2d/physics_2d_server_wrap_mt.h
-#: servers/physics_2d/space_2d_sw.cpp servers/visual_server.cpp
+#: servers/physics_2d/space_2d_sw.cpp servers/physics_2d_server.cpp
+#: servers/visual_server.cpp
 msgid "2D"
 msgstr ""
 
@@ -1059,13 +1079,14 @@ msgstr ""
 msgid "Subsurface Scattering"
 msgstr ""
 
-#: drivers/gles3/rasterizer_scene_gles3.cpp
+#: drivers/gles3/rasterizer_scene_gles3.cpp editor/animation_track_editor.cpp
 #: editor/import/resource_importer_texture.cpp
 #: editor/plugins/spatial_editor_plugin.cpp modules/gltf/gltf_node.cpp
 #: modules/gridmap/grid_map.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/node_2d.cpp scene/2d/parallax_layer.cpp scene/2d/polygon_2d.cpp
 #: scene/2d/remote_transform_2d.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp scene/gui/control.cpp
+#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp
+#: scene/animation/animation_blend_tree.cpp scene/gui/control.cpp
 #: scene/main/canvas_layer.cpp scene/resources/environment.cpp
 #: scene/resources/material.cpp scene/resources/particles_material.cpp
 #, fuzzy
@@ -1092,6 +1113,7 @@ msgstr ""
 msgid "Blend Shape Max Buffer Size (KB)"
 msgstr ""
 
+#. TRANSLATORS: Adjective, refers to the mode for Bezier handles (Free, Balanced, Mirror).
 #: editor/animation_bezier_editor.cpp
 msgid "Free"
 msgstr "Voľný"
@@ -1108,7 +1130,7 @@ msgstr "Zrkadlový"
 msgid "Time:"
 msgstr "Čas:"
 
-#: editor/animation_bezier_editor.cpp
+#: editor/animation_bezier_editor.cpp editor/animation_track_editor.cpp
 msgid "Value:"
 msgstr "Hodnota:"
 
@@ -1159,6 +1181,96 @@ msgstr "Anim Zmeniť Hodnotu Keyframe"
 #: editor/animation_track_editor.cpp
 msgid "Anim Change Call"
 msgstr "Anim Change Call"
+
+#: editor/animation_track_editor.cpp scene/2d/animated_sprite.cpp
+#: scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Frame"
+msgstr "Snímka %"
+
+#: editor/animation_track_editor.cpp editor/editor_profiler.cpp
+#: scene/2d/cpu_particles_2d.cpp scene/2d/particles_2d.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/particles.cpp
+#: scene/resources/particles_material.cpp servers/visual_server.cpp
+msgid "Time"
+msgstr "Čas"
+
+#: editor/animation_track_editor.cpp editor/import/resource_importer_scene.cpp
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Location"
+msgstr "Krok Rotácie:"
+
+#: editor/animation_track_editor.cpp modules/gltf/gltf_node.cpp
+#: scene/2d/polygon_2d.cpp scene/2d/remote_transform_2d.cpp
+#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp scene/gui/control.cpp
+#, fuzzy
+msgid "Rotation"
+msgstr "Krok Rotácie:"
+
+#: editor/animation_track_editor.cpp editor/script_editor_debugger.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/gui/range.cpp
+msgid "Value"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Arg Count"
+msgstr "Množstvo:"
+
+#: editor/animation_track_editor.cpp main/main.cpp
+#: modules/mono/mono_gd/gd_mono.cpp
+msgid "Args"
+msgstr ""
+
+#: editor/animation_track_editor.cpp editor/editor_settings.cpp
+#: editor/script_editor_debugger.cpp modules/gltf/gltf_accessor.cpp
+#: modules/gltf/gltf_light.cpp modules/visual_script/visual_script_nodes.cpp
+#: scene/3d/physics_body.cpp scene/resources/visual_shader_nodes.cpp
+msgid "Type"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "In Handle"
+msgstr "Nastaviť Rukoväť"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Out Handle"
+msgstr "Nastaviť Rukoväť"
+
+#: editor/animation_track_editor.cpp
+#: editor/import/resource_importer_texture.cpp
+#: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
+#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
+msgid "Stream"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Start Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "End Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: editor/animation_track_editor.cpp editor/editor_settings.cpp
+#: editor/import/resource_importer_scene.cpp
+#: editor/plugins/animation_player_editor_plugin.cpp editor/scene_tree_dock.cpp
+#: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
+#: scene/2d/sprite.cpp scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
+#: scene/animation/animation_blend_tree.cpp
+#: scene/resources/particles_material.cpp
+msgid "Animation"
+msgstr "Animácie"
+
+#: editor/animation_track_editor.cpp
+msgid "Easing"
+msgstr ""
 
 #: editor/animation_track_editor.cpp
 msgid "Anim Multi Change Keyframe Time"
@@ -1254,7 +1366,7 @@ msgstr "Zapnúť/Vypnúť tento track."
 msgid "Update Mode (How this property is set)"
 msgstr "Update Mode (Tak ako je táto možnosť nastavená)"
 
-#: editor/animation_track_editor.cpp
+#: editor/animation_track_editor.cpp scene/resources/gradient.cpp
 msgid "Interpolation Mode"
 msgstr "Režim Interpolácie"
 
@@ -1267,8 +1379,71 @@ msgid "Remove this track."
 msgstr "Vymazať tento track."
 
 #: editor/animation_track_editor.cpp
-msgid "Time (s): "
+#, fuzzy
+msgid "Time (s):"
 msgstr "Čas (s): "
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Position:"
+msgstr "Pozícia Dock-u"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Rotation:"
+msgstr "Krok Rotácie:"
+
+#: editor/animation_track_editor.cpp
+#: editor/plugins/animation_tree_player_editor_plugin.cpp
+#: editor/plugins/multimesh_editor_plugin.cpp
+msgid "Scale:"
+msgstr "Veľkosť:"
+
+#: editor/animation_track_editor.cpp
+#: editor/plugins/resource_preloader_editor_plugin.cpp
+#: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
+#: editor/scene_tree_editor.cpp editor/script_editor_debugger.cpp
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Type:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "(Invalid, expected type: %s)"
+msgstr "Nesprávna veľkosť písma."
+
+#: editor/animation_track_editor.cpp
+msgid "Easing:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "In-Handle:"
+msgstr "Nastaviť Rukoväť"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Out-Handle:"
+msgstr "Nastaviť Rukoväť"
+
+#: editor/animation_track_editor.cpp
+msgid "Stream:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Start (s):"
+msgstr "Reštart (s):"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "End (s):"
+msgstr "Miznutie do (s):"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Animation Clip:"
+msgstr "Popis:"
 
 #: editor/animation_track_editor.cpp
 msgid "Toggle Track Enabled"
@@ -1346,7 +1521,6 @@ msgid "Remove Anim Track"
 msgstr "Vymazať Track Animácie"
 
 #: editor/animation_track_editor.cpp editor/editor_settings.cpp
-#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/path_editor_plugin.cpp
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp
@@ -1356,16 +1530,6 @@ msgstr "Vymazať Track Animácie"
 #, fuzzy
 msgid "Editors"
 msgstr "Editor"
-
-#: editor/animation_track_editor.cpp editor/editor_settings.cpp
-#: editor/import/resource_importer_scene.cpp
-#: editor/plugins/animation_player_editor_plugin.cpp editor/scene_tree_dock.cpp
-#: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/2d/sprite.cpp scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
-#: scene/animation/animation_blend_tree.cpp
-#: scene/resources/particles_material.cpp
-msgid "Animation"
-msgstr "Animácie"
 
 #: editor/animation_track_editor.cpp editor/editor_settings.cpp
 #, fuzzy
@@ -1496,7 +1660,8 @@ msgid "Add Method Track Key"
 msgstr "Pridať Method Track Key"
 
 #: editor/animation_track_editor.cpp
-msgid "Method not found in object: "
+#, fuzzy
+msgid "Method not found in object:"
 msgstr "Metóda nebola nájdená v objekte: "
 
 #: editor/animation_track_editor.cpp
@@ -1865,7 +2030,9 @@ msgid "Scene does not contain any script."
 msgstr "Scéna neobsahuje žiadny script."
 
 #: editor/connections_dialog.cpp editor/editor_autoload_settings.cpp
-#: editor/groups_editor.cpp editor/plugins/item_list_editor_plugin.cpp
+#: editor/groups_editor.cpp
+#: editor/plugins/animation_tree_player_editor_plugin.cpp
+#: editor/plugins/item_list_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
 msgid "Add"
 msgstr "Pridať"
@@ -1929,6 +2096,7 @@ msgstr "Nedá sa pripojiť signál"
 #: editor/project_settings_editor.cpp editor/property_editor.cpp
 #: editor/run_settings_dialog.cpp editor/settings_config_dialog.cpp
 #: modules/visual_script/visual_script_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Close"
 msgstr "Zatvoriť"
 
@@ -2103,8 +2271,8 @@ msgid "Open"
 msgstr "Otvoriť"
 
 #: editor/dependency_editor.cpp
-msgid "Owners Of:"
-msgstr "Majitelia:"
+msgid "Owners of: %s (Total: %d)"
+msgstr ""
 
 #: editor/dependency_editor.cpp
 #, fuzzy
@@ -2413,7 +2581,7 @@ msgid "Bus Options"
 msgstr "Možnosti pre Bus"
 
 #: editor/editor_audio_buses.cpp editor/filesystem_dock.cpp
-#: editor/scene_tree_dock.cpp
+#: editor/project_export.cpp editor/scene_tree_dock.cpp
 msgid "Duplicate"
 msgstr "Duplikovať"
 
@@ -2465,8 +2633,9 @@ msgstr "Otvoriť Audio Bus Layout"
 msgid "There is no '%s' file."
 msgstr "Není tu žiadny '%s' súbor."
 
-#: editor/editor_audio_buses.cpp editor/plugins/canvas_item_editor_plugin.cpp
-msgid "Layout"
+#: editor/editor_audio_buses.cpp
+#, fuzzy
+msgid "Layout:"
 msgstr "Layout"
 
 #: editor/editor_audio_buses.cpp
@@ -2671,6 +2840,24 @@ msgid "Choose"
 msgstr "Vyberte"
 
 #: editor/editor_export.cpp
+msgid "Project export for platform:"
+msgstr ""
+
+#: editor/editor_export.cpp
+msgid "Completed with errors."
+msgstr ""
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Completed successfully."
+msgstr "Balík bol úspešne nainštalovaný!"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Failed."
+msgstr "Zlihalo:"
+
+#: editor/editor_export.cpp
 msgid "Storing File:"
 msgstr "Ukladanie súboru:"
 
@@ -2681,6 +2868,31 @@ msgstr "Na očakávanej ceste sa nenašla žiadna exportná cesta:"
 #: editor/editor_export.cpp
 msgid "Packing"
 msgstr "Zabalovanie"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Save PCK"
+msgstr "Uložiť Ako"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Cannot create file \"%s\"."
+msgstr "Priečinok sa nepodarilo vytvoriť."
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Failed to export project files."
+msgstr "Popis:"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Can't open file to read from path \"%s\"."
+msgstr "Nie je možné otvoriť súbor pre písanie:"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Save ZIP"
+msgstr "Uložiť Ako"
 
 #: editor/editor_export.cpp
 msgid ""
@@ -2804,9 +3016,29 @@ msgstr "Vlastná debug šablóna sa nenašla."
 msgid "Custom release template not found."
 msgstr "Vlastná release šablóna sa nenašla."
 
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Prepare Template"
+msgstr "Spravovať Šablóny"
+
+#: editor/editor_export.cpp platform/osx/export/export.cpp
+msgid "The given export path doesn't exist."
+msgstr ""
+
 #: editor/editor_export.cpp platform/javascript/export/export.cpp
-msgid "Template file not found:"
+#, fuzzy
+msgid "Template file not found: \"%s\"."
 msgstr "Súbor Šablóny sa nenašiel:"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Failed to copy export template."
+msgstr "Nedá sa otvoriť export templates zip."
+
+#: editor/editor_export.cpp platform/windows/export/export.cpp
+#: platform/x11/export/export.cpp
+msgid "PCK Embedding"
+msgstr ""
 
 #: editor/editor_export.cpp
 msgid "On 32-bit exports the embedded PCK cannot be bigger than 4 GiB."
@@ -2825,7 +3057,7 @@ msgid "Script Editor"
 msgstr "Script Editor"
 
 #: editor/editor_feature_profile.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp
+#: editor/plugins/asset_library_editor_plugin.cpp editor/project_manager.cpp
 msgid "Asset Library"
 msgstr "Asset Library"
 
@@ -2979,13 +3211,14 @@ msgstr "Spraviť Aktuálny"
 #: editor/editor_feature_profile.cpp editor/editor_node.cpp
 #: editor/import/resource_importer_scene.cpp
 #: editor/plugins/theme_editor_plugin.cpp editor/project_manager.cpp
+#: modules/fbx/editor_scene_importer_fbx.cpp
 msgid "Import"
 msgstr "Import"
 
 #: editor/editor_feature_profile.cpp editor/project_export.cpp
-#: platform/android/export/export.cpp platform/javascript/export/export.cpp
-#: platform/osx/export/export.cpp platform/uwp/export/export.cpp
-#: platform/windows/export/export.cpp
+#: platform/android/export/export.cpp platform/android/export/export_plugin.cpp
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#: platform/uwp/export/export.cpp platform/windows/export/export.cpp
 msgid "Export"
 msgstr "Export"
 
@@ -3113,11 +3346,11 @@ msgstr "Prehrať Mód:"
 #: editor/import/resource_importer_texture.cpp
 #: editor/import/resource_importer_wav.cpp main/main.cpp
 #: modules/csg/csg_shape.cpp modules/visual_script/visual_script_nodes.cpp
-#: modules/visual_script/visual_script_yield_nodes.cpp scene/2d/light_2d.cpp
-#: scene/2d/physics_body_2d.cpp scene/2d/tile_map.cpp
+#: scene/2d/light_2d.cpp scene/2d/physics_body_2d.cpp scene/2d/tile_map.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/light.cpp scene/3d/physics_body.cpp
 #: scene/gui/control.cpp scene/gui/file_dialog.cpp
 #: scene/resources/environment.cpp scene/resources/material.cpp
+#: scene/resources/visual_shader.cpp
 #: servers/audio/effects/audio_effect_distortion.cpp
 #, fuzzy
 msgid "Mode"
@@ -3253,7 +3486,7 @@ msgstr ""
 
 #: editor/editor_help.cpp scene/2d/camera_2d.cpp scene/gui/control.cpp
 #: scene/gui/nine_patch_rect.cpp scene/resources/dynamic_font.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 msgid "Top"
 msgstr "Top"
 
@@ -3346,6 +3579,15 @@ msgstr ""
 "Zatiaľ tu není žiadny popisok pre túto metódu. Prosím pomôžte nám pomocou "
 "[color=$color][url=$url]prispetím jedného[/url][/color]!"
 
+#: editor/editor_help.cpp editor/editor_settings.cpp
+#: editor/plugins/script_editor_plugin.cpp
+#: editor/plugins/script_text_editor.cpp
+#: modules/gdscript/editor/gdscript_highlighter.cpp
+#: modules/gdscript/gdscript_editor.cpp
+#, fuzzy
+msgid "Text Editor"
+msgstr "Otvorit Editor"
+
 #: editor/editor_help.cpp editor/editor_node.cpp editor/editor_settings.cpp
 #: editor/plugins/shader_editor_plugin.cpp
 msgid "Help"
@@ -3437,15 +3679,17 @@ msgid "Label"
 msgstr ""
 
 #: editor/editor_inspector.cpp editor/editor_spin_slider.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Read Only"
 msgstr "Iba Metódy"
 
-#: editor/editor_inspector.cpp
+#: editor/editor_inspector.cpp editor/plugins/item_list_editor_plugin.cpp
 msgid "Checkable"
 msgstr ""
 
-#: editor/editor_inspector.cpp
+#: editor/editor_inspector.cpp editor/plugins/item_list_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Checked"
 msgstr "Zamknúť Označené"
@@ -3524,7 +3768,7 @@ msgstr "Skopírovať Výber"
 #: editor/property_editor.cpp editor/scene_tree_dock.cpp
 #: editor/script_editor_debugger.cpp
 #: modules/gdnative/gdnative_library_editor_plugin.cpp scene/gui/line_edit.cpp
-#: scene/gui/text_edit.cpp
+#: scene/gui/text_edit.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Clear"
 msgstr "Vyčistiť"
 
@@ -3555,7 +3799,7 @@ msgid "Up"
 msgstr "Hore"
 
 #: editor/editor_network_profiler.cpp editor/editor_node.cpp
-#: scene/main/node.cpp
+#: scene/main/node.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Node"
 msgstr "Node"
 
@@ -3578,6 +3822,10 @@ msgstr "Vychádzajúci RSET"
 #: editor/editor_node.cpp editor/project_manager.cpp
 msgid "New Window"
 msgstr "Nové Okno"
+
+#: editor/editor_node.cpp editor/project_manager.cpp
+msgid "Unnamed Project"
+msgstr ""
 
 #: editor/editor_node.cpp
 msgid ""
@@ -4129,15 +4377,6 @@ msgid ""
 "Unable to write to file '%s', file in use, locked or lacking permissions."
 msgstr ""
 
-#: editor/editor_node.cpp editor/plugins/theme_editor_plugin.cpp
-msgid "Scene"
-msgstr "Scéna"
-
-#: editor/editor_node.cpp
-#, fuzzy
-msgid "Scene Naming"
-msgstr "Cesta Scény:"
-
 #: editor/editor_node.cpp editor/editor_settings.cpp editor/scene_tree_dock.cpp
 #: servers/arvr/arvr_interface.cpp
 msgid "Interface"
@@ -4177,16 +4416,6 @@ msgstr ""
 #: editor/editor_node.cpp editor/editor_settings.cpp
 msgid "Always Close Output On Stop"
 msgstr ""
-
-#: editor/editor_node.cpp editor/editor_settings.cpp
-#, fuzzy
-msgid "Auto Save"
-msgstr "Neukladať"
-
-#: editor/editor_node.cpp editor/editor_settings.cpp
-#, fuzzy
-msgid "Save Before Running"
-msgstr "Uložiť scénu pred spustením..."
 
 #: editor/editor_node.cpp
 msgid "Save On Focus Loss"
@@ -4275,6 +4504,10 @@ msgid "Default Color Picker Mode"
 msgstr ""
 
 #: editor/editor_node.cpp editor/plugins/version_control_editor_plugin.cpp
+msgid "Version Control"
+msgstr "Kontrola Verzie"
+
+#: editor/editor_node.cpp editor/plugins/version_control_editor_plugin.cpp
 #, fuzzy
 msgid "Username"
 msgstr "Premenovať"
@@ -4302,6 +4535,10 @@ msgstr "Prepnúť režim bez rozptyľovania."
 #: editor/editor_node.cpp
 msgid "Add a new scene."
 msgstr "Pridať novú scénu."
+
+#: editor/editor_node.cpp editor/plugins/theme_editor_plugin.cpp
+msgid "Scene"
+msgstr "Scéna"
 
 #: editor/editor_node.cpp
 msgid "Go to previously opened scene."
@@ -4663,7 +4900,9 @@ msgstr "Parameter sa Zmenil"
 msgid "Hide Update Spinner"
 msgstr "Skryť aktualizáciu Spinner"
 
-#: editor/editor_node.cpp
+#: editor/editor_node.cpp editor/editor_settings.cpp
+#: editor/fileserver/editor_file_server.cpp
+#: modules/fbx/editor_scene_importer_fbx.cpp
 msgid "FileSystem"
 msgstr "FileSystém"
 
@@ -4757,6 +4996,7 @@ msgstr ""
 
 #: editor/editor_node.cpp editor/plugins/script_editor_plugin.cpp
 #: editor/plugins/shader_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Reload"
 msgstr "Znovu načítať"
 
@@ -4906,12 +5146,6 @@ msgstr ""
 msgid "Frame #:"
 msgstr "Snímka #:"
 
-#: editor/editor_profiler.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/2d/particles_2d.cpp scene/3d/cpu_particles.cpp scene/3d/particles.cpp
-#: scene/resources/particles_material.cpp servers/visual_server.cpp
-msgid "Time"
-msgstr "Čas"
-
 #: editor/editor_profiler.cpp
 msgid "Calls"
 msgstr "Volania"
@@ -4935,6 +5169,7 @@ msgid "Edit Text:"
 msgstr "Editovať Text:"
 
 #: editor/editor_properties.cpp editor/script_create_dialog.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "On"
 msgstr "Zapnúť"
 
@@ -4990,11 +5225,15 @@ msgid "Selected node is not a Viewport!"
 msgstr "Vybraný node není Viewport!"
 
 #: editor/editor_properties_array_dict.cpp
-msgid "Size: "
+#: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+#, fuzzy
+msgid "Size:"
 msgstr "Veľkosť: "
 
 #: editor/editor_properties_array_dict.cpp
-msgid "Page: "
+#, fuzzy
+msgid "Page:"
 msgstr "Strana: "
 
 #: editor/editor_properties_array_dict.cpp
@@ -5095,6 +5334,11 @@ msgstr ""
 "Prosím pridajte spustiteľný \"preset\" v export menu alebo definujte "
 "existujúci \"preset\" ako spustiteľný."
 
+#: editor/editor_run_native.cpp
+#, fuzzy
+msgid "Project Run"
+msgstr "Projekt"
+
 #: editor/editor_run_script.cpp
 msgid "Write your logic in the _run() method."
 msgstr "Napíšte svoju logiku v metóde _run()."
@@ -5189,7 +5433,6 @@ msgid "Max Array Dictionary Items Per Page"
 msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp editor/plugins/text_editor.cpp
 #: editor/plugins/theme_editor_plugin.cpp scene/gui/control.cpp
 #: scene/register_scene_types.cpp
 msgid "Theme"
@@ -5246,11 +5489,6 @@ msgstr "Súbor:"
 #: editor/editor_settings.cpp
 msgid "Show Script Button"
 msgstr ""
-
-#: editor/editor_settings.cpp editor/fileserver/editor_file_server.cpp
-#, fuzzy
-msgid "Filesystem"
-msgstr "FileSystém"
 
 #: editor/editor_settings.cpp
 #, fuzzy
@@ -5327,8 +5565,8 @@ msgstr "Nenašli sa žiadne \"sub-resources\"."
 msgid "Color Theme"
 msgstr "Súbor:"
 
-#: editor/editor_settings.cpp editor/plugins/script_text_editor.cpp
-#: editor/plugins/text_editor.cpp
+#: editor/editor_settings.cpp scene/3d/label_3d.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Line Spacing"
 msgstr ""
 
@@ -5354,17 +5592,8 @@ msgstr ""
 msgid "Highlight Type Safe Lines"
 msgstr ""
 
-#: editor/editor_settings.cpp modules/gdscript/gdscript_editor.cpp
-#: modules/mono/csharp_script.cpp
+#: editor/editor_settings.cpp
 msgid "Indent"
-msgstr ""
-
-#: editor/editor_settings.cpp editor/script_editor_debugger.cpp
-#: modules/gdscript/gdscript_editor.cpp modules/gltf/gltf_accessor.cpp
-#: modules/gltf/gltf_light.cpp modules/mono/csharp_script.cpp
-#: modules/visual_script/visual_script_nodes.cpp scene/3d/physics_body.cpp
-#: scene/resources/visual_shader_nodes.cpp
-msgid "Type"
 msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_text_editor.cpp
@@ -5386,7 +5615,9 @@ msgid "Draw Spaces"
 msgstr "Volania"
 
 #: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
-#: editor/plugins/tile_set_editor_plugin.cpp scene/main/scene_tree.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/tile_map.cpp
+#: scene/main/scene_tree.cpp scene/resources/world.cpp
+#: scene/resources/world_2d.cpp
 #, fuzzy
 msgid "Navigation"
 msgstr "Signály:"
@@ -5469,7 +5700,6 @@ msgid "Show Members Overview"
 msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/shader_editor_plugin.cpp
 #, fuzzy
 msgid "Files"
 msgstr "Súbor:"
@@ -5487,6 +5717,14 @@ msgid "Restore Scripts On Load"
 msgstr ""
 
 #: editor/editor_settings.cpp
+msgid "Auto Reload And Parse Scripts On Save"
+msgstr ""
+
+#: editor/editor_settings.cpp
+msgid "Auto Reload Scripts On External Change"
+msgstr ""
+
+#: editor/editor_settings.cpp
 msgid "Create Signal Callbacks"
 msgstr ""
 
@@ -5494,7 +5732,7 @@ msgstr ""
 msgid "Sort Members Outline Alphabetically"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Cursor"
 msgstr ""
 
@@ -5506,11 +5744,11 @@ msgstr ""
 msgid "Block Caret"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp
 msgid "Caret Blink"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp
 msgid "Caret Blink Speed"
 msgstr ""
 
@@ -5518,6 +5756,13 @@ msgstr ""
 #, fuzzy
 msgid "Right Click Moves Caret"
 msgstr "Pravým kliknutím pridáťe Bod"
+
+#: editor/editor_settings.cpp modules/gdscript/gdscript.cpp
+#: modules/gdscript/gdscript_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion"
+msgstr "Skopírovať Výber"
 
 #: editor/editor_settings.cpp
 msgid "Idle Parse Delay"
@@ -5549,6 +5794,10 @@ msgid "Add Type Hints"
 msgstr "Pridať Node"
 
 #: editor/editor_settings.cpp
+msgid "Use Single Quotes"
+msgstr ""
+
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Show Help Index"
 msgstr "Zobraziť Pomocníkov"
@@ -5565,8 +5814,7 @@ msgstr ""
 msgid "Help Title Font Size"
 msgstr ""
 
-#: editor/editor_settings.cpp editor/plugins/mesh_library_editor_plugin.cpp
-#: modules/gridmap/grid_map_editor_plugin.cpp
+#: editor/editor_settings.cpp modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Grid Map"
 msgstr ""
 
@@ -5574,6 +5822,11 @@ msgstr ""
 #, fuzzy
 msgid "Pick Distance"
 msgstr "Vyberte hlavnú scénu"
+
+#: editor/editor_settings.cpp editor/plugins/tile_map_editor_plugin.cpp
+#, fuzzy
+msgid "Preview Size"
+msgstr "Predzobraziť"
 
 #: editor/editor_settings.cpp
 msgid "Primary Grid Color"
@@ -5587,6 +5840,37 @@ msgstr ""
 #, fuzzy
 msgid "Selection Box Color"
 msgstr "Iba Výber"
+
+#: editor/editor_settings.cpp editor/plugins/path_editor_plugin.cpp
+#: editor/spatial_editor_gizmos.cpp modules/csg/csg_gizmos.cpp
+msgid "3D Gizmos"
+msgstr ""
+
+#: editor/editor_settings.cpp editor/plugins/path_editor_plugin.cpp
+#: editor/spatial_editor_gizmos.cpp modules/csg/csg_gizmos.cpp
+#, fuzzy
+msgid "Gizmo Colors"
+msgstr "Emisné Farby"
+
+#: editor/editor_settings.cpp
+#, fuzzy
+msgid "Instanced"
+msgstr "Inštancie"
+
+#: editor/editor_settings.cpp modules/gltf/gltf_node.cpp
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Joint"
+msgstr "Bod"
+
+#: editor/editor_settings.cpp scene/2d/collision_shape_2d.cpp
+#: scene/2d/cpu_particles_2d.cpp scene/2d/touch_screen_button.cpp
+#: scene/3d/collision_shape.cpp scene/3d/cpu_particles.cpp
+#: scene/3d/occluder.cpp scene/3d/spring_arm.cpp
+#: scene/resources/particles_material.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
+msgid "Shape"
+msgstr ""
 
 #: editor/editor_settings.cpp
 #, fuzzy
@@ -5622,17 +5906,17 @@ msgstr ""
 msgid "Grid YZ Plane"
 msgstr ""
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default FOV"
 msgstr "Predvolené"
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default Z Near"
 msgstr "Predvolené"
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default Z Far"
 msgstr "Predvolené"
@@ -5868,6 +6152,16 @@ msgid "Screen"
 msgstr ""
 
 #: editor/editor_settings.cpp
+#, fuzzy
+msgid "Auto Save"
+msgstr "Neukladať"
+
+#: editor/editor_settings.cpp
+#, fuzzy
+msgid "Save Before Running"
+msgstr "Uložiť scénu pred spustením..."
+
+#: editor/editor_settings.cpp
 msgid "Font Size"
 msgstr ""
 
@@ -5897,19 +6191,22 @@ msgstr ""
 
 #: editor/editor_settings.cpp editor/fileserver/editor_file_server.cpp
 #: main/main.cpp modules/mono/mono_gd/gd_mono.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Port"
 msgstr ""
 
+#. TRANSLATORS: Project Manager here refers to the tool used to create/manage Godot projects.
 #: editor/editor_settings.cpp
 msgid "Project Manager"
 msgstr ""
 
+#. TRANSLATORS: Project Manager here refers to the tool used to create/manage Godot projects.
 #: editor/editor_settings.cpp
 #, fuzzy
 msgid "Sorting Order"
 msgstr "Zostávajúce priečinky:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Symbol Color"
 msgstr ""
 
@@ -5945,29 +6242,30 @@ msgstr "Ukladanie súboru:"
 
 #: editor/editor_settings.cpp platform/javascript/export/export.cpp
 #: platform/uwp/export/export.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Background Color"
 msgstr "Nesprávna veľkosť písma."
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Completion Background Color"
 msgstr "Nesprávna veľkosť písma."
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Completion Selected Color"
 msgstr "Importovať Scénu"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Existing Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Scroll Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Font Color"
 msgstr ""
 
@@ -5976,21 +6274,21 @@ msgstr ""
 msgid "Text Color"
 msgstr "Popis:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Line Number Color"
 msgstr "Číslo línie:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Safe Line Number Color"
 msgstr "Číslo línie:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Caret Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Caret Background Color"
 msgstr "Nesprávna veľkosť písma."
@@ -6000,16 +6298,16 @@ msgstr "Nesprávna veľkosť písma."
 msgid "Text Selected Color"
 msgstr "Zmazať označené kľúč(e)"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Selection Color"
 msgstr "Iba Výber"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Brace Mismatch Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Current Line Color"
 msgstr ""
 
@@ -6017,41 +6315,41 @@ msgstr ""
 msgid "Line Length Guideline Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Word Highlighted Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Number Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Function Color"
 msgstr "Funkcie"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Member Variable Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Mark Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Bookmark Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Breakpoint Color"
 msgstr "Všetky vybrané"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Executing Line Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Code Folding Color"
 msgstr ""
 
@@ -6076,6 +6374,11 @@ msgstr ""
 #, fuzzy
 msgid "Flat"
 msgstr "Plochý 0"
+
+#: editor/editor_spin_slider.cpp
+#, fuzzy
+msgid "Hide Slider"
+msgstr "Režim Interpolácie"
 
 #: editor/editor_sub_scene.cpp
 msgid "Select Node(s) to Import"
@@ -6679,14 +6982,6 @@ msgid "Replace in Files"
 msgstr "Nahradiť Všetko"
 
 #: editor/find_in_files.cpp
-msgid "Find: "
-msgstr "Nájsť: "
-
-#: editor/find_in_files.cpp
-msgid "Replace: "
-msgstr "Nahradiť: "
-
-#: editor/find_in_files.cpp
 #, fuzzy
 msgid "Replace All (NO UNDO)"
 msgstr "Nahradiť Všetko"
@@ -6792,14 +7087,19 @@ msgid "Delimiter"
 msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
+#, fuzzy
+msgid "ColorCorrect"
+msgstr "Všetky vybrané"
+
+#: editor/import/resource_importer_layered_texture.cpp
 msgid "No BPTC If RGB"
 msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
 #: editor/import/resource_importer_texture.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
 #: scene/resources/material.cpp scene/resources/particles_material.cpp
-#: scene/resources/texture.cpp
+#: scene/resources/texture.cpp scene/resources/visual_shader.cpp
 msgid "Flags"
 msgstr ""
 
@@ -6811,7 +7111,7 @@ msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
 #: editor/import/resource_importer_texture.cpp scene/2d/light_2d.cpp
-#: scene/gui/control.cpp scene/resources/navigation_mesh.cpp
+#: scene/gui/control.cpp
 #, fuzzy
 msgid "Filter"
 msgstr "Filtre:"
@@ -6959,11 +7259,6 @@ msgstr ""
 msgid "Materials"
 msgstr "Parameter sa Zmenil"
 
-#: editor/import/resource_importer_scene.cpp platform/osx/export/export.cpp
-#, fuzzy
-msgid "Location"
-msgstr "Krok Rotácie:"
-
 #: editor/import/resource_importer_scene.cpp
 #, fuzzy
 msgid "Keep On Reimport"
@@ -7021,17 +7316,18 @@ msgstr "Súbor:"
 msgid "Optimizer"
 msgstr "Optimalizácia"
 
-#: editor/import/resource_importer_scene.cpp main/main.cpp
+#: editor/import/resource_importer_scene.cpp
+#: editor/plugins/item_list_editor_plugin.cpp main/main.cpp
 #: modules/mono/mono_gd/gd_mono.cpp platform/javascript/export/export.cpp
 #: platform/osx/export/export.cpp scene/2d/camera_2d.cpp scene/2d/light_2d.cpp
 #: scene/2d/navigation_polygon.cpp scene/2d/ray_cast_2d.cpp scene/2d/sprite.cpp
 #: scene/2d/y_sort.cpp scene/3d/audio_stream_player_3d.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/interpolated_camera.cpp
 #: scene/3d/light.cpp scene/3d/navigation_mesh_instance.cpp
-#: scene/3d/physics_joint.cpp scene/3d/ray_cast.cpp scene/3d/sprite_3d.cpp
-#: scene/gui/graph_edit.cpp scene/gui/rich_text_label.cpp
-#: scene/resources/curve.cpp scene/resources/environment.cpp
-#: scene/resources/material.cpp
+#: scene/3d/physics_joint.cpp scene/3d/ray_cast.cpp scene/3d/skeleton.cpp
+#: scene/3d/sprite_3d.cpp scene/gui/graph_edit.cpp
+#: scene/gui/rich_text_label.cpp scene/resources/curve.cpp
+#: scene/resources/environment.cpp scene/resources/material.cpp
 #, fuzzy
 msgid "Enabled"
 msgstr "Povoliť"
@@ -7082,7 +7378,8 @@ msgid "Generating Lightmaps"
 msgstr "Generovanie Lightmaps"
 
 #: editor/import/resource_importer_scene.cpp
-msgid "Generating for Mesh: "
+#, fuzzy
+msgid "Generating for Mesh:"
 msgstr "Generovanie pre Mesh: "
 
 #: editor/import/resource_importer_scene.cpp
@@ -7109,6 +7406,27 @@ msgstr "Vrátili ste Node-derived objekt v `post_import()` metóde?"
 msgid "Saving..."
 msgstr "Ukladám..."
 
+#: editor/import/resource_importer_texture.cpp
+msgid ""
+"%s: Texture detected as used as a normal map in 3D. Enabling red-green "
+"texture compression to reduce memory usage (blue channel is discarded)."
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+msgid ""
+"%s: Texture detected as used in 3D. Enabling filter, repeat, mipmap "
+"generation and VRAM texture compression."
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+msgid "2D, Detect 3D"
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+#, fuzzy
+msgid "2D Pixel"
+msgstr "Pevné Pixely"
+
 #: editor/import/resource_importer_texture.cpp scene/resources/texture.cpp
 msgid "Lossy Quality"
 msgstr ""
@@ -7122,7 +7440,8 @@ msgstr "Vybrať Režim"
 msgid "BPTC LDR"
 msgstr ""
 
-#: editor/import/resource_importer_texture.cpp scene/2d/cpu_particles_2d.cpp
+#: editor/import/resource_importer_texture.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/mesh_instance_2d.cpp scene/2d/multimesh_instance_2d.cpp
 #: scene/2d/particles_2d.cpp scene/2d/sprite.cpp scene/resources/style_box.cpp
 msgid "Normal Map"
@@ -7153,12 +7472,6 @@ msgstr "Popis:"
 
 #: editor/import/resource_importer_texture.cpp
 msgid "Normal Map Invert Y"
-msgstr ""
-
-#: editor/import/resource_importer_texture.cpp
-#: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
-#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
-msgid "Stream"
 msgstr ""
 
 #: editor/import/resource_importer_texture.cpp
@@ -7837,10 +8150,6 @@ msgid "Load Animation"
 msgstr "Načítať Animáciu"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
-msgid "No animation to copy!"
-msgstr "Žiadne animácie na skopírovanie!"
-
-#: editor/plugins/animation_player_editor_plugin.cpp
 msgid "No animation resource on clipboard!"
 msgstr "Žiadny zroj animácie v clipboard!"
 
@@ -7851,10 +8160,6 @@ msgstr "Prilepená Animácia"
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Paste Animation"
 msgstr "Prilepiť Animáciu"
-
-#: editor/plugins/animation_player_editor_plugin.cpp
-msgid "No animation to edit!"
-msgstr "Žiadna animácia na úpravu!"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Play selected animation backwards from current pos. (A)"
@@ -7894,6 +8199,10 @@ msgid "New"
 msgstr "Nový"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
+msgid "Paste As Reference"
+msgstr ""
+
+#: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Edit Transitions..."
 msgstr "Upraviť Prechody..."
 
@@ -7921,17 +8230,20 @@ msgstr "Onion Skinning Možnosti"
 msgid "Directions"
 msgstr "Smery"
 
+#. TRANSLATORS: Opposite of "Future", refers to a direction in animation onion skinning.
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Past"
 msgstr "Minulosť"
 
+#. TRANSLATORS: Opposite of "Past", refers to a direction in animation onion skinning.
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Future"
 msgstr "Budúcnosť"
 
 #: editor/plugins/animation_player_editor_plugin.cpp modules/csg/csg_shape.cpp
 #: scene/3d/collision_polygon.cpp scene/main/scene_tree.cpp
-#: scene/resources/material.cpp servers/audio/effects/audio_effect_phaser.cpp
+#: scene/resources/material.cpp scene/resources/primitive_meshes.cpp
+#: servers/audio/effects/audio_effect_phaser.cpp
 msgid "Depth"
 msgstr "Hĺbka"
 
@@ -8082,7 +8394,8 @@ msgid "Set the end animation. This is useful for sub-transitions."
 msgstr "Nastaviť koniec animácie. Toto je užitočné pre sub-prechody."
 
 #: editor/plugins/animation_state_machine_editor.cpp
-msgid "Transition: "
+#, fuzzy
+msgid "Transition:"
 msgstr "Prechody: "
 
 #: editor/plugins/animation_state_machine_editor.cpp
@@ -8099,11 +8412,6 @@ msgid "New name:"
 msgstr "Nové Meno:"
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: editor/plugins/multimesh_editor_plugin.cpp
-msgid "Scale:"
-msgstr "Veľkosť:"
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "Fade In (s):"
 msgstr "Miznutie do (s):"
 
@@ -8112,14 +8420,9 @@ msgid "Fade Out (s):"
 msgstr "Miznutie Von (s):"
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/visual_shader.cpp
 msgid "Blend"
 msgstr "Blend"
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: servers/audio/effects/audio_effect_compressor.cpp
-msgid "Mix"
-msgstr "Mix"
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "Auto Restart:"
@@ -8153,10 +8456,6 @@ msgstr "Blend 1:"
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "X-Fade Time (s):"
 msgstr "Čas X-Miznutia (s):"
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
-msgid "Current:"
-msgstr "Aktuálny:"
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 #: editor/plugins/visual_shader_editor_plugin.cpp
@@ -8394,6 +8693,10 @@ msgid "License (Z-A)"
 msgstr "Licencia (Z-A)"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+msgid "Loading..."
+msgstr "Načitávanie..."
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 #, fuzzy
 msgctxt "Pagination"
 msgid "First"
@@ -8462,8 +8765,8 @@ msgid "Testing"
 msgstr "Testovanie"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
-msgid "Loading..."
-msgstr "Načitávanie..."
+msgid "Failed to get repository configuration."
+msgstr ""
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Assets ZIP File"
@@ -8527,7 +8830,7 @@ msgid "Select lightmap bake file:"
 msgstr "Vybrať Súbor Šablóny"
 
 #: editor/plugins/camera_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/spatial_editor_plugin.cpp scene/resources/mesh_library.cpp
 msgid "Preview"
 msgstr "Predzobraziť"
 
@@ -9034,6 +9337,7 @@ msgstr "Vytvoriť Vlastnú Kosť(i) z Node-u(ou)"
 msgid "Clear Custom Bones"
 msgstr "Zmazať Vlastné Kosti"
 
+#. TRANSLATORS: Noun, name of the 2D/3D View menus.
 #: editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "View"
@@ -9097,6 +9401,10 @@ msgstr "Výber Frame-u"
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Preview Canvas Scale"
 msgstr "Predzobraziť Veľkosť Plátna"
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Layout"
+msgstr "Layout"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Translation mask for inserting keys."
@@ -9422,13 +9730,36 @@ msgstr ""
 msgid "Toggle Grid Snap"
 msgstr "Prepnúť Mode"
 
+#: editor/plugins/item_list_editor_plugin.cpp editor/project_export.cpp
+#: scene/3d/label_3d.cpp scene/gui/button.cpp scene/gui/dialogs.cpp
+#: scene/gui/label.cpp scene/gui/line_edit.cpp scene/gui/link_button.cpp
+#: scene/gui/rich_text_label.cpp scene/gui/text_edit.cpp
+#: scene/resources/primitive_meshes.cpp
+msgid "Text"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp main/main.cpp
+#: platform/osx/export/export.cpp platform/windows/export/export.cpp
+#: scene/gui/button.cpp scene/gui/item_list.cpp
+msgid "Icon"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+msgid "ID"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Separator"
+msgstr "Popis:"
+
 #: editor/plugins/item_list_editor_plugin.cpp
 msgid "Item %d"
 msgstr "Predmet %d"
 
-#: editor/plugins/item_list_editor_plugin.cpp scene/gui/item_list.cpp
-#: scene/gui/menu_button.cpp scene/gui/option_button.cpp
-#: scene/gui/popup_menu.cpp
+#: editor/plugins/item_list_editor_plugin.cpp
 msgid "Items"
 msgstr "Predmety"
 
@@ -9535,7 +9866,8 @@ msgstr ""
 #: editor/plugins/mesh_instance_editor_plugin.cpp modules/csg/csg_shape.cpp
 #: modules/gltf/gltf_mesh.cpp modules/gltf/gltf_node.cpp
 #: scene/2d/mesh_instance_2d.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/mesh_instance.cpp scene/resources/multimesh.cpp
+#: scene/3d/mesh_instance.cpp scene/resources/mesh_library.cpp
+#: scene/resources/multimesh.cpp scene/resources/primitive_meshes.cpp
 #: scene/resources/texture.cpp
 msgid "Mesh"
 msgstr ""
@@ -9678,13 +10010,6 @@ msgstr "Anim Zmeniť Veľkosť"
 #, fuzzy
 msgid "Apply with Transforms"
 msgstr "Anim Zmeniť Veľkosť"
-
-#: editor/plugins/mesh_library_editor_plugin.cpp
-#: editor/plugins/tile_map_editor_plugin.cpp
-#: modules/gridmap/grid_map_editor_plugin.cpp
-#, fuzzy
-msgid "Preview Size"
-msgstr "Predzobraziť"
 
 #: editor/plugins/multimesh_editor_plugin.cpp
 msgid "No mesh source specified (and no MultiMesh set in node)."
@@ -9851,8 +10176,9 @@ msgid "Volume"
 msgstr ""
 
 #: editor/plugins/particles_editor_plugin.cpp
-msgid "Emission Source: "
-msgstr ""
+#, fuzzy
+msgid "Emission Source:"
+msgstr "Emisná Maska"
 
 #: editor/plugins/particles_editor_plugin.cpp
 msgid "A processor material of type 'ParticlesMaterial' is required."
@@ -10000,19 +10326,6 @@ msgstr ""
 msgid "Split Segment (in curve)"
 msgstr ""
 
-#: editor/plugins/path_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/spatial_editor_gizmos.cpp
-#: modules/csg/csg_gizmos.cpp
-msgid "3D Gizmos"
-msgstr ""
-
-#: editor/plugins/path_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/spatial_editor_gizmos.cpp
-#: modules/csg/csg_gizmos.cpp
-#, fuzzy
-msgid "Gizmo Colors"
-msgstr "Emisné Farby"
-
 #: editor/plugins/physical_bone_plugin.cpp
 #, fuzzy
 msgid "Move Joint"
@@ -10104,13 +10417,13 @@ msgstr ""
 msgid "Points"
 msgstr "Všetky vybrané"
 
-#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/navigation_polygon.cpp
-#: scene/2d/polygon_2d.cpp scene/resources/navigation_mesh.cpp
+#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/polygon_2d.cpp
+#: scene/resources/navigation_mesh.cpp
 #, fuzzy
 msgid "Polygons"
 msgstr "Signály:"
 
-#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/polygon_2d.cpp
+#: editor/plugins/polygon_2d_editor_plugin.cpp scene/3d/skeleton.cpp
 msgid "Bones"
 msgstr ""
 
@@ -10192,8 +10505,7 @@ msgid "Grid Settings"
 msgstr ""
 
 #: editor/plugins/polygon_2d_editor_plugin.cpp modules/csg/csg_shape.cpp
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Snap"
 msgstr "Prichytiť"
 
@@ -10229,6 +10541,10 @@ msgstr ""
 msgid "Sync Bones to Polygon"
 msgstr ""
 
+#: editor/plugins/ray_cast_2d_editor_plugin.cpp
+msgid "Set cast_to"
+msgstr ""
+
 #: editor/plugins/resource_preloader_editor_plugin.cpp
 msgid "ERROR: Couldn't load resource!"
 msgstr ""
@@ -10260,23 +10576,12 @@ msgid "Instance:"
 msgstr ""
 
 #: editor/plugins/resource_preloader_editor_plugin.cpp
-#: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
-#: editor/scene_tree_editor.cpp editor/script_editor_debugger.cpp
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Type:"
-msgstr ""
-
-#: editor/plugins/resource_preloader_editor_plugin.cpp
 #: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
 msgid "Open in Editor"
 msgstr ""
 
 #: editor/plugins/resource_preloader_editor_plugin.cpp
 msgid "Load Resource"
-msgstr ""
-
-#: editor/plugins/resource_preloader_editor_plugin.cpp
-msgid "ResourcePreloader"
 msgstr ""
 
 #: editor/plugins/room_manager_editor_plugin.cpp
@@ -10320,11 +10625,6 @@ msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
 msgid "Close and save changes?"
-msgstr ""
-
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/shader_editor_plugin.cpp
-msgid "Auto Reload Scripts On External Change"
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
@@ -10409,10 +10709,6 @@ msgid "%s Class Reference"
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
-msgid "Auto Reload And Parse Scripts On Save"
-msgstr ""
-
-#: editor/plugins/script_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 msgid "Find Next"
 msgstr ""
@@ -10463,8 +10759,7 @@ msgid "Previous Script"
 msgstr "Minulá karta"
 
 #: editor/plugins/script_editor_plugin.cpp
-#: modules/gdnative/videodecoder/video_stream_gdnative.cpp
-#: modules/theora/video_stream_theora.cpp modules/webm/video_stream_webm.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "File"
 msgstr ""
 
@@ -10704,7 +10999,8 @@ msgid "Convert Case"
 msgstr ""
 
 #: editor/plugins/script_text_editor.cpp editor/plugins/text_editor.cpp
-#: scene/gui/label.cpp
+#: scene/3d/label_3d.cpp scene/gui/label.cpp
+#: scene/resources/primitive_meshes.cpp
 msgid "Uppercase"
 msgstr ""
 
@@ -11013,13 +11309,17 @@ msgstr "Rotačný Režim"
 msgid "Translate"
 msgstr "Preložiť Preloženie:"
 
+#. TRANSLATORS: Refers to changing the scale of a node in the 3D editor.
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "Scaling: "
-msgstr ""
+#, fuzzy
+msgid "Scaling:"
+msgstr "Veľkosť:"
 
+#. TRANSLATORS: Refers to changing the position of a node in the 3D editor.
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "Translating: "
-msgstr ""
+#, fuzzy
+msgid "Translating:"
+msgstr "Preložiť Preloženie:"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Rotating %s degrees."
@@ -11040,11 +11340,6 @@ msgstr ""
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Yaw:"
 msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-#, fuzzy
-msgid "Size:"
-msgstr "Veľkosť: "
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Objects Drawn:"
@@ -11489,11 +11784,6 @@ msgid "Show Viewport Rotation Gizmo"
 msgstr "Zobraziť Výrez"
 
 #: editor/plugins/spatial_editor_plugin.cpp
-#, fuzzy
-msgid "Instanced"
-msgstr "Inštancie"
-
-#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Unnamed Gizmo"
 msgstr ""
 
@@ -11546,8 +11836,9 @@ msgid "Invalid geometry, can't replace by mesh."
 msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Convert to Mesh2D"
-msgstr ""
+#, fuzzy
+msgid "Convert to MeshInstance2D"
+msgstr "Všetky vybrané"
 
 #: editor/plugins/sprite_editor_plugin.cpp
 msgid "Invalid geometry, can't create polygon."
@@ -11580,16 +11871,19 @@ msgid "Sprite"
 msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Simplification: "
-msgstr ""
+#, fuzzy
+msgid "Simplification:"
+msgstr "Všetky vybrané"
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Shrink (Pixels): "
-msgstr ""
+#, fuzzy
+msgid "Shrink (Pixels):"
+msgstr "Pevné Pixely"
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Grow (Pixels): "
-msgstr ""
+#, fuzzy
+msgid "Grow (Pixels):"
+msgstr "Pevné Pixely"
 
 #: editor/plugins/sprite_editor_plugin.cpp
 msgid "Update Preview"
@@ -11711,6 +12005,17 @@ msgid "Vertical:"
 msgstr ""
 
 #: editor/plugins/sprite_frames_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+#, fuzzy
+msgid "Separation:"
+msgstr "Popis:"
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+msgid "Offset:"
+msgstr ""
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
 msgid "Select/Clear All Frames"
 msgstr ""
 
@@ -11747,17 +12052,8 @@ msgid "Auto Slice"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
-msgid "Offset:"
-msgstr ""
-
-#: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Step:"
 msgstr ""
-
-#: editor/plugins/texture_region_editor_plugin.cpp
-#, fuzzy
-msgid "Separation:"
-msgstr "Popis:"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
 msgid "TextureRegion"
@@ -11964,6 +12260,11 @@ msgid ""
 msgstr ""
 
 #: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Remove Type"
+msgstr "Všetky vybrané"
+
+#: editor/plugins/theme_editor_plugin.cpp
 msgid ""
 "Select a theme type from the list to edit its items.\n"
 "You can add a custom type or import a type with its items from another theme."
@@ -12004,6 +12305,16 @@ msgid ""
 "This theme type is empty.\n"
 "Add more items to it manually or by importing from another theme."
 msgstr ""
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Add Theme Type"
+msgstr "Vymazať Predmet"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Remove Theme Type"
+msgstr "Vymazať Predmet"
 
 #: editor/plugins/theme_editor_plugin.cpp
 #, fuzzy
@@ -12285,7 +12596,7 @@ msgstr "Tlačidlo"
 msgid "Disabled Button"
 msgstr "Vypnuté"
 
-#: editor/plugins/theme_editor_preview.cpp
+#: editor/plugins/theme_editor_preview.cpp scene/resources/mesh_library.cpp
 msgid "Item"
 msgstr ""
 
@@ -12316,6 +12627,7 @@ msgid "Named Separator"
 msgstr "Popis:"
 
 #: editor/plugins/theme_editor_preview.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Submenu"
 msgstr ""
 
@@ -12493,8 +12805,9 @@ msgid "Palette Min Width"
 msgstr ""
 
 #: editor/plugins/tile_map_editor_plugin.cpp
-msgid "Palette Item Hseparation"
-msgstr ""
+#, fuzzy
+msgid "Palette Item H Separation"
+msgstr "Popis:"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 #, fuzzy
@@ -12580,8 +12893,7 @@ msgid "Select the previous shape, subtile, or Tile."
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp scene/2d/sprite.cpp
-#: scene/3d/sprite_3d.cpp scene/resources/navigation_mesh.cpp
-#: scene/resources/texture.cpp
+#: scene/3d/sprite_3d.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Region"
 msgstr "Režim Interpolácie"
@@ -12611,12 +12923,6 @@ msgstr ""
 #, fuzzy
 msgid "Priority"
 msgstr "Súbor:"
-
-#: editor/plugins/tile_set_editor_plugin.cpp main/main.cpp
-#: platform/osx/export/export.cpp platform/windows/export/export.cpp
-#: scene/gui/button.cpp scene/gui/item_list.cpp
-msgid "Icon"
-msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp scene/2d/node_2d.cpp
 msgid "Z Index"
@@ -12900,6 +13206,140 @@ msgstr "Vytvoriť adresár"
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "This property can't be changed."
 msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Snap Options"
+msgstr "Možnosti Prichytávania"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/animated_sprite.cpp
+#: scene/2d/camera_2d.cpp scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp
+#: scene/2d/parallax_background.cpp scene/2d/parallax_layer.cpp
+#: scene/2d/path_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/label_3d.cpp scene/3d/path.cpp
+#: scene/3d/physics_body.cpp scene/3d/soft_body.cpp scene/3d/sprite_3d.cpp
+#: scene/gui/graph_node.cpp scene/gui/rich_text_effect.cpp
+#: scene/main/canvas_layer.cpp scene/resources/material.cpp
+#: scene/resources/particles_material.cpp scene/resources/style_box.cpp
+#, fuzzy
+msgid "Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp editor/rename_dialog.cpp
+#: scene/gui/range.cpp scene/resources/animation.cpp
+#: scene/resources/visual_shader_nodes.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
+msgid "Step"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Separation"
+msgstr "Popis:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Tile"
+msgstr "Zvoliť"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/cpu_particles_2d.cpp
+#: scene/2d/light_2d.cpp scene/2d/line_2d.cpp scene/2d/mesh_instance_2d.cpp
+#: scene/2d/multimesh_instance_2d.cpp scene/2d/particles_2d.cpp
+#: scene/2d/polygon_2d.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
+#: scene/gui/nine_patch_rect.cpp scene/gui/texture_rect.cpp
+#: scene/resources/material.cpp scene/resources/sky.cpp
+#: scene/resources/style_box.cpp scene/resources/visual_shader_nodes.cpp
+#, fuzzy
+msgid "Texture"
+msgstr "Všetky vybrané"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tex Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp modules/csg/csg_shape.cpp
+#: scene/2d/canvas_item.cpp scene/2d/particles_2d.cpp
+#: scene/3d/mesh_instance.cpp scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Material"
+msgstr "Parameter sa Zmenil"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/canvas_item.cpp
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/style_box.cpp
+msgid "Modulate"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tile Mode"
+msgstr "Prepnúť Mode"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Autotile Bitmask Mode"
+msgstr "Súbor:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Subtile Size"
+msgstr "\"Thumbnail\"..."
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Subtile Spacing"
+msgstr "Opakovanie Animácie"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occluder Offset"
+msgstr "Vytvoriť Occluder Polygon"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation Offset"
+msgstr "Signály:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Shape Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Shape Transform"
+msgstr "Anim Zmeniť Veľkosť"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision"
+msgstr "Režim Interpolácie"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision One Way"
+msgstr "Iba Výber"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision One Way Margin"
+msgstr "Režim Interpolácie"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Navigation"
+msgstr "Viditeľná Navigácia"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Occlusion"
+msgstr "Zvoliť"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tileset Script"
+msgstr "Filter:"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 #, fuzzy
@@ -13965,32 +14405,19 @@ msgid "Runnable"
 msgstr ""
 
 #: editor/project_export.cpp
+msgid "Export the project for all the presets defined."
+msgstr ""
+
+#: editor/project_export.cpp
+msgid "All presets must have an export path defined for Export All to work."
+msgstr ""
+
+#: editor/project_export.cpp
 msgid "Delete preset '%s'?"
 msgstr ""
 
 #: editor/project_export.cpp
-msgid ""
-"Failed to export the project for platform '%s'.\n"
-"Export templates seem to be missing or invalid."
-msgstr ""
-
-#: editor/project_export.cpp
-msgid ""
-"Failed to export the project for platform '%s'.\n"
-"This might be due to a configuration issue in the export preset or your "
-"export settings."
-msgstr ""
-
-#: editor/project_export.cpp
 msgid "Exporting All"
-msgstr ""
-
-#: editor/project_export.cpp
-msgid "The given export path doesn't exist:"
-msgstr ""
-
-#: editor/project_export.cpp
-msgid "Export templates for this platform are missing/corrupted:"
 msgstr ""
 
 #: editor/project_export.cpp
@@ -14011,7 +14438,7 @@ msgid ""
 "Only one preset per platform may be marked as runnable."
 msgstr ""
 
-#: editor/project_export.cpp scene/main/resource_preloader.cpp
+#: editor/project_export.cpp
 msgid "Resources"
 msgstr ""
 
@@ -14068,12 +14495,6 @@ msgstr "Popis:"
 msgid "GDScript Export Mode:"
 msgstr ""
 
-#: editor/project_export.cpp scene/gui/button.cpp scene/gui/dialogs.cpp
-#: scene/gui/label.cpp scene/gui/line_edit.cpp scene/gui/link_button.cpp
-#: scene/gui/rich_text_label.cpp scene/gui/text_edit.cpp
-msgid "Text"
-msgstr ""
-
 #: editor/project_export.cpp
 msgid "Compiled Bytecode (Faster Loading)"
 msgstr ""
@@ -14102,20 +14523,28 @@ msgid "More Info..."
 msgstr "Presunúť Do..."
 
 #: editor/project_export.cpp
-msgid "Export PCK/Zip"
-msgstr ""
+#, fuzzy
+msgid "Export PCK/Zip..."
+msgstr "Export..."
 
 #: editor/project_export.cpp
-msgid "Export Project"
-msgstr ""
-
-#: editor/project_export.cpp
-msgid "Export mode?"
-msgstr ""
+#, fuzzy
+msgid "Export Project..."
+msgstr "Importovať Dock"
 
 #: editor/project_export.cpp
 msgid "Export All"
 msgstr ""
+
+#: editor/project_export.cpp
+#, fuzzy
+msgid "Choose an export mode:"
+msgstr "Vyberte adresár"
+
+#: editor/project_export.cpp
+#, fuzzy
+msgid "Export All..."
+msgstr "Export..."
 
 #: editor/project_export.cpp editor/project_manager.cpp
 #, fuzzy
@@ -14123,12 +14552,18 @@ msgid "ZIP File"
 msgstr "Súbor:"
 
 #: editor/project_export.cpp
-msgid "Godot Game Pack"
-msgstr ""
+#, fuzzy
+msgid "Godot Project Pack"
+msgstr "Projekt"
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
 msgstr ""
+
+#: editor/project_export.cpp
+#, fuzzy
+msgid "Project Export"
+msgstr "Zakladatelia Projektu"
 
 #: editor/project_export.cpp
 msgid "Manage Export Templates"
@@ -14299,10 +14734,6 @@ msgid "Renderer can be changed later, but scenes may need to be adjusted."
 msgstr ""
 
 #: editor/project_manager.cpp
-msgid "Unnamed Project"
-msgstr ""
-
-#: editor/project_manager.cpp
 #, fuzzy
 msgid "Missing Project"
 msgstr "Všetky vybrané"
@@ -14310,6 +14741,20 @@ msgstr "Všetky vybrané"
 #: editor/project_manager.cpp
 msgid "Error: Project is missing on the filesystem."
 msgstr ""
+
+#: editor/project_manager.cpp editor/scene_tree_dock.cpp
+msgid "Local"
+msgstr ""
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Local Projects"
+msgstr "Zakladatelia Projektu"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Asset Library Projects"
+msgstr "Asset Library"
 
 #: editor/project_manager.cpp
 msgid "Can't open project at '%s'."
@@ -14401,18 +14846,13 @@ msgid "Project Manager"
 msgstr "Manažér Projektu "
 
 #: editor/project_manager.cpp
-#, fuzzy
-msgid "Local Projects"
-msgstr "Zakladatelia Projektu"
+msgid "Last Modified"
+msgstr ""
 
 #: editor/project_manager.cpp
 #, fuzzy
 msgid "Loading, please wait..."
 msgstr "Načítavanie zrkadiel, prosím čakajte..."
-
-#: editor/project_manager.cpp
-msgid "Last Modified"
-msgstr ""
 
 #: editor/project_manager.cpp
 #, fuzzy
@@ -14459,11 +14899,6 @@ msgstr "Všetky vybrané"
 #: editor/project_manager.cpp
 msgid "About"
 msgstr "O nás"
-
-#: editor/project_manager.cpp
-#, fuzzy
-msgid "Asset Library Projects"
-msgstr "Asset Library"
 
 #: editor/project_manager.cpp
 msgid "Restart Now"
@@ -14619,6 +15054,7 @@ msgid "Add Event"
 msgstr ""
 
 #: editor/project_settings_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Button"
 msgstr "Tlačidlo"
 
@@ -14811,7 +15247,8 @@ msgstr ""
 msgid "AutoLoad"
 msgstr ""
 
-#: editor/project_settings_editor.cpp
+#: editor/project_settings_editor.cpp platform/android/export/export_plugin.cpp
+#: platform/iphone/export/export.cpp
 msgid "Plugins"
 msgstr "Pluginy"
 
@@ -14939,12 +15376,6 @@ msgstr ""
 msgid "Initial value for the counter"
 msgstr ""
 
-#: editor/rename_dialog.cpp scene/gui/range.cpp scene/resources/animation.cpp
-#: scene/resources/visual_shader_nodes.cpp servers/physics_2d_server.cpp
-#: servers/physics_server.cpp
-msgid "Step"
-msgstr ""
-
 #: editor/rename_dialog.cpp
 msgid "Amount by which counter is incremented for each node"
 msgstr ""
@@ -14991,7 +15422,7 @@ msgstr ""
 msgid "To Uppercase"
 msgstr ""
 
-#: editor/rename_dialog.cpp
+#: editor/rename_dialog.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Reset"
 msgstr ""
 
@@ -15187,6 +15618,20 @@ msgstr ""
 msgid "Make Local"
 msgstr ""
 
+#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
+msgid "Another node already uses this unique name in the scene."
+msgstr ""
+
+#: editor/scene_tree_dock.cpp
+#, fuzzy
+msgid "Enable Scene Unique Name"
+msgstr "Meno Node-u:"
+
+#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
+#, fuzzy
+msgid "Disable Scene Unique Name"
+msgstr "Meno Node-u:"
+
 #: editor/scene_tree_dock.cpp
 msgid "New Scene Root"
 msgstr ""
@@ -15259,6 +15704,10 @@ msgstr ""
 
 #: editor/scene_tree_dock.cpp
 msgid "Sub-Resources"
+msgstr ""
+
+#: editor/scene_tree_dock.cpp
+msgid "Access as Scene Unique Name"
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
@@ -15349,10 +15798,6 @@ msgid ""
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
-msgid "Local"
-msgstr ""
-
-#: editor/scene_tree_dock.cpp
 msgid "Clear Inheritance? (No Undo!)"
 msgstr ""
 
@@ -15390,6 +15835,13 @@ msgstr "(Pripájanie z)"
 
 #: editor/scene_tree_editor.cpp
 msgid "Node configuration warning:"
+msgstr ""
+
+#: editor/scene_tree_editor.cpp
+msgid ""
+"This node can be accessed from within anywhere in the scene by preceding it "
+"with the '%s' prefix in a node path.\n"
+"Click to disable this."
 msgstr ""
 
 #: editor/scene_tree_editor.cpp
@@ -15596,7 +16048,8 @@ msgid "Attach Node Script"
 msgstr "Popis:"
 
 #: editor/script_editor_debugger.cpp
-msgid "Remote "
+#, fuzzy
+msgid "Remote %s:"
 msgstr "Diaľkový "
 
 #: editor/script_editor_debugger.cpp
@@ -15703,11 +16156,6 @@ msgid "Monitor"
 msgstr ""
 
 #: editor/script_editor_debugger.cpp
-#: modules/visual_script/visual_script_nodes.cpp scene/gui/range.cpp
-msgid "Value"
-msgstr ""
-
-#: editor/script_editor_debugger.cpp
 msgid "Monitors"
 msgstr ""
 
@@ -15805,6 +16253,7 @@ msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp modules/gltf/gltf_node.cpp
 #: platform/osx/export/export.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Camera"
 msgstr ""
 
@@ -15814,21 +16263,6 @@ msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp
 msgid "Change Camera Size"
-msgstr ""
-
-#: editor/spatial_editor_gizmos.cpp modules/gltf/gltf_node.cpp
-#: scene/3d/physics_body.cpp
-#, fuzzy
-msgid "Joint"
-msgstr "Bod"
-
-#: editor/spatial_editor_gizmos.cpp scene/2d/collision_shape_2d.cpp
-#: scene/2d/cpu_particles_2d.cpp scene/2d/touch_screen_button.cpp
-#: scene/3d/collision_shape.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/occluder.cpp scene/3d/spring_arm.cpp
-#: scene/resources/particles_material.cpp servers/physics_2d_server.cpp
-#: servers/physics_server.cpp
-msgid "Shape"
 msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp
@@ -16088,41 +16522,6 @@ msgstr ""
 msgid "Use Nvidia Rect Flicker Workaround"
 msgstr ""
 
-#: main/main.cpp platform/javascript/export/export.cpp
-#: platform/osx/export/export.cpp platform/uwp/os_uwp.cpp
-#, fuzzy
-msgid "Display"
-msgstr "Zobraziť Všetko"
-
-#: main/main.cpp modules/csg/csg_shape.cpp
-#: modules/opensimplex/noise_texture.cpp scene/2d/line_2d.cpp
-#: scene/gui/text_edit.cpp scene/resources/texture.cpp
-msgid "Width"
-msgstr ""
-
-#: main/main.cpp modules/csg/csg_shape.cpp modules/gltf/gltf_node.cpp
-#: modules/opensimplex/noise_texture.cpp scene/2d/light_2d.cpp
-#: scene/resources/capsule_shape.cpp scene/resources/capsule_shape_2d.cpp
-#: scene/resources/cylinder_shape.cpp scene/resources/font.cpp
-#: scene/resources/navigation_mesh.cpp scene/resources/primitive_meshes.cpp
-#: scene/resources/texture.cpp
-msgid "Height"
-msgstr ""
-
-#: main/main.cpp
-msgid "Always On Top"
-msgstr ""
-
-#: main/main.cpp
-#, fuzzy
-msgid "Test Width"
-msgstr "Ľavá Šírka"
-
-#: main/main.cpp
-#, fuzzy
-msgid "Test Height"
-msgstr "Testovanie"
-
 #: main/main.cpp
 msgid "DPI"
 msgstr ""
@@ -16225,6 +16624,16 @@ msgstr ""
 #: main/main.cpp
 msgid "Verbose stdout"
 msgstr ""
+
+#: main/main.cpp scene/main/scene_tree.cpp scene/resources/multimesh.cpp
+#, fuzzy
+msgid "Physics Interpolation"
+msgstr "Režim Interpolácie"
+
+#: main/main.cpp
+#, fuzzy
+msgid "Enable Warnings"
+msgstr "Povoliť Filtrovanie"
 
 #: main/main.cpp
 #, fuzzy
@@ -16366,10 +16775,6 @@ msgstr ""
 msgid "Wait Timeout"
 msgstr "Čas vypršal."
 
-#: main/main.cpp modules/mono/mono_gd/gd_mono.cpp
-msgid "Args"
-msgstr ""
-
 #: main/main.cpp
 msgid "Runtime"
 msgstr ""
@@ -16397,11 +16802,11 @@ msgstr "Inšpektor"
 msgid "Shrink"
 msgstr ""
 
-#: main/main.cpp
+#: main/main.cpp scene/main/scene_tree.cpp
 msgid "Auto Accept Quit"
 msgstr ""
 
-#: main/main.cpp
+#: main/main.cpp scene/main/scene_tree.cpp
 #, fuzzy
 msgid "Quit On Go Back"
 msgstr "Ísť Naspäť"
@@ -16474,12 +16879,6 @@ msgstr "Režim Interpolácie"
 msgid "Invert Faces"
 msgstr "Konvertovať Do %s"
 
-#: modules/csg/csg_shape.cpp scene/2d/canvas_item.cpp scene/2d/particles_2d.cpp
-#: scene/resources/primitive_meshes.cpp
-#, fuzzy
-msgid "Material"
-msgstr "Parameter sa Zmenil"
-
 #: modules/csg/csg_shape.cpp scene/2d/navigation_agent_2d.cpp
 #: scene/2d/navigation_obstacle_2d.cpp scene/3d/navigation_agent.cpp
 #: scene/3d/navigation_obstacle.cpp scene/3d/vehicle_body.cpp
@@ -16528,7 +16927,7 @@ msgstr ""
 
 #: modules/csg/csg_shape.cpp scene/2d/collision_polygon_2d.cpp
 #: scene/2d/light_occluder_2d.cpp scene/2d/polygon_2d.cpp
-#: scene/3d/collision_polygon.cpp scene/resources/navigation_mesh.cpp
+#: scene/3d/collision_polygon.cpp
 #, fuzzy
 msgid "Polygon"
 msgstr "Signály:"
@@ -16620,6 +17019,14 @@ msgstr ""
 msgid "Use DTLS"
 msgstr "Použiť Prichytávanie"
 
+#: modules/fbx/editor_scene_importer_fbx.cpp
+msgid "FBX"
+msgstr ""
+
+#: modules/fbx/editor_scene_importer_fbx.cpp
+msgid "Use FBX"
+msgstr ""
+
 #: modules/gdnative/gdnative.cpp
 #, fuzzy
 msgid "Config File"
@@ -16697,7 +17104,7 @@ msgid "Disabled GDNative Singleton"
 msgstr ""
 
 #: modules/gdnative/gdnative_library_singleton_editor.cpp
-msgid "Libraries: "
+msgid "Libraries:"
 msgstr ""
 
 #: modules/gdnative/nativescript/nativescript.cpp
@@ -16943,7 +17350,7 @@ msgstr "Bake Lightmaps"
 msgid "Instance Materials"
 msgstr "Parameter sa Zmenil"
 
-#: modules/gltf/gltf_node.cpp
+#: modules/gltf/gltf_node.cpp scene/3d/skeleton.cpp
 #, fuzzy
 msgid "Parent"
 msgstr "Prichytiť na Rodiča"
@@ -16960,13 +17367,6 @@ msgstr ""
 #, fuzzy
 msgid "Translation"
 msgstr "Preložiť Preloženie:"
-
-#: modules/gltf/gltf_node.cpp scene/2d/node_2d.cpp scene/2d/polygon_2d.cpp
-#: scene/2d/remote_transform_2d.cpp scene/3d/remote_transform.cpp
-#: scene/3d/spatial.cpp scene/gui/control.cpp scene/main/canvas_layer.cpp
-#, fuzzy
-msgid "Rotation"
-msgstr "Krok Rotácie:"
 
 #: modules/gltf/gltf_node.cpp
 msgid "Children"
@@ -17082,7 +17482,6 @@ msgstr "Vytvoriť adresár"
 
 #: modules/gltf/gltf_state.cpp scene/2d/particles_2d.cpp
 #: scene/gui/texture_button.cpp scene/gui/texture_progress.cpp
-#: scene/resources/font.cpp
 #, fuzzy
 msgid "Textures"
 msgstr "Všetky vybrané"
@@ -17115,7 +17514,7 @@ msgstr "Nastavenia Kostry"
 msgid "Skeleton To Node"
 msgstr "Zmazať Node"
 
-#: modules/gltf/gltf_state.cpp scene/2d/animated_sprite.cpp
+#: modules/gltf/gltf_state.cpp
 #, fuzzy
 msgid "Animations"
 msgstr "Popis:"
@@ -17140,7 +17539,6 @@ msgid "Use In Baked Light"
 msgstr "Bake Lightmaps"
 
 #: modules/gridmap/grid_map.cpp scene/2d/tile_map.cpp
-#: scene/resources/navigation_mesh.cpp
 msgid "Cell"
 msgstr ""
 
@@ -17169,6 +17567,19 @@ msgstr "V Strede"
 #: scene/resources/material.cpp
 msgid "Mask"
 msgstr ""
+
+#: modules/gridmap/grid_map.cpp scene/2d/tile_map.cpp
+#, fuzzy
+msgid "Bake Navigation"
+msgstr "Signály:"
+
+#: modules/gridmap/grid_map.cpp scene/2d/navigation_2d.cpp
+#: scene/2d/navigation_agent_2d.cpp scene/2d/navigation_polygon.cpp
+#: scene/2d/tile_map.cpp scene/3d/navigation.cpp scene/3d/navigation_agent.cpp
+#: scene/3d/navigation_mesh_instance.cpp
+#, fuzzy
+msgid "Navigation Layers"
+msgstr "Signály:"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Next Plane"
@@ -17567,11 +17978,6 @@ msgstr ""
 msgid "IGD Status"
 msgstr ""
 
-#: modules/visual_script/visual_script.cpp scene/resources/visual_shader.cpp
-#, fuzzy
-msgid "Default Input Values"
-msgstr "Zmazať Vstup"
-
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "A node yielded without working memory, please read the docs on how to yield "
@@ -17591,7 +17997,7 @@ msgid ""
 msgstr ""
 
 #: modules/visual_script/visual_script.cpp
-msgid "Node returned an invalid sequence output: "
+msgid "Node returned an invalid sequence output:"
 msgstr ""
 
 #: modules/visual_script/visual_script.cpp
@@ -17599,7 +18005,7 @@ msgid "Found sequence bit but not the node in the stack, report bug!"
 msgstr ""
 
 #: modules/visual_script/visual_script.cpp
-msgid "Stack overflow with stack depth: "
+msgid "Stack overflow with stack depth:"
 msgstr ""
 
 #: modules/visual_script/visual_script.cpp
@@ -17728,6 +18134,15 @@ msgid "Change Expression"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
+msgid "Can't copy the function node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Paste VisualScript Nodes"
+msgstr "Vložiť"
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Remove VisualScript Nodes"
 msgstr ""
 
@@ -17827,15 +18242,6 @@ msgstr ""
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Resize Comment"
 msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Can't copy the function node."
-msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Paste VisualScript Nodes"
-msgstr "Vložiť"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Can't create function with a function node."
@@ -17989,7 +18395,7 @@ msgid "for (elem) in (input):"
 msgstr ""
 
 #: modules/visual_script/visual_script_flow_control.cpp
-msgid "Input type not iterable: "
+msgid "Input type not iterable:"
 msgstr ""
 
 #: modules/visual_script/visual_script_flow_control.cpp
@@ -17997,7 +18403,7 @@ msgid "Iterator became invalid"
 msgstr ""
 
 #: modules/visual_script/visual_script_flow_control.cpp
-msgid "Iterator became invalid: "
+msgid "Iterator became invalid:"
 msgstr ""
 
 #: modules/visual_script/visual_script_flow_control.cpp
@@ -18065,10 +18471,6 @@ msgid "Node Path"
 msgstr "Načítať Predvoľbu"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-msgid "Argument Cache"
-msgstr ""
-
-#: modules/visual_script/visual_script_func_nodes.cpp
 #, fuzzy
 msgid "Use Default Args"
 msgstr "Obnoviť na východzie"
@@ -18128,11 +18530,6 @@ msgstr "Vybrať Režim"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
 #, fuzzy
-msgid "Type Cache"
-msgstr "Zmeniť"
-
-#: modules/visual_script/visual_script_func_nodes.cpp
-#, fuzzy
 msgid "Assign Op"
 msgstr "Priradiť..."
 
@@ -18151,7 +18548,7 @@ msgid "Base object is not a Node!"
 msgstr ""
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-msgid "Path does not lead Node!"
+msgid "Path does not lead to Node!"
 msgstr ""
 
 #: modules/visual_script/visual_script_func_nodes.cpp
@@ -18167,18 +18564,20 @@ msgstr ""
 msgid "Compose Array"
 msgstr "Zmeniť veľkosť Array-u"
 
-#: modules/visual_script/visual_script_nodes.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/resources/material.cpp
 #: scene/resources/visual_shader_nodes.cpp
 msgid "Operator"
 msgstr ""
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid ": Invalid argument of type: "
-msgstr ""
+#, fuzzy
+msgid "Invalid argument of type:"
+msgstr "Neplatné argumenty pre vytvorenie '%s'"
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid ": Invalid arguments: "
-msgstr ""
+#, fuzzy
+msgid "Invalid arguments:"
+msgstr "Neplatný Názov."
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "a if cond, else b"
@@ -18190,12 +18589,14 @@ msgid "Var Name"
 msgstr "Meno"
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid "VariableGet not found in script: "
-msgstr ""
+#, fuzzy
+msgid "VariableGet not found in script:"
+msgstr "Metóda nebola nájdená v objekte: "
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid "VariableSet not found in script: "
-msgstr ""
+#, fuzzy
+msgid "VariableSet not found in script:"
+msgstr "Metóda nebola nájdená v objekte: "
 
 #: modules/visual_script/visual_script_nodes.cpp
 #, fuzzy
@@ -18280,11 +18681,6 @@ msgid "Construct %s"
 msgstr "Konštanty"
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
-msgid "Constructor"
-msgstr "Konštanty"
-
-#: modules/visual_script/visual_script_nodes.cpp
 msgid "Get Local Var"
 msgstr ""
 
@@ -18299,10 +18695,6 @@ msgstr "Všetky vybrané"
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "Deconstruct %s"
-msgstr ""
-
-#: modules/visual_script/visual_script_nodes.cpp
-msgid "Elem Cache"
 msgstr ""
 
 #: modules/visual_script/visual_script_property_selector.cpp
@@ -18357,6 +18749,14 @@ msgstr "Inštancie"
 msgid "Write Mode"
 msgstr "Rotačný Režim"
 
+#: modules/webrtc/webrtc_data_channel.h
+msgid "WebRTC"
+msgstr ""
+
+#: modules/webrtc/webrtc_data_channel.h
+msgid "Max Channel In Buffer (KB)"
+msgstr ""
+
 #: modules/websocket/websocket_client.cpp
 msgid "Verify SSL"
 msgstr ""
@@ -18364,6 +18764,32 @@ msgstr ""
 #: modules/websocket/websocket_client.cpp
 msgid "Trusted SSL Certificate"
 msgstr ""
+
+#: modules/websocket/websocket_macros.h
+#, fuzzy
+msgid "WebSocket Client"
+msgstr "Vytvoriť adresár"
+
+#: modules/websocket/websocket_macros.h
+msgid "Max In Buffer (KB)"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max In Packets"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max Out Buffer (KB)"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max Out Packets"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+#, fuzzy
+msgid "WebSocket Server"
+msgstr "Vytvoriť adresár"
 
 #: modules/websocket/websocket_server.cpp
 msgid "Bind IP"
@@ -18419,6 +18845,11 @@ msgstr ""
 msgid "Bounds Geometry"
 msgstr "Skúsiť znova"
 
+#: modules/webxr/webxr_interface.cpp
+#, fuzzy
+msgid "XR Standard Mapping"
+msgstr "Smart Prichytávanie"
+
 #: platform/android/export/export.cpp
 msgid "Android SDK Path"
 msgstr ""
@@ -18441,6 +18872,22 @@ msgstr ""
 
 #: platform/android/export/export.cpp
 msgid "Shutdown ADB On Exit"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Launcher Icons"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Main 192 X 192"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Adaptive Foreground 432 X 432"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Adaptive Background 432 X 432"
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18476,6 +18923,10 @@ msgstr ""
 msgid "Export Format"
 msgstr "Konštanty:"
 
+#: platform/android/export/export_plugin.cpp platform/iphone/export/export.cpp
+msgid "Architectures"
+msgstr ""
+
 #: platform/android/export/export_plugin.cpp
 msgid "Keystore"
 msgstr ""
@@ -18506,7 +18957,7 @@ msgstr ""
 msgid "Clear Previous Install"
 msgstr "Minulá karta"
 
-#: platform/android/export/export_plugin.cpp scene/resources/shader.cpp
+#: platform/android/export/export_plugin.cpp
 msgid "Code"
 msgstr ""
 
@@ -18688,10 +19139,6 @@ msgid "Could not execute on device."
 msgstr "Priečinok sa nepodarilo vytvoriť."
 
 #: platform/android/export/export_plugin.cpp
-msgid "Unable to find the 'apksigner' tool."
-msgstr ""
-
-#: platform/android/export/export_plugin.cpp
 msgid ""
 "Android build template not installed in the project. Install it from the "
 "Project menu."
@@ -18796,12 +19243,16 @@ msgstr ""
 msgid "\"Target Sdk\" version must be greater or equal to \"Min Sdk\" version."
 msgstr ""
 
+#: platform/android/export/export_plugin.cpp platform/osx/export/export.cpp
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Code Signing"
+msgstr "Signál"
+
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"'apksigner' could not be found.\n"
-"Please check the command is available in the Android SDK build-tools "
-"directory.\n"
-"The resulting %s is unsigned."
+"'apksigner' could not be found. Please check that the command is available "
+"in the Android SDK build-tools directory. The resulting %s is unsigned."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18818,6 +19269,11 @@ msgstr ""
 #: platform/android/export/export_plugin.cpp
 msgid "Could not find keystore, unable to export."
 msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+#, fuzzy
+msgid "Could not start apksigner executable."
+msgstr "Subprocess sa nedá spustiť!"
 
 #: platform/android/export/export_plugin.cpp
 msgid "'apksigner' returned with error #%d"
@@ -18849,7 +19305,7 @@ msgid "Invalid filename! Android APK requires the *.apk extension."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
-msgid "Unsupported export format!\n"
+msgid "Unsupported export format!"
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18860,20 +19316,19 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Android build version mismatch:\n"
-"   Template installed: %s\n"
-"   Godot Version: %s\n"
+"Android build version mismatch: Template installed: %s, Godot version: %s. "
 "Please reinstall Android build template from 'Project' menu."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Unable to overwrite res://android/build/res/*.xml files with project name"
+"Unable to overwrite res://android/build/res/*.xml files with project name."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
-msgid "Could not export project files to gradle project\n"
-msgstr ""
+#, fuzzy
+msgid "Could not export project files to gradle project."
+msgstr "Popis:"
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
@@ -18886,7 +19341,7 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Building of Android project failed, check output for the error.\n"
+"Building of Android project failed, check output for the error. "
 "Alternatively visit docs.godotengine.org for Android build documentation."
 msgstr ""
 
@@ -18902,7 +19357,7 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
-msgid "Package not found: %s"
+msgid "Package not found: \"%s\"."
 msgstr "Balíček Obsahu:"
 
 #: platform/android/export/export_plugin.cpp
@@ -18911,15 +19366,13 @@ msgid "Creating APK..."
 msgstr "Pripájanie..."
 
 #: platform/android/export/export_plugin.cpp
-msgid ""
-"Could not find template APK to export:\n"
-"%s"
-msgstr ""
+#, fuzzy
+msgid "Could not find template APK to export: \"%s\"."
+msgstr "Subprocess sa nedá spustiť!"
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Missing libraries in the export template for the selected architectures: "
-"%s.\n"
+"Missing libraries in the export template for the selected architectures: %s. "
 "Please build a template with all required libraries, or uncheck the missing "
 "architectures in the export preset."
 msgstr ""
@@ -18931,7 +19384,7 @@ msgstr "Pridávanie %s..."
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
-msgid "Could not export project files"
+msgid "Could not export project files."
 msgstr "Popis:"
 
 #: platform/android/export/export_plugin.cpp
@@ -18948,6 +19401,58 @@ msgstr ""
 
 #: platform/iphone/export/export.cpp platform/osx/export/export.cpp
 msgid "The character '%s' is not allowed in Identifier."
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "Landscape Launch Screens"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 2436 X 1125"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 2208 X 1242"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 1024 X 768"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 2048 X 1536"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "Portrait Launch Screens"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 640 X 960"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 640 X 1136"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 750 X 1334"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 1125 X 2436"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 768 X 1024"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 1536 X 2048"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 1242 X 2208"
 msgstr ""
 
 #: platform/iphone/export/export.cpp
@@ -19024,7 +19529,7 @@ msgstr "Úspech!"
 msgid "Push Notifications"
 msgstr "Prilepiť Animáciu"
 
-#: platform/iphone/export/export.cpp scene/3d/baked_lightmap.cpp
+#: platform/iphone/export/export.cpp
 #, fuzzy
 msgid "User Data"
 msgstr "Otvoriť priečinok Editor Data"
@@ -19034,7 +19539,7 @@ msgid "Accessible From Files App"
 msgstr ""
 
 #: platform/iphone/export/export.cpp
-msgid "Accessible From Itunes Sharing"
+msgid "Accessible From iTunes Sharing"
 msgstr ""
 
 #: platform/iphone/export/export.cpp platform/osx/export/export.cpp
@@ -19121,6 +19626,17 @@ msgstr "Vložiť"
 msgid "Custom BG Color"
 msgstr "Vložiť"
 
+#: platform/iphone/export/export.cpp platform/javascript/export/export.cpp
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Prepare Templates"
+msgstr "Spravovať Šablóny"
+
+#: platform/iphone/export/export.cpp platform/osx/export/export.cpp
+#, fuzzy
+msgid "Export template not found."
+msgstr "Vlastná release šablóna sa nenašla."
+
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID not specified - cannot configure the project."
 msgstr ""
@@ -19143,22 +19659,33 @@ msgid "Run exported HTML in the system's default browser."
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-msgid "Could not open template for export:"
-msgstr ""
-
-#: platform/javascript/export/export.cpp
-msgid "Invalid export template:"
-msgstr ""
+#, fuzzy
+msgid "Could not open template for export: \"%s\"."
+msgstr "Priečinok sa nepodarilo vytvoriť."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not write file:"
-msgstr "Popis:"
+msgid "Invalid export template: \"%s\"."
+msgstr "Nesprávna veľkosť písma."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read file:"
+msgid "Could not write file: \"%s\"."
 msgstr "Popis:"
+
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#, fuzzy
+msgid "Icon Creation"
+msgstr "Obsah:"
+
+#: platform/javascript/export/export.cpp
+#, fuzzy
+msgid "Could not read file: \"%s\"."
+msgstr "Popis:"
+
+#: platform/javascript/export/export.cpp
+msgid "PWA"
+msgstr ""
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
@@ -19184,7 +19711,7 @@ msgid "For Mobile"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-msgid "Html"
+msgid "HTML"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
@@ -19194,7 +19721,7 @@ msgstr "Expandovať Všetky"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Custom Html Shell"
+msgid "Custom HTML Shell"
 msgstr "Vložiť"
 
 #: platform/javascript/export/export.cpp
@@ -19236,17 +19763,17 @@ msgstr ""
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read HTML shell:"
+msgid "Could not read HTML shell: \"%s\"."
 msgstr "Popis:"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not create HTTP server directory:"
+msgid "Could not create HTTP server directory: %s."
 msgstr "Priečinok sa nepodarilo vytvoriť."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Error starting HTTP server:"
+msgid "Error starting HTTP server: %d."
 msgstr "Error pri ukladaní TileSet-u!"
 
 #: platform/javascript/export/export.cpp
@@ -19493,7 +20020,7 @@ msgstr "Vytvoriť adresár"
 
 #: platform/osx/export/export.cpp
 #, fuzzy
-msgid "Device Usb"
+msgid "Device USB"
 msgstr "Zariadenie"
 
 #: platform/osx/export/export.cpp
@@ -19543,9 +20070,28 @@ msgid "Apple Team ID"
 msgstr ""
 
 #: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not open icon file \"%s\"."
+msgstr "Popis:"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not start xcrun executable."
+msgstr "Subprocess sa nedá spustiť!"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Notarization failed."
+msgstr "Signály:"
+
+#: platform/osx/export/export.cpp
+msgid "Notarization request UUID: \"%s\""
+msgstr ""
+
+#: platform/osx/export/export.cpp
 msgid ""
-"Note: The notarization process generally takes less than an hour. When the "
-"process is completed, you'll receive an email."
+"The notarization process generally takes less than an hour. When the process "
+"is completed, you'll receive an email."
 msgstr ""
 
 #: platform/osx/export/export.cpp
@@ -19561,9 +20107,59 @@ msgid ""
 msgstr ""
 
 #: platform/osx/export/export.cpp
+msgid "Timestamping is not compatible with ad-hoc signature, and was disabled!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid ""
+"Hardened Runtime is not compatible with ad-hoc signature, and was disabled!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "Built-in CodeSign failed with error \"%s\"."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "Built-in CodeSign require regex module."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid ""
+"Could not start codesign executable, make sure Xcode command line tools are "
+"installed."
+msgstr ""
+
+#: platform/osx/export/export.cpp platform/windows/export/export.cpp
 #, fuzzy
 msgid "No identity found."
 msgstr "Nenašli sa žiadne \"sub-resources\"."
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Cannot sign file %s."
+msgstr "Chyba uloženia súbora: %s"
+
+#: platform/osx/export/export.cpp
+msgid "Relative symlinks are not supported, exported \"%s\" might be broken!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "DMG Creation"
+msgstr "Smery"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not start hdiutil executable."
+msgstr "Subprocess sa nedá spustiť!"
+
+#: platform/osx/export/export.cpp
+msgid "`hdiutil create` failed - file exists."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "`hdiutil create` failed."
+msgstr ""
 
 #: platform/osx/export/export.cpp
 #, fuzzy
@@ -19571,8 +20167,14 @@ msgid "Creating app bundle"
 msgstr "Vytváranie Náhľadu"
 
 #: platform/osx/export/export.cpp
-msgid "Could not find template app to export:"
-msgstr ""
+#, fuzzy
+msgid "Could not find template app to export: \"%s\"."
+msgstr "Subprocess sa nedá spustiť!"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Invalid export format."
+msgstr "Neplatný Názov."
 
 #: platform/osx/export/export.cpp
 msgid ""
@@ -19582,7 +20184,7 @@ msgstr ""
 
 #: platform/osx/export/export.cpp
 msgid ""
-"Requested template binary '%s' not found. It might be missing from your "
+"Requested template binary \"%s\" not found. It might be missing from your "
 "template archive."
 msgstr ""
 
@@ -19620,6 +20222,15 @@ msgstr ""
 
 #: platform/osx/export/export.cpp
 msgid "Sending archive for notarization"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "ZIP Creation"
+msgstr "Projekt"
+
+#: platform/osx/export/export.cpp
+msgid "Could not open file to read from path \"%s\"."
 msgstr ""
 
 #: platform/osx/export/export.cpp
@@ -19758,12 +20369,13 @@ msgid "Publisher Display Name"
 msgstr "Nesprávna veľkosť písma."
 
 #: platform/uwp/export/export.cpp
-msgid "Product Guid"
-msgstr ""
+#, fuzzy
+msgid "Product GUID"
+msgstr "Nesprávna veľkosť písma."
 
 #: platform/uwp/export/export.cpp
 #, fuzzy
-msgid "Publisher Guid"
+msgid "Publisher GUID"
 msgstr "Zmazať Návody"
 
 #: platform/uwp/export/export.cpp
@@ -19936,6 +20548,11 @@ msgid "Debug Algorithm"
 msgstr ""
 
 #: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Failed to rename temporary file \"%s\"."
+msgstr "Nepodarilo sa vymazať dočasné súbory:"
+
+#: platform/windows/export/export.cpp
 msgid "Identity Type"
 msgstr ""
 
@@ -19946,6 +20563,11 @@ msgstr ""
 #: platform/windows/export/export.cpp
 msgid "Digest Algorithm"
 msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Modify Resources"
+msgstr "Skopírovať Prostriedok"
 
 #: platform/windows/export/export.cpp
 #, fuzzy
@@ -19977,6 +20599,66 @@ msgid "Trademarks"
 msgstr ""
 
 #: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Resources Modification"
+msgstr "Prilepiť Animáciu"
+
+#: platform/windows/export/export.cpp
+msgid "Could not find rcedit executable at \"%s\"."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid "Could not find wine executable at \"%s\"."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Could not start rcedit executable, configure rcedit path in the Editor "
+"Settings (Export > Windows > Rcedit)."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid ""
+"rcedit failed to modify executable:\n"
+"%s"
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid "Could not find signtool executable at \"%s\"."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid "Could not find osslsigncode executable at \"%s\"."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Invalid identity type."
+msgstr "Nesprávna veľkosť písma."
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Invalid timestamp server."
+msgstr "Neplatný Názov."
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Could not start signtool executable, configure signtool path in the Editor "
+"Settings (Export > Windows > Signtool)."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Signtool failed to sign executable:\n"
+"%s"
+msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Failed to remove temporary file \"%s\"."
+msgstr "Nepodarilo sa vymazať dočasné súbory:"
+
+#: platform/windows/export/export.cpp
 msgid ""
 "The rcedit tool must be configured in the Editor Settings (Export > Windows "
 "> Rcedit) to change the icon or app information data."
@@ -19998,6 +20680,23 @@ msgid "Invalid product version:"
 msgstr "Nesprávna veľkosť písma."
 
 #: platform/windows/export/export.cpp
+msgid "Windows executables cannot be >= 4 GiB."
+msgstr ""
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+#, fuzzy
+msgid "Failed to open executable file \"%s\"."
+msgstr "Nesprávna veľkosť písma."
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+msgid "Executable file header corrupted."
+msgstr ""
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+msgid "Executable \"pck\" section not found."
+msgstr ""
+
+#: platform/windows/export/export.cpp
 #, fuzzy
 msgid "Windows"
 msgstr "Nové Okno"
@@ -20014,6 +20713,10 @@ msgstr ""
 msgid "Wine"
 msgstr ""
 
+#: platform/x11/export/export.cpp
+msgid "32-bit executables cannot have embedded data >= 4 GiB."
+msgstr ""
+
 #: scene/2d/animated_sprite.cpp scene/3d/sprite_3d.cpp
 #: scene/resources/texture.cpp
 #, fuzzy
@@ -20025,11 +20728,6 @@ msgid ""
 "A SpriteFrames resource must be created or set in the \"Frames\" property in "
 "order for AnimatedSprite to display frames."
 msgstr ""
-
-#: scene/2d/animated_sprite.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
-#, fuzzy
-msgid "Frame"
-msgstr "Snímka %"
 
 #: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/particles_2d.cpp scene/3d/cpu_particles.cpp scene/3d/particles.cpp
@@ -20048,19 +20746,6 @@ msgstr "Spustiť"
 #, fuzzy
 msgid "Centered"
 msgstr "V Strede"
-
-#: scene/2d/animated_sprite.cpp scene/2d/camera_2d.cpp
-#: scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp
-#: scene/2d/parallax_background.cpp scene/2d/parallax_layer.cpp
-#: scene/2d/path_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/path.cpp scene/3d/physics_body.cpp
-#: scene/3d/sprite_3d.cpp scene/gui/graph_node.cpp
-#: scene/gui/rich_text_effect.cpp scene/main/canvas_layer.cpp
-#: scene/resources/material.cpp scene/resources/particles_material.cpp
-#: scene/resources/style_box.cpp
-#, fuzzy
-msgid "Offset"
-msgstr "Odchýlka Mriežky:"
 
 #: scene/2d/animated_sprite.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
 #: scene/gui/texture_button.cpp scene/gui/texture_rect.cpp
@@ -20142,8 +20827,7 @@ msgid "Pitch Scale"
 msgstr "Veľkosť:"
 
 #: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
-#: scene/animation/animation_player.cpp scene/audio/audio_stream_player.cpp
-#: scene/gui/video_player.cpp
+#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
 #, fuzzy
 msgid "Autoplay"
 msgstr "Prepnúť Autoplay"
@@ -20155,7 +20839,8 @@ msgstr ""
 
 #: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
 #: scene/3d/light.cpp scene/3d/reflection_probe.cpp
-#: scene/3d/visual_instance.cpp scene/resources/material.cpp
+#: scene/3d/visibility_notifier.cpp scene/3d/visual_instance.cpp
+#: scene/resources/material.cpp
 #, fuzzy
 msgid "Max Distance"
 msgstr "Inštancie"
@@ -20190,7 +20875,8 @@ msgstr "Iba Kovadliny"
 msgid "Rotating"
 msgstr "Krok Rotácie:"
 
-#: scene/2d/camera_2d.cpp scene/3d/camera.cpp
+#: scene/2d/camera_2d.cpp scene/2d/listener_2d.cpp scene/3d/camera.cpp
+#: scene/3d/listener.cpp scene/animation/animation_blend_tree.cpp
 #, fuzzy
 msgid "Current"
 msgstr "Aktuálny:"
@@ -20217,19 +20903,20 @@ msgid "Limit"
 msgstr ""
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Left"
 msgstr "Vľavo Hore"
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Right"
 msgstr "Vpravo Hore"
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
 #: scene/resources/dynamic_font.cpp scene/resources/style_box.cpp
+#: scene/resources/texture.cpp
 #, fuzzy
 msgid "Bottom"
 msgstr "Vľavo Dole"
@@ -20283,8 +20970,8 @@ msgstr "Volania"
 msgid "Draw Drag Margin"
 msgstr "Extra Call Argumenty:"
 
-#: scene/2d/canvas_item.cpp scene/animation/animation_blend_space_2d.cpp
-#: scene/resources/environment.cpp scene/resources/material.cpp
+#: scene/2d/canvas_item.cpp scene/resources/environment.cpp
+#: scene/resources/material.cpp
 #, fuzzy
 msgid "Blend Mode"
 msgstr "Blend2 Node"
@@ -20321,11 +21008,6 @@ msgstr ""
 msgid "Visible"
 msgstr ""
 
-#: scene/2d/canvas_item.cpp scene/3d/sprite_3d.cpp
-#: scene/resources/style_box.cpp
-msgid "Modulate"
-msgstr ""
-
 #: scene/2d/canvas_item.cpp
 #, fuzzy
 msgid "Self Modulate"
@@ -20347,10 +21029,6 @@ msgstr ""
 
 #: scene/2d/canvas_item.cpp
 msgid "Use Parent Material"
-msgstr ""
-
-#: scene/2d/canvas_item.cpp
-msgid "Toplevel"
 msgstr ""
 
 #: scene/2d/canvas_modulate.cpp
@@ -20390,6 +21068,11 @@ msgstr ""
 msgid "Invalid polygon. At least 2 points are needed in 'Segments' build mode."
 msgstr ""
 
+#: scene/2d/collision_polygon_2d.cpp scene/2d/collision_shape_2d.cpp
+msgid ""
+"The One Way Collision property will be ignored when the parent is an Area2D."
+msgstr ""
+
 #: scene/2d/collision_polygon_2d.cpp
 #, fuzzy
 msgid "Build Mode"
@@ -20398,7 +21081,7 @@ msgstr "Pravítko"
 #: scene/2d/collision_polygon_2d.cpp scene/2d/collision_shape_2d.cpp
 #: scene/3d/collision_polygon.cpp scene/3d/collision_shape.cpp
 #: scene/animation/animation_node_state_machine.cpp scene/gui/base_button.cpp
-#: scene/gui/texture_button.cpp
+#: scene/gui/texture_button.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Disabled"
 msgstr "Vypnuté"
@@ -20508,17 +21191,6 @@ msgstr "Zakladatelia Projektu"
 msgid "Draw Order"
 msgstr ""
 
-#: scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp scene/2d/line_2d.cpp
-#: scene/2d/mesh_instance_2d.cpp scene/2d/multimesh_instance_2d.cpp
-#: scene/2d/particles_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
-#: scene/3d/sprite_3d.cpp scene/gui/nine_patch_rect.cpp
-#: scene/gui/texture_rect.cpp scene/resources/material.cpp
-#: scene/resources/sky.cpp scene/resources/style_box.cpp
-#: scene/resources/visual_shader_nodes.cpp
-#, fuzzy
-msgid "Texture"
-msgstr "Všetky vybrané"
-
 #: scene/2d/cpu_particles_2d.cpp scene/3d/cpu_particles.cpp
 #: scene/resources/particles_material.cpp
 #, fuzzy
@@ -20618,8 +21290,9 @@ msgid "Tangential Accel"
 msgstr ""
 
 #: scene/2d/cpu_particles_2d.cpp scene/2d/joints_2d.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/physics_joint.cpp
-#: scene/3d/vehicle_body.cpp scene/resources/particles_material.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/physics_body.cpp
+#: scene/3d/physics_joint.cpp scene/3d/vehicle_body.cpp
+#: scene/resources/particles_material.cpp
 #: servers/audio/effects/audio_effect_reverb.cpp
 msgid "Damping"
 msgstr ""
@@ -20754,7 +21427,7 @@ msgid "Node B"
 msgstr "Node"
 
 #: scene/2d/joints_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/3d/light.cpp scene/3d/physics_joint.cpp
+#: scene/3d/light.cpp scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
 #: scene/resources/environment.cpp
 msgid "Bias"
 msgstr ""
@@ -20764,7 +21437,7 @@ msgstr ""
 msgid "Disable Collision"
 msgstr "Vypnuté"
 
-#: scene/2d/joints_2d.cpp scene/3d/physics_joint.cpp
+#: scene/2d/joints_2d.cpp scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
 msgid "Softness"
 msgstr ""
 
@@ -20803,7 +21476,8 @@ msgid "Texture Scale"
 msgstr ""
 
 #: scene/2d/light_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/3d/light.cpp scene/resources/environment.cpp scene/resources/sky.cpp
+#: scene/3d/light.cpp scene/resources/environment.cpp
+#: scene/resources/material.cpp scene/resources/sky.cpp
 msgid "Energy"
 msgstr ""
 
@@ -20873,7 +21547,7 @@ msgstr ""
 msgid "Width Curve"
 msgstr ""
 
-#: scene/2d/line_2d.cpp
+#: scene/2d/line_2d.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Default Color"
 msgstr "Predvolené"
@@ -20933,7 +21607,7 @@ msgstr ""
 msgid "Multimesh"
 msgstr ""
 
-#: scene/2d/navigation_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
+#: scene/2d/navigation_2d.cpp scene/3d/baked_lightmap.cpp
 #: scene/3d/navigation.cpp scene/animation/root_motion_view.cpp
 #: scene/resources/world_2d.cpp servers/physics_2d/physics_2d_server_sw.cpp
 msgid "Cell Size"
@@ -20968,8 +21642,14 @@ msgstr ""
 msgid "Path Max Distance"
 msgstr ""
 
+#: scene/2d/navigation_agent_2d.cpp scene/3d/navigation_agent.cpp
+#, fuzzy
+msgid "Avoidance Enabled"
+msgstr "Povoliť"
+
 #: scene/2d/navigation_agent_2d.cpp
-msgid "The NavigationAgent2D can be used only under a Node2D node."
+msgid ""
+"The NavigationAgent2D can be used only under a Node2D inheriting parent node."
 msgstr ""
 
 #: scene/2d/navigation_obstacle_2d.cpp scene/3d/navigation_obstacle.cpp
@@ -20983,16 +21663,6 @@ msgid ""
 "Node2D object."
 msgstr ""
 
-#: scene/2d/navigation_polygon.cpp scene/resources/navigation_mesh.cpp
-#, fuzzy
-msgid "Vertices"
-msgstr "Particly"
-
-#: scene/2d/navigation_polygon.cpp
-#, fuzzy
-msgid "Outlines"
-msgstr "Online Dokumentácie"
-
 #: scene/2d/navigation_polygon.cpp
 msgid ""
 "A NavigationPolygon resource must be set or created for this node to work. "
@@ -21000,14 +21670,18 @@ msgid ""
 msgstr ""
 
 #: scene/2d/navigation_polygon.cpp
-msgid ""
-"NavigationPolygonInstance must be a child or grandchild to a Navigation2D "
-"node. It only provides navigation data."
-msgstr ""
-
-#: scene/2d/navigation_polygon.cpp
 msgid "Navpoly"
 msgstr ""
+
+#: scene/2d/navigation_polygon.cpp scene/3d/navigation_mesh_instance.cpp
+#, fuzzy
+msgid "Enter Cost"
+msgstr "Od Stredu Dole"
+
+#: scene/2d/navigation_polygon.cpp scene/3d/navigation_mesh_instance.cpp
+#, fuzzy
+msgid "Travel Cost"
+msgstr "Cestovať"
 
 #: scene/2d/node_2d.cpp scene/2d/polygon_2d.cpp scene/3d/spatial.cpp
 #: scene/main/canvas_layer.cpp
@@ -21039,6 +21713,7 @@ msgid "Z As Relative"
 msgstr "Prichytiť Relatívne"
 
 #: scene/2d/parallax_background.cpp scene/gui/scroll_container.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Scroll"
 msgstr ""
 
@@ -21272,6 +21947,7 @@ msgstr ""
 
 #: scene/2d/physics_body_2d.cpp scene/2d/touch_screen_button.cpp
 #: scene/3d/physics_body.cpp scene/gui/texture_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #: scene/resources/line_shape_2d.cpp scene/resources/material.cpp
 msgid "Normal"
 msgstr ""
@@ -21374,7 +22050,7 @@ msgstr "Vymazať Bod"
 msgid "Use Global Coordinates"
 msgstr "Popis:"
 
-#: scene/2d/skeleton_2d.cpp
+#: scene/2d/skeleton_2d.cpp scene/3d/skeleton.cpp
 #, fuzzy
 msgid "Rest"
 msgstr "Reštartovať"
@@ -21652,25 +22328,8 @@ msgid "Tracking"
 msgstr "Zabalovanie"
 
 #: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-msgid "Bounds"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp
-#, fuzzy
-msgid "Cell Space Transform"
-msgstr "Anim Zmeniť Veľkosť"
-
-#: scene/3d/baked_lightmap.cpp
-msgid "Cell Subdiv"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
 #: scene/3d/reflection_probe.cpp
 msgid "Interior"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp
-msgid "Octree"
 msgstr ""
 
 #: scene/3d/baked_lightmap.cpp
@@ -21789,7 +22448,7 @@ msgstr ""
 msgid "Light Data"
 msgstr ""
 
-#: scene/3d/bone_attachment.cpp
+#: scene/3d/bone_attachment.cpp scene/3d/physics_body.cpp
 #, fuzzy
 msgid "Bone Name"
 msgstr "Meno Node-u:"
@@ -21831,9 +22490,10 @@ msgid "Far"
 msgstr ""
 
 #: scene/3d/camera.cpp scene/3d/collision_polygon.cpp scene/3d/spring_arm.cpp
-#: scene/gui/control.cpp scene/resources/shape.cpp
-#: scene/resources/style_box.cpp scene/resources/texture.cpp
-#: servers/physics_2d_server.cpp servers/physics_server.cpp
+#: scene/gui/control.cpp scene/resources/default_theme/default_theme.cpp
+#: scene/resources/shape.cpp scene/resources/style_box.cpp
+#: scene/resources/texture.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
 msgid "Margin"
 msgstr ""
 
@@ -21966,22 +22626,6 @@ msgid "Autoplace Priority"
 msgstr "Súbor:"
 
 #: scene/3d/gi_probe.cpp
-msgid "To Cell Xform"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp
-msgid "Dynamic Data"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp
-msgid "Dynamic Range"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp scene/3d/light.cpp
-msgid "Normal Bias"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp
 msgid "Plotting Meshes"
 msgstr ""
 
@@ -22006,6 +22650,85 @@ msgstr ""
 msgid "Subdiv"
 msgstr ""
 
+#: scene/3d/gi_probe.cpp
+msgid "Dynamic Range"
+msgstr ""
+
+#: scene/3d/gi_probe.cpp scene/3d/light.cpp
+msgid "Normal Bias"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+#: scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Pixel Size"
+msgstr "Prichytenie Pixelov"
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Billboard"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+#, fuzzy
+msgid "Shaded"
+msgstr "Zmeniť"
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Double Sided"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+msgid "No Depth Test"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+#, fuzzy
+msgid "Fixed Size"
+msgstr "Prichytenie Pixelov"
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Alpha Cut"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/resources/material.cpp
+msgid "Alpha Scissor Threshold"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+#, fuzzy
+msgid "Render Priority"
+msgstr "Súbor:"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Outline Render Priority"
+msgstr "Súbor:"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Outline Modulate"
+msgstr "Force White Modulate"
+
+#: scene/3d/label_3d.cpp scene/resources/default_theme/default_theme.cpp
+#: scene/resources/dynamic_font.cpp scene/resources/primitive_meshes.cpp
+msgid "Font"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Horizontal Alignment"
+msgstr "Signály Filtru"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Vertical Alignment"
+msgstr "Signály Filtru"
+
+#: scene/3d/label_3d.cpp scene/gui/dialogs.cpp scene/gui/label.cpp
+#, fuzzy
+msgid "Autowrap"
+msgstr "Prepnúť Autoplay"
+
 #: scene/3d/light.cpp
 #, fuzzy
 msgid "Indirect Energy"
@@ -22015,7 +22738,8 @@ msgstr "Emisné Farby"
 msgid "Negative"
 msgstr ""
 
-#: scene/3d/light.cpp
+#: scene/3d/light.cpp scene/resources/material.cpp
+#: scene/resources/visual_shader.cpp
 #, fuzzy
 msgid "Specular"
 msgstr "Pravítko"
@@ -22125,23 +22849,18 @@ msgid "Ignore Y"
 msgstr ""
 
 #: scene/3d/navigation_agent.cpp
-msgid "The NavigationAgent can be used only under a spatial node."
-msgstr ""
-
-#: scene/3d/navigation_mesh_instance.cpp
 msgid ""
-"NavigationMeshInstance must be a child or grandchild to a Navigation node. "
-"It only provides navigation data."
+"The NavigationAgent can be used only under a Spatial inheriting parent node."
 msgstr ""
 
-#: scene/3d/navigation_mesh_instance.cpp
-msgid "Navmesh"
+#: scene/3d/navigation_mesh_instance.cpp scene/resources/mesh_library.cpp
+msgid "NavMesh"
 msgstr ""
 
 #: scene/3d/navigation_obstacle.cpp
 msgid ""
 "The NavigationObstacle only serves to provide collision avoidance to a "
-"spatial object."
+"Spatial inheriting parent object."
 msgstr ""
 
 #: scene/3d/occluder.cpp
@@ -22263,18 +22982,170 @@ msgstr "Všetky vybrané"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock X"
-msgstr "Premiestniť Node"
+msgid "Joint Constraints"
+msgstr "Konštanty"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "Impulse Clamp"
+msgstr ""
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+#, fuzzy
+msgid "Swing Span"
+msgstr "Ukladanie Scény"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "Twist Span"
+msgstr ""
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+#: scene/3d/vehicle_body.cpp
+#, fuzzy
+msgid "Relaxation"
+msgstr "Popis:"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock Y"
-msgstr "Premiestniť Node"
+msgid "Angular Limit Enabled"
+msgstr "Signály Filtru"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock Z"
-msgstr "Premiestniť Node"
+msgid "Angular Limit Upper"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Lower"
+msgstr "Max. Angular Error:"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Bias"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Softness"
+msgstr "Animácie"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Relaxation"
+msgstr "Animácie"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Upper"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Lower"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Softness"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Restitution"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Damping"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Restitution"
+msgstr "Animácie"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Damping"
+msgstr "Animácie"
+
+#: scene/3d/physics_body.cpp
+msgid "X"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Y"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Z"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Enabled"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Enabled"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Stiffness"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Damping"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Equilibrium Point"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Restitution"
+msgstr "Popis"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Damping"
+msgstr "Lineárne"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Restitution"
+msgstr "Popis"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Damping"
+msgstr "Animácie"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "ERP"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Spring Enabled"
+msgstr "Signály Filtru"
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Spring Stiffness"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Spring Damping"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Equilibrium Point"
+msgstr ""
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
@@ -22316,10 +23187,6 @@ msgid "Params"
 msgstr "Parameter sa Zmenil"
 
 #: scene/3d/physics_joint.cpp
-msgid "Impulse Clamp"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
 msgid "Angular Limit"
 msgstr ""
 
@@ -22330,11 +23197,6 @@ msgstr ""
 #: scene/3d/physics_joint.cpp
 msgid "Lower"
 msgstr ""
-
-#: scene/3d/physics_joint.cpp scene/3d/vehicle_body.cpp
-#, fuzzy
-msgid "Relaxation"
-msgstr "Popis:"
 
 #: scene/3d/physics_joint.cpp
 msgid "Motor"
@@ -22400,15 +23262,6 @@ msgstr "Max. Angular Error:"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
-msgid "Swing Span"
-msgstr "Ukladanie Scény"
-
-#: scene/3d/physics_joint.cpp
-msgid "Twist Span"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
-#, fuzzy
 msgid "Linear Limit X"
 msgstr "Lineárne"
 
@@ -22433,10 +23286,6 @@ msgstr ""
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit X"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
-msgid "Erp"
 msgstr ""
 
 #: scene/3d/physics_joint.cpp
@@ -22656,8 +23505,9 @@ msgstr ""
 msgid "Main"
 msgstr ""
 
-#: scene/3d/room_manager.cpp scene/animation/animation_player.cpp
-#: scene/animation/animation_tree.cpp scene/animation/animation_tree_player.cpp
+#: scene/3d/room_manager.cpp scene/animation/animation_blend_tree.cpp
+#: scene/animation/animation_player.cpp scene/animation/animation_tree.cpp
+#: scene/animation/animation_tree_player.cpp
 #: servers/audio/effects/audio_effect_delay.cpp
 #, fuzzy
 msgid "Active"
@@ -22769,6 +23619,35 @@ msgid ""
 "Ensure all rooms contain geometry or manual bounds."
 msgstr ""
 
+#: scene/3d/skeleton.cpp scene/resources/skin.cpp
+#, fuzzy
+msgid "Pose"
+msgstr "Kopírovať Pozíciu"
+
+#: scene/3d/skeleton.cpp
+#, fuzzy
+msgid "Bound Children"
+msgstr "Nesprávna veľkosť písma."
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Pinned Points"
+msgstr "Všetky vybrané"
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Attachments"
+msgstr "Obsah:"
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Point Index"
+msgstr "Nastaviť Rukoväť"
+
+#: scene/3d/soft_body.cpp
+msgid "Spatial Attachment Path"
+msgstr ""
+
 #: scene/3d/soft_body.cpp
 #, fuzzy
 msgid "Physics Enabled"
@@ -22848,32 +23727,10 @@ msgstr ""
 msgid "Opacity"
 msgstr ""
 
-#: scene/3d/sprite_3d.cpp
-#, fuzzy
-msgid "Pixel Size"
-msgstr "Prichytenie Pixelov"
-
-#: scene/3d/sprite_3d.cpp
-msgid "Billboard"
-msgstr ""
-
 #: scene/3d/sprite_3d.cpp scene/resources/material.cpp
 #, fuzzy
 msgid "Transparent"
 msgstr "Preložiť Preloženie:"
-
-#: scene/3d/sprite_3d.cpp
-#, fuzzy
-msgid "Shaded"
-msgstr "Zmeniť"
-
-#: scene/3d/sprite_3d.cpp
-msgid "Double Sided"
-msgstr ""
-
-#: scene/3d/sprite_3d.cpp
-msgid "Alpha Cut"
-msgstr ""
 
 #: scene/3d/sprite_3d.cpp
 msgid ""
@@ -23016,38 +23873,6 @@ msgid ""
 "this environment's Background Mode to Canvas (for 2D scenes)."
 msgstr ""
 
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Min Space"
-msgstr ""
-
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Max Space"
-msgstr ""
-
-#: scene/animation/animation_blend_space_1d.cpp
-msgid "Value Label"
-msgstr ""
-
-#: scene/animation/animation_blend_space_2d.cpp
-#, fuzzy
-msgid "Auto Triangles"
-msgstr "Prepnúť Automatické Trojuholníky"
-
-#: scene/animation/animation_blend_space_2d.cpp
-#, fuzzy
-msgid "Triangles"
-msgstr "Prepnúť Automatické Trojuholníky"
-
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "X Label"
-msgstr ""
-
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Y Label"
-msgstr ""
-
 #: scene/animation/animation_blend_tree.cpp
 msgid "On BlendTree node '%s', animation not found: '%s'"
 msgstr ""
@@ -23082,13 +23907,28 @@ msgid "Autorestart"
 msgstr "Auto Reštart:"
 
 #: scene/animation/animation_blend_tree.cpp
-#, fuzzy
-msgid "Autorestart Delay"
-msgstr "Auto Reštart:"
+msgid "Delay"
+msgstr ""
 
 #: scene/animation/animation_blend_tree.cpp
-msgid "Autorestart Random Delay"
-msgstr ""
+#, fuzzy
+msgid "Random Delay"
+msgstr "Náhodný Reštart (s):"
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Add Amount"
+msgstr "Množstvo:"
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Blend Amount"
+msgstr "Množstvo:"
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Seek Position"
+msgstr "Všetky vybrané"
 
 #: scene/animation/animation_blend_tree.cpp
 #, fuzzy
@@ -23100,11 +23940,6 @@ msgstr "Signály:"
 #, fuzzy
 msgid "Xfade Time"
 msgstr "Čas X-Miznutia (s):"
-
-#: scene/animation/animation_blend_tree.cpp scene/resources/visual_shader.cpp
-#, fuzzy
-msgid "Graph Offset"
-msgstr "Odchýlka Mriežky:"
 
 #: scene/animation/animation_node_state_machine.cpp
 #, fuzzy
@@ -23175,11 +24010,6 @@ msgstr "Nesprávna veľkosť písma."
 #: scene/animation/animation_tree.cpp
 msgid "Nothing connected to input '%s' of node '%s'."
 msgstr ""
-
-#: scene/animation/animation_tree.cpp
-#, fuzzy
-msgid "Filter Enabled"
-msgstr "Signály Filtru"
 
 #: scene/animation/animation_tree.cpp
 msgid "No root AnimationNode for the graph is set."
@@ -23422,6 +24252,11 @@ msgid ""
 msgstr ""
 
 #: scene/gui/control.cpp
+#, fuzzy
+msgid "Theme Overrides"
+msgstr "Vlastnosti Témy"
+
+#: scene/gui/control.cpp
 msgid ""
 "The Hint Tooltip won't be displayed as the control's Mouse Filter is set to "
 "\"Ignore\". To solve this, set the Mouse Filter to \"Stop\" or \"Pass\"."
@@ -23461,7 +24296,7 @@ msgstr ""
 msgid "Tooltip"
 msgstr "Nástroje"
 
-#: scene/gui/control.cpp
+#: scene/gui/control.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Focus"
 msgstr "Zamerať Cestu"
@@ -23531,11 +24366,6 @@ msgstr ""
 msgid "Hide On OK"
 msgstr ""
 
-#: scene/gui/dialogs.cpp scene/gui/label.cpp
-#, fuzzy
-msgid "Autowrap"
-msgstr "Prepnúť Autoplay"
-
 #: scene/gui/dialogs.cpp
 msgid "Alert!"
 msgstr ""
@@ -23589,6 +24419,7 @@ msgid "Show Zoom Label"
 msgstr "Zobraziť Kosti"
 
 #: scene/gui/graph_edit.cpp scene/gui/text_edit.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Minimap"
 msgstr ""
 
@@ -23603,11 +24434,12 @@ msgid "Show Close"
 msgstr "Zobraziť Kosti"
 
 #: scene/gui/graph_node.cpp scene/gui/option_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Selected"
 msgstr "Zvoliť"
 
-#: scene/gui/graph_node.cpp
+#: scene/gui/graph_node.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Comment"
 msgstr "Komunita"
@@ -23671,8 +24503,9 @@ msgid "Fixed Icon Size"
 msgstr "Prichytenie Pixelov"
 
 #: scene/gui/label.cpp
-msgid "Valign"
-msgstr ""
+#, fuzzy
+msgid "V Align"
+msgstr "Priradiť..."
 
 #: scene/gui/label.cpp scene/gui/rich_text_label.cpp
 #, fuzzy
@@ -24119,7 +24952,7 @@ msgstr ""
 msgid "Text Edit Undo Stack Max Size"
 msgstr ""
 
-#: scene/gui/texture_button.cpp
+#: scene/gui/texture_button.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Hover"
 msgstr ""
 
@@ -24162,7 +24995,7 @@ msgstr ""
 msgid "Fill Mode"
 msgstr "Prehrať Mód:"
 
-#: scene/gui/texture_progress.cpp
+#: scene/gui/texture_progress.cpp scene/resources/material.cpp
 msgid "Tint"
 msgstr ""
 
@@ -24289,6 +25122,12 @@ msgid "Timeout"
 msgstr "Čas vypršal."
 
 #: scene/main/node.cpp
+msgid ""
+"Setting node name '%s' to be unique within scene for '%s', but it's already "
+"claimed by '%s'. This node is no longer set unique."
+msgstr ""
+
+#: scene/main/node.cpp
 #, fuzzy
 msgid "Name Num Separator"
 msgstr "Popis:"
@@ -24304,13 +25143,13 @@ msgstr "Popis"
 
 #: scene/main/node.cpp
 #, fuzzy
-msgid "Import Path"
-msgstr "Import"
+msgid "Pause Mode"
+msgstr "Pohyb Mód"
 
 #: scene/main/node.cpp
 #, fuzzy
-msgid "Pause Mode"
-msgstr "Pohyb Mód"
+msgid "Physics Interpolation Mode"
+msgstr "Režim Interpolácie"
 
 #: scene/main/node.cpp
 #, fuzzy
@@ -24341,11 +25180,6 @@ msgstr "Nastaviť Viac:"
 #, fuzzy
 msgid "Process Priority"
 msgstr "Súbor:"
-
-#: scene/main/node.cpp
-#, fuzzy
-msgid "Physics Interpolated"
-msgstr "Režim Interpolácie"
 
 #: scene/main/scene_tree.cpp scene/main/timer.cpp
 #, fuzzy
@@ -24379,12 +25213,8 @@ msgstr ""
 msgid "Multiplayer Poll"
 msgstr "Nastaviť Viac:"
 
-#: scene/main/scene_tree.cpp scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Physics Interpolation"
-msgstr "Režim Interpolácie"
-
-#: scene/main/scene_tree.cpp scene/resources/shape_2d.cpp
+#: scene/main/scene_tree.cpp scene/resources/mesh_library.cpp
+#: scene/resources/shape_2d.cpp
 msgid "Shapes"
 msgstr ""
 
@@ -24625,6 +25455,39 @@ msgid "Swap OK Cancel"
 msgstr "Zrušiť"
 
 #: scene/register_scene_types.cpp
+#, fuzzy
+msgid "Layer Names"
+msgstr "Meno"
+
+#: scene/register_scene_types.cpp
+msgid "2D Render"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+msgid "3D Render"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "2D Physics"
+msgstr "Fyzická Snímka %"
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "3D Physics"
+msgstr "Fyzická Snímka %"
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "2D Navigation"
+msgstr "Signály:"
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "3D Navigation"
+msgstr "Signály:"
+
+#: scene/register_scene_types.cpp
 msgid "Use hiDPI"
 msgstr ""
 
@@ -24660,6 +25523,789 @@ msgstr "Všetky vybrané"
 #: scene/resources/curve.cpp
 msgid "Bake Interval"
 msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Panel"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color"
+msgstr "Funkcie"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Pressed"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Hover"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Focus"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Disabled"
+msgstr "(Editor je vypnutý)"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "H Separation"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Underline Spacing"
+msgstr "Opakovanie Animácie"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Arrow"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Arrow Margin"
+msgstr "Zobraziť Pôvod"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Hover Pressed"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Checked Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Unchecked"
+msgstr "Zamknúť Označené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Unchecked Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Radio Checked"
+msgstr "Zamknúť Označené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Radio Checked Disabled"
+msgstr "(Editor je vypnutý)"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Radio Unchecked"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Radio Unchecked Disabled"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Hover Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Check V Adjust"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "On Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Off"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Off Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Shadow"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Outline Modulate"
+msgstr "Force White Modulate"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow Offset X"
+msgstr "Načítať predvolené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow Offset Y"
+msgstr "Načítať predvolené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow As Outline"
+msgstr "Prejsť na predchádzajúci krok"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Selected"
+msgstr "Odomknúť Označené"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Uneditable"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Cursor Color"
+msgstr "Vložiť"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Clear Button Color"
+msgstr "Signály Filtru"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Clear Button Color Pressed"
+msgstr "Signály Filtru"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Minimum Spaces"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "BG"
+msgstr "B"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#: scene/resources/dynamic_font.cpp scene/resources/world.cpp
+#: scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Space"
+msgstr "Volania"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folded"
+msgstr "Priečinok:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Fold"
+msgstr "Priečinok:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Readonly"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Lines"
+msgstr "Skopírovať Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Max Width"
+msgstr "Skopírovať Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Scroll Width"
+msgstr "Importovať Scénu"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scroll Focus"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Highlight"
+msgstr "Smery"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Pressed"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Slider"
+msgstr "Režim Interpolácie"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber Area"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber Area Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tick"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Updown"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scaleborder Size"
+msgstr "Ohraničené Pixely"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Font"
+msgstr "Pridať Bod Node-u"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Color"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Height"
+msgstr "Testovanie"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Highlight"
+msgstr "Smery"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close H Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close V Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Parent Folder"
+msgstr "Vytvoriť adresár"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Toggle Hidden"
+msgstr "Prepnúť Skryté Súbory"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Panel Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Labeled Separator Left"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Labeled Separator Right"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Separator"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Accel"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Separator"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "V Separation"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selected Frame"
+msgstr "Zvoliť"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Default Frame"
+msgstr "Predvolené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Default Focus"
+msgstr "Predvolené"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Comment Focus"
+msgstr "Komunita"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Breakpoint"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Resizer"
+msgstr "Zmeniť veľkosť Array-u"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Color"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Resizer Color"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Port Offset"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "BG Focus"
+msgstr "Zamerať Cestu"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selected Focus"
+msgstr "Zvoliť"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Cursor Unfocused"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Button Pressed"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Normal"
+msgstr "Tlačidlo"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Pressed"
+msgstr "Tlačidlo"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Hover"
+msgstr "Tlačidlo"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button"
+msgstr "Vložiť"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button Pressed"
+msgstr "Možnosti pre Bus"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button Hover"
+msgstr "Vložiť"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Select Arrow"
+msgstr "Vybrať Režim"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Arrow Collapsed"
+msgstr "Collapse All"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Font"
+msgstr "Tlačidlo"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Color"
+msgstr "Iba Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Guide Color"
+msgstr "Funkcie"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Drop Position Color"
+msgstr "Pozícia Dock-u"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Relationship Line Color"
+msgstr "Iba Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Custom Button Font Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Item Margin"
+msgstr "Obsah:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Button Margin"
+msgstr "Tlačidlo"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Draw Relationship Lines"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Draw Guides"
+msgstr "Zobraziť Návody"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scroll Border"
+msgstr "Presunúť Vertikálny Návod"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scroll Speed"
+msgstr "Odchýlka Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Icon Margin"
+msgstr "Obsah:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Line Separation"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab BG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Tab Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Menu"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Menu Highlight"
+msgstr "Smery"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color FG"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color BG"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Side Margin"
+msgstr "Zobraziť Pôvod"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Top Margin"
+msgstr "Zobraziť Pôvod"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Label V Align FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Label V Align BG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Large"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folder"
+msgstr "Priečinok:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folder Icon Modulate"
+msgstr "Force White Modulate"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "File Icon Modulate"
+msgstr "Vybrať Režim"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Files Disabled"
+msgstr "Vypnuté"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "SV Width"
+msgstr "Ľavá Šírka"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "SV Height"
+msgstr "Testovanie"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "H Width"
+msgstr "Ľavá Šírka"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Label Width"
+msgstr "Ľavá Šírka"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Screen Picker"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Add Preset"
+msgstr "Načítať Predvoľbu"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Color Hue"
+msgstr "Súbor:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Color Sample"
+msgstr "Súbor:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset BG"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Overbright Indicator"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset FG"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset BG Icon"
+msgstr "Preset"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Normal Font"
+msgstr "Emisné Farby"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Bold Font"
+msgstr "Pridať Bod Node-u"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Italics Font"
+msgstr "Povolené Funkcie:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Bold Italics Font"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Mono Font"
+msgstr "Povolené Funkcie:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Table H Separation"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Table V Separation"
+msgstr "Popis:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Left"
+msgstr "Vybrať Režim"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Top"
+msgstr "Vybrať Režim"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Right"
+msgstr "Od Stredu Vpravo"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Bottom"
+msgstr "Vybrať Režim"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Autohide"
+msgstr "Súbor:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Minus"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "More"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grid Minor"
+msgstr "Krok Mriežky:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grid Major"
+msgstr "Prichytenie Mriežky"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selection Fill"
+msgstr "Iba Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selection Stroke"
+msgstr "Iba Výber"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Activity"
+msgstr "Všetky vybrané"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Bezier Len Pos"
+msgstr "Presunúť Bazier Points"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Bezier Len Neg"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Port Grab Distance Horizontal"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Port Grab Distance Vertical"
+msgstr "Inštancie"
 
 #: scene/resources/dynamic_font.cpp
 msgid "Hinting"
@@ -24698,16 +26344,6 @@ msgstr "Možnosti pre Class:"
 #, fuzzy
 msgid "Char"
 msgstr "Platné písmená:"
-
-#: scene/resources/dynamic_font.cpp scene/resources/world.cpp
-#: scene/resources/world_2d.cpp
-#, fuzzy
-msgid "Space"
-msgstr "Volania"
-
-#: scene/resources/dynamic_font.cpp
-msgid "Font"
-msgstr ""
 
 #: scene/resources/dynamic_font.cpp
 msgid "Font Data"
@@ -25006,15 +26642,6 @@ msgid "Color Correction"
 msgstr "Všetky vybrané"
 
 #: scene/resources/font.cpp
-msgid "Chars"
-msgstr ""
-
-#: scene/resources/font.cpp
-#, fuzzy
-msgid "Kernings"
-msgstr "Varovania"
-
-#: scene/resources/font.cpp
 #, fuzzy
 msgid "Ascent"
 msgstr "Nedávne:"
@@ -25023,6 +26650,11 @@ msgstr "Nedávne:"
 #, fuzzy
 msgid "Distance Field"
 msgstr "Režim bez rozptyľovania"
+
+#: scene/resources/gradient.cpp
+#, fuzzy
+msgid "Raw Data"
+msgstr "Hĺbka"
 
 #: scene/resources/gradient.cpp
 #, fuzzy
@@ -25049,11 +26681,6 @@ msgstr ""
 
 #: scene/resources/material.cpp
 #, fuzzy
-msgid "Render Priority"
-msgstr "Súbor:"
-
-#: scene/resources/material.cpp
-#, fuzzy
 msgid "Next Pass"
 msgstr "Ďalšia karta"
 
@@ -25071,10 +26698,6 @@ msgid "Vertex Lighting"
 msgstr "Smery"
 
 #: scene/resources/material.cpp
-msgid "No Depth Test"
-msgstr ""
-
-#: scene/resources/material.cpp
 #, fuzzy
 msgid "Use Point Size"
 msgstr "Veľkosť: "
@@ -25082,11 +26705,6 @@ msgstr "Veľkosť: "
 #: scene/resources/material.cpp
 msgid "World Triplanar"
 msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Fixed Size"
-msgstr "Prichytenie Pixelov"
 
 #: scene/resources/material.cpp
 msgid "Albedo Tex Force sRGB"
@@ -25105,6 +26723,10 @@ msgstr "Od Stredu Vpravo"
 #, fuzzy
 msgid "Ensure Correct Normals"
 msgstr "Vytvoriť adresár"
+
+#: scene/resources/material.cpp
+msgid "Albedo Tex MSDF"
+msgstr ""
 
 #: scene/resources/material.cpp
 msgid "Vertex Color"
@@ -25172,10 +26794,6 @@ msgid "Use Alpha Scissor"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Alpha Scissor Threshold"
-msgstr ""
-
-#: scene/resources/material.cpp
 #, fuzzy
 msgid "Particles Anim"
 msgstr "Particly"
@@ -25199,26 +26817,9 @@ msgid "Metallic"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Metallic Specular"
-msgstr ""
-
-#: scene/resources/material.cpp
 #, fuzzy
-msgid "Metallic Texture"
-msgstr "Emisné Farby"
-
-#: scene/resources/material.cpp
-msgid "Metallic Texture Channel"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Roughness Texture"
-msgstr "Všetky vybrané"
-
-#: scene/resources/material.cpp
-msgid "Roughness Texture Channel"
-msgstr ""
+msgid "Texture Channel"
+msgstr "Pravítko"
 
 #: scene/resources/material.cpp
 #, fuzzy
@@ -25226,24 +26827,8 @@ msgid "Emission"
 msgstr "Emisná Maska"
 
 #: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission Energy"
-msgstr "Emisné Farby"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission Operator"
-msgstr "Emisné Farby"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission On UV2"
-msgstr "Emisná Maska"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission Texture"
-msgstr "Emisné Farby"
+msgid "On UV2"
+msgstr ""
 
 #: scene/resources/material.cpp
 msgid "NormalMap"
@@ -25254,50 +26839,26 @@ msgid "Rim"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Rim Tint"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Rim Texture"
-msgstr "Všetky vybrané"
-
-#: scene/resources/material.cpp
 #, fuzzy
 msgid "Clearcoat"
 msgstr "Vyčistiť"
 
 #: scene/resources/material.cpp
-#, fuzzy
-msgid "Clearcoat Gloss"
-msgstr "Zmazať Pozíciu"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Clearcoat Texture"
-msgstr "Súbor:"
+msgid "Gloss"
+msgstr ""
 
 #: scene/resources/material.cpp
 msgid "Anisotropy"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Anisotropy Flowmap"
+msgid "Flowmap"
 msgstr ""
 
 #: scene/resources/material.cpp
 #, fuzzy
 msgid "Ambient Occlusion"
 msgstr "Signály:"
-
-#: scene/resources/material.cpp
-msgid "On UV2"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Texture Channel"
-msgstr "Pravítko"
 
 #: scene/resources/material.cpp
 msgid "Deep Parallax"
@@ -25332,15 +26893,10 @@ msgstr "Prechody: "
 
 #: scene/resources/material.cpp
 #, fuzzy
-msgid "Transmission Texture"
-msgstr "Prechody: "
-
-#: scene/resources/material.cpp
-#, fuzzy
 msgid "Refraction"
 msgstr "Popis:"
 
-#: scene/resources/material.cpp scene/resources/navigation_mesh.cpp
+#: scene/resources/material.cpp
 msgid "Detail"
 msgstr ""
 
@@ -25383,14 +26939,19 @@ msgstr "Pohyb Mód"
 msgid "Lightmap Size Hint"
 msgstr "Bake Lightmaps"
 
-#: scene/resources/mesh.cpp
-#, fuzzy
-msgid "Blend Shape Mode"
-msgstr "Blend2 Node"
-
 #: scene/resources/mesh.cpp scene/resources/primitive_meshes.cpp
 msgid "Custom AABB"
 msgstr ""
+
+#: scene/resources/mesh_library.cpp
+#, fuzzy
+msgid "Mesh Transform"
+msgstr "Súbor:"
+
+#: scene/resources/mesh_library.cpp
+#, fuzzy
+msgid "NavMesh Transform"
+msgstr "Anim Zmeniť Veľkosť"
 
 #: scene/resources/multimesh.cpp
 #, fuzzy
@@ -25415,29 +26976,14 @@ msgstr "Inštancie"
 msgid "Visible Instance Count"
 msgstr ""
 
-#: scene/resources/multimesh.cpp
+#: scene/resources/navigation_mesh.cpp
 #, fuzzy
-msgid "Transform Array"
-msgstr "Vytvoriť adresár"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Transform 2D Array"
-msgstr "Vytvoriť adresár"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Color Array"
-msgstr "Zmeniť veľkosť Array-u"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Custom Data Array"
-msgstr "Zmeniť veľkosť Array-u"
+msgid "Sampling"
+msgstr "Veľkosť:"
 
 #: scene/resources/navigation_mesh.cpp
 #, fuzzy
-msgid "Sample Partition Type"
+msgid "Partition Type"
 msgstr "Zmeniť %s Typ"
 
 #: scene/resources/navigation_mesh.cpp
@@ -25454,8 +27000,13 @@ msgid "Source Group Name"
 msgstr "Prostriedok"
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Agent"
+msgid "Cells"
 msgstr ""
+
+#: scene/resources/navigation_mesh.cpp
+#, fuzzy
+msgid "Agents"
+msgstr "Obsah:"
 
 #: scene/resources/navigation_mesh.cpp
 msgid "Max Climb"
@@ -25466,11 +27017,16 @@ msgid "Max Slope"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
+#, fuzzy
+msgid "Regions"
+msgstr "Režim Interpolácie"
+
+#: scene/resources/navigation_mesh.cpp
 msgid "Merge Size"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Edge"
+msgid "Edges"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
@@ -25481,6 +27037,11 @@ msgstr "Chyba!"
 #: scene/resources/navigation_mesh.cpp
 msgid "Verts Per Poly"
 msgstr ""
+
+#: scene/resources/navigation_mesh.cpp
+#, fuzzy
+msgid "Details"
+msgstr "Načítať predvolené"
 
 #: scene/resources/navigation_mesh.cpp
 msgid "Sample Distance"
@@ -25499,7 +27060,7 @@ msgid "Ledge Spans"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Filter Walkable Low Height Spans"
+msgid "Walkable Low Height Spans"
 msgstr ""
 
 #: scene/resources/occluder_shape.cpp
@@ -25623,6 +27184,11 @@ msgstr "Vpravo Hore"
 msgid "Is Hemisphere"
 msgstr ""
 
+#: scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Curve Step"
+msgstr "Vložiť"
+
 #: scene/resources/ray_shape.cpp scene/resources/segment_shape_2d.cpp
 msgid "Slips On Slope"
 msgstr ""
@@ -25631,14 +27197,23 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: scene/resources/shader.cpp
-#, fuzzy
-msgid "Custom Defines"
-msgstr "Spustiť Vlastnú Scénu"
-
 #: scene/resources/shape_2d.cpp
 msgid "Custom Solver Bias"
 msgstr ""
+
+#: scene/resources/skin.cpp
+#, fuzzy
+msgid "Bind Count"
+msgstr "Signály:"
+
+#: scene/resources/skin.cpp
+msgid "Bind"
+msgstr ""
+
+#: scene/resources/skin.cpp
+#, fuzzy
+msgid "Bone"
+msgstr "Meno Node-u:"
 
 #: scene/resources/sky.cpp
 msgid "Radiance Size"
@@ -25699,6 +27274,10 @@ msgid "Expand Margin"
 msgstr "Expandovať Všetky"
 
 #: scene/resources/style_box.cpp
+msgid "Skew"
+msgstr ""
+
+#: scene/resources/style_box.cpp
 msgid "Corner Radius"
 msgstr ""
 
@@ -25708,10 +27287,6 @@ msgstr ""
 
 #: scene/resources/style_box.cpp
 msgid "Anti Aliasing"
-msgstr ""
-
-#: scene/resources/style_box.cpp
-msgid "Anti Aliasing Size"
 msgstr ""
 
 #: scene/resources/style_box.cpp
@@ -25739,6 +27314,20 @@ msgstr "Strana: "
 
 #: scene/resources/texture.cpp
 #, fuzzy
+msgid "Side"
+msgstr "Zobraziť Návody"
+
+#: scene/resources/texture.cpp
+msgid "Front"
+msgstr ""
+
+#: scene/resources/texture.cpp
+#, fuzzy
+msgid "Back"
+msgstr "Ísť Naspäť"
+
+#: scene/resources/texture.cpp
+#, fuzzy
 msgid "Storage Mode"
 msgstr "Zmena Veľkosti"
 
@@ -25749,13 +27338,13 @@ msgstr "Zachytiť"
 
 #: scene/resources/texture.cpp
 #, fuzzy
-msgid "Fill From"
+msgid "From"
 msgstr "Prehrať Mód:"
 
 #: scene/resources/texture.cpp
 #, fuzzy
-msgid "Fill To"
-msgstr "Prehrať Mód:"
+msgid "To"
+msgstr "Top"
 
 #: scene/resources/texture.cpp
 #, fuzzy
@@ -25791,8 +27380,29 @@ msgid "Output Port For Preview"
 msgstr ""
 
 #: scene/resources/visual_shader.cpp
-msgid "Initialized"
-msgstr ""
+#, fuzzy
+msgid "Depth Draw"
+msgstr "Režim Interpolácie"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Cull"
+msgstr "Pravítko"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Diffuse"
+msgstr "Pohyb Mód"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Async"
+msgstr "Pohyb Mód"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Modes"
+msgstr "Pohyb Mód"
 
 #: scene/resources/visual_shader.cpp
 #, fuzzy
@@ -25856,6 +27466,11 @@ msgid "Scenario"
 msgstr "Scéna"
 
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Navigation Map"
+msgstr "Signály:"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
 msgid "Direct Space State"
 msgstr ""
 
@@ -25872,6 +27487,26 @@ msgstr "Lineárne Vľavo"
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
 msgid "Default Angular Damp"
 msgstr ""
+
+#: scene/resources/world.cpp
+#, fuzzy
+msgid "Default Map Up"
+msgstr "Predvolené"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Cell Size"
+msgstr "Predzobraziť Vylepšenie"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Cell Height"
+msgstr "Testovanie"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Edge Connection Margin"
+msgstr "Upraviť Pripojenie:"
 
 #: scene/resources/world_2d.cpp
 msgid "Canvas"
@@ -25970,6 +27605,10 @@ msgstr ""
 #: servers/audio/effects/audio_effect_compressor.cpp
 msgid "Release (ms)"
 msgstr ""
+
+#: servers/audio/effects/audio_effect_compressor.cpp
+msgid "Mix"
+msgstr "Mix"
 
 #: servers/audio/effects/audio_effect_compressor.cpp
 msgid "Sidechain"
@@ -26224,6 +27863,11 @@ msgstr "Režim Interpolácie"
 msgid "Collision Unsafe Fraction"
 msgstr "Režim Interpolácie"
 
+#: servers/physics_2d_server.cpp servers/physics_server.cpp
+#, fuzzy
+msgid "Physics Engine"
+msgstr "Fyzická Snímka %"
+
 #: servers/physics_server.cpp
 #, fuzzy
 msgid "Center Of Mass"
@@ -26239,13 +27883,13 @@ msgstr ""
 
 #: servers/visual/shader_language.cpp
 msgid ""
-"Varyings which assigned in 'vertex' function may not be reassigned in "
+"Varyings which were assigned in 'vertex' function may not be reassigned in "
 "'fragment' or 'light'."
 msgstr ""
 
 #: servers/visual/shader_language.cpp
 msgid ""
-"Varyings which assigned in 'fragment' function may not be reassigned in "
+"Varyings which were assigned in 'fragment' function may not be reassigned in "
 "'vertex' or 'light'."
 msgstr ""
 
@@ -26506,6 +28150,11 @@ msgstr ""
 #: servers/visual_server.cpp
 msgid "Disable Half Float"
 msgstr ""
+
+#: servers/visual_server.cpp
+#, fuzzy
+msgid "Enable High Float"
+msgstr "Súbor:"
 
 #: servers/visual_server.cpp
 #, fuzzy

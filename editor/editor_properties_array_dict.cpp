@@ -280,7 +280,7 @@ void EditorPropertyArray::update_property() {
 			HBoxContainer *hbox = memnew(HBoxContainer);
 			vbox->add_child(hbox);
 
-			Label *label = memnew(Label(TTR("Size: ")));
+			Label *label = memnew(Label(TTR("Size:")));
 			label->set_h_size_flags(SIZE_EXPAND_FILL);
 			hbox->add_child(label);
 
@@ -294,7 +294,7 @@ void EditorPropertyArray::update_property() {
 			page_hbox = memnew(HBoxContainer);
 			vbox->add_child(page_hbox);
 
-			label = memnew(Label(TTR("Page: ")));
+			label = memnew(Label(TTR("Page:")));
 			label->set_h_size_flags(SIZE_EXPAND_FILL);
 			page_hbox->add_child(label);
 
@@ -373,6 +373,7 @@ void EditorPropertyArray::update_property() {
 			prop->set_object_and_property(object.ptr(), prop_name);
 			prop->set_label(itos(i + offset));
 			prop->set_selectable(false);
+			prop->set_use_folding(is_using_folding());
 			prop->connect("property_changed", this, "_property_changed");
 			prop->connect("object_id_selected", this, "_object_id_selected");
 			prop->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -618,11 +619,16 @@ void EditorPropertyArray::_reorder_button_gui_input(const Ref<InputEvent> &p_eve
 		Variant array = object->get_array();
 		int size = array.call("size");
 
-		if ((reorder_to_index == 0 && mm->get_relative().y < 0.0f) || (reorder_to_index == size - 1 && mm->get_relative().y > 0.0f)) {
+		// Cumulate the mouse delta, many small changes (dragging slowly) should result in reordering at some point.
+		reorder_mouse_y_delta += mm->get_relative().y;
+
+		// Reordering is done by moving the dragged element by +1/-1 index at a time based on the cumulated mouse delta so if
+		// already at the array bounds make sure to ignore the remaining out of bounds drag (by resetting the cumulated delta).
+		if ((reorder_to_index == 0 && reorder_mouse_y_delta < 0.0f) || (reorder_to_index == size - 1 && reorder_mouse_y_delta > 0.0f)) {
+			reorder_mouse_y_delta = 0.0f;
 			return;
 		}
 
-		reorder_mouse_y_delta += mm->get_relative().y;
 		float required_y_distance = 20.0f * EDSCALE;
 		if (ABS(reorder_mouse_y_delta) > required_y_distance) {
 			int direction = reorder_mouse_y_delta > 0.0f ? 1 : -1;
@@ -820,6 +826,7 @@ void EditorPropertyDictionary::update_property() {
 		if (vbox) {
 			set_bottom_editor(nullptr);
 			memdelete(vbox);
+			button_add_item = nullptr;
 			vbox = nullptr;
 		}
 		return;
@@ -844,7 +851,7 @@ void EditorPropertyDictionary::update_property() {
 
 			page_hbox = memnew(HBoxContainer);
 			vbox->add_child(page_hbox);
-			Label *label = memnew(Label(TTR("Page: ")));
+			Label *label = memnew(Label(TTR("Page:")));
 			label->set_h_size_flags(SIZE_EXPAND_FILL);
 			page_hbox->add_child(label);
 			page_slider = memnew(EditorSpinSlider);
@@ -1001,6 +1008,7 @@ void EditorPropertyDictionary::update_property() {
 					} else {
 						EditorPropertyResource *editor = memnew(EditorPropertyResource);
 						editor->setup(object.ptr(), prop_name, "Resource");
+						editor->set_use_folding(is_using_folding());
 						prop = editor;
 					}
 
@@ -1119,6 +1127,7 @@ void EditorPropertyDictionary::update_property() {
 		if (vbox) {
 			set_bottom_editor(nullptr);
 			memdelete(vbox);
+			button_add_item = nullptr;
 			vbox = nullptr;
 		}
 	}

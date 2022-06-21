@@ -117,6 +117,7 @@
 #include "editor/plugins/asset_library_editor_plugin.h"
 #include "editor/plugins/audio_stream_editor_plugin.h"
 #include "editor/plugins/baked_lightmap_editor_plugin.h"
+#include "editor/plugins/bit_map_editor_plugin.h"
 #include "editor/plugins/camera_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor/plugins/collision_polygon_2d_editor_plugin.h"
@@ -144,6 +145,7 @@
 #include "editor/plugins/path_editor_plugin.h"
 #include "editor/plugins/physical_bone_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
+#include "editor/plugins/ray_cast_2d_editor_plugin.h"
 #include "editor/plugins/resource_preloader_editor_plugin.h"
 #include "editor/plugins/room_manager_editor_plugin.h"
 #include "editor/plugins/root_motion_editor_plugin.h"
@@ -618,15 +620,14 @@ void EditorNode::_notification(int p_what) {
 
 			PopupMenu *p = help_menu->get_popup();
 			p->set_item_icon(p->get_item_index(HELP_SEARCH), gui_base->get_icon("HelpSearch", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_DOCS), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_QA), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_REPORT_A_BUG), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_SUGGEST_A_FEATURE), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_SEND_DOCS_FEEDBACK), gui_base->get_icon("Instance", "EditorIcons"));
-			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("Instance", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_DOCS), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_QA), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_REPORT_A_BUG), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_SUGGEST_A_FEATURE), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_SEND_DOCS_FEEDBACK), gui_base->get_icon("ExternalLink", "EditorIcons"));
+			p->set_item_icon(p->get_item_index(HELP_COMMUNITY), gui_base->get_icon("ExternalLink", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_ABOUT), gui_base->get_icon("Godot", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(HELP_SUPPORT_GODOT_DEVELOPMENT), gui_base->get_icon("Heart", "EditorIcons"));
-
 			_update_update_spinner();
 		} break;
 
@@ -797,21 +798,14 @@ void EditorNode::_fs_changed() {
 						ERR_PRINT(vformat("Cannot export project with preset \"%s\" due to configuration errors:\n%s", preset_name, config_error));
 						err = missing_templates ? ERR_FILE_NOT_FOUND : ERR_UNCONFIGURED;
 					} else {
+						platform->clear_messages();
 						err = platform->export_project(preset, export_defer.debug, export_path);
 					}
 				}
-				switch (err) {
-					case OK:
-						break;
-					case ERR_FILE_NOT_FOUND:
-						export_error = vformat("Project export failed for preset \"%s\". The export template appears to be missing.", preset_name);
-						break;
-					case ERR_FILE_BAD_PATH:
-						export_error = vformat("Project export failed for preset \"%s\". The target path \"%s\" appears to be invalid.", preset_name, export_path);
-						break;
-					default:
-						export_error = vformat("Project export failed with error code %d for preset \"%s\".", (int)err, preset_name);
-						break;
+				if (err != OK) {
+					export_error = vformat("Project export for preset \"%s\" failed.", preset_name);
+				} else if (platform->get_worst_message_type() >= EditorExportPlatform::EXPORT_MESSAGE_WARNING) {
+					export_error = vformat("Project export for preset \"%s\" completed with errors.", preset_name);
 				}
 			}
 		}
@@ -1612,6 +1606,10 @@ void EditorNode::save_scene_list(Vector<String> p_scene_filenames) {
 
 void EditorNode::restart_editor() {
 	exiting = true;
+
+	if (editor_run.get_status() != EditorRun::STATUS_STOP) {
+		editor_run.stop();
+	}
 
 	String to_reopen;
 	if (get_tree()->get_edited_scene_root()) {
@@ -2459,7 +2457,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			} else if (extensions.size()) {
 				String root_name = scene->get_name();
 				// Very similar to node naming logic.
-				switch (ProjectSettings::get_singleton()->get("editor/scene/scene_naming").operator int()) {
+				switch (ProjectSettings::get_singleton()->get("editor/scene_naming").operator int()) {
 					case SCENE_NAME_CASING_AUTO:
 						// Use casing of the root node.
 						break;
@@ -2711,7 +2709,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			if (!p_confirmed) {
 				bool save_each = EDITOR_GET("interface/editor/save_each_scene_on_quit");
 				if (_next_unsaved_scene(!save_each) == -1) {
-					bool confirm = EDITOR_GET("interface/editor/quit_confirmation");
+					bool confirm = (p_option != RELOAD_CURRENT_PROJECT) && EDITOR_GET("interface/editor/quit_confirmation");
 					if (confirm) {
 						confirmation->get_ok()->set_text(p_option == FILE_QUIT ? TTR("Quit") : TTR("Yes"));
 						confirmation->set_text(p_option == FILE_QUIT ? TTR("Exit the editor?") : TTR("Open Project Manager?"));
@@ -3370,6 +3368,9 @@ void EditorNode::_remove_edited_scene(bool p_change_tab) {
 }
 
 void EditorNode::_remove_scene(int index, bool p_change_tab) {
+	// Clear icon cache in case some scripts are no longer needed.
+	script_icon_cache.clear();
+
 	if (editor_data.get_edited_scene() == index) {
 		//Scene to remove is current scene
 		_remove_edited_scene(p_change_tab);
@@ -4017,7 +4018,7 @@ void EditorNode::_pick_main_scene_custom_action(const String &p_custom_action_na
 	}
 }
 
-Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p_fallback) const {
+Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p_fallback) {
 	ERR_FAIL_COND_V(!p_object || !gui_base, nullptr);
 
 	Ref<Script> script = p_object->get_script();
@@ -4025,13 +4026,14 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 		script = p_object;
 	}
 
-	if (script.is_valid()) {
+	if (script.is_valid() && !script_icon_cache.has(script)) {
 		Ref<Script> base_script = script;
 		while (base_script.is_valid()) {
 			StringName name = EditorNode::get_editor_data().script_class_get_name(base_script->get_path());
 			String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
 			Ref<ImageTexture> icon = _load_custom_class_icon(icon_path);
 			if (icon.is_valid()) {
+				script_icon_cache[script] = icon;
 				return icon;
 			}
 
@@ -4041,12 +4043,18 @@ Ref<Texture> EditorNode::get_object_icon(const Object *p_object, const String &p
 				const Vector<EditorData::CustomType> &types = EditorNode::get_editor_data().get_custom_types()[base];
 				for (int i = 0; i < types.size(); ++i) {
 					if (types[i].script == base_script && types[i].icon.is_valid()) {
+						script_icon_cache[script] = types[i].icon;
 						return types[i].icon;
 					}
 				}
 			}
 			base_script = base_script->get_base_script();
 		}
+
+		// If no icon found, cache it as null.
+		script_icon_cache[script] = Ref<Texture>();
+	} else if (script.is_valid() && script_icon_cache.has(script) && script_icon_cache[script].is_valid()) {
+		return script_icon_cache[script];
 	}
 
 	// should probably be deprecated in 4.x
@@ -4069,25 +4077,32 @@ Ref<Texture> EditorNode::get_class_icon(const String &p_class, const String &p_f
 	ERR_FAIL_COND_V_MSG(p_class.empty(), nullptr, "Class name cannot be empty.");
 
 	if (ScriptServer::is_global_class(p_class)) {
-		Ref<ImageTexture> icon;
-		Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(p_class);
-		StringName name = p_class;
+		String class_name = p_class;
+		Ref<Script> script = EditorNode::get_editor_data().script_class_load_script(class_name);
 
-		while (script.is_valid()) {
-			name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
-			String current_icon_path = EditorNode::get_editor_data().script_class_get_icon_path(name);
-			icon = _load_custom_class_icon(current_icon_path);
+		while (true) {
+			String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(class_name);
+			Ref<Texture> icon = _load_custom_class_icon(icon_path);
 			if (icon.is_valid()) {
-				return icon;
+				return icon; // Current global class has icon.
 			}
-			script = script->get_base_script();
-		}
 
-		if (icon.is_null()) {
-			icon = gui_base->get_icon(ScriptServer::get_global_class_base(name), "EditorIcons");
+			// Find next global class along the inheritance chain.
+			do {
+				Ref<Script> base_script = script->get_base_script();
+				if (base_script.is_null()) {
+					// We've reached a native class, use its icon.
+					String base_type;
+					script->get_language()->get_global_class_name(script->get_path(), &base_type);
+					if (gui_base->has_icon(base_type, "EditorIcons")) {
+						return gui_base->get_icon(base_type, "EditorIcons");
+					}
+					return gui_base->get_icon(p_fallback, "EditorIcons");
+				}
+				script = base_script;
+				class_name = EditorNode::get_editor_data().script_class_get_name(script->get_path());
+			} while (class_name.empty());
 		}
-
-		return icon;
 	}
 
 	const Map<String, Vector<EditorData::CustomType>> &p_map = EditorNode::get_editor_data().get_custom_types();
@@ -5639,9 +5654,6 @@ void EditorNode::_feature_profile_changed() {
 }
 
 void EditorNode::_bind_methods() {
-	GLOBAL_DEF("editor/scene/scene_naming", SCENE_NAME_CASING_AUTO);
-	ProjectSettings::get_singleton()->set_custom_property_info("editor/scene/scene_naming", PropertyInfo(Variant::INT, "editor/scene/scene_naming", PROPERTY_HINT_ENUM, "Auto,PascalCase,snake_case"));
-
 	ClassDB::bind_method("_menu_option", &EditorNode::_menu_option);
 	ClassDB::bind_method("_tool_menu_option", &EditorNode::_tool_menu_option);
 	ClassDB::bind_method("_menu_confirm_current", &EditorNode::_menu_confirm_current);
@@ -6005,7 +6017,6 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("run/output/always_clear_output_on_play", true);
 	EDITOR_DEF("run/output/always_open_output_on_play", true);
 	EDITOR_DEF("run/output/always_close_output_on_stop", true);
-	EDITOR_DEF("run/auto_save/save_before_running", true);
 	EDITOR_DEF("interface/editor/save_on_focus_loss", false);
 	EDITOR_DEF_RST("interface/editor/save_each_scene_on_quit", true);
 	EDITOR_DEF("interface/editor/quit_confirmation", true);
@@ -6027,7 +6038,6 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("interface/inspector/resources_to_open_in_new_inspector", "Script,MeshLibrary,TileSet");
 	EDITOR_DEF("interface/inspector/default_color_picker_mode", 0);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "interface/inspector/default_color_picker_mode", PROPERTY_HINT_ENUM, "RGB,HSV,RAW", PROPERTY_USAGE_DEFAULT));
-	EDITOR_DEF("run/auto_save/save_before_running", true);
 	EDITOR_DEF("version_control/username", "");
 	EDITOR_DEF("version_control/ssh_public_key_path", "");
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "version_control/ssh_public_key_path", PROPERTY_HINT_GLOBAL_FILE));
@@ -6557,12 +6567,12 @@ EditorNode::EditorNode() {
 	p->add_icon_shortcut(gui_base->get_icon("HelpSearch", "EditorIcons"), ED_SHORTCUT("editor/editor_help", TTR("Search Help"), KEY_F1), HELP_SEARCH);
 #endif
 	p->add_separator();
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/online_docs", TTR("Online Documentation")), HELP_DOCS);
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/q&a", TTR("Questions & Answers")), HELP_QA);
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/report_a_bug", TTR("Report a Bug")), HELP_REPORT_A_BUG);
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/suggest_a_feature", TTR("Suggest a Feature")), HELP_SUGGEST_A_FEATURE);
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/send_docs_feedback", TTR("Send Docs Feedback")), HELP_SEND_DOCS_FEEDBACK);
-	p->add_icon_shortcut(gui_base->get_icon("Instance", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/online_docs", TTR("Online Documentation")), HELP_DOCS);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/q&a", TTR("Questions & Answers")), HELP_QA);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/report_a_bug", TTR("Report a Bug")), HELP_REPORT_A_BUG);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/suggest_a_feature", TTR("Suggest a Feature")), HELP_SUGGEST_A_FEATURE);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/send_docs_feedback", TTR("Send Docs Feedback")), HELP_SEND_DOCS_FEEDBACK);
+	p->add_icon_shortcut(gui_base->get_icon("ExternalLink", "EditorIcons"), ED_SHORTCUT("editor/community", TTR("Community")), HELP_COMMUNITY);
 	p->add_separator();
 	p->add_icon_shortcut(gui_base->get_icon("Godot", "EditorIcons"), ED_SHORTCUT("editor/about", TTR("About Godot")), HELP_ABOUT);
 	p->add_icon_shortcut(gui_base->get_icon("Heart", "EditorIcons"), ED_SHORTCUT("editor/support_development", TTR("Support Godot Development")), HELP_SUPPORT_GODOT_DEVELOPMENT);
@@ -6948,11 +6958,15 @@ EditorNode::EditorNode() {
 	ScriptTextEditor::register_editor(); //register one for text scripts
 	TextEditor::register_editor();
 
+	// Asset Library can't work on Web editor for now as most assets are sourced
+	// directly from GitHub which does not set CORS.
+#ifndef JAVASCRIPT_ENABLED
 	if (StreamPeerSSL::is_available()) {
 		add_editor_plugin(memnew(AssetLibraryEditorPlugin(this)));
 	} else {
 		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
 	}
+#endif
 
 	//add interface before adding plugins
 
@@ -7013,6 +7027,8 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(MaterialEditorPlugin(this)));
 	add_editor_plugin(memnew(ViewportPreviewEditorPlugin(this)));
 	add_editor_plugin(memnew(GradientTexture2DEditorPlugin(this)));
+	add_editor_plugin(memnew(RayCast2DEditorPlugin(this)));
+	add_editor_plugin(memnew(BitMapEditorPlugin(this)));
 
 	for (int i = 0; i < EditorPlugins::get_plugin_count(); i++) {
 		add_editor_plugin(EditorPlugins::create(i, this));

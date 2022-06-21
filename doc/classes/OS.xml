@@ -161,6 +161,10 @@
 				    if argument.find("=") &gt; -1:
 				        var key_value = argument.split("=")
 				        arguments[key_value[0].lstrip("--")] = key_value[1]
+				    else:
+				        # Options without an argument will be present in the dictionary,
+				        # with the value set to an empty string.
+				        arguments[argument.lstrip("--")] = ""
 				[/codeblock]
 			</description>
 		</method>
@@ -215,6 +219,13 @@
 				Deprecated, use [method Time.get_datetime_dict_from_unix_time] instead.
 				Gets a dictionary of time values corresponding to the given UNIX epoch time (in seconds).
 				The returned Dictionary's values will be the same as [method get_datetime], with the exception of Daylight Savings Time as it cannot be determined from the epoch.
+			</description>
+		</method>
+		<method name="get_display_cutouts" qualifiers="const">
+			<return type="Array" />
+			<description>
+				Returns an [Array] of [Rect2], each of which is the bounding rectangle for a display cutout or notch. These are non-functional areas on edge-to-edge screens used by cameras and sensors. Returns an empty array if the device does not have cutouts. See also [method get_window_safe_area].
+				[b]Note:[/b] Currently only implemented on Android. Other platforms will return an empty array even if they do have display cutouts or notches.
 			</description>
 		</method>
 		<method name="get_dynamic_memory_usage" qualifiers="const">
@@ -679,6 +690,15 @@
 				Returns [code]true[/code] if the [b]OK[/b] button should appear on the left and [b]Cancel[/b] on the right.
 			</description>
 		</method>
+		<method name="is_process_running" qualifiers="const">
+			<return type="bool" />
+			<argument index="0" name="pid" type="int" />
+			<description>
+				Returns [code]true[/code] if the child process ID ([code]pid[/code]) is still running or [code]false[/code] if it has terminated.
+				Must be a valid ID generated from [method execute].
+				[b]Note:[/b] This method is implemented on Android, iOS, Linux, macOS and Windows.
+			</description>
+		</method>
 		<method name="is_scancode_unicode" qualifiers="const">
 			<return type="bool" />
 			<argument index="0" name="code" type="int" />
@@ -764,6 +784,19 @@
 				Kill (terminate) the process identified by the given process ID ([code]pid[/code]), e.g. the one returned by [method execute] in non-blocking mode. See also [method crash].
 				[b]Note:[/b] This method can also be used to kill processes that were not spawned by the game.
 				[b]Note:[/b] This method is implemented on Android, iOS, Linux, macOS and Windows.
+			</description>
+		</method>
+		<method name="move_to_trash" qualifiers="const">
+			<return type="int" enum="Error" />
+			<argument index="0" name="path" type="String" />
+			<description>
+				Moves the file or directory to the system's recycle bin. See also [method Directory.remove].
+				The method takes only global paths, so you may need to use [method ProjectSettings.globalize_path]. Do not use it for files in [code]res://[/code] as it will not work in exported project.
+				[b]Note:[/b] If the user has disabled the recycle bin on their system, the file will be permanently deleted instead.
+				[codeblock]
+				var file_to_remove = "user://slot1.sav"
+				OS.move_to_trash(ProjectSettings.globalize_path(file_to_remove))
+				[/codeblock]
 			</description>
 		</method>
 		<method name="move_window_to_foreground">
@@ -971,7 +1004,7 @@
 				Requests the OS to open a resource with the most appropriate program. For example:
 				- [code]OS.shell_open("C:\\Users\name\Downloads")[/code] on Windows opens the file explorer at the user's Downloads folder.
 				- [code]OS.shell_open("https://godotengine.org")[/code] opens the default web browser on the official Godot website.
-				- [code]OS.shell_open("mailto:example@example.com")[/code] opens the default email client with the "To" field set to [code]example@example.com[/code]. See [url=https://blog.escapecreative.com/customizing-mailto-links/]Customizing [code]mailto:[/code] Links[/url] for a list of fields that can be added.
+				- [code]OS.shell_open("mailto:example@example.com")[/code] opens the default email client with the "To" field set to [code]example@example.com[/code]. See [url=https://datatracker.ietf.org/doc/html/rfc2368]RFC 2368 - The [code]mailto[/code] URL scheme[/url] for a list of fields that can be added.
 				Use [method ProjectSettings.globalize_path] to convert a [code]res://[/code] or [code]user://[/code] path into a system path for use with this method.
 				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS and Windows.
 			</description>

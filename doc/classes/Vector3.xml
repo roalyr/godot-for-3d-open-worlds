@@ -4,7 +4,7 @@
 		Vector used for 3D math.
 	</brief_description>
 	<description>
-		3-element structure that can be used to represent positions in 3D space or any other pair of numeric values.
+		3-element structure that can be used to represent positions in 3D space or any other triplet of numeric values.
 		[b]Note:[/b] In a boolean context, a Vector3 will evaluate to [code]false[/code] if it's equal to [code]Vector3(0, 0, 0)[/code]. Otherwise, a Vector3 will always evaluate to [code]true[/code].
 	</description>
 	<tutorials>
@@ -217,9 +217,9 @@
 		<method name="rotated">
 			<return type="Vector3" />
 			<argument index="0" name="axis" type="Vector3" />
-			<argument index="1" name="phi" type="float" />
+			<argument index="1" name="angle" type="float" />
 			<description>
-				Rotates this vector around a given axis by [code]phi[/code] radians. The axis must be a normalized vector.
+				Rotates this vector around a given axis by [code]angle[/code] (in radians). The axis must be a normalized vector.
 			</description>
 		</method>
 		<method name="round">

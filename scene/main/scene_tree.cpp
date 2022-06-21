@@ -40,6 +40,7 @@
 #include "core/project_settings.h"
 #include "main/input_default.h"
 #include "node.h"
+#include "scene/animation/scene_tree_tween.h"
 #include "scene/debugger/script_debugger_remote.h"
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/material.h"
@@ -524,6 +525,14 @@ void SceneTree::client_physics_interpolation_remove_spatial(SelfList<Spatial> *p
 	_client_physics_interpolation._spatials_list.remove(p_elem);
 }
 
+void SceneTree::iteration_end() {
+	// When physics interpolation is active, we want all pending transforms
+	// to be flushed to the VisualServer before finishing a physics tick.
+	if (_physics_interpolation_enabled) {
+		flush_transform_notifications();
+	}
+}
+
 bool SceneTree::iteration(float p_time) {
 	root_lock++;
 
@@ -552,6 +561,9 @@ bool SceneTree::iteration(float p_time) {
 	_notify_group_pause("physics_process", Node::NOTIFICATION_PHYSICS_PROCESS);
 	_flush_ugc();
 	MessageQueue::get_singleton()->flush(); //small little hack
+
+	process_tweens(p_time, true);
+
 	flush_transform_notifications();
 	call_group_flags(GROUP_CALL_REALTIME, "_viewports", "update_worlds");
 	root_lock--;
@@ -644,6 +656,8 @@ bool SceneTree::idle(float p_time) {
 		E = N;
 	}
 
+	process_tweens(p_time, false);
+
 	flush_transform_notifications(); //additional transforms after timers update
 
 	_call_idle_callbacks();
@@ -682,6 +696,32 @@ bool SceneTree::idle(float p_time) {
 	}
 
 	return _quit;
+}
+
+void SceneTree::process_tweens(float p_delta, bool p_physics) {
+	// This methods works similarly to how SceneTreeTimers are handled.
+	List<Ref<SceneTreeTween>>::Element *L = tweens.back();
+
+	for (List<Ref<SceneTreeTween>>::Element *E = tweens.front(); E;) {
+		List<Ref<SceneTreeTween>>::Element *N = E->next();
+		// Don't process if paused or process mode doesn't match.
+		if (!E->get()->can_process(pause) || (p_physics == (E->get()->get_process_mode() == Tween::TWEEN_PROCESS_IDLE))) {
+			if (E == L) {
+				break;
+			}
+			E = N;
+			continue;
+		}
+
+		if (!E->get()->step(p_delta)) {
+			E->get()->clear();
+			tweens.erase(E);
+		}
+		if (E == L) {
+			break;
+		}
+		E = N;
+	}
 }
 
 void SceneTree::finish() {
@@ -783,8 +823,16 @@ void SceneTree::_notification(int p_notification) {
 	};
 };
 
+bool SceneTree::is_auto_accept_quit() const {
+	return accept_quit;
+}
+
 void SceneTree::set_auto_accept_quit(bool p_enable) {
 	accept_quit = p_enable;
+}
+
+bool SceneTree::is_quit_on_go_back() const {
+	return quit_on_go_back;
 }
 
 void SceneTree::set_quit_on_go_back(bool p_enable) {
@@ -1787,6 +1835,23 @@ Ref<SceneTreeTimer> SceneTree::create_timer(float p_delay_sec, bool p_process_pa
 	return stt;
 }
 
+Ref<SceneTreeTween> SceneTree::create_tween() {
+	Ref<SceneTreeTween> tween = memnew(SceneTreeTween(true));
+	tweens.push_back(tween);
+	return tween;
+}
+
+Array SceneTree::get_processed_tweens() {
+	Array ret;
+	ret.resize(tweens.size());
+
+	for (int i = 0; i < tweens.size(); i++) {
+		ret[i] = tweens[i];
+	}
+
+	return ret;
+}
+
 void SceneTree::_network_peer_connected(int p_id) {
 	emit_signal("network_peer_connected", p_id);
 }
@@ -1880,7 +1945,9 @@ void SceneTree::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_root"), &SceneTree::get_root);
 	ClassDB::bind_method(D_METHOD("has_group", "name"), &SceneTree::has_group);
 
+	ClassDB::bind_method(D_METHOD("is_auto_accept_quit"), &SceneTree::is_auto_accept_quit);
 	ClassDB::bind_method(D_METHOD("set_auto_accept_quit", "enabled"), &SceneTree::set_auto_accept_quit);
+	ClassDB::bind_method(D_METHOD("is_quit_on_go_back"), &SceneTree::is_quit_on_go_back);
 	ClassDB::bind_method(D_METHOD("set_quit_on_go_back", "enabled"), &SceneTree::set_quit_on_go_back);
 
 	ClassDB::bind_method(D_METHOD("set_debug_collisions_hint", "enable"), &SceneTree::set_debug_collisions_hint);
@@ -1897,6 +1964,8 @@ void SceneTree::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_input_handled"), &SceneTree::is_input_handled);
 
 	ClassDB::bind_method(D_METHOD("create_timer", "time_sec", "pause_mode_process"), &SceneTree::create_timer, DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("create_tween"), &SceneTree::create_tween);
+	ClassDB::bind_method(D_METHOD("get_processed_tweens"), &SceneTree::get_processed_tweens);
 
 	ClassDB::bind_method(D_METHOD("get_node_count"), &SceneTree::get_node_count);
 	ClassDB::bind_method(D_METHOD("get_frame"), &SceneTree::get_frame);
@@ -1964,6 +2033,8 @@ void SceneTree::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_font_oversampling", "enable"), &SceneTree::set_use_font_oversampling);
 	ClassDB::bind_method(D_METHOD("is_using_font_oversampling"), &SceneTree::is_using_font_oversampling);
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_accept_quit"), "set_auto_accept_quit", "is_auto_accept_quit");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "quit_on_go_back"), "set_quit_on_go_back", "is_quit_on_go_back");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_collisions_hint"), "set_debug_collisions_hint", "is_debugging_collisions_hint");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "debug_navigation_hint"), "set_debug_navigation_hint", "is_debugging_navigation_hint");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "paused"), "set_pause", "is_paused");

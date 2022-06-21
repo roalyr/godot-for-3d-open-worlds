@@ -24,13 +24,14 @@
 # عبدالرئوف عابدی <abdolraoofabedi@gmail.com>, 2021.
 # Alireza Khodabande <alirezakhodabande74@gmail.com>, 2021.
 # Seyed Fazel Alavi <fazel8195@gmail.com>, 2022.
+# Giga hertz <gigahertzyt@gmail.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2022-01-12 16:52+0000\n"
-"Last-Translator: Seyed Fazel Alavi <fazel8195@gmail.com>\n"
+"PO-Revision-Date: 2022-04-03 13:13+0000\n"
+"Last-Translator: Giga hertz <gigahertzyt@gmail.com>\n"
 "Language-Team: Persian <https://hosted.weblate.org/projects/godot-engine/"
 "godot/fa/>\n"
 "Language: fa\n"
@@ -38,7 +39,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 4.10.1\n"
+"X-Generator: Weblate 4.12-dev\n"
 
 #: core/bind/core_bind.cpp main/main.cpp
 msgid "Tablet Driver"
@@ -99,12 +100,13 @@ msgstr "باز کردن و اجرای یک اسکریپت"
 msgid "Screen Orientation"
 msgstr "شمارش ها"
 
-#: core/bind/core_bind.cpp main/main.cpp platform/uwp/os_uwp.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp main/main.cpp
+#: platform/uwp/os_uwp.cpp
 #, fuzzy
 msgid "Window"
 msgstr "چارچوب جدید"
 
-#: core/bind/core_bind.cpp main/main.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp
 msgid "Borderless"
 msgstr ""
 
@@ -112,7 +114,7 @@ msgstr ""
 msgid "Per Pixel Transparency Enabled"
 msgstr ""
 
-#: core/bind/core_bind.cpp main/main.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp
 #, fuzzy
 msgid "Fullscreen"
 msgstr "حالت تمام صفحه"
@@ -125,7 +127,7 @@ msgstr ""
 msgid "Minimized"
 msgstr ""
 
-#: core/bind/core_bind.cpp main/main.cpp scene/gui/dialogs.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp scene/gui/dialogs.cpp
 #: scene/gui/graph_node.cpp
 msgid "Resizable"
 msgstr ""
@@ -134,15 +136,16 @@ msgstr ""
 #: scene/2d/physics_body_2d.cpp scene/2d/remote_transform_2d.cpp
 #: scene/3d/physics_body.cpp scene/3d/remote_transform.cpp
 #: scene/gui/control.cpp scene/gui/line_edit.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Position"
 msgstr "برداشتن موج"
 
-#: core/bind/core_bind.cpp editor/editor_settings.cpp main/main.cpp
-#: modules/gdscript/gdscript_editor.cpp modules/gridmap/grid_map.cpp
-#: modules/mono/csharp_script.cpp modules/visual_script/visual_script_nodes.cpp
-#: scene/2d/tile_map.cpp scene/3d/camera.cpp scene/3d/light.cpp
-#: scene/gui/control.cpp scene/gui/graph_edit.cpp scene/main/viewport.cpp
+#: core/bind/core_bind.cpp core/project_settings.cpp editor/editor_settings.cpp
+#: main/main.cpp modules/gridmap/grid_map.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/2d/tile_map.cpp
+#: scene/3d/camera.cpp scene/3d/light.cpp scene/gui/control.cpp
+#: scene/gui/graph_edit.cpp scene/main/viewport.cpp
 #: scene/resources/dynamic_font.cpp scene/resources/navigation_mesh.cpp
 #: scene/resources/primitive_meshes.cpp scene/resources/sky.cpp
 #: scene/resources/style_box.cpp scene/resources/texture.cpp
@@ -210,6 +213,7 @@ msgstr ""
 #: drivers/gles3/rasterizer_canvas_base_gles3.cpp
 #: drivers/gles3/rasterizer_scene_gles3.cpp
 #: drivers/gles3/rasterizer_storage_gles3.cpp main/main.cpp
+#: modules/webrtc/webrtc_data_channel.h modules/websocket/websocket_macros.h
 #: servers/visual_server.cpp
 msgid "Limits"
 msgstr ""
@@ -230,20 +234,16 @@ msgstr ""
 msgid "Function"
 msgstr "توابع"
 
-#: core/image.cpp core/packed_data_container.cpp
-#: modules/minimp3/audio_stream_mp3.cpp
-#: modules/stb_vorbis/audio_stream_ogg_vorbis.cpp
-#: modules/visual_script/visual_script.cpp scene/2d/polygon_2d.cpp
+#: core/image.cpp core/packed_data_container.cpp scene/2d/polygon_2d.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/resources/audio_stream_sample.cpp scene/resources/bit_map.cpp
-#: scene/resources/concave_polygon_shape.cpp scene/resources/curve.cpp
-#: scene/resources/polygon_path_finder.cpp scene/resources/texture.cpp
 msgid "Data"
 msgstr ""
 
 #: core/io/file_access_network.cpp core/register_core_types.cpp
-#: editor/editor_settings.cpp main/main.cpp
+#: editor/editor_file_dialog.cpp editor/editor_settings.cpp main/main.cpp
 #: modules/gdscript/language_server/gdscript_language_server.cpp
+#: modules/webrtc/webrtc_data_channel.h modules/websocket/websocket_macros.h
+#: scene/gui/file_dialog.cpp
 #, fuzzy
 msgid "Network"
 msgstr "صدور پروژه"
@@ -357,7 +357,8 @@ msgstr ""
 "است ."
 
 #: core/math/expression.cpp
-msgid "Invalid input %i (not passed) in expression"
+#, fuzzy
+msgid "Invalid input %d (not passed) in expression"
 msgstr "ورودی نامعتبر i% (تایید نشده) در عبارت"
 
 #: core/math/expression.cpp
@@ -402,36 +403,13 @@ msgstr ""
 msgid "Max Size (KB)"
 msgstr ""
 
-#: core/os/input.cpp editor/editor_help.cpp editor/editor_settings.cpp
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp
-#: editor/plugins/shader_editor_plugin.cpp editor/plugins/text_editor.cpp
-#: modules/gdscript/editor/gdscript_highlighter.cpp
-#: modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: modules/mono/csharp_script.cpp scene/animation/animation_player.cpp
-#: scene/gui/control.cpp scene/gui/line_edit.cpp scene/main/node.cpp
-#: scene/resources/material.cpp
+#: core/os/input.cpp
 #, fuzzy
-msgid "Text Editor"
-msgstr "گشودن در ویرایشگر"
+msgid "Mouse Mode"
+msgstr "انتخاب حالت"
 
-#: core/os/input.cpp editor/editor_settings.cpp
-#: editor/plugins/script_text_editor.cpp modules/gdscript/gdscript.cpp
-#: modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: scene/animation/animation_player.cpp scene/gui/control.cpp
-#: scene/main/node.cpp scene/resources/material.cpp
-#, fuzzy
-msgid "Completion"
-msgstr "کپی برگزیده"
-
-#: core/os/input.cpp editor/editor_settings.cpp
-#: editor/plugins/script_text_editor.cpp modules/gdscript/gdscript_editor.cpp
-#: modules/gdscript/language_server/gdscript_text_document.cpp
-#: scene/animation/animation_player.cpp scene/gui/control.cpp
-#: scene/main/node.cpp scene/resources/material.cpp
-msgid "Use Single Quotes"
+#: core/os/input.cpp
+msgid "Use Accumulated Input"
 msgstr ""
 
 #: core/os/input_event.cpp editor/project_settings_editor.cpp
@@ -464,6 +442,7 @@ msgstr "جامعه"
 
 #: core/os/input_event.cpp scene/2d/touch_screen_button.cpp
 #: scene/gui/base_button.cpp scene/gui/texture_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Pressed"
 msgstr "بازنشانی بزرگنمایی"
@@ -612,13 +591,15 @@ msgid "Project Settings Override"
 msgstr "تنظیمات طرح…"
 
 #: core/project_settings.cpp core/resource.cpp
-#: editor/editor_autoload_settings.cpp editor/editor_help_search.cpp
-#: editor/editor_plugin_settings.cpp editor/editor_profiler.cpp
+#: editor/animation_track_editor.cpp editor/editor_autoload_settings.cpp
+#: editor/editor_help_search.cpp editor/editor_plugin_settings.cpp
+#: editor/editor_profiler.cpp editor/plugins/tile_set_editor_plugin.cpp
 #: editor/project_manager.cpp editor/settings_config_dialog.cpp
 #: modules/gdnative/nativescript/nativescript.cpp
 #: platform/android/export/export_plugin.cpp platform/iphone/export/export.cpp
 #: platform/osx/export/export.cpp scene/2d/area_2d.cpp scene/3d/area.cpp
-#: scene/main/node.cpp
+#: scene/3d/skeleton.cpp scene/main/node.cpp scene/resources/mesh_library.cpp
+#: scene/resources/skin.cpp
 msgid "Name"
 msgstr "نام"
 
@@ -630,7 +611,8 @@ msgstr "تعریف"
 
 #: core/project_settings.cpp editor/editor_node.cpp editor/editor_settings.cpp
 #: editor/plugins/script_editor_plugin.cpp editor/project_manager.cpp
-#: main/main.cpp
+#: main/main.cpp platform/android/export/export_plugin.cpp
+#: platform/javascript/export/export.cpp
 msgid "Run"
 msgstr "اجرا"
 
@@ -661,6 +643,42 @@ msgstr ""
 msgid "Custom User Dir Name"
 msgstr ""
 
+#: core/project_settings.cpp main/main.cpp
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#: platform/uwp/os_uwp.cpp
+#, fuzzy
+msgid "Display"
+msgstr "نشان دادن همه"
+
+#: core/project_settings.cpp main/main.cpp modules/csg/csg_shape.cpp
+#: modules/opensimplex/noise_texture.cpp scene/2d/line_2d.cpp
+#: scene/3d/label_3d.cpp scene/gui/text_edit.cpp scene/resources/texture.cpp
+msgid "Width"
+msgstr ""
+
+#: core/project_settings.cpp main/main.cpp modules/csg/csg_shape.cpp
+#: modules/gltf/gltf_node.cpp modules/opensimplex/noise_texture.cpp
+#: scene/2d/light_2d.cpp scene/resources/capsule_shape.cpp
+#: scene/resources/capsule_shape_2d.cpp scene/resources/cylinder_shape.cpp
+#: scene/resources/font.cpp scene/resources/navigation_mesh.cpp
+#: scene/resources/primitive_meshes.cpp scene/resources/texture.cpp
+msgid "Height"
+msgstr ""
+
+#: core/project_settings.cpp
+msgid "Always On Top"
+msgstr ""
+
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Test Width"
+msgstr "خطی"
+
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Test Height"
+msgstr "آزمودن"
+
 #: core/project_settings.cpp editor/animation_track_editor.cpp
 #: editor/editor_audio_buses.cpp main/main.cpp servers/audio_server.cpp
 msgid "Audio"
@@ -683,6 +701,10 @@ msgid "Main Run Args"
 msgstr ""
 
 #: core/project_settings.cpp
+msgid "Scene Naming"
+msgstr ""
+
+#: core/project_settings.cpp
 msgid "Search In File Extensions"
 msgstr ""
 
@@ -690,19 +712,15 @@ msgstr ""
 msgid "Script Templates Search Path"
 msgstr ""
 
-#: core/project_settings.cpp editor/editor_node.cpp
-#: editor/plugins/version_control_editor_plugin.cpp
-msgid "Version Control"
+#: core/project_settings.cpp
+#, fuzzy
+msgid "Version Control Autoload On Startup"
 msgstr "مهار نسخه"
 
 #: core/project_settings.cpp
-msgid "Autoload On Startup"
-msgstr ""
-
-#: core/project_settings.cpp
 #, fuzzy
-msgid "Plugin Name"
-msgstr "افزونه‌ها"
+msgid "Version Control Plugin Name"
+msgstr "مهار نسخه"
 
 #: core/project_settings.cpp scene/2d/collision_object_2d.cpp
 #: scene/3d/collision_object.cpp scene/gui/control.cpp
@@ -770,15 +788,18 @@ msgstr ""
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
 #: servers/physics/space_sw.cpp servers/physics_2d/physics_2d_server_sw.cpp
 #: servers/physics_2d/physics_2d_server_wrap_mt.h
-#: servers/physics_2d/space_2d_sw.cpp
+#: servers/physics_2d/space_2d_sw.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
 msgid "Physics"
 msgstr ""
 
 #: core/project_settings.cpp editor/editor_settings.cpp
+#: editor/import/resource_importer_layered_texture.cpp
+#: editor/import/resource_importer_texture.cpp
 #: editor/plugins/spatial_editor_plugin.cpp main/main.cpp
 #: modules/bullet/register_types.cpp modules/bullet/space_bullet.cpp
 #: scene/3d/physics_body.cpp scene/resources/world.cpp
-#: servers/physics/space_sw.cpp
+#: servers/physics/space_sw.cpp servers/physics_server.cpp
 msgid "3D"
 msgstr ""
 
@@ -808,8 +829,8 @@ msgstr ""
 msgid "Quality"
 msgstr ""
 
-#: core/project_settings.cpp scene/animation/animation_tree.cpp
-#: scene/gui/file_dialog.cpp scene/main/scene_tree.cpp
+#: core/project_settings.cpp scene/gui/file_dialog.cpp
+#: scene/main/scene_tree.cpp scene/resources/navigation_mesh.cpp
 #: servers/visual_server.cpp
 #, fuzzy
 msgid "Filters"
@@ -937,11 +958,6 @@ msgstr "آدرس"
 msgid "Source Code"
 msgstr "منبع"
 
-#: core/translation.cpp
-#, fuzzy
-msgid "Messages"
-msgstr "تغییر بده"
-
 #: core/translation.cpp editor/project_settings_editor.cpp
 msgid "Locale"
 msgstr "بومی"
@@ -1003,10 +1019,13 @@ msgstr ""
 
 #: drivers/gles2/rasterizer_canvas_base_gles2.cpp
 #: drivers/gles3/rasterizer_canvas_base_gles3.cpp editor/editor_settings.cpp
-#: main/main.cpp scene/2d/physics_body_2d.cpp scene/resources/world_2d.cpp
+#: editor/import/resource_importer_layered_texture.cpp
+#: editor/import/resource_importer_texture.cpp main/main.cpp
+#: scene/2d/physics_body_2d.cpp scene/resources/world_2d.cpp
 #: servers/physics_2d/physics_2d_server_sw.cpp
 #: servers/physics_2d/physics_2d_server_wrap_mt.h
-#: servers/physics_2d/space_2d_sw.cpp servers/visual_server.cpp
+#: servers/physics_2d/space_2d_sw.cpp servers/physics_2d_server.cpp
+#: servers/visual_server.cpp
 msgid "2D"
 msgstr ""
 
@@ -1057,13 +1076,14 @@ msgstr ""
 msgid "Subsurface Scattering"
 msgstr ""
 
-#: drivers/gles3/rasterizer_scene_gles3.cpp
+#: drivers/gles3/rasterizer_scene_gles3.cpp editor/animation_track_editor.cpp
 #: editor/import/resource_importer_texture.cpp
 #: editor/plugins/spatial_editor_plugin.cpp modules/gltf/gltf_node.cpp
 #: modules/gridmap/grid_map.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/node_2d.cpp scene/2d/parallax_layer.cpp scene/2d/polygon_2d.cpp
 #: scene/2d/remote_transform_2d.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp scene/gui/control.cpp
+#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp
+#: scene/animation/animation_blend_tree.cpp scene/gui/control.cpp
 #: scene/main/canvas_layer.cpp scene/resources/environment.cpp
 #: scene/resources/material.cpp scene/resources/particles_material.cpp
 #, fuzzy
@@ -1090,6 +1110,7 @@ msgstr ""
 msgid "Blend Shape Max Buffer Size (KB)"
 msgstr ""
 
+#. TRANSLATORS: Adjective, refers to the mode for Bezier handles (Free, Balanced, Mirror).
 #: editor/animation_bezier_editor.cpp
 msgid "Free"
 msgstr "آزاد کردن"
@@ -1106,7 +1127,7 @@ msgstr "بازتاب"
 msgid "Time:"
 msgstr "زمان:"
 
-#: editor/animation_bezier_editor.cpp
+#: editor/animation_bezier_editor.cpp editor/animation_track_editor.cpp
 msgid "Value:"
 msgstr "مقدار:"
 
@@ -1157,6 +1178,95 @@ msgstr "تغییر مقدار لحظه‌کلید متحرک"
 #: editor/animation_track_editor.cpp
 msgid "Anim Change Call"
 msgstr "تغییر فراخوان متحرک"
+
+#: editor/animation_track_editor.cpp scene/2d/animated_sprite.cpp
+#: scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Frame"
+msgstr "انتخاب یک گره"
+
+#: editor/animation_track_editor.cpp editor/editor_profiler.cpp
+#: scene/2d/cpu_particles_2d.cpp scene/2d/particles_2d.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/particles.cpp
+#: scene/resources/particles_material.cpp servers/visual_server.cpp
+#, fuzzy
+msgid "Time"
+msgstr "زمان:"
+
+#: editor/animation_track_editor.cpp editor/import/resource_importer_scene.cpp
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Location"
+msgstr "بومی‌سازی"
+
+#: editor/animation_track_editor.cpp modules/gltf/gltf_node.cpp
+#: scene/2d/polygon_2d.cpp scene/2d/remote_transform_2d.cpp
+#: scene/3d/remote_transform.cpp scene/3d/spatial.cpp scene/gui/control.cpp
+#, fuzzy
+msgid "Rotation"
+msgstr "وضعیت:"
+
+#: editor/animation_track_editor.cpp editor/script_editor_debugger.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/gui/range.cpp
+msgid "Value"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Arg Count"
+msgstr "افزودن عمل ورودی"
+
+#: editor/animation_track_editor.cpp main/main.cpp
+#: modules/mono/mono_gd/gd_mono.cpp
+msgid "Args"
+msgstr ""
+
+#: editor/animation_track_editor.cpp editor/editor_settings.cpp
+#: editor/script_editor_debugger.cpp modules/gltf/gltf_accessor.cpp
+#: modules/gltf/gltf_light.cpp modules/visual_script/visual_script_nodes.cpp
+#: scene/3d/physics_body.cpp scene/resources/visual_shader_nodes.cpp
+msgid "Type"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+msgid "In Handle"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+msgid "Out Handle"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#: editor/import/resource_importer_texture.cpp
+#: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
+#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
+msgid "Stream"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Start Offset"
+msgstr "انتخاب حالت"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "End Offset"
+msgstr "ساختن گره"
+
+#: editor/animation_track_editor.cpp editor/editor_settings.cpp
+#: editor/import/resource_importer_scene.cpp
+#: editor/plugins/animation_player_editor_plugin.cpp editor/scene_tree_dock.cpp
+#: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
+#: scene/2d/sprite.cpp scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
+#: scene/animation/animation_blend_tree.cpp
+#: scene/resources/particles_material.cpp
+msgid "Animation"
+msgstr "انیمیشن"
+
+#: editor/animation_track_editor.cpp
+msgid "Easing"
+msgstr ""
 
 #: editor/animation_track_editor.cpp
 msgid "Anim Multi Change Keyframe Time"
@@ -1252,7 +1362,7 @@ msgstr "دِگرحالتِ روشن/خاموش این قطعه."
 msgid "Update Mode (How this property is set)"
 msgstr "حالت بروزرسانی (نحوه تنظیم این ویژگی)"
 
-#: editor/animation_track_editor.cpp
+#: editor/animation_track_editor.cpp scene/resources/gradient.cpp
 msgid "Interpolation Mode"
 msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
 
@@ -1265,8 +1375,70 @@ msgid "Remove this track."
 msgstr "این ترک را حذف کن."
 
 #: editor/animation_track_editor.cpp
-msgid "Time (s): "
+#, fuzzy
+msgid "Time (s):"
 msgstr "زمان(s): "
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Position:"
+msgstr "برداشتن موج"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Rotation:"
+msgstr "وضعیت:"
+
+#: editor/animation_track_editor.cpp
+#: editor/plugins/animation_tree_player_editor_plugin.cpp
+#: editor/plugins/multimesh_editor_plugin.cpp
+msgid "Scale:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#: editor/plugins/resource_preloader_editor_plugin.cpp
+#: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
+#: editor/scene_tree_editor.cpp editor/script_editor_debugger.cpp
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Type:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "(Invalid, expected type: %s)"
+msgstr "نام دارایی ایندکس نامعتبر."
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Easing:"
+msgstr "انتقال"
+
+#: editor/animation_track_editor.cpp
+msgid "In-Handle:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+msgid "Out-Handle:"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Stream:"
+msgstr "افزودن مورد"
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Start (s):"
+msgstr "شروع"
+
+#: editor/animation_track_editor.cpp
+msgid "End (s):"
+msgstr ""
+
+#: editor/animation_track_editor.cpp
+#, fuzzy
+msgid "Animation Clip:"
+msgstr "گره انیمیشن"
 
 #: editor/animation_track_editor.cpp
 msgid "Toggle Track Enabled"
@@ -1344,7 +1516,6 @@ msgid "Remove Anim Track"
 msgstr "حذف ترک انیمشین"
 
 #: editor/animation_track_editor.cpp editor/editor_settings.cpp
-#: editor/plugins/mesh_library_editor_plugin.cpp
 #: editor/plugins/path_editor_plugin.cpp
 #: editor/plugins/polygon_2d_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp
@@ -1354,16 +1525,6 @@ msgstr "حذف ترک انیمشین"
 #, fuzzy
 msgid "Editors"
 msgstr "ویرایشگر"
-
-#: editor/animation_track_editor.cpp editor/editor_settings.cpp
-#: editor/import/resource_importer_scene.cpp
-#: editor/plugins/animation_player_editor_plugin.cpp editor/scene_tree_dock.cpp
-#: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/2d/sprite.cpp scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
-#: scene/animation/animation_blend_tree.cpp
-#: scene/resources/particles_material.cpp
-msgid "Animation"
-msgstr "انیمیشن"
 
 #: editor/animation_track_editor.cpp editor/editor_settings.cpp
 #, fuzzy
@@ -1492,7 +1653,8 @@ msgid "Add Method Track Key"
 msgstr "افزودن تابع کلید میسر"
 
 #: editor/animation_track_editor.cpp
-msgid "Method not found in object: "
+#, fuzzy
+msgid "Method not found in object:"
 msgstr "تابع در شئ یافت نشد: "
 
 #: editor/animation_track_editor.cpp
@@ -1858,7 +2020,9 @@ msgid "Scene does not contain any script."
 msgstr "صحنه شامل هیچ فیلم نامه ای نیست."
 
 #: editor/connections_dialog.cpp editor/editor_autoload_settings.cpp
-#: editor/groups_editor.cpp editor/plugins/item_list_editor_plugin.cpp
+#: editor/groups_editor.cpp
+#: editor/plugins/animation_tree_player_editor_plugin.cpp
+#: editor/plugins/item_list_editor_plugin.cpp
 #: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
 msgid "Add"
 msgstr "افزودن"
@@ -1924,6 +2088,7 @@ msgstr "نمی توان سیگنال را متصل کرد"
 #: editor/project_settings_editor.cpp editor/property_editor.cpp
 #: editor/run_settings_dialog.cpp editor/settings_config_dialog.cpp
 #: modules/visual_script/visual_script_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Close"
 msgstr "بستن"
 
@@ -2099,8 +2264,8 @@ msgid "Open"
 msgstr "باز کن"
 
 #: editor/dependency_editor.cpp
-msgid "Owners Of:"
-msgstr "مالکانِ:"
+msgid "Owners of: %s (Total: %d)"
+msgstr ""
 
 #: editor/dependency_editor.cpp
 msgid ""
@@ -2401,7 +2566,7 @@ msgid "Bus Options"
 msgstr "گزینه های اتوبوس"
 
 #: editor/editor_audio_buses.cpp editor/filesystem_dock.cpp
-#: editor/scene_tree_dock.cpp
+#: editor/project_export.cpp editor/scene_tree_dock.cpp
 msgid "Duplicate"
 msgstr "تکثیر کردن"
 
@@ -2453,8 +2618,9 @@ msgstr "چیدمان اتوبوس صوتی را باز کنید"
 msgid "There is no '%s' file."
 msgstr "پرونده '٪ s' وجود ندارد."
 
-#: editor/editor_audio_buses.cpp editor/plugins/canvas_item_editor_plugin.cpp
-msgid "Layout"
+#: editor/editor_audio_buses.cpp
+#, fuzzy
+msgid "Layout:"
 msgstr "چیدمان"
 
 #: editor/editor_audio_buses.cpp
@@ -2658,6 +2824,24 @@ msgid "Choose"
 msgstr "انتخاب کنید"
 
 #: editor/editor_export.cpp
+msgid "Project export for platform:"
+msgstr ""
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Completed with errors."
+msgstr "کپی کردن مسیر node"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Completed successfully."
+msgstr "بسته با موفقیت نصب شد!"
+
+#: editor/editor_export.cpp
+msgid "Failed."
+msgstr ""
+
+#: editor/editor_export.cpp
 msgid "Storing File:"
 msgstr "ذخیره فایل:"
 
@@ -2668,6 +2852,31 @@ msgstr "هیچ الگوی صادراتی در مسیر مورد انتظار ی�
 #: editor/editor_export.cpp
 msgid "Packing"
 msgstr "بسته بندی"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Save PCK"
+msgstr "ذخیره در"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Cannot create file \"%s\"."
+msgstr "ناتوان در ساختن پوشه."
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Failed to export project files."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Can't open file to read from path \"%s\"."
+msgstr "ناتوان در گشودن پروژه"
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Save ZIP"
+msgstr "ذخیره در"
 
 #: editor/editor_export.cpp
 msgid ""
@@ -2785,8 +2994,29 @@ msgstr ""
 msgid "Custom release template not found."
 msgstr ""
 
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Prepare Template"
+msgstr "مدیریت صدور قالب ها"
+
+#: editor/editor_export.cpp platform/osx/export/export.cpp
+#, fuzzy
+msgid "The given export path doesn't exist."
+msgstr "پرونده موجود نیست."
+
 #: editor/editor_export.cpp platform/javascript/export/export.cpp
-msgid "Template file not found:"
+#, fuzzy
+msgid "Template file not found: \"%s\"."
+msgstr "طول انیمیشن (به ثانیه)."
+
+#: editor/editor_export.cpp
+#, fuzzy
+msgid "Failed to copy export template."
+msgstr "نام دارایی ایندکس نامعتبر."
+
+#: editor/editor_export.cpp platform/windows/export/export.cpp
+#: platform/x11/export/export.cpp
+msgid "PCK Embedding"
 msgstr ""
 
 #: editor/editor_export.cpp
@@ -2806,7 +3036,7 @@ msgid "Script Editor"
 msgstr "ویرایشگر اسکریپت"
 
 #: editor/editor_feature_profile.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp
+#: editor/plugins/asset_library_editor_plugin.cpp editor/project_manager.cpp
 msgid "Asset Library"
 msgstr "کتابخانه دارایی"
 
@@ -2958,13 +3188,14 @@ msgstr "ساختن جریان"
 #: editor/editor_feature_profile.cpp editor/editor_node.cpp
 #: editor/import/resource_importer_scene.cpp
 #: editor/plugins/theme_editor_plugin.cpp editor/project_manager.cpp
+#: modules/fbx/editor_scene_importer_fbx.cpp
 msgid "Import"
 msgstr "وارد کردن"
 
 #: editor/editor_feature_profile.cpp editor/project_export.cpp
-#: platform/android/export/export.cpp platform/javascript/export/export.cpp
-#: platform/osx/export/export.cpp platform/uwp/export/export.cpp
-#: platform/windows/export/export.cpp
+#: platform/android/export/export.cpp platform/android/export/export_plugin.cpp
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#: platform/uwp/export/export.cpp platform/windows/export/export.cpp
 msgid "Export"
 msgstr "خروجی"
 
@@ -3092,11 +3323,11 @@ msgstr "حالت صدور:"
 #: editor/import/resource_importer_texture.cpp
 #: editor/import/resource_importer_wav.cpp main/main.cpp
 #: modules/csg/csg_shape.cpp modules/visual_script/visual_script_nodes.cpp
-#: modules/visual_script/visual_script_yield_nodes.cpp scene/2d/light_2d.cpp
-#: scene/2d/physics_body_2d.cpp scene/2d/tile_map.cpp
+#: scene/2d/light_2d.cpp scene/2d/physics_body_2d.cpp scene/2d/tile_map.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/light.cpp scene/3d/physics_body.cpp
 #: scene/gui/control.cpp scene/gui/file_dialog.cpp
 #: scene/resources/environment.cpp scene/resources/material.cpp
+#: scene/resources/visual_shader.cpp
 #: servers/audio/effects/audio_effect_distortion.cpp
 #, fuzzy
 msgid "Mode"
@@ -3230,7 +3461,7 @@ msgstr ""
 
 #: editor/editor_help.cpp scene/2d/camera_2d.cpp scene/gui/control.cpp
 #: scene/gui/nine_patch_rect.cpp scene/resources/dynamic_font.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 msgid "Top"
 msgstr ""
 
@@ -3317,6 +3548,15 @@ msgid ""
 "There is currently no description for this method. Please help us by "
 "[color=$color][url=$url]contributing one[/url][/color]!"
 msgstr ""
+
+#: editor/editor_help.cpp editor/editor_settings.cpp
+#: editor/plugins/script_editor_plugin.cpp
+#: editor/plugins/script_text_editor.cpp
+#: modules/gdscript/editor/gdscript_highlighter.cpp
+#: modules/gdscript/gdscript_editor.cpp
+#, fuzzy
+msgid "Text Editor"
+msgstr "گشودن در ویرایشگر"
 
 #: editor/editor_help.cpp editor/editor_node.cpp editor/editor_settings.cpp
 #: editor/plugins/shader_editor_plugin.cpp
@@ -3409,15 +3649,17 @@ msgid "Label"
 msgstr ""
 
 #: editor/editor_inspector.cpp editor/editor_spin_slider.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Read Only"
 msgstr "تنها روش‌ها"
 
-#: editor/editor_inspector.cpp
+#: editor/editor_inspector.cpp editor/plugins/item_list_editor_plugin.cpp
 msgid "Checkable"
 msgstr ""
 
-#: editor/editor_inspector.cpp
+#: editor/editor_inspector.cpp editor/plugins/item_list_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Checked"
 msgstr "همه‌ی انتخاب ها"
@@ -3496,7 +3738,7 @@ msgstr "کپی برگزیده"
 #: editor/property_editor.cpp editor/scene_tree_dock.cpp
 #: editor/script_editor_debugger.cpp
 #: modules/gdnative/gdnative_library_editor_plugin.cpp scene/gui/line_edit.cpp
-#: scene/gui/text_edit.cpp
+#: scene/gui/text_edit.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Clear"
 msgstr "پاک کردن"
 
@@ -3527,7 +3769,7 @@ msgid "Up"
 msgstr "بالا"
 
 #: editor/editor_network_profiler.cpp editor/editor_node.cpp
-#: scene/main/node.cpp
+#: scene/main/node.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Node"
 msgstr "گره"
 
@@ -3550,6 +3792,10 @@ msgstr ""
 #: editor/editor_node.cpp editor/project_manager.cpp
 msgid "New Window"
 msgstr "چارچوب جدید"
+
+#: editor/editor_node.cpp editor/project_manager.cpp
+msgid "Unnamed Project"
+msgstr "پروژه بی نام"
 
 #: editor/editor_node.cpp
 msgid ""
@@ -3997,7 +4243,7 @@ msgstr ""
 #: editor/editor_node.cpp editor/import_dock.cpp
 #: editor/script_create_dialog.cpp
 msgid "Default"
-msgstr "پیشفرض"
+msgstr "پیش‌فرض"
 
 #: editor/editor_node.cpp editor/editor_resource_picker.cpp
 #: editor/plugins/script_editor_plugin.cpp editor/property_editor.cpp
@@ -4049,14 +4295,6 @@ msgid ""
 "Unable to write to file '%s', file in use, locked or lacking permissions."
 msgstr ""
 
-#: editor/editor_node.cpp editor/plugins/theme_editor_plugin.cpp
-msgid "Scene"
-msgstr "صحنه"
-
-#: editor/editor_node.cpp
-msgid "Scene Naming"
-msgstr ""
-
 #: editor/editor_node.cpp editor/editor_settings.cpp editor/scene_tree_dock.cpp
 #: servers/arvr/arvr_interface.cpp
 #, fuzzy
@@ -4095,15 +4333,6 @@ msgstr ""
 
 #: editor/editor_node.cpp editor/editor_settings.cpp
 msgid "Always Close Output On Stop"
-msgstr ""
-
-#: editor/editor_node.cpp editor/editor_settings.cpp
-#, fuzzy
-msgid "Auto Save"
-msgstr "ذخیره"
-
-#: editor/editor_node.cpp editor/editor_settings.cpp
-msgid "Save Before Running"
 msgstr ""
 
 #: editor/editor_node.cpp
@@ -4193,6 +4422,10 @@ msgid "Default Color Picker Mode"
 msgstr ""
 
 #: editor/editor_node.cpp editor/plugins/version_control_editor_plugin.cpp
+msgid "Version Control"
+msgstr "مهار نسخه"
+
+#: editor/editor_node.cpp editor/plugins/version_control_editor_plugin.cpp
 #, fuzzy
 msgid "Username"
 msgstr "تغییر نام"
@@ -4220,6 +4453,10 @@ msgstr ""
 #: editor/editor_node.cpp
 msgid "Add a new scene."
 msgstr "افزودن صحنه جدید."
+
+#: editor/editor_node.cpp editor/plugins/theme_editor_plugin.cpp
+msgid "Scene"
+msgstr "صحنه"
 
 #: editor/editor_node.cpp
 msgid "Go to previously opened scene."
@@ -4567,7 +4804,9 @@ msgstr "تغییر بده"
 msgid "Hide Update Spinner"
 msgstr ""
 
-#: editor/editor_node.cpp
+#: editor/editor_node.cpp editor/editor_settings.cpp
+#: editor/fileserver/editor_file_server.cpp
+#: modules/fbx/editor_scene_importer_fbx.cpp
 msgid "FileSystem"
 msgstr "سامانه پرونده"
 
@@ -4652,6 +4891,7 @@ msgstr "استخراج پرونده های زیر از بسته بندی انج�
 
 #: editor/editor_node.cpp editor/plugins/script_editor_plugin.cpp
 #: editor/plugins/shader_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Reload"
 msgstr ""
 
@@ -4804,13 +5044,6 @@ msgstr ""
 msgid "Frame #:"
 msgstr ""
 
-#: editor/editor_profiler.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/2d/particles_2d.cpp scene/3d/cpu_particles.cpp scene/3d/particles.cpp
-#: scene/resources/particles_material.cpp servers/visual_server.cpp
-#, fuzzy
-msgid "Time"
-msgstr "زمان:"
-
 #: editor/editor_profiler.cpp
 #, fuzzy
 msgid "Calls"
@@ -4836,6 +5069,7 @@ msgid "Edit Text:"
 msgstr "عضوها"
 
 #: editor/editor_properties.cpp editor/script_create_dialog.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "On"
 msgstr ""
 
@@ -4886,11 +5120,13 @@ msgid "Selected node is not a Viewport!"
 msgstr ""
 
 #: editor/editor_properties_array_dict.cpp
-msgid "Size: "
+#: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+msgid "Size:"
 msgstr ""
 
 #: editor/editor_properties_array_dict.cpp
-msgid "Page: "
+msgid "Page:"
 msgstr ""
 
 #: editor/editor_properties_array_dict.cpp
@@ -4989,6 +5225,11 @@ msgid ""
 "as runnable."
 msgstr ""
 
+#: editor/editor_run_native.cpp
+#, fuzzy
+msgid "Project Run"
+msgstr "پروژه"
+
 #: editor/editor_run_script.cpp
 msgid "Write your logic in the _run() method."
 msgstr ""
@@ -5083,7 +5324,6 @@ msgid "Max Array Dictionary Items Per Page"
 msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp editor/plugins/text_editor.cpp
 #: editor/plugins/theme_editor_plugin.cpp scene/gui/control.cpp
 #: scene/register_scene_types.cpp
 msgid "Theme"
@@ -5140,11 +5380,6 @@ msgstr "عضوها"
 #, fuzzy
 msgid "Show Script Button"
 msgstr "دکمهٔ راست."
-
-#: editor/editor_settings.cpp editor/fileserver/editor_file_server.cpp
-#, fuzzy
-msgid "Filesystem"
-msgstr "سامانه پرونده"
 
 #: editor/editor_settings.cpp
 #, fuzzy
@@ -5219,8 +5454,8 @@ msgstr "زیرمنبع‌ها:"
 msgid "Color Theme"
 msgstr "عضوها"
 
-#: editor/editor_settings.cpp editor/plugins/script_text_editor.cpp
-#: editor/plugins/text_editor.cpp
+#: editor/editor_settings.cpp scene/3d/label_3d.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Line Spacing"
 msgstr ""
 
@@ -5246,19 +5481,10 @@ msgstr ""
 msgid "Highlight Type Safe Lines"
 msgstr ""
 
-#: editor/editor_settings.cpp modules/gdscript/gdscript_editor.cpp
-#: modules/mono/csharp_script.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Indent"
 msgstr "اندیس:"
-
-#: editor/editor_settings.cpp editor/script_editor_debugger.cpp
-#: modules/gdscript/gdscript_editor.cpp modules/gltf/gltf_accessor.cpp
-#: modules/gltf/gltf_light.cpp modules/mono/csharp_script.cpp
-#: modules/visual_script/visual_script_nodes.cpp scene/3d/physics_body.cpp
-#: scene/resources/visual_shader_nodes.cpp
-msgid "Type"
-msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_text_editor.cpp
 msgid "Auto Indent"
@@ -5280,7 +5506,9 @@ msgid "Draw Spaces"
 msgstr "فراخوانی"
 
 #: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
-#: editor/plugins/tile_set_editor_plugin.cpp scene/main/scene_tree.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/tile_map.cpp
+#: scene/main/scene_tree.cpp scene/resources/world.cpp
+#: scene/resources/world_2d.cpp
 msgid "Navigation"
 msgstr ""
 
@@ -5362,7 +5590,6 @@ msgid "Show Members Overview"
 msgstr ""
 
 #: editor/editor_settings.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/shader_editor_plugin.cpp
 #, fuzzy
 msgid "Files"
 msgstr "پرونده:"
@@ -5380,6 +5607,14 @@ msgid "Restore Scripts On Load"
 msgstr ""
 
 #: editor/editor_settings.cpp
+msgid "Auto Reload And Parse Scripts On Save"
+msgstr ""
+
+#: editor/editor_settings.cpp
+msgid "Auto Reload Scripts On External Change"
+msgstr ""
+
+#: editor/editor_settings.cpp
 msgid "Create Signal Callbacks"
 msgstr ""
 
@@ -5387,7 +5622,7 @@ msgstr ""
 msgid "Sort Members Outline Alphabetically"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Cursor"
 msgstr ""
 
@@ -5399,17 +5634,24 @@ msgstr ""
 msgid "Block Caret"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp
 msgid "Caret Blink"
 msgstr ""
 
-#: editor/editor_settings.cpp scene/gui/line_edit.cpp
+#: editor/editor_settings.cpp
 msgid "Caret Blink Speed"
 msgstr ""
 
 #: editor/editor_settings.cpp
 msgid "Right Click Moves Caret"
 msgstr ""
+
+#: editor/editor_settings.cpp modules/gdscript/gdscript.cpp
+#: modules/gdscript/gdscript_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion"
+msgstr "کپی برگزیده"
 
 #: editor/editor_settings.cpp
 msgid "Idle Parse Delay"
@@ -5442,6 +5684,10 @@ msgid "Add Type Hints"
 msgstr "پیدا کردن نوع گره"
 
 #: editor/editor_settings.cpp
+msgid "Use Single Quotes"
+msgstr ""
+
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Show Help Index"
 msgstr "اندیس:"
@@ -5458,14 +5704,18 @@ msgstr ""
 msgid "Help Title Font Size"
 msgstr ""
 
-#: editor/editor_settings.cpp editor/plugins/mesh_library_editor_plugin.cpp
-#: modules/gridmap/grid_map_editor_plugin.cpp
+#: editor/editor_settings.cpp modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Grid Map"
 msgstr ""
 
 #: editor/editor_settings.cpp modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Pick Distance"
 msgstr ""
+
+#: editor/editor_settings.cpp editor/plugins/tile_map_editor_plugin.cpp
+#, fuzzy
+msgid "Preview Size"
+msgstr "به‌روزرسانی از صحنه"
 
 #: editor/editor_settings.cpp
 msgid "Primary Grid Color"
@@ -5479,6 +5729,36 @@ msgstr ""
 #, fuzzy
 msgid "Selection Box Color"
 msgstr "تنها در قسمت انتخاب شده"
+
+#: editor/editor_settings.cpp editor/plugins/path_editor_plugin.cpp
+#: editor/spatial_editor_gizmos.cpp modules/csg/csg_gizmos.cpp
+msgid "3D Gizmos"
+msgstr ""
+
+#: editor/editor_settings.cpp editor/plugins/path_editor_plugin.cpp
+#: editor/spatial_editor_gizmos.cpp modules/csg/csg_gizmos.cpp
+msgid "Gizmo Colors"
+msgstr ""
+
+#: editor/editor_settings.cpp
+#, fuzzy
+msgid "Instanced"
+msgstr "نصب کردن"
+
+#: editor/editor_settings.cpp modules/gltf/gltf_node.cpp
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Joint"
+msgstr "برداشتن نقطه"
+
+#: editor/editor_settings.cpp scene/2d/collision_shape_2d.cpp
+#: scene/2d/cpu_particles_2d.cpp scene/2d/touch_screen_button.cpp
+#: scene/3d/collision_shape.cpp scene/3d/cpu_particles.cpp
+#: scene/3d/occluder.cpp scene/3d/spring_arm.cpp
+#: scene/resources/particles_material.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
+msgid "Shape"
+msgstr ""
 
 #: editor/editor_settings.cpp
 msgid "Primary Grid Steps"
@@ -5516,17 +5796,17 @@ msgstr "ترجیحات"
 msgid "Grid YZ Plane"
 msgstr "ترجیحات"
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default FOV"
 msgstr "پیشفرض"
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default Z Near"
 msgstr "پیشفرض"
 
-#: editor/editor_settings.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/editor_settings.cpp
 #, fuzzy
 msgid "Default Z Far"
 msgstr "پیشفرض"
@@ -5765,6 +6045,15 @@ msgid "Screen"
 msgstr ""
 
 #: editor/editor_settings.cpp
+#, fuzzy
+msgid "Auto Save"
+msgstr "ذخیره"
+
+#: editor/editor_settings.cpp
+msgid "Save Before Running"
+msgstr ""
+
+#: editor/editor_settings.cpp
 msgid "Font Size"
 msgstr ""
 
@@ -5795,19 +6084,22 @@ msgstr ""
 
 #: editor/editor_settings.cpp editor/fileserver/editor_file_server.cpp
 #: main/main.cpp modules/mono/mono_gd/gd_mono.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Port"
 msgstr ""
 
+#. TRANSLATORS: Project Manager here refers to the tool used to create/manage Godot projects.
 #: editor/editor_settings.cpp
 msgid "Project Manager"
 msgstr "مدیر پروژه"
 
+#. TRANSLATORS: Project Manager here refers to the tool used to create/manage Godot projects.
 #: editor/editor_settings.cpp
 #, fuzzy
 msgid "Sorting Order"
 msgstr "ساختن پوشه"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Symbol Color"
 msgstr ""
 
@@ -5843,29 +6135,30 @@ msgstr "ذخیره فایل:"
 
 #: editor/editor_settings.cpp platform/javascript/export/export.cpp
 #: platform/uwp/export/export.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Background Color"
 msgstr "نام نامعتبر."
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Completion Background Color"
 msgstr "نام نامعتبر."
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Completion Selected Color"
 msgstr "همه‌ی انتخاب ها"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Existing Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Scroll Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Completion Font Color"
 msgstr ""
 
@@ -5873,21 +6166,21 @@ msgstr ""
 msgid "Text Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Line Number Color"
 msgstr "شماره خط:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Safe Line Number Color"
 msgstr "شماره خط:"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Caret Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Caret Background Color"
 msgstr "نام نامعتبر."
@@ -5897,16 +6190,16 @@ msgstr "نام نامعتبر."
 msgid "Text Selected Color"
 msgstr "حذف انتخاب شده"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Selection Color"
 msgstr "تنها در قسمت انتخاب شده"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Brace Mismatch Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Current Line Color"
 msgstr ""
 
@@ -5914,42 +6207,42 @@ msgstr ""
 msgid "Line Length Guideline Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Word Highlighted Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Number Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Function Color"
 msgstr "توابع"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Member Variable Color"
 msgstr "تغییر متغیر"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Mark Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Bookmark Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Breakpoint Color"
 msgstr "حذف کن"
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Executing Line Color"
 msgstr ""
 
-#: editor/editor_settings.cpp
+#: editor/editor_settings.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Code Folding Color"
 msgstr ""
 
@@ -5971,6 +6264,11 @@ msgstr ""
 #, fuzzy
 msgid "Flat"
 msgstr "تخت 1"
+
+#: editor/editor_spin_slider.cpp
+#, fuzzy
+msgid "Hide Slider"
+msgstr "گره انیمیشن"
 
 #: editor/editor_sub_scene.cpp
 msgid "Select Node(s) to Import"
@@ -6587,16 +6885,6 @@ msgstr "جایگزینی همه"
 
 #: editor/find_in_files.cpp
 #, fuzzy
-msgid "Find: "
-msgstr "یافتن"
-
-#: editor/find_in_files.cpp
-#, fuzzy
-msgid "Replace: "
-msgstr "جایگزینی"
-
-#: editor/find_in_files.cpp
-#, fuzzy
 msgid "Replace All (NO UNDO)"
 msgstr "جایگزینی همه"
 
@@ -6710,14 +6998,19 @@ msgid "Delimiter"
 msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
+#, fuzzy
+msgid "ColorCorrect"
+msgstr "افزودن وظیفه"
+
+#: editor/import/resource_importer_layered_texture.cpp
 msgid "No BPTC If RGB"
 msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
 #: editor/import/resource_importer_texture.cpp scene/2d/cpu_particles_2d.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/sprite_3d.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
 #: scene/resources/material.cpp scene/resources/particles_material.cpp
-#: scene/resources/texture.cpp
+#: scene/resources/texture.cpp scene/resources/visual_shader.cpp
 msgid "Flags"
 msgstr ""
 
@@ -6729,7 +7022,7 @@ msgstr ""
 
 #: editor/import/resource_importer_layered_texture.cpp
 #: editor/import/resource_importer_texture.cpp scene/2d/light_2d.cpp
-#: scene/gui/control.cpp scene/resources/navigation_mesh.cpp
+#: scene/gui/control.cpp
 #, fuzzy
 msgid "Filter"
 msgstr "صافی:"
@@ -6875,11 +7168,6 @@ msgstr ""
 msgid "Materials"
 msgstr "تغییر بده"
 
-#: editor/import/resource_importer_scene.cpp platform/osx/export/export.cpp
-#, fuzzy
-msgid "Location"
-msgstr "بومی‌سازی"
-
 #: editor/import/resource_importer_scene.cpp
 #, fuzzy
 msgid "Keep On Reimport"
@@ -6936,17 +7224,18 @@ msgstr "انتقال را در انیمیشن تغییر بده"
 msgid "Optimizer"
 msgstr "بهینه‌سازی کن"
 
-#: editor/import/resource_importer_scene.cpp main/main.cpp
+#: editor/import/resource_importer_scene.cpp
+#: editor/plugins/item_list_editor_plugin.cpp main/main.cpp
 #: modules/mono/mono_gd/gd_mono.cpp platform/javascript/export/export.cpp
 #: platform/osx/export/export.cpp scene/2d/camera_2d.cpp scene/2d/light_2d.cpp
 #: scene/2d/navigation_polygon.cpp scene/2d/ray_cast_2d.cpp scene/2d/sprite.cpp
 #: scene/2d/y_sort.cpp scene/3d/audio_stream_player_3d.cpp
 #: scene/3d/baked_lightmap.cpp scene/3d/interpolated_camera.cpp
 #: scene/3d/light.cpp scene/3d/navigation_mesh_instance.cpp
-#: scene/3d/physics_joint.cpp scene/3d/ray_cast.cpp scene/3d/sprite_3d.cpp
-#: scene/gui/graph_edit.cpp scene/gui/rich_text_label.cpp
-#: scene/resources/curve.cpp scene/resources/environment.cpp
-#: scene/resources/material.cpp
+#: scene/3d/physics_joint.cpp scene/3d/ray_cast.cpp scene/3d/skeleton.cpp
+#: scene/3d/sprite_3d.cpp scene/gui/graph_edit.cpp
+#: scene/gui/rich_text_label.cpp scene/resources/curve.cpp
+#: scene/resources/environment.cpp scene/resources/material.cpp
 #, fuzzy
 msgid "Enabled"
 msgstr "روشن"
@@ -6996,7 +7285,7 @@ msgid "Generating Lightmaps"
 msgstr ""
 
 #: editor/import/resource_importer_scene.cpp
-msgid "Generating for Mesh: "
+msgid "Generating for Mesh:"
 msgstr ""
 
 #: editor/import/resource_importer_scene.cpp
@@ -7023,6 +7312,26 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
+#: editor/import/resource_importer_texture.cpp
+msgid ""
+"%s: Texture detected as used as a normal map in 3D. Enabling red-green "
+"texture compression to reduce memory usage (blue channel is discarded)."
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+msgid ""
+"%s: Texture detected as used in 3D. Enabling filter, repeat, mipmap "
+"generation and VRAM texture compression."
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+msgid "2D, Detect 3D"
+msgstr ""
+
+#: editor/import/resource_importer_texture.cpp
+msgid "2D Pixel"
+msgstr ""
+
 #: editor/import/resource_importer_texture.cpp scene/resources/texture.cpp
 msgid "Lossy Quality"
 msgstr ""
@@ -7036,7 +7345,8 @@ msgstr "انتخاب حالت"
 msgid "BPTC LDR"
 msgstr ""
 
-#: editor/import/resource_importer_texture.cpp scene/2d/cpu_particles_2d.cpp
+#: editor/import/resource_importer_texture.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/mesh_instance_2d.cpp scene/2d/multimesh_instance_2d.cpp
 #: scene/2d/particles_2d.cpp scene/2d/sprite.cpp scene/resources/style_box.cpp
 msgid "Normal Map"
@@ -7066,12 +7376,6 @@ msgstr "برداشتن انتخاب شده"
 
 #: editor/import/resource_importer_texture.cpp
 msgid "Normal Map Invert Y"
-msgstr ""
-
-#: editor/import/resource_importer_texture.cpp
-#: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
-#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
-msgid "Stream"
 msgstr ""
 
 #: editor/import/resource_importer_texture.cpp
@@ -7776,11 +8080,6 @@ msgstr ""
 
 #: editor/plugins/animation_player_editor_plugin.cpp
 #, fuzzy
-msgid "No animation to copy!"
-msgstr "بزرگنمایی در انیمیشن."
-
-#: editor/plugins/animation_player_editor_plugin.cpp
-#, fuzzy
 msgid "No animation resource on clipboard!"
 msgstr "در مسیرِ منبع نیست."
 
@@ -7791,11 +8090,6 @@ msgstr ""
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Paste Animation"
 msgstr ""
-
-#: editor/plugins/animation_player_editor_plugin.cpp
-#, fuzzy
-msgid "No animation to edit!"
-msgstr "گره انیمیشن"
 
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Play selected animation backwards from current pos. (A)"
@@ -7835,6 +8129,10 @@ msgid "New"
 msgstr ""
 
 #: editor/plugins/animation_player_editor_plugin.cpp
+msgid "Paste As Reference"
+msgstr ""
+
+#: editor/plugins/animation_player_editor_plugin.cpp
 #, fuzzy
 msgid "Edit Transitions..."
 msgstr "انتقال‌ها"
@@ -7865,18 +8163,21 @@ msgstr ""
 msgid "Directions"
 msgstr "توضیح"
 
+#. TRANSLATORS: Opposite of "Future", refers to a direction in animation onion skinning.
 #: editor/plugins/animation_player_editor_plugin.cpp
 #, fuzzy
 msgid "Past"
 msgstr "چسباندن"
 
+#. TRANSLATORS: Opposite of "Past", refers to a direction in animation onion skinning.
 #: editor/plugins/animation_player_editor_plugin.cpp
 msgid "Future"
 msgstr ""
 
 #: editor/plugins/animation_player_editor_plugin.cpp modules/csg/csg_shape.cpp
 #: scene/3d/collision_polygon.cpp scene/main/scene_tree.cpp
-#: scene/resources/material.cpp servers/audio/effects/audio_effect_phaser.cpp
+#: scene/resources/material.cpp scene/resources/primitive_meshes.cpp
+#: servers/audio/effects/audio_effect_phaser.cpp
 msgid "Depth"
 msgstr ""
 
@@ -8034,7 +8335,7 @@ msgstr ""
 
 #: editor/plugins/animation_state_machine_editor.cpp
 #, fuzzy
-msgid "Transition: "
+msgid "Transition:"
 msgstr "انتقال"
 
 #: editor/plugins/animation_state_machine_editor.cpp
@@ -8053,11 +8354,6 @@ msgid "New name:"
 msgstr ""
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: editor/plugins/multimesh_editor_plugin.cpp
-msgid "Scale:"
-msgstr ""
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "Fade In (s):"
 msgstr ""
 
@@ -8066,13 +8362,8 @@ msgid "Fade Out (s):"
 msgstr ""
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/visual_shader.cpp
 msgid "Blend"
-msgstr ""
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
-#: servers/audio/effects/audio_effect_compressor.cpp
-msgid "Mix"
 msgstr ""
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
@@ -8106,10 +8397,6 @@ msgstr ""
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
 msgid "X-Fade Time (s):"
-msgstr ""
-
-#: editor/plugins/animation_tree_player_editor_plugin.cpp
-msgid "Current:"
 msgstr ""
 
 #: editor/plugins/animation_tree_player_editor_plugin.cpp
@@ -8358,6 +8645,11 @@ msgid "License (Z-A)"
 msgstr "مجوز"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
+#, fuzzy
+msgid "Loading..."
+msgstr "بارگیری"
+
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgctxt "Pagination"
 msgid "First"
 msgstr ""
@@ -8426,9 +8718,8 @@ msgid "Testing"
 msgstr "آزمودن"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
-#, fuzzy
-msgid "Loading..."
-msgstr "بارگیری"
+msgid "Failed to get repository configuration."
+msgstr ""
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Assets ZIP File"
@@ -8483,7 +8774,7 @@ msgid "Select lightmap bake file:"
 msgstr "انتخاب پرونده قالب"
 
 #: editor/plugins/camera_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp
+#: editor/plugins/spatial_editor_plugin.cpp scene/resources/mesh_library.cpp
 msgid "Preview"
 msgstr ""
 
@@ -8998,6 +9289,7 @@ msgstr ""
 msgid "Clear Custom Bones"
 msgstr "پخش سفارشی صحنه"
 
+#. TRANSLATORS: Noun, name of the 2D/3D View menus.
 #: editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "View"
@@ -9060,6 +9352,10 @@ msgstr ""
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Preview Canvas Scale"
 msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Layout"
+msgstr "چیدمان"
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Translation mask for inserting keys."
@@ -9390,13 +9686,36 @@ msgstr ""
 msgid "Toggle Grid Snap"
 msgstr "یک Breakpoint درج کن"
 
+#: editor/plugins/item_list_editor_plugin.cpp editor/project_export.cpp
+#: scene/3d/label_3d.cpp scene/gui/button.cpp scene/gui/dialogs.cpp
+#: scene/gui/label.cpp scene/gui/line_edit.cpp scene/gui/link_button.cpp
+#: scene/gui/rich_text_label.cpp scene/gui/text_edit.cpp
+#: scene/resources/primitive_meshes.cpp
+msgid "Text"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp main/main.cpp
+#: platform/osx/export/export.cpp platform/windows/export/export.cpp
+#: scene/gui/button.cpp scene/gui/item_list.cpp
+msgid "Icon"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+msgid "ID"
+msgstr ""
+
+#: editor/plugins/item_list_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Separator"
+msgstr "شمارش ها:"
+
 #: editor/plugins/item_list_editor_plugin.cpp
 msgid "Item %d"
 msgstr ""
 
-#: editor/plugins/item_list_editor_plugin.cpp scene/gui/item_list.cpp
-#: scene/gui/menu_button.cpp scene/gui/option_button.cpp
-#: scene/gui/popup_menu.cpp
+#: editor/plugins/item_list_editor_plugin.cpp
 msgid "Items"
 msgstr ""
 
@@ -9504,7 +9823,8 @@ msgstr ""
 #: editor/plugins/mesh_instance_editor_plugin.cpp modules/csg/csg_shape.cpp
 #: modules/gltf/gltf_mesh.cpp modules/gltf/gltf_node.cpp
 #: scene/2d/mesh_instance_2d.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/mesh_instance.cpp scene/resources/multimesh.cpp
+#: scene/3d/mesh_instance.cpp scene/resources/mesh_library.cpp
+#: scene/resources/multimesh.cpp scene/resources/primitive_meshes.cpp
 #: scene/resources/texture.cpp
 msgid "Mesh"
 msgstr ""
@@ -9650,13 +9970,6 @@ msgstr "تغییر دگرشکل متحرک"
 #, fuzzy
 msgid "Apply with Transforms"
 msgstr "تغییر دگرشکل متحرک"
-
-#: editor/plugins/mesh_library_editor_plugin.cpp
-#: editor/plugins/tile_map_editor_plugin.cpp
-#: modules/gridmap/grid_map_editor_plugin.cpp
-#, fuzzy
-msgid "Preview Size"
-msgstr "به‌روزرسانی از صحنه"
 
 #: editor/plugins/multimesh_editor_plugin.cpp
 msgid "No mesh source specified (and no MultiMesh set in node)."
@@ -9824,8 +10137,9 @@ msgid "Volume"
 msgstr ""
 
 #: editor/plugins/particles_editor_plugin.cpp
-msgid "Emission Source: "
-msgstr ""
+#, fuzzy
+msgid "Emission Source:"
+msgstr "انتقال را در انیمیشن تغییر بده"
 
 #: editor/plugins/particles_editor_plugin.cpp
 msgid "A processor material of type 'ParticlesMaterial' is required."
@@ -9974,18 +10288,6 @@ msgstr ""
 msgid "Split Segment (in curve)"
 msgstr ""
 
-#: editor/plugins/path_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/spatial_editor_gizmos.cpp
-#: modules/csg/csg_gizmos.cpp
-msgid "3D Gizmos"
-msgstr ""
-
-#: editor/plugins/path_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/spatial_editor_gizmos.cpp
-#: modules/csg/csg_gizmos.cpp
-msgid "Gizmo Colors"
-msgstr ""
-
 #: editor/plugins/physical_bone_plugin.cpp
 #, fuzzy
 msgid "Move Joint"
@@ -10078,13 +10380,13 @@ msgstr ""
 msgid "Points"
 msgstr "برداشتن نقطه"
 
-#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/navigation_polygon.cpp
-#: scene/2d/polygon_2d.cpp scene/resources/navigation_mesh.cpp
+#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/polygon_2d.cpp
+#: scene/resources/navigation_mesh.cpp
 #, fuzzy
 msgid "Polygons"
 msgstr "ویرایش سیگنال"
 
-#: editor/plugins/polygon_2d_editor_plugin.cpp scene/2d/polygon_2d.cpp
+#: editor/plugins/polygon_2d_editor_plugin.cpp scene/3d/skeleton.cpp
 msgid "Bones"
 msgstr ""
 
@@ -10166,8 +10468,7 @@ msgid "Grid Settings"
 msgstr "ترجیحات"
 
 #: editor/plugins/polygon_2d_editor_plugin.cpp modules/csg/csg_shape.cpp
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Snap"
 msgstr ""
 
@@ -10203,6 +10504,10 @@ msgstr ""
 msgid "Sync Bones to Polygon"
 msgstr ""
 
+#: editor/plugins/ray_cast_2d_editor_plugin.cpp
+msgid "Set cast_to"
+msgstr ""
+
 #: editor/plugins/resource_preloader_editor_plugin.cpp
 msgid "ERROR: Couldn't load resource!"
 msgstr ""
@@ -10234,13 +10539,6 @@ msgid "Instance:"
 msgstr ""
 
 #: editor/plugins/resource_preloader_editor_plugin.cpp
-#: editor/plugins/theme_editor_plugin.cpp editor/project_settings_editor.cpp
-#: editor/scene_tree_editor.cpp editor/script_editor_debugger.cpp
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Type:"
-msgstr ""
-
-#: editor/plugins/resource_preloader_editor_plugin.cpp
 #: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
 msgid "Open in Editor"
 msgstr "گشودن در ویرایشگر"
@@ -10248,11 +10546,6 @@ msgstr "گشودن در ویرایشگر"
 #: editor/plugins/resource_preloader_editor_plugin.cpp
 msgid "Load Resource"
 msgstr ""
-
-#: editor/plugins/resource_preloader_editor_plugin.cpp
-#, fuzzy
-msgid "ResourcePreloader"
-msgstr "منبع"
 
 #: editor/plugins/room_manager_editor_plugin.cpp
 msgid "Flip Portals"
@@ -10296,11 +10589,6 @@ msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
 msgid "Close and save changes?"
-msgstr ""
-
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/shader_editor_plugin.cpp
-msgid "Auto Reload Scripts On External Change"
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
@@ -10391,10 +10679,6 @@ msgid "%s Class Reference"
 msgstr ""
 
 #: editor/plugins/script_editor_plugin.cpp
-msgid "Auto Reload And Parse Scripts On Save"
-msgstr ""
-
-#: editor/plugins/script_editor_plugin.cpp
 #: editor/plugins/script_text_editor.cpp
 msgid "Find Next"
 msgstr ""
@@ -10446,8 +10730,7 @@ msgid "Previous Script"
 msgstr "زبانه قبلی"
 
 #: editor/plugins/script_editor_plugin.cpp
-#: modules/gdnative/videodecoder/video_stream_gdnative.cpp
-#: modules/theora/video_stream_theora.cpp modules/webm/video_stream_webm.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "File"
 msgstr ""
 
@@ -10695,7 +10978,8 @@ msgid "Convert Case"
 msgstr ""
 
 #: editor/plugins/script_text_editor.cpp editor/plugins/text_editor.cpp
-#: scene/gui/label.cpp
+#: scene/3d/label_3d.cpp scene/gui/label.cpp
+#: scene/resources/primitive_meshes.cpp
 msgid "Uppercase"
 msgstr ""
 
@@ -11012,13 +11296,16 @@ msgstr "وضعیت:"
 msgid "Translate"
 msgstr "ترجمه‌ها"
 
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Scaling: "
-msgstr ""
-
+#. TRANSLATORS: Refers to changing the scale of a node in the 3D editor.
 #: editor/plugins/spatial_editor_plugin.cpp
 #, fuzzy
-msgid "Translating: "
+msgid "Scaling:"
+msgstr "بومی"
+
+#. TRANSLATORS: Refers to changing the position of a node in the 3D editor.
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Translating:"
 msgstr "انتقال"
 
 #: editor/plugins/spatial_editor_plugin.cpp
@@ -11040,10 +11327,6 @@ msgstr "سوییچ"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Yaw:"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Size:"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
@@ -11493,11 +11776,6 @@ msgstr "بومی‌سازی"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 #, fuzzy
-msgid "Instanced"
-msgstr "نصب کردن"
-
-#: editor/plugins/spatial_editor_plugin.cpp
-#, fuzzy
 msgid "Unnamed Gizmo"
 msgstr "پروژه بی نام"
 
@@ -11555,7 +11833,7 @@ msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
 #, fuzzy
-msgid "Convert to Mesh2D"
+msgid "Convert to MeshInstance2D"
 msgstr "اتصال به گره:"
 
 #: editor/plugins/sprite_editor_plugin.cpp
@@ -11589,15 +11867,16 @@ msgid "Sprite"
 msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Simplification: "
+#, fuzzy
+msgid "Simplification:"
+msgstr "افزودن وظیفه"
+
+#: editor/plugins/sprite_editor_plugin.cpp
+msgid "Shrink (Pixels):"
 msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
-msgid "Shrink (Pixels): "
-msgstr ""
-
-#: editor/plugins/sprite_editor_plugin.cpp
-msgid "Grow (Pixels): "
+msgid "Grow (Pixels):"
 msgstr ""
 
 #: editor/plugins/sprite_editor_plugin.cpp
@@ -11725,6 +12004,17 @@ msgid "Vertical:"
 msgstr ""
 
 #: editor/plugins/sprite_frames_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+#, fuzzy
+msgid "Separation:"
+msgstr "شمارش ها:"
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+#: editor/plugins/texture_region_editor_plugin.cpp
+msgid "Offset:"
+msgstr ""
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
 #, fuzzy
 msgid "Select/Clear All Frames"
 msgstr "انتخاب همه"
@@ -11762,17 +12052,8 @@ msgid "Auto Slice"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
-msgid "Offset:"
-msgstr ""
-
-#: editor/plugins/texture_region_editor_plugin.cpp
 msgid "Step:"
 msgstr ""
-
-#: editor/plugins/texture_region_editor_plugin.cpp
-#, fuzzy
-msgid "Separation:"
-msgstr "شمارش ها:"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
 msgid "TextureRegion"
@@ -11986,6 +12267,11 @@ msgid ""
 msgstr ""
 
 #: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Remove Type"
+msgstr "حذف قالب"
+
+#: editor/plugins/theme_editor_plugin.cpp
 msgid ""
 "Select a theme type from the list to edit its items.\n"
 "You can add a custom type or import a type with its items from another theme."
@@ -12026,6 +12312,16 @@ msgid ""
 "This theme type is empty.\n"
 "Add more items to it manually or by importing from another theme."
 msgstr ""
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Add Theme Type"
+msgstr "افزودن مورد"
+
+#: editor/plugins/theme_editor_plugin.cpp
+#, fuzzy
+msgid "Remove Theme Type"
+msgstr "حذف قالب"
 
 #: editor/plugins/theme_editor_plugin.cpp
 #, fuzzy
@@ -12309,7 +12605,7 @@ msgstr "دکمهٔ میانی."
 msgid "Disabled Button"
 msgstr "غیرفعال شده"
 
-#: editor/plugins/theme_editor_preview.cpp
+#: editor/plugins/theme_editor_preview.cpp scene/resources/mesh_library.cpp
 msgid "Item"
 msgstr ""
 
@@ -12340,6 +12636,7 @@ msgid "Named Separator"
 msgstr ""
 
 #: editor/plugins/theme_editor_preview.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Submenu"
 msgstr ""
 
@@ -12521,8 +12818,9 @@ msgid "Palette Min Width"
 msgstr ""
 
 #: editor/plugins/tile_map_editor_plugin.cpp
-msgid "Palette Item Hseparation"
-msgstr ""
+#, fuzzy
+msgid "Palette Item H Separation"
+msgstr "حذف برگزیده"
 
 #: editor/plugins/tile_map_editor_plugin.cpp
 #, fuzzy
@@ -12606,8 +12904,7 @@ msgid "Select the previous shape, subtile, or Tile."
 msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp scene/2d/sprite.cpp
-#: scene/3d/sprite_3d.cpp scene/resources/navigation_mesh.cpp
-#: scene/resources/texture.cpp
+#: scene/3d/sprite_3d.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Region"
 msgstr "گره انیمیشن"
@@ -12637,12 +12934,6 @@ msgstr ""
 #, fuzzy
 msgid "Priority"
 msgstr "حالت صدور:"
-
-#: editor/plugins/tile_set_editor_plugin.cpp main/main.cpp
-#: platform/osx/export/export.cpp platform/windows/export/export.cpp
-#: scene/gui/button.cpp scene/gui/item_list.cpp
-msgid "Icon"
-msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp scene/2d/node_2d.cpp
 #, fuzzy
@@ -12924,6 +13215,140 @@ msgstr "انتخاب شده را تغییر مقیاس بده"
 #: editor/plugins/tile_set_editor_plugin.cpp
 msgid "This property can't be changed."
 msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Snap Options"
+msgstr "تنها در قسمت انتخاب شده"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/animated_sprite.cpp
+#: scene/2d/camera_2d.cpp scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp
+#: scene/2d/parallax_background.cpp scene/2d/parallax_layer.cpp
+#: scene/2d/path_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/label_3d.cpp scene/3d/path.cpp
+#: scene/3d/physics_body.cpp scene/3d/soft_body.cpp scene/3d/sprite_3d.cpp
+#: scene/gui/graph_node.cpp scene/gui/rich_text_effect.cpp
+#: scene/main/canvas_layer.cpp scene/resources/material.cpp
+#: scene/resources/particles_material.cpp scene/resources/style_box.cpp
+msgid "Offset"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp editor/rename_dialog.cpp
+#: scene/gui/range.cpp scene/resources/animation.cpp
+#: scene/resources/visual_shader_nodes.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
+#, fuzzy
+msgid "Step"
+msgstr "گام(ها):"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Separation"
+msgstr "شمارش ها:"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Tile"
+msgstr "همه‌ی انتخاب ها"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/cpu_particles_2d.cpp
+#: scene/2d/light_2d.cpp scene/2d/line_2d.cpp scene/2d/mesh_instance_2d.cpp
+#: scene/2d/multimesh_instance_2d.cpp scene/2d/particles_2d.cpp
+#: scene/2d/polygon_2d.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
+#: scene/gui/nine_patch_rect.cpp scene/gui/texture_rect.cpp
+#: scene/resources/material.cpp scene/resources/sky.cpp
+#: scene/resources/style_box.cpp scene/resources/visual_shader_nodes.cpp
+#, fuzzy
+msgid "Texture"
+msgstr "حذف قالب"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tex Offset"
+msgstr "ویرایش منحنی گره"
+
+#: editor/plugins/tile_set_editor_plugin.cpp modules/csg/csg_shape.cpp
+#: scene/2d/canvas_item.cpp scene/2d/particles_2d.cpp
+#: scene/3d/mesh_instance.cpp scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Material"
+msgstr "تغییر بده"
+
+#: editor/plugins/tile_set_editor_plugin.cpp scene/2d/canvas_item.cpp
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/style_box.cpp
+msgid "Modulate"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tile Mode"
+msgstr "صافی کردن گره‌ها"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Autotile Bitmask Mode"
+msgstr "ویرایش صافی ها"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Subtile Size"
+msgstr "باز کردن و اجرای یک اسکریپت"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Subtile Spacing"
+msgstr "تکرار انیمیشن"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Occluder Offset"
+msgstr "ویرایش سیگنال"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Navigation Offset"
+msgstr "گره انیمیشن"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Shape Offset"
+msgstr "حذف قالب"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Shape Transform"
+msgstr "انتقال را در انیمیشن تغییر بده"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision"
+msgstr "گره انیمیشن"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision One Way"
+msgstr "تنها در قسمت انتخاب شده"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Collision One Way Margin"
+msgstr "گره انیمیشن"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Navigation"
+msgstr "انیمیشن حذف شود؟"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Selected Occlusion"
+msgstr "همه‌ی انتخاب ها"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Tileset Script"
+msgstr "صافی کردن گره‌ها"
 
 #: editor/plugins/tile_set_editor_plugin.cpp
 #, fuzzy
@@ -13998,36 +14423,22 @@ msgid "Runnable"
 msgstr ""
 
 #: editor/project_export.cpp
+msgid "Export the project for all the presets defined."
+msgstr ""
+
+#: editor/project_export.cpp
+msgid "All presets must have an export path defined for Export All to work."
+msgstr ""
+
+#: editor/project_export.cpp
 #, fuzzy
 msgid "Delete preset '%s'?"
 msgstr "آیا پرونده‌های انتخاب شده حذف شود؟"
 
 #: editor/project_export.cpp
-msgid ""
-"Failed to export the project for platform '%s'.\n"
-"Export templates seem to be missing or invalid."
-msgstr ""
-
-#: editor/project_export.cpp
-msgid ""
-"Failed to export the project for platform '%s'.\n"
-"This might be due to a configuration issue in the export preset or your "
-"export settings."
-msgstr ""
-
-#: editor/project_export.cpp
 #, fuzzy
 msgid "Exporting All"
 msgstr "صدور"
-
-#: editor/project_export.cpp
-#, fuzzy
-msgid "The given export path doesn't exist:"
-msgstr "پرونده موجود نیست."
-
-#: editor/project_export.cpp
-msgid "Export templates for this platform are missing/corrupted:"
-msgstr ""
 
 #: editor/project_export.cpp
 #, fuzzy
@@ -14048,7 +14459,7 @@ msgid ""
 "Only one preset per platform may be marked as runnable."
 msgstr ""
 
-#: editor/project_export.cpp scene/main/resource_preloader.cpp
+#: editor/project_export.cpp
 msgid "Resources"
 msgstr "منابع"
 
@@ -14107,12 +14518,6 @@ msgstr "صحنه جدید"
 msgid "GDScript Export Mode:"
 msgstr "حالت صدور:"
 
-#: editor/project_export.cpp scene/gui/button.cpp scene/gui/dialogs.cpp
-#: scene/gui/label.cpp scene/gui/line_edit.cpp scene/gui/link_button.cpp
-#: scene/gui/rich_text_label.cpp scene/gui/text_edit.cpp
-msgid "Text"
-msgstr ""
-
 #: editor/project_export.cpp
 msgid "Compiled Bytecode (Faster Loading)"
 msgstr ""
@@ -14140,21 +14545,28 @@ msgid "More Info..."
 msgstr ""
 
 #: editor/project_export.cpp
-msgid "Export PCK/Zip"
+#, fuzzy
+msgid "Export PCK/Zip..."
 msgstr "صدور pck/zip"
 
 #: editor/project_export.cpp
-msgid "Export Project"
+#, fuzzy
+msgid "Export Project..."
 msgstr "صدور پروژه"
 
 #: editor/project_export.cpp
 #, fuzzy
-msgid "Export mode?"
-msgstr "حالت صدور:"
+msgid "Export All"
+msgstr "صدور"
 
 #: editor/project_export.cpp
 #, fuzzy
-msgid "Export All"
+msgid "Choose an export mode:"
+msgstr "یک فهرست انتخاب کنید"
+
+#: editor/project_export.cpp
+#, fuzzy
+msgid "Export All..."
 msgstr "صدور"
 
 #: editor/project_export.cpp editor/project_manager.cpp
@@ -14163,12 +14575,18 @@ msgid "ZIP File"
 msgstr " پوشه ها"
 
 #: editor/project_export.cpp
-msgid "Godot Game Pack"
-msgstr ""
+#, fuzzy
+msgid "Godot Project Pack"
+msgstr "صدور پروژه"
 
 #: editor/project_export.cpp
 msgid "Export templates for this platform are missing:"
 msgstr ""
+
+#: editor/project_export.cpp
+#, fuzzy
+msgid "Project Export"
+msgstr "بنیان‌گذاران پروژه"
 
 #: editor/project_export.cpp
 msgid "Manage Export Templates"
@@ -14341,10 +14759,6 @@ msgid "Renderer can be changed later, but scenes may need to be adjusted."
 msgstr ""
 
 #: editor/project_manager.cpp
-msgid "Unnamed Project"
-msgstr "پروژه بی نام"
-
-#: editor/project_manager.cpp
 #, fuzzy
 msgid "Missing Project"
 msgstr "وارد کردن پروژه موجود"
@@ -14352,6 +14766,20 @@ msgstr "وارد کردن پروژه موجود"
 #: editor/project_manager.cpp
 msgid "Error: Project is missing on the filesystem."
 msgstr ""
+
+#: editor/project_manager.cpp editor/scene_tree_dock.cpp
+msgid "Local"
+msgstr "محلی"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Local Projects"
+msgstr "طرح ها"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Asset Library Projects"
+msgstr "کتابخانه دارایی"
 
 #: editor/project_manager.cpp
 #, fuzzy
@@ -14447,18 +14875,13 @@ msgid "Project Manager"
 msgstr "مدیر پروژه"
 
 #: editor/project_manager.cpp
-#, fuzzy
-msgid "Local Projects"
-msgstr "طرح ها"
+msgid "Last Modified"
+msgstr ""
 
 #: editor/project_manager.cpp
 #, fuzzy
 msgid "Loading, please wait..."
 msgstr "بارگیری"
-
-#: editor/project_manager.cpp
-msgid "Last Modified"
-msgstr ""
 
 #: editor/project_manager.cpp
 #, fuzzy
@@ -14505,11 +14928,6 @@ msgstr "برداشتن نقطه"
 #: editor/project_manager.cpp
 msgid "About"
 msgstr "درباره"
-
-#: editor/project_manager.cpp
-#, fuzzy
-msgid "Asset Library Projects"
-msgstr "کتابخانه دارایی"
 
 #: editor/project_manager.cpp
 msgid "Restart Now"
@@ -14675,6 +15093,7 @@ msgid "Add Event"
 msgstr "افزودن رویداد"
 
 #: editor/project_settings_editor.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Button"
 msgstr "Button"
 
@@ -14868,7 +15287,8 @@ msgstr "بومی‌سازی‌ها:"
 msgid "AutoLoad"
 msgstr "AutoLoad"
 
-#: editor/project_settings_editor.cpp
+#: editor/project_settings_editor.cpp platform/android/export/export_plugin.cpp
+#: platform/iphone/export/export.cpp
 msgid "Plugins"
 msgstr "افزونه‌ها"
 
@@ -15003,13 +15423,6 @@ msgstr ""
 msgid "Initial value for the counter"
 msgstr ""
 
-#: editor/rename_dialog.cpp scene/gui/range.cpp scene/resources/animation.cpp
-#: scene/resources/visual_shader_nodes.cpp servers/physics_2d_server.cpp
-#: servers/physics_server.cpp
-#, fuzzy
-msgid "Step"
-msgstr "گام(ها):"
-
 #: editor/rename_dialog.cpp
 msgid "Amount by which counter is incremented for each node"
 msgstr ""
@@ -15057,7 +15470,7 @@ msgstr "اتصال به گره:"
 msgid "To Uppercase"
 msgstr ""
 
-#: editor/rename_dialog.cpp
+#: editor/rename_dialog.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Reset"
 msgstr "بازنشانی بزرگنمایی"
@@ -15261,6 +15674,20 @@ msgstr ""
 msgid "Make Local"
 msgstr "محلی"
 
+#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
+msgid "Another node already uses this unique name in the scene."
+msgstr ""
+
+#: editor/scene_tree_dock.cpp
+#, fuzzy
+msgid "Enable Scene Unique Name"
+msgstr "نام گره:"
+
+#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
+#, fuzzy
+msgid "Disable Scene Unique Name"
+msgstr "نام گره:"
+
 #: editor/scene_tree_dock.cpp
 #, fuzzy
 msgid "New Scene Root"
@@ -15339,6 +15766,10 @@ msgstr ""
 #, fuzzy
 msgid "Sub-Resources"
 msgstr "زیرمنبع‌ها:"
+
+#: editor/scene_tree_dock.cpp
+msgid "Access as Scene Unique Name"
+msgstr ""
 
 #: editor/scene_tree_dock.cpp
 msgid "Clear Inheritance"
@@ -15430,10 +15861,6 @@ msgid ""
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
-msgid "Local"
-msgstr "محلی"
-
-#: editor/scene_tree_dock.cpp
 msgid "Clear Inheritance? (No Undo!)"
 msgstr "وراثت حذف شود؟ (بدون بازگشت!)"
 
@@ -15472,6 +15899,13 @@ msgstr "خطای اتصال"
 
 #: editor/scene_tree_editor.cpp
 msgid "Node configuration warning:"
+msgstr ""
+
+#: editor/scene_tree_editor.cpp
+msgid ""
+"This node can be accessed from within anywhere in the scene by preceding it "
+"with the '%s' prefix in a node path.\n"
+"Click to disable this."
 msgstr ""
 
 #: editor/scene_tree_editor.cpp
@@ -15689,7 +16123,7 @@ msgstr "صحنه جدید"
 
 #: editor/script_editor_debugger.cpp
 #, fuzzy
-msgid "Remote "
+msgid "Remote %s:"
 msgstr "برداشتن"
 
 #: editor/script_editor_debugger.cpp
@@ -15800,11 +16234,6 @@ msgid "Monitor"
 msgstr ""
 
 #: editor/script_editor_debugger.cpp
-#: modules/visual_script/visual_script_nodes.cpp scene/gui/range.cpp
-msgid "Value"
-msgstr ""
-
-#: editor/script_editor_debugger.cpp
 msgid "Monitors"
 msgstr ""
 
@@ -15902,6 +16331,7 @@ msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp modules/gltf/gltf_node.cpp
 #: platform/osx/export/export.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Camera"
 msgstr ""
 
@@ -15911,21 +16341,6 @@ msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp
 msgid "Change Camera Size"
-msgstr ""
-
-#: editor/spatial_editor_gizmos.cpp modules/gltf/gltf_node.cpp
-#: scene/3d/physics_body.cpp
-#, fuzzy
-msgid "Joint"
-msgstr "برداشتن نقطه"
-
-#: editor/spatial_editor_gizmos.cpp scene/2d/collision_shape_2d.cpp
-#: scene/2d/cpu_particles_2d.cpp scene/2d/touch_screen_button.cpp
-#: scene/3d/collision_shape.cpp scene/3d/cpu_particles.cpp
-#: scene/3d/occluder.cpp scene/3d/spring_arm.cpp
-#: scene/resources/particles_material.cpp servers/physics_2d_server.cpp
-#: servers/physics_server.cpp
-msgid "Shape"
 msgstr ""
 
 #: editor/spatial_editor_gizmos.cpp
@@ -16180,41 +16595,6 @@ msgstr ""
 msgid "Use Nvidia Rect Flicker Workaround"
 msgstr ""
 
-#: main/main.cpp platform/javascript/export/export.cpp
-#: platform/osx/export/export.cpp platform/uwp/os_uwp.cpp
-#, fuzzy
-msgid "Display"
-msgstr "نشان دادن همه"
-
-#: main/main.cpp modules/csg/csg_shape.cpp
-#: modules/opensimplex/noise_texture.cpp scene/2d/line_2d.cpp
-#: scene/gui/text_edit.cpp scene/resources/texture.cpp
-msgid "Width"
-msgstr ""
-
-#: main/main.cpp modules/csg/csg_shape.cpp modules/gltf/gltf_node.cpp
-#: modules/opensimplex/noise_texture.cpp scene/2d/light_2d.cpp
-#: scene/resources/capsule_shape.cpp scene/resources/capsule_shape_2d.cpp
-#: scene/resources/cylinder_shape.cpp scene/resources/font.cpp
-#: scene/resources/navigation_mesh.cpp scene/resources/primitive_meshes.cpp
-#: scene/resources/texture.cpp
-msgid "Height"
-msgstr ""
-
-#: main/main.cpp
-msgid "Always On Top"
-msgstr ""
-
-#: main/main.cpp
-#, fuzzy
-msgid "Test Width"
-msgstr "خطی"
-
-#: main/main.cpp
-#, fuzzy
-msgid "Test Height"
-msgstr "آزمودن"
-
 #: main/main.cpp
 msgid "DPI"
 msgstr ""
@@ -16313,6 +16693,16 @@ msgstr ""
 #: main/main.cpp
 msgid "Verbose stdout"
 msgstr ""
+
+#: main/main.cpp scene/main/scene_tree.cpp scene/resources/multimesh.cpp
+#, fuzzy
+msgid "Physics Interpolation"
+msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
+
+#: main/main.cpp
+#, fuzzy
+msgid "Enable Warnings"
+msgstr "فرزند قابل ویرایش"
 
 #: main/main.cpp
 #, fuzzy
@@ -16452,10 +16842,6 @@ msgstr ""
 msgid "Wait Timeout"
 msgstr "زمان:"
 
-#: main/main.cpp modules/mono/mono_gd/gd_mono.cpp
-msgid "Args"
-msgstr ""
-
 #: main/main.cpp
 msgid "Runtime"
 msgstr ""
@@ -16482,11 +16868,11 @@ msgstr ""
 msgid "Shrink"
 msgstr ""
 
-#: main/main.cpp
+#: main/main.cpp scene/main/scene_tree.cpp
 msgid "Auto Accept Quit"
 msgstr ""
 
-#: main/main.cpp
+#: main/main.cpp scene/main/scene_tree.cpp
 msgid "Quit On Go Back"
 msgstr ""
 
@@ -16558,12 +16944,6 @@ msgstr "گره انیمیشن"
 msgid "Invert Faces"
 msgstr "اتصال به گره:"
 
-#: modules/csg/csg_shape.cpp scene/2d/canvas_item.cpp scene/2d/particles_2d.cpp
-#: scene/resources/primitive_meshes.cpp
-#, fuzzy
-msgid "Material"
-msgstr "تغییر بده"
-
 #: modules/csg/csg_shape.cpp scene/2d/navigation_agent_2d.cpp
 #: scene/2d/navigation_obstacle_2d.cpp scene/3d/navigation_agent.cpp
 #: scene/3d/navigation_obstacle.cpp scene/3d/vehicle_body.cpp
@@ -16611,7 +16991,7 @@ msgstr ""
 
 #: modules/csg/csg_shape.cpp scene/2d/collision_polygon_2d.cpp
 #: scene/2d/light_occluder_2d.cpp scene/2d/polygon_2d.cpp
-#: scene/3d/collision_polygon.cpp scene/resources/navigation_mesh.cpp
+#: scene/3d/collision_polygon.cpp
 #, fuzzy
 msgid "Polygon"
 msgstr "ویرایش سیگنال"
@@ -16701,6 +17081,14 @@ msgstr ""
 msgid "Use DTLS"
 msgstr ""
 
+#: modules/fbx/editor_scene_importer_fbx.cpp
+msgid "FBX"
+msgstr ""
+
+#: modules/fbx/editor_scene_importer_fbx.cpp
+msgid "Use FBX"
+msgstr ""
+
 #: modules/gdnative/gdnative.cpp
 #, fuzzy
 msgid "Config File"
@@ -16781,8 +17169,9 @@ msgid "Disabled GDNative Singleton"
 msgstr ""
 
 #: modules/gdnative/gdnative_library_singleton_editor.cpp
-msgid "Libraries: "
-msgstr ""
+#, fuzzy
+msgid "Libraries:"
+msgstr "صادکردن فایل کتابخانه ای"
 
 #: modules/gdnative/nativescript/nativescript.cpp
 #, fuzzy
@@ -17027,7 +17416,7 @@ msgstr "گره مخلوط۲"
 msgid "Instance Materials"
 msgstr "تغییر بده"
 
-#: modules/gltf/gltf_node.cpp
+#: modules/gltf/gltf_node.cpp scene/3d/skeleton.cpp
 msgid "Parent"
 msgstr ""
 
@@ -17043,13 +17432,6 @@ msgstr ""
 #, fuzzy
 msgid "Translation"
 msgstr "ترجمه‌ها"
-
-#: modules/gltf/gltf_node.cpp scene/2d/node_2d.cpp scene/2d/polygon_2d.cpp
-#: scene/2d/remote_transform_2d.cpp scene/3d/remote_transform.cpp
-#: scene/3d/spatial.cpp scene/gui/control.cpp scene/main/canvas_layer.cpp
-#, fuzzy
-msgid "Rotation"
-msgstr "وضعیت:"
 
 #: modules/gltf/gltf_node.cpp
 #, fuzzy
@@ -17166,7 +17548,6 @@ msgstr "تغییر نام"
 
 #: modules/gltf/gltf_state.cpp scene/2d/particles_2d.cpp
 #: scene/gui/texture_button.cpp scene/gui/texture_progress.cpp
-#: scene/resources/font.cpp
 #, fuzzy
 msgid "Textures"
 msgstr "ویژگی‌ها"
@@ -17198,7 +17579,7 @@ msgstr "تنها در قسمت انتخاب شده"
 msgid "Skeleton To Node"
 msgstr "انتخاب یک گره"
 
-#: modules/gltf/gltf_state.cpp scene/2d/animated_sprite.cpp
+#: modules/gltf/gltf_state.cpp
 #, fuzzy
 msgid "Animations"
 msgstr "گره انیمیشن"
@@ -17221,7 +17602,6 @@ msgid "Use In Baked Light"
 msgstr ""
 
 #: modules/gridmap/grid_map.cpp scene/2d/tile_map.cpp
-#: scene/resources/navigation_mesh.cpp
 msgid "Cell"
 msgstr ""
 
@@ -17250,6 +17630,19 @@ msgstr "ساختن گره"
 #: scene/resources/material.cpp
 msgid "Mask"
 msgstr ""
+
+#: modules/gridmap/grid_map.cpp scene/2d/tile_map.cpp
+#, fuzzy
+msgid "Bake Navigation"
+msgstr "انیمیشن حذف شود؟"
+
+#: modules/gridmap/grid_map.cpp scene/2d/navigation_2d.cpp
+#: scene/2d/navigation_agent_2d.cpp scene/2d/navigation_polygon.cpp
+#: scene/2d/tile_map.cpp scene/3d/navigation.cpp scene/3d/navigation_agent.cpp
+#: scene/3d/navigation_mesh_instance.cpp
+#, fuzzy
+msgid "Navigation Layers"
+msgstr "گره انیمیشن"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 #, fuzzy
@@ -17654,11 +18047,6 @@ msgstr ""
 msgid "IGD Status"
 msgstr "وضعیت:"
 
-#: modules/visual_script/visual_script.cpp scene/resources/visual_shader.cpp
-#, fuzzy
-msgid "Default Input Values"
-msgstr "تغییر مقدار ورودی"
-
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "A node yielded without working memory, please read the docs on how to yield "
@@ -17684,7 +18072,7 @@ msgstr ""
 
 #: modules/visual_script/visual_script.cpp
 #, fuzzy
-msgid "Node returned an invalid sequence output: "
+msgid "Node returned an invalid sequence output:"
 msgstr "گره ،‌ یک سلسله خروجی نامعتبر را برگردانده است: "
 
 #: modules/visual_script/visual_script.cpp
@@ -17694,7 +18082,7 @@ msgstr "بیت دنباله پیدا شد ولی گره موجود در پشته
 
 #: modules/visual_script/visual_script.cpp
 #, fuzzy
-msgid "Stack overflow with stack depth: "
+msgid "Stack overflow with stack depth:"
 msgstr "سرریزی پشته با عمق پشته: "
 
 #: modules/visual_script/visual_script.cpp
@@ -17827,6 +18215,15 @@ msgid "Change Expression"
 msgstr "انتقال را در انیمیشن تغییر بده"
 
 #: modules/visual_script/visual_script_editor.cpp
+msgid "Can't copy the function node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Paste VisualScript Nodes"
+msgstr "مسیر به سمت گره:"
+
+#: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
 msgid "Remove VisualScript Nodes"
 msgstr "کلیدهای نامعتبر را حذف کن"
@@ -17929,15 +18326,6 @@ msgstr "تغییر مقدار ورودی"
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Resize Comment"
 msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Can't copy the function node."
-msgstr ""
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Paste VisualScript Nodes"
-msgstr "مسیر به سمت گره:"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Can't create function with a function node."
@@ -18092,7 +18480,8 @@ msgid "for (elem) in (input):"
 msgstr ""
 
 #: modules/visual_script/visual_script_flow_control.cpp
-msgid "Input type not iterable: "
+#, fuzzy
+msgid "Input type not iterable:"
 msgstr "نوع ورودی قابل تکرار نیست: "
 
 #: modules/visual_script/visual_script_flow_control.cpp
@@ -18102,7 +18491,7 @@ msgstr "تکرارگر نامعتبر شد"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 #, fuzzy
-msgid "Iterator became invalid: "
+msgid "Iterator became invalid:"
 msgstr "تکرارگر نامعتبر شد: "
 
 #: modules/visual_script/visual_script_flow_control.cpp
@@ -18172,11 +18561,6 @@ msgstr "کپی کردن مسیر node"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
 #, fuzzy
-msgid "Argument Cache"
-msgstr "مقدار آرایه را تغییر بده"
-
-#: modules/visual_script/visual_script_func_nodes.cpp
-#, fuzzy
 msgid "Use Default Args"
 msgstr "بارگیری پیش فرض"
 
@@ -18234,11 +18618,6 @@ msgid "Set Mode"
 msgstr "انتخاب حالت"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-#, fuzzy
-msgid "Type Cache"
-msgstr "نوع پایه:"
-
-#: modules/visual_script/visual_script_func_nodes.cpp
 msgid "Assign Op"
 msgstr ""
 
@@ -18257,7 +18636,8 @@ msgid "Base object is not a Node!"
 msgstr "شیء پایه یک گره نیست!"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-msgid "Path does not lead Node!"
+#, fuzzy
+msgid "Path does not lead to Node!"
 msgstr "مسیر به یک نود نمیرسد!"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
@@ -18274,17 +18654,19 @@ msgstr "تنظیم %s"
 msgid "Compose Array"
 msgstr "آرایه را تغییر اندازه بده"
 
-#: modules/visual_script/visual_script_nodes.cpp
+#: modules/visual_script/visual_script_nodes.cpp scene/resources/material.cpp
 #: scene/resources/visual_shader_nodes.cpp
 msgid "Operator"
 msgstr ""
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid ": Invalid argument of type: "
+#, fuzzy
+msgid "Invalid argument of type:"
 msgstr ": آرگومان نوع نامعتبر "
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid ": Invalid arguments: "
+#, fuzzy
+msgid "Invalid arguments:"
 msgstr ": آرگومان‌های نامعتبر: "
 
 #: modules/visual_script/visual_script_nodes.cpp
@@ -18297,11 +18679,13 @@ msgid "Var Name"
 msgstr "نام"
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid "VariableGet not found in script: "
+#, fuzzy
+msgid "VariableGet not found in script:"
 msgstr "VariableGet در اسکریپت پیدا نشد: "
 
 #: modules/visual_script/visual_script_nodes.cpp
-msgid "VariableSet not found in script: "
+#, fuzzy
+msgid "VariableSet not found in script:"
 msgstr "VariableSet در اسکریپت پیدا نشد: "
 
 #: modules/visual_script/visual_script_nodes.cpp
@@ -18391,11 +18775,6 @@ msgstr "ثابت ها"
 
 #: modules/visual_script/visual_script_nodes.cpp
 #, fuzzy
-msgid "Constructor"
-msgstr "ثابت ها"
-
-#: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid "Get Local Var"
 msgstr "محلی"
 
@@ -18411,10 +18790,6 @@ msgstr "افزودن وظیفه"
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "Deconstruct %s"
-msgstr ""
-
-#: modules/visual_script/visual_script_nodes.cpp
-msgid "Elem Cache"
 msgstr ""
 
 #: modules/visual_script/visual_script_property_selector.cpp
@@ -18467,6 +18842,14 @@ msgstr ""
 msgid "Write Mode"
 msgstr "حالت صدور:"
 
+#: modules/webrtc/webrtc_data_channel.h
+msgid "WebRTC"
+msgstr ""
+
+#: modules/webrtc/webrtc_data_channel.h
+msgid "Max Channel In Buffer (KB)"
+msgstr ""
+
 #: modules/websocket/websocket_client.cpp
 msgid "Verify SSL"
 msgstr ""
@@ -18474,6 +18857,32 @@ msgstr ""
 #: modules/websocket/websocket_client.cpp
 msgid "Trusted SSL Certificate"
 msgstr ""
+
+#: modules/websocket/websocket_macros.h
+#, fuzzy
+msgid "WebSocket Client"
+msgstr "صدور پروژه"
+
+#: modules/websocket/websocket_macros.h
+msgid "Max In Buffer (KB)"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max In Packets"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max Out Buffer (KB)"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+msgid "Max Out Packets"
+msgstr ""
+
+#: modules/websocket/websocket_macros.h
+#, fuzzy
+msgid "WebSocket Server"
+msgstr "صدور پروژه"
 
 #: modules/websocket/websocket_server.cpp
 msgid "Bind IP"
@@ -18527,6 +18936,10 @@ msgstr ""
 msgid "Bounds Geometry"
 msgstr ""
 
+#: modules/webxr/webxr_interface.cpp
+msgid "XR Standard Mapping"
+msgstr ""
+
 #: platform/android/export/export.cpp
 msgid "Android SDK Path"
 msgstr ""
@@ -18549,6 +18962,22 @@ msgstr ""
 
 #: platform/android/export/export.cpp
 msgid "Shutdown ADB On Exit"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Launcher Icons"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Main 192 X 192"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Adaptive Foreground 432 X 432"
+msgstr ""
+
+#: platform/android/export/export_plugin.cpp
+msgid "Adaptive Background 432 X 432"
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18584,6 +19013,10 @@ msgstr ""
 msgid "Export Format"
 msgstr "صدور پروژه"
 
+#: platform/android/export/export_plugin.cpp platform/iphone/export/export.cpp
+msgid "Architectures"
+msgstr ""
+
 #: platform/android/export/export_plugin.cpp
 msgid "Keystore"
 msgstr ""
@@ -18614,7 +19047,7 @@ msgstr ""
 msgid "Clear Previous Install"
 msgstr "زبانه قبلی"
 
-#: platform/android/export/export_plugin.cpp scene/resources/shader.cpp
+#: platform/android/export/export_plugin.cpp
 msgid "Code"
 msgstr ""
 
@@ -18795,10 +19228,6 @@ msgid "Could not execute on device."
 msgstr "ناتوان در ساختن پوشه."
 
 #: platform/android/export/export_plugin.cpp
-msgid "Unable to find the 'apksigner' tool."
-msgstr ""
-
-#: platform/android/export/export_plugin.cpp
 msgid ""
 "Android build template not installed in the project. Install it from the "
 "Project menu."
@@ -18903,12 +19332,16 @@ msgstr ""
 msgid "\"Target Sdk\" version must be greater or equal to \"Min Sdk\" version."
 msgstr ""
 
+#: platform/android/export/export_plugin.cpp platform/osx/export/export.cpp
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Code Signing"
+msgstr "سیگنال‌"
+
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"'apksigner' could not be found.\n"
-"Please check the command is available in the Android SDK build-tools "
-"directory.\n"
-"The resulting %s is unsigned."
+"'apksigner' could not be found. Please check that the command is available "
+"in the Android SDK build-tools directory. The resulting %s is unsigned."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18923,6 +19356,10 @@ msgstr ""
 #, fuzzy
 msgid "Could not find keystore, unable to export."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/android/export/export_plugin.cpp
+msgid "Could not start apksigner executable."
+msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid "'apksigner' returned with error #%d"
@@ -18955,7 +19392,7 @@ msgid "Invalid filename! Android APK requires the *.apk extension."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
-msgid "Unsupported export format!\n"
+msgid "Unsupported export format!"
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
@@ -18966,20 +19403,19 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Android build version mismatch:\n"
-"   Template installed: %s\n"
-"   Godot Version: %s\n"
+"Android build version mismatch: Template installed: %s, Godot version: %s. "
 "Please reinstall Android build template from 'Project' menu."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Unable to overwrite res://android/build/res/*.xml files with project name"
+"Unable to overwrite res://android/build/res/*.xml files with project name."
 msgstr ""
 
 #: platform/android/export/export_plugin.cpp
-msgid "Could not export project files to gradle project\n"
-msgstr ""
+#, fuzzy
+msgid "Could not export project files to gradle project."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
@@ -18992,7 +19428,7 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Building of Android project failed, check output for the error.\n"
+"Building of Android project failed, check output for the error. "
 "Alternatively visit docs.godotengine.org for Android build documentation."
 msgstr ""
 
@@ -19008,7 +19444,7 @@ msgstr ""
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
-msgid "Package not found: %s"
+msgid "Package not found: \"%s\"."
 msgstr "طول انیمیشن (به ثانیه)."
 
 #: platform/android/export/export_plugin.cpp
@@ -19018,15 +19454,12 @@ msgstr "در حال اتصال..."
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
-msgid ""
-"Could not find template APK to export:\n"
-"%s"
+msgid "Could not find template APK to export: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
-"Missing libraries in the export template for the selected architectures: "
-"%s.\n"
+"Missing libraries in the export template for the selected architectures: %s. "
 "Please build a template with all required libraries, or uncheck the missing "
 "architectures in the export preset."
 msgstr ""
@@ -19038,7 +19471,7 @@ msgstr "یافتن"
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
-msgid "Could not export project files"
+msgid "Could not export project files."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/android/export/export_plugin.cpp
@@ -19057,6 +19490,58 @@ msgstr ""
 #, fuzzy
 msgid "The character '%s' is not allowed in Identifier."
 msgstr "نام یک شناسه‌ی معتبر نیست:"
+
+#: platform/iphone/export/export.cpp
+msgid "Landscape Launch Screens"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 2436 X 1125"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 2208 X 1242"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 1024 X 768"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 2048 X 1536"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "Portrait Launch Screens"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 640 X 960"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 640 X 1136"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 750 X 1334"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 1125 X 2436"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 768 X 1024"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPad 1536 X 2048"
+msgstr ""
+
+#: platform/iphone/export/export.cpp
+msgid "iPhone 1242 X 2208"
+msgstr ""
 
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID"
@@ -19132,7 +19617,7 @@ msgstr "موفقیت!"
 msgid "Push Notifications"
 msgstr "ثابت"
 
-#: platform/iphone/export/export.cpp scene/3d/baked_lightmap.cpp
+#: platform/iphone/export/export.cpp
 #, fuzzy
 msgid "User Data"
 msgstr "پاک کردن ارث‌بری"
@@ -19142,7 +19627,7 @@ msgid "Accessible From Files App"
 msgstr ""
 
 #: platform/iphone/export/export.cpp
-msgid "Accessible From Itunes Sharing"
+msgid "Accessible From iTunes Sharing"
 msgstr ""
 
 #: platform/iphone/export/export.cpp platform/osx/export/export.cpp
@@ -19229,6 +19714,16 @@ msgstr "ساختن گره"
 msgid "Custom BG Color"
 msgstr "ساختن گره"
 
+#: platform/iphone/export/export.cpp platform/javascript/export/export.cpp
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Prepare Templates"
+msgstr "مدیریت صدور قالب ها"
+
+#: platform/iphone/export/export.cpp platform/osx/export/export.cpp
+msgid "Export template not found."
+msgstr ""
+
 #: platform/iphone/export/export.cpp
 msgid "App Store Team ID not specified - cannot configure the project."
 msgstr ""
@@ -19252,23 +19747,32 @@ msgstr ""
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not open template for export:"
+msgid "Could not open template for export: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Invalid export template:"
+msgid "Invalid export template: \"%s\"."
 msgstr "نام دارایی ایندکس نامعتبر."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not write file:"
+msgid "Could not write file: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/javascript/export/export.cpp platform/osx/export/export.cpp
+#, fuzzy
+msgid "Icon Creation"
+msgstr "محتواها:"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read file:"
+msgid "Could not read file: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/javascript/export/export.cpp
+msgid "PWA"
+msgstr ""
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
@@ -19294,7 +19798,7 @@ msgid "For Mobile"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-msgid "Html"
+msgid "HTML"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
@@ -19304,7 +19808,7 @@ msgstr "خروجی"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Custom Html Shell"
+msgid "Custom HTML Shell"
 msgstr "ساختن گره"
 
 #: platform/javascript/export/export.cpp
@@ -19346,17 +19850,17 @@ msgstr ""
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read HTML shell:"
+msgid "Could not read HTML shell: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not create HTTP server directory:"
+msgid "Could not create HTTP server directory: %s."
 msgstr "ناتوان در ساختن پوشه."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Error starting HTTP server:"
+msgid "Error starting HTTP server: %d."
 msgstr "خطا در بارگذاری:"
 
 #: platform/javascript/export/export.cpp
@@ -19603,7 +20107,7 @@ msgstr "صدور پروژه"
 
 #: platform/osx/export/export.cpp
 #, fuzzy
-msgid "Device Usb"
+msgid "Device USB"
 msgstr "دستگاه"
 
 #: platform/osx/export/export.cpp
@@ -19653,9 +20157,28 @@ msgid "Apple Team ID"
 msgstr ""
 
 #: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not open icon file \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not start xcrun executable."
+msgstr "ناتوان در ساختن پوشه."
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Notarization failed."
+msgstr "بومی‌سازی"
+
+#: platform/osx/export/export.cpp
+msgid "Notarization request UUID: \"%s\""
+msgstr ""
+
+#: platform/osx/export/export.cpp
 msgid ""
-"Note: The notarization process generally takes less than an hour. When the "
-"process is completed, you'll receive an email."
+"The notarization process generally takes less than an hour. When the process "
+"is completed, you'll receive an email."
 msgstr ""
 
 #: platform/osx/export/export.cpp
@@ -19671,9 +20194,58 @@ msgid ""
 msgstr ""
 
 #: platform/osx/export/export.cpp
+msgid "Timestamping is not compatible with ad-hoc signature, and was disabled!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid ""
+"Hardened Runtime is not compatible with ad-hoc signature, and was disabled!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "Built-in CodeSign failed with error \"%s\"."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "Built-in CodeSign require regex module."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid ""
+"Could not start codesign executable, make sure Xcode command line tools are "
+"installed."
+msgstr ""
+
+#: platform/osx/export/export.cpp platform/windows/export/export.cpp
 #, fuzzy
 msgid "No identity found."
 msgstr "چیزی یافت نشد!"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Cannot sign file %s."
+msgstr "خطای ذخیره کردن پرونده: %s"
+
+#: platform/osx/export/export.cpp
+msgid "Relative symlinks are not supported, exported \"%s\" might be broken!"
+msgstr ""
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "DMG Creation"
+msgstr "توضیح"
+
+#: platform/osx/export/export.cpp
+msgid "Could not start hdiutil executable."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "`hdiutil create` failed - file exists."
+msgstr ""
+
+#: platform/osx/export/export.cpp
+msgid "`hdiutil create` failed."
+msgstr ""
 
 #: platform/osx/export/export.cpp
 msgid "Creating app bundle"
@@ -19681,8 +20253,13 @@ msgstr ""
 
 #: platform/osx/export/export.cpp
 #, fuzzy
-msgid "Could not find template app to export:"
+msgid "Could not find template app to export: \"%s\"."
 msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Invalid export format."
+msgstr "نام دارایی ایندکس نامعتبر."
 
 #: platform/osx/export/export.cpp
 msgid ""
@@ -19692,7 +20269,7 @@ msgstr ""
 
 #: platform/osx/export/export.cpp
 msgid ""
-"Requested template binary '%s' not found. It might be missing from your "
+"Requested template binary \"%s\" not found. It might be missing from your "
 "template archive."
 msgstr ""
 
@@ -19731,6 +20308,16 @@ msgstr ""
 #: platform/osx/export/export.cpp
 msgid "Sending archive for notarization"
 msgstr ""
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "ZIP Creation"
+msgstr "پروژه"
+
+#: platform/osx/export/export.cpp
+#, fuzzy
+msgid "Could not open file to read from path \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
 
 #: platform/osx/export/export.cpp
 #, fuzzy
@@ -19868,12 +20455,13 @@ msgid "Publisher Display Name"
 msgstr "نام نامعتبر."
 
 #: platform/uwp/export/export.cpp
-msgid "Product Guid"
-msgstr ""
+#, fuzzy
+msgid "Product GUID"
+msgstr "اندازه‌ی قلم نامعتبر."
 
 #: platform/uwp/export/export.cpp
 #, fuzzy
-msgid "Publisher Guid"
+msgid "Publisher GUID"
 msgstr "پخش سفارشی صحنه"
 
 #: platform/uwp/export/export.cpp
@@ -20047,6 +20635,11 @@ msgid "Debug Algorithm"
 msgstr ""
 
 #: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Failed to rename temporary file \"%s\"."
+msgstr "امکان حذف وجود ندارد :"
+
+#: platform/windows/export/export.cpp
 msgid "Identity Type"
 msgstr ""
 
@@ -20057,6 +20650,11 @@ msgstr ""
 #: platform/windows/export/export.cpp
 msgid "Digest Algorithm"
 msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Modify Resources"
+msgstr "منابع"
 
 #: platform/windows/export/export.cpp
 #, fuzzy
@@ -20088,6 +20686,70 @@ msgid "Trademarks"
 msgstr ""
 
 #: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Resources Modification"
+msgstr "ثابت"
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Could not find rcedit executable at \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Could not find wine executable at \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Could not start rcedit executable, configure rcedit path in the Editor "
+"Settings (Export > Windows > Rcedit)."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid ""
+"rcedit failed to modify executable:\n"
+"%s"
+msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Could not find signtool executable at \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Could not find osslsigncode executable at \"%s\"."
+msgstr "نمی‌تواند یک پوشه ایجاد شود."
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Invalid identity type."
+msgstr "نام یک شناسه‌ی معتبر نیست:"
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Invalid timestamp server."
+msgstr "نام نامعتبر."
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Could not start signtool executable, configure signtool path in the Editor "
+"Settings (Export > Windows > Signtool)."
+msgstr ""
+
+#: platform/windows/export/export.cpp
+msgid ""
+"Signtool failed to sign executable:\n"
+"%s"
+msgstr ""
+
+#: platform/windows/export/export.cpp
+#, fuzzy
+msgid "Failed to remove temporary file \"%s\"."
+msgstr "امکان حذف وجود ندارد :"
+
+#: platform/windows/export/export.cpp
 msgid ""
 "The rcedit tool must be configured in the Editor Settings (Export > Windows "
 "> Rcedit) to change the icon or app information data."
@@ -20109,6 +20771,23 @@ msgid "Invalid product version:"
 msgstr "اندازه‌ی قلم نامعتبر."
 
 #: platform/windows/export/export.cpp
+msgid "Windows executables cannot be >= 4 GiB."
+msgstr ""
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+#, fuzzy
+msgid "Failed to open executable file \"%s\"."
+msgstr "باید از یک پسوند معتبر استفاده شود."
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+msgid "Executable file header corrupted."
+msgstr ""
+
+#: platform/windows/export/export.cpp platform/x11/export/export.cpp
+msgid "Executable \"pck\" section not found."
+msgstr ""
+
+#: platform/windows/export/export.cpp
 #, fuzzy
 msgid "Windows"
 msgstr "چارچوب جدید"
@@ -20125,6 +20804,10 @@ msgstr ""
 msgid "Wine"
 msgstr ""
 
+#: platform/x11/export/export.cpp
+msgid "32-bit executables cannot have embedded data >= 4 GiB."
+msgstr ""
+
 #: scene/2d/animated_sprite.cpp scene/3d/sprite_3d.cpp
 #: scene/resources/texture.cpp
 #, fuzzy
@@ -20139,11 +20822,6 @@ msgid ""
 msgstr ""
 "یک منبع SpriteFrames باید در دارایی Frames ایجاد یا تنظیم شود تا "
 "AnimatedSprite فریم‌ها را نمایش دهد."
-
-#: scene/2d/animated_sprite.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
-#, fuzzy
-msgid "Frame"
-msgstr "انتخاب یک گره"
 
 #: scene/2d/animated_sprite.cpp scene/2d/cpu_particles_2d.cpp
 #: scene/2d/particles_2d.cpp scene/3d/cpu_particles.cpp scene/3d/particles.cpp
@@ -20162,18 +20840,6 @@ msgstr "پخش"
 #, fuzzy
 msgid "Centered"
 msgstr "ساختن گره"
-
-#: scene/2d/animated_sprite.cpp scene/2d/camera_2d.cpp
-#: scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp
-#: scene/2d/parallax_background.cpp scene/2d/parallax_layer.cpp
-#: scene/2d/path_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/path.cpp scene/3d/physics_body.cpp
-#: scene/3d/sprite_3d.cpp scene/gui/graph_node.cpp
-#: scene/gui/rich_text_effect.cpp scene/main/canvas_layer.cpp
-#: scene/resources/material.cpp scene/resources/particles_material.cpp
-#: scene/resources/style_box.cpp
-msgid "Offset"
-msgstr ""
 
 #: scene/2d/animated_sprite.cpp scene/2d/sprite.cpp scene/3d/sprite_3d.cpp
 #: scene/gui/texture_button.cpp scene/gui/texture_rect.cpp
@@ -20251,8 +20917,7 @@ msgid "Pitch Scale"
 msgstr "بومی"
 
 #: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
-#: scene/animation/animation_player.cpp scene/audio/audio_stream_player.cpp
-#: scene/gui/video_player.cpp
+#: scene/audio/audio_stream_player.cpp scene/gui/video_player.cpp
 #, fuzzy
 msgid "Autoplay"
 msgstr "AutoLoad"
@@ -20264,7 +20929,8 @@ msgstr ""
 
 #: scene/2d/audio_stream_player_2d.cpp scene/3d/audio_stream_player_3d.cpp
 #: scene/3d/light.cpp scene/3d/reflection_probe.cpp
-#: scene/3d/visual_instance.cpp scene/resources/material.cpp
+#: scene/3d/visibility_notifier.cpp scene/3d/visual_instance.cpp
+#: scene/resources/material.cpp
 msgid "Max Distance"
 msgstr ""
 
@@ -20298,7 +20964,8 @@ msgstr "انتخاب حالت"
 msgid "Rotating"
 msgstr "وضعیت:"
 
-#: scene/2d/camera_2d.cpp scene/3d/camera.cpp
+#: scene/2d/camera_2d.cpp scene/2d/listener_2d.cpp scene/3d/camera.cpp
+#: scene/3d/listener.cpp scene/animation/animation_blend_tree.cpp
 #, fuzzy
 msgid "Current"
 msgstr "نمایه موجود:"
@@ -20324,19 +20991,20 @@ msgid "Limit"
 msgstr ""
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Left"
 msgstr "خطی"
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
-#: scene/resources/style_box.cpp
+#: scene/resources/style_box.cpp scene/resources/texture.cpp
 #, fuzzy
 msgid "Right"
 msgstr "خطی"
 
 #: scene/2d/camera_2d.cpp scene/gui/control.cpp scene/gui/nine_patch_rect.cpp
 #: scene/resources/dynamic_font.cpp scene/resources/style_box.cpp
+#: scene/resources/texture.cpp
 #, fuzzy
 msgid "Bottom"
 msgstr "برداشتن انتخاب شده"
@@ -20390,8 +21058,8 @@ msgstr "فراخوانی"
 msgid "Draw Drag Margin"
 msgstr "آرگومان‌های اضافی فراخوانی:"
 
-#: scene/2d/canvas_item.cpp scene/animation/animation_blend_space_2d.cpp
-#: scene/resources/environment.cpp scene/resources/material.cpp
+#: scene/2d/canvas_item.cpp scene/resources/environment.cpp
+#: scene/resources/material.cpp
 #, fuzzy
 msgid "Blend Mode"
 msgstr "گره مخلوط۲"
@@ -20429,11 +21097,6 @@ msgstr ""
 msgid "Visible"
 msgstr "یک Breakpoint درج کن"
 
-#: scene/2d/canvas_item.cpp scene/3d/sprite_3d.cpp
-#: scene/resources/style_box.cpp
-msgid "Modulate"
-msgstr ""
-
 #: scene/2d/canvas_item.cpp
 #, fuzzy
 msgid "Self Modulate"
@@ -20454,10 +21117,6 @@ msgstr ""
 
 #: scene/2d/canvas_item.cpp
 msgid "Use Parent Material"
-msgstr ""
-
-#: scene/2d/canvas_item.cpp
-msgid "Toplevel"
 msgstr ""
 
 #: scene/2d/canvas_modulate.cpp
@@ -20504,6 +21163,11 @@ msgstr ""
 msgid "Invalid polygon. At least 2 points are needed in 'Segments' build mode."
 msgstr ""
 
+#: scene/2d/collision_polygon_2d.cpp scene/2d/collision_shape_2d.cpp
+msgid ""
+"The One Way Collision property will be ignored when the parent is an Area2D."
+msgstr ""
+
 #: scene/2d/collision_polygon_2d.cpp
 #, fuzzy
 msgid "Build Mode"
@@ -20512,7 +21176,7 @@ msgstr "انتخاب حالت"
 #: scene/2d/collision_polygon_2d.cpp scene/2d/collision_shape_2d.cpp
 #: scene/3d/collision_polygon.cpp scene/3d/collision_shape.cpp
 #: scene/animation/animation_node_state_machine.cpp scene/gui/base_button.cpp
-#: scene/gui/texture_button.cpp
+#: scene/gui/texture_button.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Disabled"
 msgstr "غیرفعال شده"
@@ -20622,17 +21286,6 @@ msgstr "طرح ها"
 msgid "Draw Order"
 msgstr ""
 
-#: scene/2d/cpu_particles_2d.cpp scene/2d/light_2d.cpp scene/2d/line_2d.cpp
-#: scene/2d/mesh_instance_2d.cpp scene/2d/multimesh_instance_2d.cpp
-#: scene/2d/particles_2d.cpp scene/2d/polygon_2d.cpp scene/2d/sprite.cpp
-#: scene/3d/sprite_3d.cpp scene/gui/nine_patch_rect.cpp
-#: scene/gui/texture_rect.cpp scene/resources/material.cpp
-#: scene/resources/sky.cpp scene/resources/style_box.cpp
-#: scene/resources/visual_shader_nodes.cpp
-#, fuzzy
-msgid "Texture"
-msgstr "حذف قالب"
-
 #: scene/2d/cpu_particles_2d.cpp scene/3d/cpu_particles.cpp
 #: scene/resources/particles_material.cpp
 msgid "Emission Shape"
@@ -20729,8 +21382,9 @@ msgid "Tangential Accel"
 msgstr ""
 
 #: scene/2d/cpu_particles_2d.cpp scene/2d/joints_2d.cpp
-#: scene/3d/cpu_particles.cpp scene/3d/physics_joint.cpp
-#: scene/3d/vehicle_body.cpp scene/resources/particles_material.cpp
+#: scene/3d/cpu_particles.cpp scene/3d/physics_body.cpp
+#: scene/3d/physics_joint.cpp scene/3d/vehicle_body.cpp
+#: scene/resources/particles_material.cpp
 #: servers/audio/effects/audio_effect_reverb.cpp
 msgid "Damping"
 msgstr ""
@@ -20864,7 +21518,7 @@ msgid "Node B"
 msgstr "گره"
 
 #: scene/2d/joints_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/3d/light.cpp scene/3d/physics_joint.cpp
+#: scene/3d/light.cpp scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
 #: scene/resources/environment.cpp
 msgid "Bias"
 msgstr ""
@@ -20874,7 +21528,7 @@ msgstr ""
 msgid "Disable Collision"
 msgstr "غیرفعال شده"
 
-#: scene/2d/joints_2d.cpp scene/3d/physics_joint.cpp
+#: scene/2d/joints_2d.cpp scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
 msgid "Softness"
 msgstr ""
 
@@ -20912,7 +21566,8 @@ msgid "Texture Scale"
 msgstr ""
 
 #: scene/2d/light_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-#: scene/3d/light.cpp scene/resources/environment.cpp scene/resources/sky.cpp
+#: scene/3d/light.cpp scene/resources/environment.cpp
+#: scene/resources/material.cpp scene/resources/sky.cpp
 msgid "Energy"
 msgstr ""
 
@@ -20980,7 +21635,7 @@ msgstr "چندضلعی مسدود برای این مسدودکننده، خال�
 msgid "Width Curve"
 msgstr "ویرایش منحنی گره"
 
-#: scene/2d/line_2d.cpp
+#: scene/2d/line_2d.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Default Color"
 msgstr "پیشفرض"
@@ -21038,7 +21693,7 @@ msgstr ""
 msgid "Multimesh"
 msgstr ""
 
-#: scene/2d/navigation_2d.cpp scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
+#: scene/2d/navigation_2d.cpp scene/3d/baked_lightmap.cpp
 #: scene/3d/navigation.cpp scene/animation/root_motion_view.cpp
 #: scene/resources/world_2d.cpp servers/physics_2d/physics_2d_server_sw.cpp
 msgid "Cell Size"
@@ -21073,8 +21728,14 @@ msgstr ""
 msgid "Path Max Distance"
 msgstr ""
 
+#: scene/2d/navigation_agent_2d.cpp scene/3d/navigation_agent.cpp
+#, fuzzy
+msgid "Avoidance Enabled"
+msgstr "روشن"
+
 #: scene/2d/navigation_agent_2d.cpp
-msgid "The NavigationAgent2D can be used only under a Node2D node."
+msgid ""
+"The NavigationAgent2D can be used only under a Node2D inheriting parent node."
 msgstr ""
 
 #: scene/2d/navigation_obstacle_2d.cpp scene/3d/navigation_obstacle.cpp
@@ -21087,15 +21748,6 @@ msgid ""
 "Node2D object."
 msgstr ""
 
-#: scene/2d/navigation_polygon.cpp scene/resources/navigation_mesh.cpp
-#, fuzzy
-msgid "Vertices"
-msgstr "خصوصیات"
-
-#: scene/2d/navigation_polygon.cpp
-msgid "Outlines"
-msgstr ""
-
 #: scene/2d/navigation_polygon.cpp
 msgid ""
 "A NavigationPolygon resource must be set or created for this node to work. "
@@ -21105,15 +21757,16 @@ msgstr ""
 "لطفا یک دارایی تعیین یا یک چندضلعی ترسیم کنید."
 
 #: scene/2d/navigation_polygon.cpp
-msgid ""
-"NavigationPolygonInstance must be a child or grandchild to a Navigation2D "
-"node. It only provides navigation data."
-msgstr ""
-"NavigationPolygonInstance باید یک فرزند یا نوه‌ی یک گره Navigation2D باشد. "
-"این تنها یک داده‌ی پیمایش را فراهم می‌کند."
-
-#: scene/2d/navigation_polygon.cpp
 msgid "Navpoly"
+msgstr ""
+
+#: scene/2d/navigation_polygon.cpp scene/3d/navigation_mesh_instance.cpp
+#, fuzzy
+msgid "Enter Cost"
+msgstr "ساختن گره"
+
+#: scene/2d/navigation_polygon.cpp scene/3d/navigation_mesh_instance.cpp
+msgid "Travel Cost"
 msgstr ""
 
 #: scene/2d/node_2d.cpp scene/2d/polygon_2d.cpp scene/3d/spatial.cpp
@@ -21145,6 +21798,7 @@ msgid "Z As Relative"
 msgstr ""
 
 #: scene/2d/parallax_background.cpp scene/gui/scroll_container.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Scroll"
 msgstr ""
 
@@ -21378,6 +22032,7 @@ msgstr ""
 
 #: scene/2d/physics_body_2d.cpp scene/2d/touch_screen_button.cpp
 #: scene/3d/physics_body.cpp scene/gui/texture_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #: scene/resources/line_shape_2d.cpp scene/resources/material.cpp
 msgid "Normal"
 msgstr ""
@@ -21480,7 +22135,7 @@ msgstr "برداشتن نقطه"
 msgid "Use Global Coordinates"
 msgstr "ثابت"
 
-#: scene/2d/skeleton_2d.cpp
+#: scene/2d/skeleton_2d.cpp scene/3d/skeleton.cpp
 #, fuzzy
 msgid "Rest"
 msgstr "راه اندازی دوباره"
@@ -21759,25 +22414,8 @@ msgid "Tracking"
 msgstr "بسته بندی"
 
 #: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
-msgid "Bounds"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp
-#, fuzzy
-msgid "Cell Space Transform"
-msgstr "انتقال را در انیمیشن تغییر بده"
-
-#: scene/3d/baked_lightmap.cpp
-msgid "Cell Subdiv"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp scene/3d/gi_probe.cpp
 #: scene/3d/reflection_probe.cpp
 msgid "Interior"
-msgstr ""
-
-#: scene/3d/baked_lightmap.cpp
-msgid "Octree"
 msgstr ""
 
 #: scene/3d/baked_lightmap.cpp
@@ -21892,7 +22530,7 @@ msgstr ""
 msgid "Light Data"
 msgstr ""
 
-#: scene/3d/bone_attachment.cpp
+#: scene/3d/bone_attachment.cpp scene/3d/physics_body.cpp
 #, fuzzy
 msgid "Bone Name"
 msgstr "نام گره:"
@@ -21933,9 +22571,10 @@ msgid "Far"
 msgstr ""
 
 #: scene/3d/camera.cpp scene/3d/collision_polygon.cpp scene/3d/spring_arm.cpp
-#: scene/gui/control.cpp scene/resources/shape.cpp
-#: scene/resources/style_box.cpp scene/resources/texture.cpp
-#: servers/physics_2d_server.cpp servers/physics_server.cpp
+#: scene/gui/control.cpp scene/resources/default_theme/default_theme.cpp
+#: scene/resources/shape.cpp scene/resources/style_box.cpp
+#: scene/resources/texture.cpp servers/physics_2d_server.cpp
+#: servers/physics_server.cpp
 msgid "Margin"
 msgstr ""
 
@@ -22076,24 +22715,6 @@ msgid "Autoplace Priority"
 msgstr "ویرایش صافی ها"
 
 #: scene/3d/gi_probe.cpp
-msgid "To Cell Xform"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp
-#, fuzzy
-msgid "Dynamic Data"
-msgstr "صادکردن فایل کتابخانه ای"
-
-#: scene/3d/gi_probe.cpp
-#, fuzzy
-msgid "Dynamic Range"
-msgstr "صادکردن فایل کتابخانه ای"
-
-#: scene/3d/gi_probe.cpp scene/3d/light.cpp
-msgid "Normal Bias"
-msgstr ""
-
-#: scene/3d/gi_probe.cpp
 msgid "Plotting Meshes"
 msgstr ""
 
@@ -22118,6 +22739,85 @@ msgstr ""
 msgid "Subdiv"
 msgstr ""
 
+#: scene/3d/gi_probe.cpp
+#, fuzzy
+msgid "Dynamic Range"
+msgstr "صادکردن فایل کتابخانه ای"
+
+#: scene/3d/gi_probe.cpp scene/3d/light.cpp
+msgid "Normal Bias"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+#: scene/resources/primitive_meshes.cpp
+msgid "Pixel Size"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Billboard"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+#, fuzzy
+msgid "Shaded"
+msgstr "تغییر بده"
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Double Sided"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+msgid "No Depth Test"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+#, fuzzy
+msgid "Fixed Size"
+msgstr "باز کردن و اجرای یک اسکریپت"
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp
+msgid "Alpha Cut"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/resources/material.cpp
+msgid "Alpha Scissor Threshold"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/3d/sprite_3d.cpp scene/resources/material.cpp
+#, fuzzy
+msgid "Render Priority"
+msgstr "ویرایش صافی ها"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Outline Render Priority"
+msgstr "ویرایش صافی ها"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Outline Modulate"
+msgstr "انتخاب حالت"
+
+#: scene/3d/label_3d.cpp scene/resources/default_theme/default_theme.cpp
+#: scene/resources/dynamic_font.cpp scene/resources/primitive_meshes.cpp
+msgid "Font"
+msgstr ""
+
+#: scene/3d/label_3d.cpp scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Horizontal Alignment"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
+
+#: scene/3d/label_3d.cpp
+#, fuzzy
+msgid "Vertical Alignment"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
+
+#: scene/3d/label_3d.cpp scene/gui/dialogs.cpp scene/gui/label.cpp
+#, fuzzy
+msgid "Autowrap"
+msgstr "AutoLoad"
+
 #: scene/3d/light.cpp
 msgid "Indirect Energy"
 msgstr ""
@@ -22127,7 +22827,8 @@ msgstr ""
 msgid "Negative"
 msgstr "GDNative"
 
-#: scene/3d/light.cpp
+#: scene/3d/light.cpp scene/resources/material.cpp
+#: scene/resources/visual_shader.cpp
 #, fuzzy
 msgid "Specular"
 msgstr "انتخاب حالت"
@@ -22235,25 +22936,18 @@ msgid "Ignore Y"
 msgstr ""
 
 #: scene/3d/navigation_agent.cpp
-msgid "The NavigationAgent can be used only under a spatial node."
-msgstr ""
-
-#: scene/3d/navigation_mesh_instance.cpp
 msgid ""
-"NavigationMeshInstance must be a child or grandchild to a Navigation node. "
-"It only provides navigation data."
+"The NavigationAgent can be used only under a Spatial inheriting parent node."
 msgstr ""
-"NavigationMeshInstance باید یک فرزند یا نوه‌ی یک گره Navigation باشد. این "
-"تنها داده‌ی پیمایش را فراهم می‌کند."
 
-#: scene/3d/navigation_mesh_instance.cpp
-msgid "Navmesh"
+#: scene/3d/navigation_mesh_instance.cpp scene/resources/mesh_library.cpp
+msgid "NavMesh"
 msgstr ""
 
 #: scene/3d/navigation_obstacle.cpp
 msgid ""
 "The NavigationObstacle only serves to provide collision avoidance to a "
-"spatial object."
+"Spatial inheriting parent object."
 msgstr ""
 
 #: scene/3d/occluder.cpp
@@ -22379,18 +23073,170 @@ msgstr "افزودن وظیفه"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock X"
-msgstr "حرکت دادن گره(ها)"
+msgid "Joint Constraints"
+msgstr "ثابت ها"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "Impulse Clamp"
+msgstr ""
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+#, fuzzy
+msgid "Swing Span"
+msgstr "ذخیره سازی صحنه"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "Twist Span"
+msgstr ""
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+#: scene/3d/vehicle_body.cpp
+#, fuzzy
+msgid "Relaxation"
+msgstr "شمارش ها:"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock Y"
-msgstr "حرکت دادن گره(ها)"
+msgid "Angular Limit Enabled"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
-msgid "Move Lock Z"
-msgstr "حرکت دادن گره(ها)"
+msgid "Angular Limit Upper"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Lower"
+msgstr "خطای Max. Angular:"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Bias"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Softness"
+msgstr "انیمیشن"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Relaxation"
+msgstr "انیمیشن"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Upper"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Lower"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Softness"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Restitution"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Damping"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Restitution"
+msgstr "انیمیشن"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Limit Damping"
+msgstr "انیمیشن"
+
+#: scene/3d/physics_body.cpp
+msgid "X"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Y"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Z"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Limit Enabled"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Enabled"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Stiffness"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Spring Damping"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Equilibrium Point"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Restitution"
+msgstr "تعریف"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Linear Damping"
+msgstr "خطی"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Restitution"
+msgstr "تعریف"
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Damping"
+msgstr "انیمیشن"
+
+#: scene/3d/physics_body.cpp scene/3d/physics_joint.cpp
+msgid "ERP"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+#, fuzzy
+msgid "Angular Spring Enabled"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Spring Stiffness"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Spring Damping"
+msgstr ""
+
+#: scene/3d/physics_body.cpp
+msgid "Angular Equilibrium Point"
+msgstr ""
 
 #: scene/3d/physics_body.cpp
 msgid "Body Offset"
@@ -22431,10 +23277,6 @@ msgid "Params"
 msgstr "تغییر بده"
 
 #: scene/3d/physics_joint.cpp
-msgid "Impulse Clamp"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
 msgid "Angular Limit"
 msgstr ""
 
@@ -22445,11 +23287,6 @@ msgstr ""
 #: scene/3d/physics_joint.cpp
 msgid "Lower"
 msgstr ""
-
-#: scene/3d/physics_joint.cpp scene/3d/vehicle_body.cpp
-#, fuzzy
-msgid "Relaxation"
-msgstr "شمارش ها:"
 
 #: scene/3d/physics_joint.cpp
 msgid "Motor"
@@ -22515,15 +23352,6 @@ msgstr "خطای Max. Angular:"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
-msgid "Swing Span"
-msgstr "ذخیره سازی صحنه"
-
-#: scene/3d/physics_joint.cpp
-msgid "Twist Span"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
-#, fuzzy
 msgid "Linear Limit X"
 msgstr "خطی"
 
@@ -22548,10 +23376,6 @@ msgstr ""
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit X"
-msgstr ""
-
-#: scene/3d/physics_joint.cpp
-msgid "Erp"
 msgstr ""
 
 #: scene/3d/physics_joint.cpp
@@ -22770,8 +23594,9 @@ msgstr ""
 msgid "Main"
 msgstr ""
 
-#: scene/3d/room_manager.cpp scene/animation/animation_player.cpp
-#: scene/animation/animation_tree.cpp scene/animation/animation_tree_player.cpp
+#: scene/3d/room_manager.cpp scene/animation/animation_blend_tree.cpp
+#: scene/animation/animation_player.cpp scene/animation/animation_tree.cpp
+#: scene/animation/animation_tree_player.cpp
 #: servers/audio/effects/audio_effect_delay.cpp
 #, fuzzy
 msgid "Active"
@@ -22881,6 +23706,34 @@ msgid ""
 "Ensure all rooms contain geometry or manual bounds."
 msgstr ""
 
+#: scene/3d/skeleton.cpp scene/resources/skin.cpp
+msgid "Pose"
+msgstr ""
+
+#: scene/3d/skeleton.cpp
+#, fuzzy
+msgid "Bound Children"
+msgstr "فرزند قابل ویرایش"
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Pinned Points"
+msgstr "برداشتن نقطه"
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Attachments"
+msgstr "محتواها:"
+
+#: scene/3d/soft_body.cpp
+#, fuzzy
+msgid "Point Index"
+msgstr "اندیس:"
+
+#: scene/3d/soft_body.cpp
+msgid "Spatial Attachment Path"
+msgstr ""
+
 #: scene/3d/soft_body.cpp
 #, fuzzy
 msgid "Physics Enabled"
@@ -22958,31 +23811,10 @@ msgstr ""
 msgid "Opacity"
 msgstr ""
 
-#: scene/3d/sprite_3d.cpp
-msgid "Pixel Size"
-msgstr ""
-
-#: scene/3d/sprite_3d.cpp
-msgid "Billboard"
-msgstr ""
-
 #: scene/3d/sprite_3d.cpp scene/resources/material.cpp
 #, fuzzy
 msgid "Transparent"
 msgstr "ترجمه‌ها"
-
-#: scene/3d/sprite_3d.cpp
-#, fuzzy
-msgid "Shaded"
-msgstr "تغییر بده"
-
-#: scene/3d/sprite_3d.cpp
-msgid "Double Sided"
-msgstr ""
-
-#: scene/3d/sprite_3d.cpp
-msgid "Alpha Cut"
-msgstr ""
 
 #: scene/3d/sprite_3d.cpp
 #, fuzzy
@@ -23131,38 +23963,6 @@ msgid ""
 "this environment's Background Mode to Canvas (for 2D scenes)."
 msgstr ""
 
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Min Space"
-msgstr ""
-
-#: scene/animation/animation_blend_space_1d.cpp
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Max Space"
-msgstr ""
-
-#: scene/animation/animation_blend_space_1d.cpp
-msgid "Value Label"
-msgstr ""
-
-#: scene/animation/animation_blend_space_2d.cpp
-#, fuzzy
-msgid "Auto Triangles"
-msgstr "افزودن متغیر"
-
-#: scene/animation/animation_blend_space_2d.cpp
-#, fuzzy
-msgid "Triangles"
-msgstr "افزودن متغیر"
-
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "X Label"
-msgstr ""
-
-#: scene/animation/animation_blend_space_2d.cpp
-msgid "Y Label"
-msgstr ""
-
 #: scene/animation/animation_blend_tree.cpp
 msgid "On BlendTree node '%s', animation not found: '%s'"
 msgstr ""
@@ -23197,13 +23997,27 @@ msgid "Autorestart"
 msgstr "راه اندازی دوباره"
 
 #: scene/animation/animation_blend_tree.cpp
-#, fuzzy
-msgid "Autorestart Delay"
-msgstr "کلید را در انیمیشن درج کن"
+msgid "Delay"
+msgstr ""
 
 #: scene/animation/animation_blend_tree.cpp
-msgid "Autorestart Random Delay"
+msgid "Random Delay"
 msgstr ""
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Add Amount"
+msgstr "افزودن نقطه"
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Blend Amount"
+msgstr "ارث‌بری صحنهٔ فرزند"
+
+#: scene/animation/animation_blend_tree.cpp
+#, fuzzy
+msgid "Seek Position"
+msgstr "برداشتن موج"
 
 #: scene/animation/animation_blend_tree.cpp
 #, fuzzy
@@ -23213,10 +24027,6 @@ msgstr "افزودن عمل ورودی"
 #: scene/animation/animation_blend_tree.cpp
 #: scene/animation/animation_node_state_machine.cpp
 msgid "Xfade Time"
-msgstr ""
-
-#: scene/animation/animation_blend_tree.cpp scene/resources/visual_shader.cpp
-msgid "Graph Offset"
 msgstr ""
 
 #: scene/animation/animation_node_state_machine.cpp
@@ -23288,11 +24098,6 @@ msgstr "انیمیشن نامعتبر: '%s'."
 #, fuzzy
 msgid "Nothing connected to input '%s' of node '%s'."
 msgstr "'%s' را از '%s' جدا کن"
-
-#: scene/animation/animation_tree.cpp
-#, fuzzy
-msgid "Filter Enabled"
-msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
 
 #: scene/animation/animation_tree.cpp
 msgid "No root AnimationNode for the graph is set."
@@ -23533,6 +24338,11 @@ msgid ""
 msgstr ""
 
 #: scene/gui/control.cpp
+#, fuzzy
+msgid "Theme Overrides"
+msgstr "خصوصیات زمینه"
+
+#: scene/gui/control.cpp
 msgid ""
 "The Hint Tooltip won't be displayed as the control's Mouse Filter is set to "
 "\"Ignore\". To solve this, set the Mouse Filter to \"Stop\" or \"Pass\"."
@@ -23570,7 +24380,7 @@ msgstr ""
 msgid "Tooltip"
 msgstr "ابزارها"
 
-#: scene/gui/control.cpp
+#: scene/gui/control.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Focus"
 msgstr ""
 
@@ -23638,11 +24448,6 @@ msgstr ""
 msgid "Hide On OK"
 msgstr ""
 
-#: scene/gui/dialogs.cpp scene/gui/label.cpp
-#, fuzzy
-msgid "Autowrap"
-msgstr "AutoLoad"
-
 #: scene/gui/dialogs.cpp
 msgid "Alert!"
 msgstr "هشدار!"
@@ -23693,6 +24498,7 @@ msgid "Show Zoom Label"
 msgstr ""
 
 #: scene/gui/graph_edit.cpp scene/gui/text_edit.cpp
+#: scene/resources/default_theme/default_theme.cpp
 msgid "Minimap"
 msgstr ""
 
@@ -23706,11 +24512,12 @@ msgid "Show Close"
 msgstr "بستن"
 
 #: scene/gui/graph_node.cpp scene/gui/option_button.cpp
+#: scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Selected"
 msgstr "همه‌ی انتخاب ها"
 
-#: scene/gui/graph_node.cpp
+#: scene/gui/graph_node.cpp scene/resources/default_theme/default_theme.cpp
 #, fuzzy
 msgid "Comment"
 msgstr "انجمن"
@@ -23775,7 +24582,7 @@ msgid "Fixed Icon Size"
 msgstr "باز کردن و اجرای یک اسکریپت"
 
 #: scene/gui/label.cpp
-msgid "Valign"
+msgid "V Align"
 msgstr ""
 
 #: scene/gui/label.cpp scene/gui/rich_text_label.cpp
@@ -24225,7 +25032,7 @@ msgstr ""
 msgid "Text Edit Undo Stack Max Size"
 msgstr ""
 
-#: scene/gui/texture_button.cpp
+#: scene/gui/texture_button.cpp scene/resources/default_theme/default_theme.cpp
 msgid "Hover"
 msgstr ""
 
@@ -24266,7 +25073,7 @@ msgstr ""
 msgid "Fill Mode"
 msgstr "حالت صدور:"
 
-#: scene/gui/texture_progress.cpp
+#: scene/gui/texture_progress.cpp scene/resources/material.cpp
 msgid "Tint"
 msgstr ""
 
@@ -24392,6 +25199,12 @@ msgid "Timeout"
 msgstr "زمان:"
 
 #: scene/main/node.cpp
+msgid ""
+"Setting node name '%s' to be unique within scene for '%s', but it's already "
+"claimed by '%s'. This node is no longer set unique."
+msgstr ""
+
+#: scene/main/node.cpp
 msgid "Name Num Separator"
 msgstr ""
 
@@ -24406,13 +25219,13 @@ msgstr "تعریف"
 
 #: scene/main/node.cpp
 #, fuzzy
-msgid "Import Path"
-msgstr "صدور پروژه"
+msgid "Pause Mode"
+msgstr "انتخاب حالت"
 
 #: scene/main/node.cpp
 #, fuzzy
-msgid "Pause Mode"
-msgstr "انتخاب حالت"
+msgid "Physics Interpolation Mode"
+msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
 
 #: scene/main/node.cpp
 #, fuzzy
@@ -24443,11 +25256,6 @@ msgstr "تعیین چندگانه:"
 #, fuzzy
 msgid "Process Priority"
 msgstr "ویرایش صافی ها"
-
-#: scene/main/node.cpp
-#, fuzzy
-msgid "Physics Interpolated"
-msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
 
 #: scene/main/scene_tree.cpp scene/main/timer.cpp
 #, fuzzy
@@ -24482,12 +25290,8 @@ msgstr ""
 msgid "Multiplayer Poll"
 msgstr "تعیین چندگانه:"
 
-#: scene/main/scene_tree.cpp scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Physics Interpolation"
-msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
-
-#: scene/main/scene_tree.cpp scene/resources/shape_2d.cpp
+#: scene/main/scene_tree.cpp scene/resources/mesh_library.cpp
+#: scene/resources/shape_2d.cpp
 msgid "Shapes"
 msgstr ""
 
@@ -24731,6 +25535,37 @@ msgid "Swap OK Cancel"
 msgstr "لغو"
 
 #: scene/register_scene_types.cpp
+#, fuzzy
+msgid "Layer Names"
+msgstr "نام"
+
+#: scene/register_scene_types.cpp
+msgid "2D Render"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+msgid "3D Render"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+msgid "2D Physics"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+msgid "3D Physics"
+msgstr ""
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "2D Navigation"
+msgstr "گره انیمیشن"
+
+#: scene/register_scene_types.cpp
+#, fuzzy
+msgid "3D Navigation"
+msgstr "گره انیمیشن"
+
+#: scene/register_scene_types.cpp
 msgid "Use hiDPI"
 msgstr ""
 
@@ -24766,6 +25601,782 @@ msgstr "انتخاب شده را تغییر مقیاس بده"
 
 #: scene/resources/curve.cpp
 msgid "Bake Interval"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Panel"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color"
+msgstr "توابع"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Pressed"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Hover"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Focus"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "H Separation"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Underline Spacing"
+msgstr "تکرار انیمیشن"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Arrow"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Arrow Margin"
+msgstr "نمایش در فایل‌سیستم"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Hover Pressed"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Checked Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Unchecked"
+msgstr "همه‌ی انتخاب ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Unchecked Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Radio Checked"
+msgstr "همه‌ی انتخاب ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Radio Checked Disabled"
+msgstr "(ویرایشگر غیرفعال شده)"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Radio Unchecked"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Radio Unchecked Disabled"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Hover Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Check V Adjust"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "On Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Off"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Off Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Shadow"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Outline Modulate"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow Offset X"
+msgstr "بارگیری پیش فرض"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow Offset Y"
+msgstr "بارگیری پیش فرض"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Shadow As Outline"
+msgstr "زبانه قبلی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Selected"
+msgstr "انتخاب شده را حذف کن"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Uneditable"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Cursor Color"
+msgstr "ساختن گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Clear Button Color"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Clear Button Color Pressed"
+msgstr "صافی کردن گره‌هاسیگنال ها را فیلتر کنید"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Minimum Spaces"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "BG"
+msgstr "بایت"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#: scene/resources/dynamic_font.cpp scene/resources/world.cpp
+#: scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Space"
+msgstr "فراخوانی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folded"
+msgstr "ساختن پوشه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Fold"
+msgstr "ساختن پوشه"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Readonly"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Lines"
+msgstr "کپی برگزیده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Max Width"
+msgstr "کپی برگزیده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Completion Scroll Width"
+msgstr "همه‌ی انتخاب ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Scroll Focus"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Highlight"
+msgstr "توضیح"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Pressed"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Increment Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Decrement Pressed"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Slider"
+msgstr "گره انیمیشن"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber Area"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grabber Area Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grabber Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tick"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Updown"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scaleborder Size"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Font"
+msgstr "افزودن گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Color"
+msgstr "توابع"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Height"
+msgstr "آزمودن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Highlight"
+msgstr "توضیح"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close H Offset"
+msgstr "حذف قالب"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close V Offset"
+msgstr "حذف قالب"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Parent Folder"
+msgstr "ایجاد پوشه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Toggle Hidden"
+msgstr "یک Breakpoint درج کن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Panel Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Labeled Separator Left"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Labeled Separator Right"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Separator"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color Accel"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Font Color Separator"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "V Separation"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selected Frame"
+msgstr "انتخاب یک گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Default Frame"
+msgstr "پیشفرض"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Default Focus"
+msgstr "پیشفرض"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Comment Focus"
+msgstr "انجمن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Breakpoint"
+msgstr "حذف کن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Resizer"
+msgstr "آرایه را تغییر اندازه بده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Color"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Resizer Color"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Offset"
+msgstr "ویرایش منحنی گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Close Offset"
+msgstr "حذف قالب"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Port Offset"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "BG Focus"
+msgstr "ویرایش سیگنال"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selected Focus"
+msgstr "همه‌ی انتخاب ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Cursor Unfocused"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Button Pressed"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Normal"
+msgstr "دکمهٔ میانی."
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Pressed"
+msgstr "دکمهٔ میانی."
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Hover"
+msgstr "دکمهٔ میانی."
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button"
+msgstr "ساختن گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button Pressed"
+msgstr "گزینه های اتوبوس"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Custom Button Hover"
+msgstr "ساختن گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Select Arrow"
+msgstr "انتخاب همه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Arrow Collapsed"
+msgstr "بستن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Font"
+msgstr "دکمهٔ میانی."
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Title Button Color"
+msgstr "تنها در قسمت انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Guide Color"
+msgstr "توابع"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Drop Position Color"
+msgstr "حذف کن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Relationship Line Color"
+msgstr "تنها در قسمت انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Custom Button Font Highlight"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Item Margin"
+msgstr "محتواها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Button Margin"
+msgstr "Button"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Draw Relationship Lines"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Draw Guides"
+msgstr "پخش سفارشی صحنه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scroll Border"
+msgstr "برداشتن متغیر"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Scroll Speed"
+msgstr "پخش صحنه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Icon Margin"
+msgstr "محتواها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Line Separation"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Tab BG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Tab Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Menu"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Menu Highlight"
+msgstr "توضیح"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color FG"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Font Color BG"
+msgstr "برداشتن انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Side Margin"
+msgstr "نمایش در فایل‌سیستم"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Top Margin"
+msgstr "نمایش در فایل‌سیستم"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Label V Align FG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Label V Align BG"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Large"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folder"
+msgstr "ساختن پوشه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Folder Icon Modulate"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "File Icon Modulate"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Files Disabled"
+msgstr "غیرفعال شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "SV Width"
+msgstr "خطی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "SV Height"
+msgstr "آزمودن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "H Width"
+msgstr "خطی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Label Width"
+msgstr "خطی"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Screen Picker"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Add Preset"
+msgstr "خطاهای بارگذاری"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Color Hue"
+msgstr "عضوها"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Color Sample"
+msgstr "عضوها"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset BG"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Overbright Indicator"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset FG"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Preset BG Icon"
+msgstr "بازنشانی بزرگنمایی"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Normal Font"
+msgstr "حذف قالب"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Bold Font"
+msgstr "افزودن گره"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Italics Font"
+msgstr "ویژگی‌ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Bold Italics Font"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Mono Font"
+msgstr "ویژگی‌ها"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Table H Separation"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Table V Separation"
+msgstr "شمارش ها:"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Left"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Top"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Right"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Margin Bottom"
+msgstr "انتخاب حالت"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Autohide"
+msgstr "AutoLoad"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Minus"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "More"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Grid Minor"
+msgstr "ترجیحات"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Grid Major"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selection Fill"
+msgstr "تنها در قسمت انتخاب شده"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Selection Stroke"
+msgstr "دارایی Setter را اضافه کن"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Activity"
+msgstr "افزودن وظیفه"
+
+#: scene/resources/default_theme/default_theme.cpp
+#, fuzzy
+msgid "Bezier Len Pos"
+msgstr "انتقال نقاط بِزیِر"
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Bezier Len Neg"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Port Grab Distance Horizontal"
+msgstr ""
+
+#: scene/resources/default_theme/default_theme.cpp
+msgid "Port Grab Distance Vertical"
 msgstr ""
 
 #: scene/resources/dynamic_font.cpp
@@ -24804,16 +26415,6 @@ msgstr "گزینه‌های کلاس:"
 #, fuzzy
 msgid "Char"
 msgstr "کاراکترهای معتبر:"
-
-#: scene/resources/dynamic_font.cpp scene/resources/world.cpp
-#: scene/resources/world_2d.cpp
-#, fuzzy
-msgid "Space"
-msgstr "فراخوانی"
-
-#: scene/resources/dynamic_font.cpp
-msgid "Font"
-msgstr ""
 
 #: scene/resources/dynamic_font.cpp
 #, fuzzy
@@ -25109,15 +26710,6 @@ msgid "Color Correction"
 msgstr "افزودن وظیفه"
 
 #: scene/resources/font.cpp
-msgid "Chars"
-msgstr ""
-
-#: scene/resources/font.cpp
-#, fuzzy
-msgid "Kernings"
-msgstr "هشدارها"
-
-#: scene/resources/font.cpp
 #, fuzzy
 msgid "Ascent"
 msgstr "اخیر:"
@@ -25126,6 +26718,11 @@ msgstr "اخیر:"
 #, fuzzy
 msgid "Distance Field"
 msgstr "نصب کردن"
+
+#: scene/resources/gradient.cpp
+#, fuzzy
+msgid "Raw Data"
+msgstr "صادکردن فایل کتابخانه ای"
 
 #: scene/resources/gradient.cpp
 msgid "Offsets"
@@ -25149,11 +26746,6 @@ msgstr ""
 
 #: scene/resources/material.cpp
 #, fuzzy
-msgid "Render Priority"
-msgstr "ویرایش صافی ها"
-
-#: scene/resources/material.cpp
-#, fuzzy
 msgid "Next Pass"
 msgstr "زبانه بعدی"
 
@@ -25171,10 +26763,6 @@ msgid "Vertex Lighting"
 msgstr "توضیح"
 
 #: scene/resources/material.cpp
-msgid "No Depth Test"
-msgstr ""
-
-#: scene/resources/material.cpp
 #, fuzzy
 msgid "Use Point Size"
 msgstr "باز کردن و اجرای یک اسکریپت"
@@ -25182,11 +26770,6 @@ msgstr "باز کردن و اجرای یک اسکریپت"
 #: scene/resources/material.cpp
 msgid "World Triplanar"
 msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Fixed Size"
-msgstr "باز کردن و اجرای یک اسکریپت"
 
 #: scene/resources/material.cpp
 msgid "Albedo Tex Force sRGB"
@@ -25205,6 +26788,10 @@ msgstr "غیرفعال شده"
 #, fuzzy
 msgid "Ensure Correct Normals"
 msgstr "انتخاب شده را تغییر مقیاس بده"
+
+#: scene/resources/material.cpp
+msgid "Albedo Tex MSDF"
+msgstr ""
 
 #: scene/resources/material.cpp
 msgid "Vertex Color"
@@ -25272,10 +26859,6 @@ msgid "Use Alpha Scissor"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Alpha Scissor Threshold"
-msgstr ""
-
-#: scene/resources/material.cpp
 msgid "Particles Anim"
 msgstr ""
 
@@ -25298,26 +26881,9 @@ msgid "Metallic"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Metallic Specular"
-msgstr ""
-
-#: scene/resources/material.cpp
 #, fuzzy
-msgid "Metallic Texture"
-msgstr "حذف قالب"
-
-#: scene/resources/material.cpp
-msgid "Metallic Texture Channel"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Roughness Texture"
-msgstr "حذف قالب"
-
-#: scene/resources/material.cpp
-msgid "Roughness Texture Channel"
-msgstr ""
+msgid "Texture Channel"
+msgstr "انتخاب حالت"
 
 #: scene/resources/material.cpp
 #, fuzzy
@@ -25325,22 +26891,8 @@ msgid "Emission"
 msgstr "انتقال را در انیمیشن تغییر بده"
 
 #: scene/resources/material.cpp
-msgid "Emission Energy"
+msgid "On UV2"
 msgstr ""
-
-#: scene/resources/material.cpp
-msgid "Emission Operator"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission On UV2"
-msgstr "انتقال را در انیمیشن تغییر بده"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Emission Texture"
-msgstr "حذف قالب"
 
 #: scene/resources/material.cpp
 msgid "NormalMap"
@@ -25351,50 +26903,26 @@ msgid "Rim"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Rim Tint"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Rim Texture"
-msgstr "حذف قالب"
-
-#: scene/resources/material.cpp
 #, fuzzy
 msgid "Clearcoat"
 msgstr "پاک کردن"
 
 #: scene/resources/material.cpp
-#, fuzzy
-msgid "Clearcoat Gloss"
-msgstr "پخش سفارشی صحنه"
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Clearcoat Texture"
-msgstr "عضوها"
+msgid "Gloss"
+msgstr ""
 
 #: scene/resources/material.cpp
 msgid "Anisotropy"
 msgstr ""
 
 #: scene/resources/material.cpp
-msgid "Anisotropy Flowmap"
+msgid "Flowmap"
 msgstr ""
 
 #: scene/resources/material.cpp
 #, fuzzy
 msgid "Ambient Occlusion"
 msgstr "ویرایش سیگنال"
-
-#: scene/resources/material.cpp
-msgid "On UV2"
-msgstr ""
-
-#: scene/resources/material.cpp
-#, fuzzy
-msgid "Texture Channel"
-msgstr "انتخاب حالت"
 
 #: scene/resources/material.cpp
 msgid "Deep Parallax"
@@ -25429,15 +26957,10 @@ msgstr "انتقال"
 
 #: scene/resources/material.cpp
 #, fuzzy
-msgid "Transmission Texture"
-msgstr "انتقال"
-
-#: scene/resources/material.cpp
-#, fuzzy
 msgid "Refraction"
 msgstr "شمارش ها:"
 
-#: scene/resources/material.cpp scene/resources/navigation_mesh.cpp
+#: scene/resources/material.cpp
 msgid "Detail"
 msgstr ""
 
@@ -25479,14 +27002,19 @@ msgstr "انتخاب حالت"
 msgid "Lightmap Size Hint"
 msgstr ""
 
-#: scene/resources/mesh.cpp
-#, fuzzy
-msgid "Blend Shape Mode"
-msgstr "گره مخلوط۲"
-
 #: scene/resources/mesh.cpp scene/resources/primitive_meshes.cpp
 msgid "Custom AABB"
 msgstr ""
+
+#: scene/resources/mesh_library.cpp
+#, fuzzy
+msgid "Mesh Transform"
+msgstr "انتقال را در انیمیشن تغییر بده"
+
+#: scene/resources/mesh_library.cpp
+#, fuzzy
+msgid "NavMesh Transform"
+msgstr "انتقال را در انیمیشن تغییر بده"
 
 #: scene/resources/multimesh.cpp
 #, fuzzy
@@ -25511,29 +27039,14 @@ msgstr "ارث‌بری صحنهٔ فرزند"
 msgid "Visible Instance Count"
 msgstr ""
 
-#: scene/resources/multimesh.cpp
+#: scene/resources/navigation_mesh.cpp
 #, fuzzy
-msgid "Transform Array"
-msgstr "انتخاب شده را تغییر مقیاس بده"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Transform 2D Array"
-msgstr "انتخاب شده را تغییر مقیاس بده"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Color Array"
-msgstr "آرایه را تغییر اندازه بده"
-
-#: scene/resources/multimesh.cpp
-#, fuzzy
-msgid "Custom Data Array"
-msgstr "آرایه را تغییر اندازه بده"
+msgid "Sampling"
+msgstr "بومی"
 
 #: scene/resources/navigation_mesh.cpp
 #, fuzzy
-msgid "Sample Partition Type"
+msgid "Partition Type"
 msgstr "متغیر را ویرایش کن:"
 
 #: scene/resources/navigation_mesh.cpp
@@ -25550,8 +27063,13 @@ msgid "Source Group Name"
 msgstr "منبع"
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Agent"
+msgid "Cells"
 msgstr ""
+
+#: scene/resources/navigation_mesh.cpp
+#, fuzzy
+msgid "Agents"
+msgstr "نشانوندها:"
 
 #: scene/resources/navigation_mesh.cpp
 msgid "Max Climb"
@@ -25563,11 +27081,16 @@ msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
 #, fuzzy
+msgid "Regions"
+msgstr "گره انیمیشن"
+
+#: scene/resources/navigation_mesh.cpp
+#, fuzzy
 msgid "Merge Size"
 msgstr "ادغام از صحنه"
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Edge"
+msgid "Edges"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
@@ -25578,6 +27101,11 @@ msgstr "بازتاب"
 #: scene/resources/navigation_mesh.cpp
 msgid "Verts Per Poly"
 msgstr ""
+
+#: scene/resources/navigation_mesh.cpp
+#, fuzzy
+msgid "Details"
+msgstr "بارگیری پیش فرض"
 
 #: scene/resources/navigation_mesh.cpp
 msgid "Sample Distance"
@@ -25597,7 +27125,7 @@ msgid "Ledge Spans"
 msgstr ""
 
 #: scene/resources/navigation_mesh.cpp
-msgid "Filter Walkable Low Height Spans"
+msgid "Walkable Low Height Spans"
 msgstr ""
 
 #: scene/resources/occluder_shape.cpp
@@ -25719,6 +27247,11 @@ msgstr ""
 msgid "Is Hemisphere"
 msgstr ""
 
+#: scene/resources/primitive_meshes.cpp
+#, fuzzy
+msgid "Curve Step"
+msgstr "ویرایش منحنی گره"
+
 #: scene/resources/ray_shape.cpp scene/resources/segment_shape_2d.cpp
 msgid "Slips On Slope"
 msgstr ""
@@ -25727,14 +27260,23 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: scene/resources/shader.cpp
-#, fuzzy
-msgid "Custom Defines"
-msgstr "اجرای صحنه دلخواه"
-
 #: scene/resources/shape_2d.cpp
 msgid "Custom Solver Bias"
 msgstr ""
+
+#: scene/resources/skin.cpp
+#, fuzzy
+msgid "Bind Count"
+msgstr "افزودن عمل ورودی"
+
+#: scene/resources/skin.cpp
+msgid "Bind"
+msgstr ""
+
+#: scene/resources/skin.cpp
+#, fuzzy
+msgid "Bone"
+msgstr "نام گره:"
 
 #: scene/resources/sky.cpp
 msgid "Radiance Size"
@@ -25795,6 +27337,10 @@ msgid "Expand Margin"
 msgstr ""
 
 #: scene/resources/style_box.cpp
+msgid "Skew"
+msgstr ""
+
+#: scene/resources/style_box.cpp
 msgid "Corner Radius"
 msgstr ""
 
@@ -25804,10 +27350,6 @@ msgstr ""
 
 #: scene/resources/style_box.cpp
 msgid "Anti Aliasing"
-msgstr ""
-
-#: scene/resources/style_box.cpp
-msgid "Anti Aliasing Size"
 msgstr ""
 
 #: scene/resources/style_box.cpp
@@ -25834,6 +27376,18 @@ msgid "Image Size"
 msgstr "ادغام از صحنه"
 
 #: scene/resources/texture.cpp
+msgid "Side"
+msgstr ""
+
+#: scene/resources/texture.cpp
+msgid "Front"
+msgstr ""
+
+#: scene/resources/texture.cpp
+msgid "Back"
+msgstr ""
+
+#: scene/resources/texture.cpp
 #, fuzzy
 msgid "Storage Mode"
 msgstr "انتخاب حالت"
@@ -25845,13 +27399,12 @@ msgstr "گرفتن"
 
 #: scene/resources/texture.cpp
 #, fuzzy
-msgid "Fill From"
+msgid "From"
 msgstr "حالت صدور:"
 
 #: scene/resources/texture.cpp
-#, fuzzy
-msgid "Fill To"
-msgstr "حالت صدور:"
+msgid "To"
+msgstr ""
 
 #: scene/resources/texture.cpp
 #, fuzzy
@@ -25887,8 +27440,29 @@ msgid "Output Port For Preview"
 msgstr ""
 
 #: scene/resources/visual_shader.cpp
-msgid "Initialized"
-msgstr ""
+#, fuzzy
+msgid "Depth Draw"
+msgstr "حالت درون یابی(درون‌یابی روشی است برای یافتن مقدار تابع درون یک بازه)"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Cull"
+msgstr "انتخاب حالت"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Diffuse"
+msgstr "انتخاب حالت"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Async"
+msgstr "انتخاب حالت"
+
+#: scene/resources/visual_shader.cpp
+#, fuzzy
+msgid "Modes"
+msgstr "انتخاب حالت"
 
 #: scene/resources/visual_shader.cpp
 #, fuzzy
@@ -25952,6 +27526,11 @@ msgid "Scenario"
 msgstr "صحنه"
 
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Navigation Map"
+msgstr "گره انیمیشن"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
 msgid "Direct Space State"
 msgstr ""
 
@@ -25968,6 +27547,26 @@ msgstr "خطی"
 #: scene/resources/world.cpp scene/resources/world_2d.cpp
 msgid "Default Angular Damp"
 msgstr ""
+
+#: scene/resources/world.cpp
+#, fuzzy
+msgid "Default Map Up"
+msgstr "پیشفرض"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Cell Size"
+msgstr "به‌روزرسانی از صحنه"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Cell Height"
+msgstr "آزمودن"
+
+#: scene/resources/world.cpp scene/resources/world_2d.cpp
+#, fuzzy
+msgid "Default Edge Connection Margin"
+msgstr "ویرایش اتصال:"
 
 #: scene/resources/world_2d.cpp
 msgid "Canvas"
@@ -26066,6 +27665,10 @@ msgstr ""
 
 #: servers/audio/effects/audio_effect_compressor.cpp
 msgid "Release (ms)"
+msgstr ""
+
+#: servers/audio/effects/audio_effect_compressor.cpp
+msgid "Mix"
 msgstr ""
 
 #: servers/audio/effects/audio_effect_compressor.cpp
@@ -26320,6 +27923,11 @@ msgstr "گره انیمیشن"
 msgid "Collision Unsafe Fraction"
 msgstr "گره انیمیشن"
 
+#: servers/physics_2d_server.cpp servers/physics_server.cpp
+#, fuzzy
+msgid "Physics Engine"
+msgstr "روشن"
+
 #: servers/physics_server.cpp
 msgid "Center Of Mass"
 msgstr ""
@@ -26334,13 +27942,13 @@ msgstr ""
 
 #: servers/visual/shader_language.cpp
 msgid ""
-"Varyings which assigned in 'vertex' function may not be reassigned in "
+"Varyings which were assigned in 'vertex' function may not be reassigned in "
 "'fragment' or 'light'."
 msgstr ""
 
 #: servers/visual/shader_language.cpp
 msgid ""
-"Varyings which assigned in 'fragment' function may not be reassigned in "
+"Varyings which were assigned in 'fragment' function may not be reassigned in "
 "'vertex' or 'light'."
 msgstr ""
 
@@ -26603,6 +28211,11 @@ msgstr ""
 #: servers/visual_server.cpp
 msgid "Disable Half Float"
 msgstr ""
+
+#: servers/visual_server.cpp
+#, fuzzy
+msgid "Enable High Float"
+msgstr "ویرایش صافی ها"
 
 #: servers/visual_server.cpp
 #, fuzzy

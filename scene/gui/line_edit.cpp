@@ -742,7 +742,7 @@ bool LineEdit::_is_over_clear_button(const Point2 &p_pos) const {
 		return false;
 	}
 	Ref<Texture> icon = Control::get_icon("clear");
-	int x_ofs = get_stylebox("normal")->get_offset().x;
+	int x_ofs = get_stylebox("normal")->get_margin(MARGIN_RIGHT);
 	return p_pos.x > get_size().width - icon->get_width() - x_ofs;
 }
 
@@ -751,9 +751,8 @@ void LineEdit::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 #ifdef TOOLS_ENABLED
 			if (Engine::get_singleton()->is_editor_hint() && !get_tree()->is_node_being_edited(this)) {
-				EDITOR_DEF("text_editor/cursor/caret_blink", false);
 				cursor_set_blink_enabled(EditorSettings::get_singleton()->is_caret_blink_active());
-				cursor_set_blink_speed(EDITOR_DEF("text_editor/cursor/caret_blink_speed", 0.65));
+				cursor_set_blink_speed(EDITOR_GET("text_editor/cursor/caret_blink_speed"));
 
 				if (!EditorSettings::get_singleton()->is_connected("settings_changed", this, "_editor_settings_changed")) {
 					EditorSettings::get_singleton()->connect("settings_changed", this, "_editor_settings_changed");
@@ -1564,7 +1563,7 @@ Size2 LineEdit::get_minimum_size() const {
 	min_size.height = font->get_height();
 
 	// Take icons into account.
-	if (!text.empty() && is_editable() && clear_button_enabled) {
+	if (clear_button_enabled) {
 		min_size.width = MAX(min_size.width, Control::get_icon("clear")->get_width());
 		min_size.height = MAX(min_size.height, Control::get_icon("clear")->get_height());
 	}
@@ -1777,9 +1776,8 @@ PopupMenu *LineEdit::get_menu() const {
 
 void LineEdit::_editor_settings_changed() {
 #ifdef TOOLS_ENABLED
-	EDITOR_DEF("text_editor/cursor/caret_blink", false);
 	cursor_set_blink_enabled(EditorSettings::get_singleton()->is_caret_blink_active());
-	cursor_set_blink_speed(EDITOR_DEF("text_editor/cursor/caret_blink_speed", 0.65));
+	cursor_set_blink_speed(EDITOR_GET("text_editor/cursor/caret_blink_speed"));
 #endif
 }
 

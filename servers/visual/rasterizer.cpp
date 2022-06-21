@@ -33,6 +33,10 @@
 #include "core/os/os.h"
 #include "core/print_string.h"
 
+#if defined(DEBUG_ENABLED) && defined(TOOLS_ENABLED)
+#include "core/project_settings.h"
+#endif
+
 Rasterizer *(*Rasterizer::_create_func)() = nullptr;
 
 Rasterizer *Rasterizer::create() {
@@ -350,6 +354,16 @@ void RasterizerStorage::multimesh_instance_set_transform(RID p_multimesh, int p_
 			ptr[11] = t.origin.z;
 
 			_multimesh_add_to_interpolation_lists(p_multimesh, *mmi);
+
+#if defined(DEBUG_ENABLED) && defined(TOOLS_ENABLED)
+			if (!Engine::get_singleton()->is_in_physics_frame()) {
+				static int32_t warn_count = 0;
+				warn_count++;
+				if (((warn_count % 2048) == 0) && GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
+					WARN_PRINT("[Physics interpolation] MultiMesh interpolation is being triggered from outside physics process, this might lead to issues (possibly benign).");
+				}
+			}
+#endif
 			return;
 		}
 	}
@@ -463,7 +477,7 @@ void RasterizerStorage::multimesh_set_physics_interpolation_quality(RID p_multim
 void RasterizerStorage::multimesh_instance_reset_physics_interpolation(RID p_multimesh, int p_index) {
 	MMInterpolator *mmi = _multimesh_get_interpolator(p_multimesh);
 	if (mmi) {
-		ERR_FAIL_COND(p_index >= mmi->_num_instances);
+		ERR_FAIL_INDEX(p_index, mmi->_num_instances);
 
 		PoolVector<float>::Write w = mmi->_data_prev.write();
 		PoolVector<float>::Read r = mmi->_data_curr.read();
@@ -498,6 +512,15 @@ void RasterizerStorage::multimesh_set_as_bulk_array_interpolated(RID p_multimesh
 		mmi->_data_prev = p_array_prev;
 		mmi->_data_curr = p_array;
 		_multimesh_add_to_interpolation_lists(p_multimesh, *mmi);
+#if defined(DEBUG_ENABLED) && defined(TOOLS_ENABLED)
+		if (!Engine::get_singleton()->is_in_physics_frame()) {
+			static int32_t warn_count = 0;
+			warn_count++;
+			if (((warn_count % 2048) == 0) && GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
+				WARN_PRINT("[Physics interpolation] MultiMesh interpolation is being triggered from outside physics process, this might lead to issues (possibly benign).");
+			}
+		}
+#endif
 	}
 }
 
@@ -507,6 +530,15 @@ void RasterizerStorage::multimesh_set_as_bulk_array(RID p_multimesh, const PoolV
 		if (mmi->interpolated) {
 			mmi->_data_curr = p_array;
 			_multimesh_add_to_interpolation_lists(p_multimesh, *mmi);
+#if defined(DEBUG_ENABLED) && defined(TOOLS_ENABLED)
+			if (!Engine::get_singleton()->is_in_physics_frame()) {
+				static int32_t warn_count = 0;
+				warn_count++;
+				if (((warn_count % 2048) == 0) && GLOBAL_GET("debug/settings/physics_interpolation/enable_warnings")) {
+					WARN_PRINT("[Physics interpolation] MultiMesh interpolation is being triggered from outside physics process, this might lead to issues (possibly benign).");
+				}
+			}
+#endif
 			return;
 		}
 	}

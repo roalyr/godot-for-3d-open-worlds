@@ -1631,7 +1631,8 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 						Vector3 motion_snapped = motion;
 						motion_snapped.snap(Vector3(snap, snap, snap));
 						// This might not be necessary anymore after issue #288 is solved (in 4.0?).
-						set_message(TTR("Scaling: ") + "(" + String::num(motion_snapped.x, snap_step_decimals) + ", " +
+						// TRANSLATORS: Refers to changing the scale of a node in the 3D editor.
+						set_message(TTR("Scaling:") + " (" + String::num(motion_snapped.x, snap_step_decimals) + ", " +
 								String::num(motion_snapped.y, snap_step_decimals) + ", " + String::num(motion_snapped.z, snap_step_decimals) + ")");
 
 						for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
@@ -1753,7 +1754,8 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 						}
 						Vector3 motion_snapped = motion;
 						motion_snapped.snap(Vector3(snap, snap, snap));
-						set_message(TTR("Translating: ") + "(" + String::num(motion_snapped.x, snap_step_decimals) + ", " +
+						// TRANSLATORS: Refers to changing the position of a node in the 3D editor.
+						set_message(TTR("Translating:") + " (" + String::num(motion_snapped.x, snap_step_decimals) + ", " +
 								String::num(motion_snapped.y, snap_step_decimals) + ", " + String::num(motion_snapped.z, snap_step_decimals) + ")");
 
 						for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
@@ -2043,7 +2045,7 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 		}
 
 		if (EditorSettings::get_singleton()->get("editors/3d/navigation/emulate_numpad")) {
-			const uint32_t code = k->get_scancode();
+			const uint32_t code = k->get_physical_scancode();
 			if (code >= KEY_0 && code <= KEY_9) {
 				k->set_scancode(code - KEY_0 + KEY_KP_0);
 			}
@@ -6489,6 +6491,7 @@ void SpatialEditor::_register_all_gizmos() {
 	add_gizmo_plugin(Ref<MeshInstanceSpatialGizmoPlugin>(memnew(MeshInstanceSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<SoftBodySpatialGizmoPlugin>(memnew(SoftBodySpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<Sprite3DSpatialGizmoPlugin>(memnew(Sprite3DSpatialGizmoPlugin)));
+	add_gizmo_plugin(Ref<Label3DSpatialGizmoPlugin>(memnew(Label3DSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<SkeletonSpatialGizmoPlugin>(memnew(SkeletonSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<Position3DSpatialGizmoPlugin>(memnew(Position3DSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<RayCastSpatialGizmoPlugin>(memnew(RayCastSpatialGizmoPlugin)));
@@ -6530,9 +6533,9 @@ void SpatialEditor::_bind_methods() {
 }
 
 void SpatialEditor::clear() {
-	settings_fov->set_value(EDITOR_DEF("editors/3d/default_fov", 70.0));
-	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", 0.05));
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", 1500.0));
+	settings_fov->set_value(EDITOR_GET("editors/3d/default_fov"));
+	settings_znear->set_value(EDITOR_GET("editors/3d/default_z_near"));
+	settings_zfar->set_value(EDITOR_GET("editors/3d/default_z_far"));
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
 		viewports[i]->reset();
@@ -6737,6 +6740,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	p->connect("id_pressed", this, "_menu_item_pressed");
 
 	view_menu = memnew(MenuButton);
+	// TRANSLATORS: Noun, name of the 2D/3D View menus.
 	view_menu->set_text(TTR("View"));
 	view_menu->set_switch_on_hover(true);
 	hbc_menu->add_child(view_menu);
@@ -6853,7 +6857,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_fov->set_max(MAX_FOV);
 	settings_fov->set_min(MIN_FOV);
 	settings_fov->set_step(0.01);
-	settings_fov->set_value(EDITOR_DEF("editors/3d/default_fov", 70.0));
+	settings_fov->set_value(EDITOR_GET("editors/3d/default_fov"));
 	settings_vbc->add_margin_child(TTR("Perspective FOV (deg.):"), settings_fov);
 
 
@@ -6868,7 +6872,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_znear->set_max(8192.0);
 	settings_znear->set_min(MIN_Z);
 	settings_znear->set_step(0.01);
-	settings_znear->set_value(EDITOR_DEF("editors/3d/default_z_near", MIN_Z));
+	settings_znear->set_value(EDITOR_GET("editors/3d/default_z_near"));
 	settings_vbc->add_margin_child(TTR("View Z-Near:"), settings_znear);
 
 	// Far is from 1.0 to 9e18.
@@ -6876,7 +6880,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_zfar->set_max(MAX_Z);
 	settings_zfar->set_min(1.0);
 	settings_zfar->set_step(1.0);
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", MAX_Z));
+	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far"));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 
@@ -7104,7 +7108,7 @@ SpatialEditorPlugin::~SpatialEditorPlugin() {
 }
 
 void EditorSpatialGizmoPlugin::create_material(const String &p_name, const Color &p_color, bool p_billboard, bool p_on_top, bool p_use_vertex_color) {
-	Color instanced_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.6));
+	Color instanced_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/instanced");
 
 	Vector<Ref<SpatialMaterial>> mats;
 
@@ -7145,7 +7149,7 @@ void EditorSpatialGizmoPlugin::create_material(const String &p_name, const Color
 }
 
 void EditorSpatialGizmoPlugin::create_icon_material(const String &p_name, const Ref<Texture> &p_texture, bool p_on_top, const Color &p_albedo) {
-	Color instanced_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.6));
+	Color instanced_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/instanced");
 
 	Vector<Ref<SpatialMaterial>> icons;
 

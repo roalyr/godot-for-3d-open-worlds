@@ -52,10 +52,7 @@
 #include "modules/modules_enabled.gen.h" // For regex.
 
 void SceneTreeDock::_nodes_drag_begin() {
-	if (restore_script_editor_on_drag) {
-		EditorNode::get_singleton()->set_visible_editor(EditorNode::EDITOR_SCRIPT);
-		restore_script_editor_on_drag = false;
-	}
+	pending_click_select = nullptr;
 }
 
 void SceneTreeDock::_quick_open() {
@@ -65,8 +62,17 @@ void SceneTreeDock::_quick_open() {
 void SceneTreeDock::_input(Ref<InputEvent> p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 
-	if (mb.is_valid() && !mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT) {
-		restore_script_editor_on_drag = false; //lost chance
+	if (mb.is_valid() && (mb->get_button_index() == BUTTON_LEFT || mb->get_button_index() == BUTTON_RIGHT)) {
+		if (mb->is_pressed() && scene_tree->get_rect().has_point(mb->get_position())) {
+			tree_clicked = true;
+		} else if (!mb->is_pressed()) {
+			tree_clicked = false;
+		}
+
+		if (!mb->is_pressed() && pending_click_select) {
+			_push_item(pending_click_select);
+			pending_click_select = nullptr;
+		}
 	}
 }
 
@@ -1122,6 +1128,28 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				}
 			}
 		} break;
+		case TOOL_TOGGLE_SCENE_UNIQUE_NAME: {
+			List<Node *> selection = editor_selection->get_selected_node_list();
+			List<Node *>::Element *e = selection.front();
+			if (e) {
+				UndoRedo *undo_redo = &editor_data->get_undo_redo();
+				Node *node = e->get();
+				bool enabled = node->is_unique_name_in_owner();
+				if (!enabled && get_tree()->get_edited_scene_root()->get_node_or_null(UNIQUE_NODE_PREFIX + String(node->get_name())) != nullptr) {
+					accept->set_text(TTR("Another node already uses this unique name in the scene."));
+					accept->popup_centered();
+					return;
+				}
+				if (!enabled) {
+					undo_redo->create_action(TTR("Enable Scene Unique Name"));
+				} else {
+					undo_redo->create_action(TTR("Disable Scene Unique Name"));
+				}
+				undo_redo->add_do_method(node, "set_unique_name_in_owner", !enabled);
+				undo_redo->add_undo_method(node, "set_unique_name_in_owner", enabled);
+				undo_redo->commit_action();
+			}
+		} break;
 		case TOOL_CREATE_2D_SCENE:
 		case TOOL_CREATE_3D_SCENE:
 		case TOOL_CREATE_USER_INTERFACE:
@@ -1353,8 +1381,17 @@ void SceneTreeDock::_node_replace_owner(Node *p_base, Node *p_node, Node *p_root
 		UndoRedo *undo_redo = &editor_data->get_undo_redo();
 		switch (p_mode) {
 			case MODE_BIDI: {
+				bool is_unique = p_node->is_unique_name_in_owner() && p_base->get_node_or_null(UNIQUE_NODE_PREFIX + String(p_node->get_name())) != nullptr;
+				if (is_unique) {
+					// Will create a unique name conflict. Disable before setting owner.
+					undo_redo->add_do_method(p_node, "set_unique_name_in_owner", false);
+				}
 				undo_redo->add_do_method(p_node, "set_owner", p_root);
 				undo_redo->add_undo_method(p_node, "set_owner", p_base);
+				if (is_unique) {
+					// Will create a unique name conflict. Enable after setting owner.
+					undo_redo->add_undo_method(p_node, "set_unique_name_in_owner", true);
+				}
 
 			} break;
 			case MODE_DO: {
@@ -1382,8 +1419,14 @@ void SceneTreeDock::_script_open_request(const Ref<Script> &p_script) {
 }
 
 void SceneTreeDock::_push_item(Object *p_object) {
-	if (!Input::get_singleton()->is_key_pressed(KEY_ALT)) {
-		editor->push_item(p_object);
+	editor->push_item(p_object);
+}
+
+void SceneTreeDock::_handle_select(Node *p_node) {
+	if (tree_clicked) {
+		pending_click_select = p_node;
+	} else {
+		_push_item(p_node);
 	}
 }
 
@@ -1393,12 +1436,7 @@ void SceneTreeDock::_node_selected() {
 	if (!node) {
 		return;
 	}
-
-	if (ScriptEditor::get_singleton()->is_visible_in_tree()) {
-		restore_script_editor_on_drag = true;
-	}
-
-	_push_item(node);
+	_handle_select(node);
 }
 
 void SceneTreeDock::_node_renamed() {
@@ -2142,7 +2180,7 @@ void SceneTreeDock::_selection_changed() {
 		//automatically turn on multi-edit
 		_tool_selected(TOOL_MULTI_EDIT);
 	} else if (selection_size == 1) {
-		_push_item(editor_selection->get_selection().front()->key());
+		_handle_select(editor_selection->get_selection().front()->key());
 	} else if (selection_size == 0) {
 		_push_item(nullptr);
 	}
@@ -2310,7 +2348,7 @@ void SceneTreeDock::_create() {
 		_do_reparent(last_created, -1, nodes, true);
 	}
 
-	scene_tree->get_scene_tree()->grab_focus();
+	scene_tree->get_scene_tree()->call_deferred("grab_focus");
 }
 
 void SceneTreeDock::replace_node(Node *p_node, Node *p_by_node, bool p_keep_properties, bool p_remove_old) {
@@ -2777,6 +2815,15 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 	}
 
 	if (profile_allow_editing) {
+		if (selection[0]->get_owner() == EditorNode::get_singleton()->get_edited_scene()) {
+			// Only for nodes owned by the edited scene root.
+			menu->add_icon_check_item(get_icon("SceneUniqueName", "EditorIcons"), TTR("Access as Scene Unique Name"), TOOL_TOGGLE_SCENE_UNIQUE_NAME);
+			menu->set_item_checked(menu->get_item_index(TOOL_TOGGLE_SCENE_UNIQUE_NAME), selection[0]->is_unique_name_in_owner());
+			menu->add_separator();
+		}
+	}
+
+	if (profile_allow_editing) {
 		bool add_separator = false;
 
 		if (full_selection.size() == 1) {
@@ -3232,6 +3279,8 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	editor_data = &p_editor_data;
 	editor_selection = p_editor_selection;
 	scene_root = p_scene_root;
+	pending_click_select = nullptr;
+	tree_clicked = false;
 
 	VBoxContainer *vbc = this;
 
@@ -3405,7 +3454,6 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	menu_subresources->connect("id_pressed", this, "_tool_selected");
 	menu->add_child(menu_subresources);
 	first_enter = true;
-	restore_script_editor_on_drag = false;
 
 	menu_properties = memnew(PopupMenu);
 	add_child(menu_properties);

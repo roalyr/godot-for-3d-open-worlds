@@ -355,6 +355,10 @@ Rect2 _OS::get_window_safe_area() const {
 	return OS::get_singleton()->get_window_safe_area();
 }
 
+Array _OS::get_display_cutouts() const {
+	return OS::get_singleton()->get_display_cutouts();
+}
+
 void _OS::set_window_fullscreen(bool p_enabled) {
 	OS::get_singleton()->set_window_fullscreen(p_enabled);
 }
@@ -502,6 +506,10 @@ int _OS::execute(const String &p_path, const Vector<String> &p_arguments, bool p
 
 Error _OS::kill(int p_pid) {
 	return OS::get_singleton()->kill(p_pid);
+}
+
+bool _OS::is_process_running(int p_pid) const {
+	return OS::get_singleton()->is_process_running(p_pid);
 }
 
 int _OS::get_process_id() const {
@@ -1102,6 +1110,10 @@ void _OS::dump_resources_to_file(const String &p_file) {
 	OS::get_singleton()->dump_resources_to_file(p_file.utf8().get_data());
 }
 
+Error _OS::move_to_trash(const String &p_path) const {
+	return OS::get_singleton()->move_to_trash(p_path);
+}
+
 String _OS::get_user_data_dir() const {
 	return OS::get_singleton()->get_user_data_dir();
 };
@@ -1281,6 +1293,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_min_window_size", "size"), &_OS::set_min_window_size);
 	ClassDB::bind_method(D_METHOD("set_window_size", "size"), &_OS::set_window_size);
 	ClassDB::bind_method(D_METHOD("get_window_safe_area"), &_OS::get_window_safe_area);
+	ClassDB::bind_method(D_METHOD("get_display_cutouts"), &_OS::get_display_cutouts);
 	ClassDB::bind_method(D_METHOD("set_window_fullscreen", "enabled"), &_OS::set_window_fullscreen);
 	ClassDB::bind_method(D_METHOD("is_window_fullscreen"), &_OS::is_window_fullscreen);
 	ClassDB::bind_method(D_METHOD("set_window_resizable", "enabled"), &_OS::set_window_resizable);
@@ -1334,6 +1347,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("execute", "path", "arguments", "blocking", "output", "read_stderr", "open_console"), &_OS::execute, DEFVAL(true), DEFVAL(Array()), DEFVAL(false), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("kill", "pid"), &_OS::kill);
 	ClassDB::bind_method(D_METHOD("shell_open", "uri"), &_OS::shell_open);
+	ClassDB::bind_method(D_METHOD("is_process_running", "pid"), &_OS::is_process_running);
 	ClassDB::bind_method(D_METHOD("get_process_id"), &_OS::get_process_id);
 
 	ClassDB::bind_method(D_METHOD("get_environment", "variable"), &_OS::get_environment);
@@ -1399,6 +1413,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_static_memory_peak_usage"), &_OS::get_static_memory_peak_usage);
 	ClassDB::bind_method(D_METHOD("get_dynamic_memory_usage"), &_OS::get_dynamic_memory_usage);
 
+	ClassDB::bind_method(D_METHOD("move_to_trash", "path"), &_OS::move_to_trash);
 	ClassDB::bind_method(D_METHOD("get_user_data_dir"), &_OS::get_user_data_dir);
 	ClassDB::bind_method(D_METHOD("get_system_dir", "dir", "shared_storage"), &_OS::get_system_dir, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_config_dir"), &_OS::get_config_dir);
@@ -2613,6 +2628,10 @@ Error _Semaphore::wait() {
 	return OK; // Can't fail anymore; keep compat
 }
 
+Error _Semaphore::try_wait() {
+	return semaphore.try_wait() ? OK : ERR_BUSY;
+}
+
 Error _Semaphore::post() {
 	semaphore.post();
 	return OK; // Can't fail anymore; keep compat
@@ -2621,6 +2640,7 @@ Error _Semaphore::post() {
 void _Semaphore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("wait"), &_Semaphore::wait);
 	ClassDB::bind_method(D_METHOD("post"), &_Semaphore::post);
+	ClassDB::bind_method(D_METHOD("try_wait"), &_Semaphore::try_wait);
 }
 
 ///////////////

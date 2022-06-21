@@ -201,7 +201,7 @@ void main() {
 #endif
 
 	float amount = smoothstep(dof_begin, dof_end, depth);
-	float k_accum = 0.0;
+	vec4 k_accum = vec4(0.0);
 
 	for (int i = 0; i < dof_kernel_size; i++) {
 		int int_ofs = i - dof_kernel_from;
@@ -218,14 +218,16 @@ void main() {
 #endif
 		float tap_amount = mix(smoothstep(dof_begin, dof_end, tap_depth), 1.0, int_ofs == 0);
 		tap_amount *= tap_amount * tap_amount; //prevent undesired glow effect
+		tap_amount *= tap_k;
 
-		vec4 tap_color = textureLod(source_color, tap_uv, 0.0) * tap_k;
+		vec4 tap_color = textureLod(source_color, tap_uv, 0.0);
 
-		k_accum += tap_k * tap_amount;
-		color_accum += tap_color * tap_amount;
+		vec4 w = vec4(tap_amount) * vec4(vec3(tap_color.a), 1.0);
+		k_accum += w;
+		color_accum += tap_color * w;
 	}
 
-	if (k_accum > 0.0) {
+	if (k_accum.r > 0.0) {
 		color_accum /= k_accum;
 	}
 

@@ -652,6 +652,7 @@ void Control::_notification(int p_notification) {
 				//remove modalness
 			} else {
 				data.minimum_size_valid = false;
+				_update_minimum_size();
 				_size_changed();
 			}
 
@@ -2050,6 +2051,11 @@ void Control::show_modal(bool p_exclusive) {
 	data.modal_frame = Engine::get_singleton()->get_frames_drawn();
 }
 
+void Control::set_modal_exclusive(bool p_exclusive) {
+	ERR_FAIL_NULL_MSG(data.MI, "Modal exclusive can be set only if the Control is already shown as modal.");
+	data.modal_exclusive = p_exclusive;
+}
+
 void Control::_modal_set_prev_focus_owner(ObjectID p_prev) {
 	data.modal_prev_focus_owner = p_prev;
 }
@@ -2546,7 +2552,7 @@ bool Control::is_visibility_clip_disabled() const {
 
 void Control::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
 #ifdef TOOLS_ENABLED
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", 0) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 #else
 	const String quote_style = "\"";
 #endif

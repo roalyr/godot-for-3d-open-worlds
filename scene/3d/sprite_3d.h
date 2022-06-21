@@ -44,6 +44,8 @@ public:
 		FLAG_TRANSPARENT,
 		FLAG_SHADED,
 		FLAG_DOUBLE_SIDED,
+		FLAG_DISABLE_DEPTH_TEST,
+		FLAG_FIXED_SIZE,
 		FLAG_MAX
 
 	};
@@ -69,6 +71,7 @@ private:
 	bool vflip;
 
 	Color modulate;
+	int render_priority = 0;
 	float opacity;
 
 	Vector3::Axis axis;
@@ -120,6 +123,9 @@ public:
 
 	void set_opacity(float p_amount);
 	float get_opacity() const;
+
+	void set_render_priority(int p_priority);
+	int get_render_priority() const;
 
 	void set_pixel_size(float p_amount);
 	float get_pixel_size() const;
@@ -237,6 +243,8 @@ public:
 	virtual Rect2 get_item_rect() const;
 
 	virtual String get_configuration_warning() const;
+	virtual void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const;
+
 	AnimatedSprite3D();
 };
 

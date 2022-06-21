@@ -40,33 +40,39 @@ class Navigation;
 class NavigationAgent : public Node {
 	GDCLASS(NavigationAgent, Node);
 
-	Spatial *agent_parent;
-	Navigation *navigation;
+	Spatial *agent_parent = nullptr;
+	Navigation *navigation = nullptr;
 
 	RID agent;
+	RID map_before_pause;
+	RID map_override;
 
-	real_t target_desired_distance;
-	real_t radius;
-	real_t navigation_height_offset;
-	bool ignore_y;
-	real_t neighbor_dist;
-	int max_neighbors;
-	real_t time_horizon;
-	real_t max_speed;
+	bool avoidance_enabled = false;
+	uint32_t navigation_layers = 1;
 
-	real_t path_max_distance;
+	real_t path_desired_distance = 1.0;
+	real_t target_desired_distance = 1.0;
+	real_t radius = 0.0;
+	real_t navigation_height_offset = 0.0;
+	bool ignore_y = false;
+	real_t neighbor_dist = 0.0;
+	int max_neighbors = 0;
+	real_t time_horizon = 0.0;
+	real_t max_speed = 0.0;
+
+	real_t path_max_distance = 3.0;
 
 	Vector3 target_location;
 	Vector<Vector3> navigation_path;
-	int nav_path_index;
-	bool velocity_submitted;
+	int nav_path_index = 0;
+	bool velocity_submitted = false;
 	Vector3 prev_safe_velocity;
 	/// The submitted target velocity
 	Vector3 target_velocity;
-	bool target_reached;
-	bool navigation_finished;
+	bool target_reached = false;
+	bool navigation_finished = true;
 	// No initialized on purpose
-	uint32_t update_frame_id;
+	uint32_t update_frame_id = 0;
 
 protected:
 	static void _bind_methods();
@@ -86,6 +92,22 @@ public:
 
 	RID get_rid() const {
 		return agent;
+	}
+
+	void set_avoidance_enabled(bool p_enabled);
+	bool get_avoidance_enabled() const;
+
+	void set_agent_parent(Node *p_agent_parent);
+
+	void set_navigation_layers(uint32_t p_navigation_layers);
+	uint32_t get_navigation_layers() const;
+
+	void set_navigation_map(RID p_navigation_map);
+	RID get_navigation_map() const;
+
+	void set_path_desired_distance(real_t p_dd);
+	real_t get_path_desired_distance() const {
+		return path_desired_distance;
 	}
 
 	void set_target_desired_distance(real_t p_dd);
@@ -157,6 +179,7 @@ public:
 
 private:
 	void update_navigation();
+	void _request_repath();
 	void _check_distance_to_target();
 };
 

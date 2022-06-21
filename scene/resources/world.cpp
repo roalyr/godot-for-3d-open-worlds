@@ -35,6 +35,7 @@
 #include "scene/3d/camera.h"
 #include "scene/3d/visibility_notifier.h"
 #include "scene/scene_string_names.h"
+#include "servers/navigation_server.h"
 
 struct SpatialIndexer {
 	Octree<VisibilityNotifier> octree;
@@ -146,9 +147,11 @@ struct SpatialIndexer {
 		for (Map<Camera *, CameraData>::Element *E = cameras.front(); E; E = E->next()) {
 			pass++;
 
+			// prepare camera info
 			Camera *c = E->key();
-
+			Vector3 cam_pos = c->get_global_transform().origin;
 			Vector<Plane> planes = c->get_frustum();
+			bool cam_is_ortho = c->get_projection() == Camera::PROJECTION_ORTHOGONAL;
 
 			int culled = octree.cull_convex(planes, cull.ptrw(), cull.size());
 
@@ -159,6 +162,19 @@ struct SpatialIndexer {
 
 			for (int i = 0; i < culled; i++) {
 				//notifiers in frustum
+
+				// check and remove notifiers that have a max range
+				VisibilityNotifier &nt = *ptr[i];
+				if (nt.is_max_distance_active() && !cam_is_ortho) {
+					Vector3 offset = nt.get_world_aabb_center() - cam_pos;
+					if ((offset.length_squared() >= nt.get_max_distance_squared()) && !nt.inside_max_distance_leadin()) {
+						// unordered remove
+						cull.set(i, cull[culled - 1]);
+						culled--;
+						i--;
+						continue;
+					}
+				}
 
 				Map<VisibilityNotifier *, uint64_t>::Element *H = E->get().notifiers.find(ptr[i]);
 				if (!H) {
@@ -241,8 +257,13 @@ void World::_update(uint64_t p_frame) {
 RID World::get_space() const {
 	return space;
 }
+
 RID World::get_scenario() const {
 	return scenario;
+}
+
+RID World::get_navigation_map() const {
+	return navigation_map;
 }
 
 void World::set_environment(const Ref<Environment> &p_environment) {
@@ -296,6 +317,7 @@ void World::get_camera_list(List<Camera *> *r_cameras) {
 void World::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_space"), &World::get_space);
 	ClassDB::bind_method(D_METHOD("get_scenario"), &World::get_scenario);
+	ClassDB::bind_method(D_METHOD("get_navigation_map"), &World::get_navigation_map);
 	ClassDB::bind_method(D_METHOD("set_environment", "env"), &World::set_environment);
 	ClassDB::bind_method(D_METHOD("get_environment"), &World::get_environment);
 	ClassDB::bind_method(D_METHOD("set_fallback_environment", "env"), &World::set_fallback_environment);
@@ -305,6 +327,7 @@ void World::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fallback_environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_fallback_environment", "get_fallback_environment");
 	ADD_PROPERTY(PropertyInfo(Variant::_RID, "space", PROPERTY_HINT_NONE, "", 0), "", "get_space");
 	ADD_PROPERTY(PropertyInfo(Variant::_RID, "scenario", PROPERTY_HINT_NONE, "", 0), "", "get_scenario");
+	ADD_PROPERTY(PropertyInfo(Variant::_RID, "navigation_map", PROPERTY_HINT_NONE, "", 0), "", "get_navigation_map");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "direct_space_state", PROPERTY_HINT_RESOURCE_TYPE, "PhysicsDirectSpaceState", 0), "", "get_direct_space_state");
 }
 
@@ -320,6 +343,14 @@ World::World() {
 	PhysicsServer::get_singleton()->area_set_param(space, PhysicsServer::AREA_PARAM_ANGULAR_DAMP, GLOBAL_DEF("physics/3d/default_angular_damp", 0.1));
 	ProjectSettings::get_singleton()->set_custom_property_info("physics/3d/default_angular_damp", PropertyInfo(Variant::REAL, "physics/3d/default_angular_damp", PROPERTY_HINT_RANGE, "-1,100,0.001,or_greater"));
 
+	// Create default navigation map
+	navigation_map = NavigationServer::get_singleton()->map_create();
+	NavigationServer::get_singleton()->map_set_active(navigation_map, true);
+	NavigationServer::get_singleton()->map_set_up(navigation_map, GLOBAL_DEF("navigation/3d/default_map_up", Vector3(0, 1, 0)));
+	NavigationServer::get_singleton()->map_set_cell_size(navigation_map, GLOBAL_DEF("navigation/3d/default_cell_size", 0.25));
+	NavigationServer::get_singleton()->map_set_cell_height(navigation_map, GLOBAL_DEF("navigation/3d/default_cell_height", 0.25));
+	NavigationServer::get_singleton()->map_set_edge_connection_margin(navigation_map, GLOBAL_DEF("navigation/3d/default_edge_connection_margin", 0.25));
+
 #ifdef _3D_DISABLED
 	indexer = NULL;
 #else
@@ -330,6 +361,7 @@ World::World() {
 World::~World() {
 	PhysicsServer::get_singleton()->free(space);
 	VisualServer::get_singleton()->free(scenario);
+	NavigationServer::get_singleton()->free(navigation_map);
 
 #ifndef _3D_DISABLED
 	memdelete(indexer);

@@ -191,6 +191,7 @@ public:
 		FLAG_ENSURE_CORRECT_NORMALS,
 		FLAG_DISABLE_AMBIENT_LIGHT,
 		FLAG_USE_SHADOW_TO_OPACITY,
+		FLAG_ALBEDO_TEXTURE_SDF,
 		FLAG_MAX
 	};
 
@@ -250,7 +251,7 @@ private:
 			uint64_t blend_mode : 2;
 			uint64_t depth_draw_mode : 2;
 			uint64_t cull_mode : 2;
-			uint64_t flags : 19;
+			uint64_t flags : 20;
 			uint64_t detail_blend_mode : 2;
 			uint64_t diffuse_mode : 3;
 			uint64_t specular_mode : 3;
@@ -263,6 +264,7 @@ private:
 			uint64_t emission_op : 1;
 			uint64_t texture_metallic : 1;
 			uint64_t texture_roughness : 1;
+			//uint64_t reserved : 6;
 		};
 
 		uint64_t key;
@@ -445,9 +447,7 @@ private:
 
 	_FORCE_INLINE_ void _validate_feature(const String &text, Feature feature, PropertyInfo &property) const;
 
-	static const int MAX_MATERIALS_FOR_2D = 128;
-
-	static Ref<SpatialMaterial> materials_for_2d[MAX_MATERIALS_FOR_2D]; //used by Sprite3D and other stuff
+	static HashMap<uint64_t, Ref<SpatialMaterial>> materials_for_2d; //used by Sprite3D and other stuff
 
 	void _validate_high_end(const String &text, PropertyInfo &property) const;
 
@@ -635,7 +635,7 @@ public:
 	static void finish_shaders();
 	static void flush_changes();
 
-	static RID get_material_rid_for_2d(bool p_shaded, bool p_transparent, bool p_double_sided, bool p_cut_alpha, bool p_opaque_prepass, bool p_billboard = false, bool p_billboard_y = false);
+	static RID get_material_rid_for_2d(bool p_shaded, bool p_transparent, bool p_double_sided, bool p_cut_alpha, bool p_opaque_prepass, bool p_billboard = false, bool p_billboard_y = false, bool p_no_depth_test = false, bool p_fixed_size = false, bool p_sdf = false);
 
 	RID get_shader_rid() const;
 

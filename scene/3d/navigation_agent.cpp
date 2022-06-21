@@ -37,6 +37,12 @@
 void NavigationAgent::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_rid"), &NavigationAgent::get_rid);
 
+	ClassDB::bind_method(D_METHOD("set_avoidance_enabled", "enabled"), &NavigationAgent::set_avoidance_enabled);
+	ClassDB::bind_method(D_METHOD("get_avoidance_enabled"), &NavigationAgent::get_avoidance_enabled);
+
+	ClassDB::bind_method(D_METHOD("set_path_desired_distance", "desired_distance"), &NavigationAgent::set_path_desired_distance);
+	ClassDB::bind_method(D_METHOD("get_path_desired_distance"), &NavigationAgent::get_path_desired_distance);
+
 	ClassDB::bind_method(D_METHOD("set_target_desired_distance", "desired_distance"), &NavigationAgent::set_target_desired_distance);
 	ClassDB::bind_method(D_METHOD("get_target_desired_distance"), &NavigationAgent::get_target_desired_distance);
 
@@ -67,6 +73,12 @@ void NavigationAgent::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_path_max_distance", "max_speed"), &NavigationAgent::set_path_max_distance);
 	ClassDB::bind_method(D_METHOD("get_path_max_distance"), &NavigationAgent::get_path_max_distance);
 
+	ClassDB::bind_method(D_METHOD("set_navigation_layers", "navigation_layers"), &NavigationAgent::set_navigation_layers);
+	ClassDB::bind_method(D_METHOD("get_navigation_layers"), &NavigationAgent::get_navigation_layers);
+
+	ClassDB::bind_method(D_METHOD("set_navigation_map", "navigation_map"), &NavigationAgent::set_navigation_map);
+	ClassDB::bind_method(D_METHOD("get_navigation_map"), &NavigationAgent::get_navigation_map);
+
 	ClassDB::bind_method(D_METHOD("set_target_location", "location"), &NavigationAgent::set_target_location);
 	ClassDB::bind_method(D_METHOD("get_target_location"), &NavigationAgent::get_target_location);
 	ClassDB::bind_method(D_METHOD("get_next_location"), &NavigationAgent::get_next_location);
@@ -81,6 +93,7 @@ void NavigationAgent::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_avoidance_done", "new_velocity"), &NavigationAgent::_avoidance_done);
 
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "path_desired_distance", PROPERTY_HINT_RANGE, "0.1,100,0.01"), "set_path_desired_distance", "get_path_desired_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "target_desired_distance", PROPERTY_HINT_RANGE, "0.1,100,0.01"), "set_target_desired_distance", "get_target_desired_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "radius", PROPERTY_HINT_RANGE, "0.1,100,0.01"), "set_radius", "get_radius");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "agent_height_offset", PROPERTY_HINT_RANGE, "-100.0,100,0.01"), "set_agent_height_offset", "get_agent_height_offset");
@@ -90,6 +103,8 @@ void NavigationAgent::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_speed", PROPERTY_HINT_RANGE, "0.1,10000,0.01"), "set_max_speed", "get_max_speed");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "path_max_distance", PROPERTY_HINT_RANGE, "0.01,100,0.1"), "set_path_max_distance", "get_path_max_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_y"), "set_ignore_y", "get_ignore_y");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "avoidance_enabled"), "set_avoidance_enabled", "get_avoidance_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "navigation_layers", PROPERTY_HINT_LAYERS_3D_NAVIGATION), "set_navigation_layers", "get_navigation_layers");
 
 	ADD_SIGNAL(MethodInfo("path_changed"));
 	ADD_SIGNAL(MethodInfo("target_reached"));
@@ -99,11 +114,7 @@ void NavigationAgent::_bind_methods() {
 
 void NavigationAgent::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_READY: {
-			agent_parent = Object::cast_to<Spatial>(get_parent());
-
-			NavigationServer::get_singleton()->agent_set_callback(agent, this, "_avoidance_done");
-
+		case NOTIFICATION_POST_ENTER_TREE: {
 			// Search the navigation node and set it
 			{
 				Navigation *nav = nullptr;
@@ -116,39 +127,71 @@ void NavigationAgent::_notification(int p_what) {
 						p = p->get_parent();
 					}
 				}
-
 				set_navigation(nav);
 			}
-
+			// need to use POST_ENTER_TREE cause with normal ENTER_TREE not all required Nodes are ready.
+			// cannot use READY as ready does not get called if Node is readded to SceneTree
+			set_agent_parent(get_parent());
 			set_physics_process_internal(true);
 		} break;
+
+		case NOTIFICATION_PARENTED: {
+			if (is_inside_tree() && (get_parent() != agent_parent)) {
+				// only react to PARENTED notifications when already inside_tree and parent changed, e.g. users switch nodes around
+				// PARENTED notification fires also when Node is added in scripts to a parent
+				// this would spam transforms fails and world fails while Node is outside SceneTree
+				// when node gets reparented when joining the tree POST_ENTER_TREE takes care of this
+				set_agent_parent(get_parent());
+				set_physics_process_internal(true);
+			}
+		} break;
+
+		case NOTIFICATION_UNPARENTED: {
+			// if agent has no parent no point in processing it until reparented
+			set_agent_parent(nullptr);
+			set_physics_process_internal(false);
+		} break;
+
 		case NOTIFICATION_EXIT_TREE: {
-			agent_parent = nullptr;
+			set_agent_parent(nullptr);
 			set_navigation(nullptr);
 			set_physics_process_internal(false);
-			// Want to call ready again when the node enters the tree again. We're not using enter_tree notification because
-			// the navigation map may not be ready at that time. This fixes issues with taking the agent out of the scene tree.
-			request_ready();
 		} break;
+
+		case NOTIFICATION_PAUSED: {
+			if (agent_parent && !agent_parent->can_process()) {
+				map_before_pause = NavigationServer::get_singleton()->agent_get_map(get_rid());
+				NavigationServer::get_singleton()->agent_set_map(get_rid(), RID());
+			} else if (agent_parent && agent_parent->can_process() && !(map_before_pause == RID())) {
+				NavigationServer::get_singleton()->agent_set_map(get_rid(), map_before_pause);
+				map_before_pause = RID();
+			}
+		} break;
+
+		case NOTIFICATION_UNPAUSED: {
+			if (agent_parent && !agent_parent->can_process()) {
+				map_before_pause = NavigationServer::get_singleton()->agent_get_map(get_rid());
+				NavigationServer::get_singleton()->agent_set_map(get_rid(), RID());
+			} else if (agent_parent && agent_parent->can_process() && !(map_before_pause == RID())) {
+				NavigationServer::get_singleton()->agent_set_map(get_rid(), map_before_pause);
+				map_before_pause = RID();
+			}
+		} break;
+
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			if (agent_parent) {
-				NavigationServer::get_singleton()->agent_set_position(agent, agent_parent->get_global_transform().origin);
+				if (avoidance_enabled) {
+					// agent_position on NavigationServer is avoidance only and has nothing to do with pathfinding
+					// no point in flooding NavigationServer queue with agent position updates that get send to the void if avoidance is not used
+					NavigationServer::get_singleton()->agent_set_position(agent, agent_parent->get_global_transform().origin);
+				}
 				_check_distance_to_target();
 			}
 		} break;
 	}
 }
 
-NavigationAgent::NavigationAgent() :
-		agent_parent(nullptr),
-		navigation(nullptr),
-		agent(RID()),
-		target_desired_distance(1.0),
-		navigation_height_offset(0.0),
-		path_max_distance(3.0),
-		velocity_submitted(false),
-		target_reached(false),
-		navigation_finished(true) {
+NavigationAgent::NavigationAgent() {
 	agent = NavigationServer::get_singleton()->agent_create();
 	set_neighbor_dist(50.0);
 	set_max_neighbors(10);
@@ -161,6 +204,19 @@ NavigationAgent::NavigationAgent() :
 NavigationAgent::~NavigationAgent() {
 	NavigationServer::get_singleton()->free(agent);
 	agent = RID(); // Pointless
+}
+
+void NavigationAgent::set_avoidance_enabled(bool p_enabled) {
+	avoidance_enabled = p_enabled;
+	if (avoidance_enabled) {
+		NavigationServer::get_singleton()->agent_set_callback(agent, this, "_avoidance_done");
+	} else {
+		NavigationServer::get_singleton()->agent_set_callback(agent, nullptr, "_avoidance_done");
+	}
+}
+
+bool NavigationAgent::get_avoidance_enabled() const {
+	return avoidance_enabled;
 }
 
 void NavigationAgent::set_navigation(Navigation *p_nav) {
@@ -180,6 +236,59 @@ void NavigationAgent::set_navigation_node(Node *p_nav) {
 
 Node *NavigationAgent::get_navigation_node() const {
 	return Object::cast_to<Node>(navigation);
+}
+
+void NavigationAgent::set_agent_parent(Node *p_agent_parent) {
+	// remove agent from any avoidance map before changing parent or there will be leftovers on the RVO map
+	NavigationServer::get_singleton()->agent_set_callback(agent, nullptr, "_avoidance_done");
+	if (Object::cast_to<Spatial>(p_agent_parent) != nullptr) {
+		// place agent on navigation map first or else the RVO agent callback creation fails silently later
+		agent_parent = Object::cast_to<Spatial>(p_agent_parent);
+		if (map_override.is_valid()) {
+			NavigationServer::get_singleton()->agent_set_map(get_rid(), map_override);
+		} else if (navigation != nullptr) {
+			NavigationServer::get_singleton()->agent_set_map(get_rid(), navigation->get_rid());
+		} else {
+			// no navigation node found in parent nodes, use default navigation map from world resource
+			NavigationServer::get_singleton()->agent_set_map(get_rid(), agent_parent->get_world()->get_navigation_map());
+		}
+		// create new avoidance callback if enabled
+		set_avoidance_enabled(avoidance_enabled);
+	} else {
+		agent_parent = nullptr;
+		NavigationServer::get_singleton()->agent_set_map(get_rid(), RID());
+	}
+}
+
+void NavigationAgent::set_navigation_layers(uint32_t p_layers) {
+	bool _navigation_layers_changed = navigation_layers != p_layers;
+	navigation_layers = p_layers;
+	if (_navigation_layers_changed) {
+		_request_repath();
+	}
+}
+
+uint32_t NavigationAgent::get_navigation_layers() const {
+	return navigation_layers;
+}
+
+void NavigationAgent::set_navigation_map(RID p_navigation_map) {
+	map_override = p_navigation_map;
+	NavigationServer::get_singleton()->agent_set_map(agent, map_override);
+	_request_repath();
+}
+
+RID NavigationAgent::get_navigation_map() const {
+	if (map_override.is_valid()) {
+		return map_override;
+	} else if (agent_parent != nullptr) {
+		return agent_parent->get_world()->get_navigation_map();
+	}
+	return RID();
+}
+
+void NavigationAgent::set_path_desired_distance(real_t p_dd) {
+	path_desired_distance = p_dd;
 }
 
 void NavigationAgent::set_target_desired_distance(real_t p_dd) {
@@ -230,10 +339,7 @@ real_t NavigationAgent::get_path_max_distance() {
 
 void NavigationAgent::set_target_location(Vector3 p_location) {
 	target_location = p_location;
-	navigation_path.clear();
-	target_reached = false;
-	navigation_finished = false;
-	update_frame_id = 0;
+	_request_repath();
 }
 
 Vector3 NavigationAgent::get_target_location() const {
@@ -243,7 +349,7 @@ Vector3 NavigationAgent::get_target_location() const {
 Vector3 NavigationAgent::get_next_location() {
 	update_navigation();
 	if (navigation_path.size() == 0) {
-		ERR_FAIL_COND_V(agent_parent == nullptr, Vector3());
+		ERR_FAIL_COND_V_MSG(agent_parent == nullptr, Vector3(), "The agent has no parent.");
 		return agent_parent->get_global_transform().origin;
 	} else {
 		return navigation_path[nav_path_index] - Vector3(0, navigation_height_offset, 0);
@@ -251,7 +357,7 @@ Vector3 NavigationAgent::get_next_location() {
 }
 
 real_t NavigationAgent::distance_to_target() const {
-	ERR_FAIL_COND_V(agent_parent == nullptr, 0.0);
+	ERR_FAIL_COND_V_MSG(agent_parent == nullptr, 0.0, "The agent has no parent.");
 	return agent_parent->get_global_transform().origin.distance_to(target_location);
 }
 
@@ -297,7 +403,7 @@ void NavigationAgent::_avoidance_done(Vector3 p_new_velocity) {
 
 String NavigationAgent::get_configuration_warning() const {
 	if (!Object::cast_to<Spatial>(get_parent())) {
-		return TTR("The NavigationAgent can be used only under a spatial node.");
+		return TTR("The NavigationAgent can be used only under a Spatial inheriting parent node.");
 	}
 
 	return String();
@@ -307,7 +413,7 @@ void NavigationAgent::update_navigation() {
 	if (agent_parent == nullptr) {
 		return;
 	}
-	if (navigation == nullptr) {
+	if (!agent_parent->is_inside_tree()) {
 		return;
 	}
 	if (update_frame_id == Engine::get_singleton()->get_physics_frames()) {
@@ -341,7 +447,13 @@ void NavigationAgent::update_navigation() {
 	}
 
 	if (reload_path) {
-		navigation_path = NavigationServer::get_singleton()->map_get_path(navigation->get_rid(), o, target_location, true);
+		if (map_override.is_valid()) {
+			navigation_path = NavigationServer::get_singleton()->map_get_path(map_override, o, target_location, true, navigation_layers);
+		} else if (navigation != nullptr) {
+			navigation_path = NavigationServer::get_singleton()->map_get_path(navigation->get_rid(), o, target_location, true, navigation_layers);
+		} else {
+			navigation_path = NavigationServer::get_singleton()->map_get_path(agent_parent->get_world()->get_navigation_map(), o, target_location, true, navigation_layers);
+		}
 		navigation_finished = false;
 		nav_path_index = 0;
 		emit_signal("path_changed");
@@ -354,7 +466,7 @@ void NavigationAgent::update_navigation() {
 	// Check if we can advance the navigation path
 	if (navigation_finished == false) {
 		// Advances to the next far away location.
-		while (o.distance_to(navigation_path[nav_path_index] - Vector3(0, navigation_height_offset, 0)) < target_desired_distance) {
+		while (o.distance_to(navigation_path[nav_path_index] - Vector3(0, navigation_height_offset, 0)) < path_desired_distance) {
 			nav_path_index += 1;
 			if (nav_path_index == navigation_path.size()) {
 				_check_distance_to_target();
@@ -365,6 +477,13 @@ void NavigationAgent::update_navigation() {
 			}
 		}
 	}
+}
+
+void NavigationAgent::_request_repath() {
+	navigation_path.clear();
+	target_reached = false;
+	navigation_finished = false;
+	update_frame_id = 0;
 }
 
 void NavigationAgent::_check_distance_to_target() {

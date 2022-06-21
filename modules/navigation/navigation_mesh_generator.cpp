@@ -35,7 +35,6 @@
 //#include "core/math/quick_hull.h"
 //#include "core/math/convex_hull.h"
 #include "core/os/thread.h"
-#include "scene/3d/collision_shape.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/multimesh_instance.h"
 #include "scene/3d/physics_body.h"
@@ -175,14 +174,16 @@ void NavigationMeshGenerator::_parse_geometry(const Transform &p_navmesh_xform, 
 	if (Object::cast_to<MultiMeshInstance>(p_node) && p_generate_from != NavigationMesh::PARSED_GEOMETRY_STATIC_COLLIDERS) {
 		MultiMeshInstance *multimesh_instance = Object::cast_to<MultiMeshInstance>(p_node);
 		Ref<MultiMesh> multimesh = multimesh_instance->get_multimesh();
-		Ref<Mesh> mesh = multimesh->get_mesh();
-		if (mesh.is_valid()) {
-			int n = multimesh->get_visible_instance_count();
-			if (n == -1) {
-				n = multimesh->get_instance_count();
-			}
-			for (int i = 0; i < n; i++) {
-				_add_mesh(mesh, p_navmesh_xform * multimesh_instance->get_global_transform() * multimesh->get_instance_transform(i), p_vertices, p_indices);
+		if (multimesh.is_valid()) {
+			Ref<Mesh> mesh = multimesh->get_mesh();
+			if (mesh.is_valid()) {
+				int n = multimesh->get_visible_instance_count();
+				if (n == -1) {
+					n = multimesh->get_instance_count();
+				}
+				for (int i = 0; i < n; i++) {
+					_add_mesh(mesh, p_navmesh_xform * multimesh_instance->get_global_transform() * multimesh->get_instance_transform(i), p_vertices, p_indices);
+				}
 			}
 		}
 	}
@@ -204,14 +205,18 @@ void NavigationMeshGenerator::_parse_geometry(const Transform &p_navmesh_xform, 
 		StaticBody *static_body = Object::cast_to<StaticBody>(p_node);
 
 		if (static_body->get_collision_layer() & p_collision_mask) {
-			for (int i = 0; i < p_node->get_child_count(); ++i) {
-				Node *child = p_node->get_child(i);
-				if (Object::cast_to<CollisionShape>(child)) {
-					CollisionShape *col_shape = Object::cast_to<CollisionShape>(child);
+			List<uint32_t> shape_owners;
+			static_body->get_shape_owners(&shape_owners);
+			for (List<uint32_t>::Element *E = shape_owners.front(); E; E = E->next()) {
+				uint32_t shape_owner = E->get();
+				const int shape_count = static_body->shape_owner_get_shape_count(shape_owner);
+				for (int i = 0; i < shape_count; i++) {
+					Ref<Shape> s = static_body->shape_owner_get_shape(shape_owner, i);
+					if (s.is_null()) {
+						continue;
+					}
 
-					Transform transform = p_navmesh_xform * static_body->get_global_transform() * col_shape->get_transform();
-
-					Ref<Shape> s = col_shape->get_shape();
+					const Transform transform = p_navmesh_xform * static_body->get_global_transform() * static_body->shape_owner_get_transform(shape_owner);
 
 					BoxShape *box = Object::cast_to<BoxShape>(*s);
 					if (box) {
@@ -444,7 +449,7 @@ void NavigationMeshGenerator::_build_recast_navigation_mesh(
 	cfg.minRegionArea = (int)(p_nav_mesh->get_region_min_size() * p_nav_mesh->get_region_min_size());
 	cfg.mergeRegionArea = (int)(p_nav_mesh->get_region_merge_size() * p_nav_mesh->get_region_merge_size());
 	cfg.maxVertsPerPoly = (int)p_nav_mesh->get_verts_per_poly();
-	cfg.detailSampleDist = p_nav_mesh->get_detail_sample_distance() < 0.9f ? 0 : p_nav_mesh->get_cell_size() * p_nav_mesh->get_detail_sample_distance();
+	cfg.detailSampleDist = MAX(p_nav_mesh->get_cell_size() * p_nav_mesh->get_detail_sample_distance(), 0.1f);
 	cfg.detailSampleMaxError = p_nav_mesh->get_cell_height() * p_nav_mesh->get_detail_sample_max_error();
 
 	cfg.bmin[0] = bmin[0];
@@ -459,6 +464,14 @@ void NavigationMeshGenerator::_build_recast_navigation_mesh(
 		ep->step(TTR("Calculating grid size..."), 2);
 #endif
 	rcCalcGridSize(cfg.bmin, cfg.bmax, cfg.cs, &cfg.width, &cfg.height);
+
+	// ~30000000 seems to be around sweetspot where Editor baking breaks
+	if ((cfg.width * cfg.height) > 30000000) {
+		WARN_PRINT("NavigationMesh baking process will likely fail."
+				   "\nSource geometry is suspiciously big for the current Cell Size and Cell Height in the NavMesh Resource bake settings."
+				   "\nIf baking does not fail, the resulting NavigationMesh will create serious pathfinding performance issues."
+				   "\nIt is advised to increase Cell Size and/or Cell Height in the NavMesh Resource bake settings or reduce the size / scale of the source geometry.");
+	}
 
 #ifdef TOOLS_ENABLED
 	if (ep)

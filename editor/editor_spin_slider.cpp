@@ -398,6 +398,7 @@ void EditorSpinSlider::_notification(int p_what) {
 			if (grabbing_spinner) {
 				grabber->hide();
 				Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+				Input::get_singleton()->warp_mouse_position(grabbing_spinner_mouse_pos);
 				grabbing_spinner = false;
 				grabbing_spinner_attempt = false;
 			}
@@ -562,6 +563,9 @@ void EditorSpinSlider::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_flat", "flat"), &EditorSpinSlider::set_flat);
 	ClassDB::bind_method(D_METHOD("is_flat"), &EditorSpinSlider::is_flat);
 
+	ClassDB::bind_method(D_METHOD("set_hide_slider", "hide_slider"), &EditorSpinSlider::set_hide_slider);
+	ClassDB::bind_method(D_METHOD("is_hiding_slider"), &EditorSpinSlider::is_hiding_slider);
+
 	ClassDB::bind_method(D_METHOD("_gui_input"), &EditorSpinSlider::_gui_input);
 	ClassDB::bind_method(D_METHOD("_value_input_gui_input", "event"), &EditorSpinSlider::_value_input_gui_input);
 	ClassDB::bind_method(D_METHOD("_grabber_mouse_entered"), &EditorSpinSlider::_grabber_mouse_entered);
@@ -574,6 +578,7 @@ void EditorSpinSlider::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "label"), "set_label", "get_label");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "read_only"), "set_read_only", "is_read_only");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "flat"), "set_flat", "is_flat");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hide_slider"), "set_hide_slider", "is_hiding_slider");
 }
 
 EditorSpinSlider::EditorSpinSlider() {

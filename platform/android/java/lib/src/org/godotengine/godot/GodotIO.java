@@ -38,6 +38,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -51,6 +52,7 @@ import android.view.DisplayCutout;
 import android.view.WindowInsets;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 
 // Wrapper for native library
@@ -222,12 +224,30 @@ public class GodotIO {
 	}
 
 	public int getScreenDPI() {
-		DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
-		return (int)(metrics.density * 160f);
+		return activity.getResources().getDisplayMetrics().densityDpi;
 	}
 
+	/**
+	 * Returns bucketized density values.
+	 */
 	public float getScaledDensity() {
-		return activity.getResources().getDisplayMetrics().scaledDensity;
+		int densityDpi = activity.getResources().getDisplayMetrics().densityDpi;
+		float selectedScaledDensity;
+		if (densityDpi >= DisplayMetrics.DENSITY_XXXHIGH) {
+			selectedScaledDensity = 4.0f;
+		} else if (densityDpi >= DisplayMetrics.DENSITY_XXHIGH) {
+			selectedScaledDensity = 3.0f;
+		} else if (densityDpi >= DisplayMetrics.DENSITY_XHIGH) {
+			selectedScaledDensity = 2.0f;
+		} else if (densityDpi >= DisplayMetrics.DENSITY_HIGH) {
+			selectedScaledDensity = 1.5f;
+		} else if (densityDpi >= DisplayMetrics.DENSITY_MEDIUM) {
+			selectedScaledDensity = 1.0f;
+		} else {
+			selectedScaledDensity = 0.75f;
+		}
+		Log.d(TAG, "Selected scaled density: " + selectedScaledDensity);
+		return selectedScaledDensity;
 	}
 
 	public double getScreenRefreshRate(double fallback) {
@@ -256,6 +276,25 @@ public class GodotIO {
 				result[2] -= insetLeft + cutout.getSafeInsetRight();
 				result[3] -= insetTop + cutout.getSafeInsetBottom();
 			}
+		}
+		return result;
+	}
+
+	public int[] getDisplayCutouts() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P)
+			return new int[0];
+		DisplayCutout cutout = activity.getWindow().getDecorView().getRootWindowInsets().getDisplayCutout();
+		if (cutout == null)
+			return new int[0];
+		List<Rect> rects = cutout.getBoundingRects();
+		int cutouts = rects.size();
+		int[] result = new int[cutouts * 4];
+		int index = 0;
+		for (Rect rect : rects) {
+			result[index++] = rect.left;
+			result[index++] = rect.top;
+			result[index++] = rect.width();
+			result[index++] = rect.height();
 		}
 		return result;
 	}

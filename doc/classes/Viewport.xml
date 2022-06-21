@@ -124,6 +124,7 @@
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the viewport is currently performing a drag operation.
+				Alternative to [constant Node.NOTIFICATION_DRAG_BEGIN] and [constant Node.NOTIFICATION_DRAG_END] when you prefer polling the value.
 			</description>
 		</method>
 		<method name="input">
@@ -242,7 +243,7 @@
 			The multisample anti-aliasing mode. A higher number results in smoother edges at the cost of significantly worse performance. A value of 4 is best unless targeting very high-end systems.
 		</member>
 		<member name="own_world" type="bool" setter="set_use_own_world" getter="is_using_own_world" default="false">
-			If [code]true[/code], the viewport will use [World] defined in [code]world[/code] property.
+			If [code]true[/code], the viewport will use a unique copy of the [World] defined in [member world].
 		</member>
 		<member name="physics_object_picking" type="bool" setter="set_physics_object_picking" getter="get_physics_object_picking" default="false">
 			If [code]true[/code], the objects rendered by viewport become subjects of mouse picking process.

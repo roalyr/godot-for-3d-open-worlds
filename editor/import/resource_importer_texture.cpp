@@ -102,11 +102,13 @@ void ResourceImporterTexture::update_imports() {
 		}
 
 		if (E->get() & MAKE_NORMAL_FLAG && int(cf->get_value("params", "compress/normal_map")) == 0) {
+			print_line(vformat(TTR("%s: Texture detected as used as a normal map in 3D. Enabling red-green texture compression to reduce memory usage (blue channel is discarded)."), String(E->key())));
 			cf->set_value("params", "compress/normal_map", 1);
 			changed = true;
 		}
 
 		if (E->get() & MAKE_3D_FLAG && bool(cf->get_value("params", "detect_3d"))) {
+			print_line(vformat(TTR("%s: Texture detected as used in 3D. Enabling filter, repeat, mipmap generation and VRAM texture compression."), String(E->key())));
 			cf->set_value("params", "detect_3d", false);
 			cf->set_value("params", "compress/mode", 2);
 			cf->set_value("params", "flags/repeat", true);
@@ -182,13 +184,13 @@ int ResourceImporterTexture::get_preset_count() const {
 }
 String ResourceImporterTexture::get_preset_name(int p_idx) const {
 	static const char *preset_names[] = {
-		"2D, Detect 3D",
-		"2D",
-		"2D Pixel",
-		"3D"
+		TTRC("2D, Detect 3D"),
+		TTRC("2D"),
+		TTRC("2D Pixel"),
+		TTRC("3D"),
 	};
 
-	return preset_names[p_idx];
+	return TTRGET(preset_names[p_idx]);
 }
 
 void ResourceImporterTexture::get_import_options(List<ImportOption> *r_options, int p_preset) const {

@@ -335,7 +335,7 @@ void SpriteEditor::_convert_to_mesh_2d_node() {
 	mesh_instance->set_mesh(mesh);
 
 	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
-	ur->create_action(TTR("Convert to Mesh2D"));
+	ur->create_action(TTR("Convert to MeshInstance2D"));
 	ur->add_do_method(EditorNode::get_singleton()->get_scene_tree_dock(), "replace_node", node, mesh_instance, true, false);
 	ur->add_do_reference(mesh_instance);
 	ur->add_undo_method(EditorNode::get_singleton()->get_scene_tree_dock(), "replace_node", mesh_instance, node, false, false);
@@ -511,7 +511,7 @@ SpriteEditor::SpriteEditor() {
 	options->set_text(TTR("Sprite"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Sprite", "EditorIcons"));
 
-	options->get_popup()->add_item(TTR("Convert to Mesh2D"), MENU_OPTION_CONVERT_TO_MESH_2D);
+	options->get_popup()->add_item(TTR("Convert to MeshInstance2D"), MENU_OPTION_CONVERT_TO_MESH_2D);
 	options->get_popup()->add_item(TTR("Convert to Polygon2D"), MENU_OPTION_CONVERT_TO_POLYGON_2D);
 	options->get_popup()->add_item(TTR("Create CollisionPolygon2D Sibling"), MENU_OPTION_CREATE_COLLISION_POLY_2D);
 	options->get_popup()->add_item(TTR("Create LightOccluder2D Sibling"), MENU_OPTION_CREATE_LIGHT_OCCLUDER_2D);
@@ -538,7 +538,7 @@ SpriteEditor::SpriteEditor() {
 	debug_uv_dialog->connect("confirmed", this, "_create_node");
 
 	HBoxContainer *hb = memnew(HBoxContainer);
-	hb->add_child(memnew(Label(TTR("Simplification: "))));
+	hb->add_child(memnew(Label(TTR("Simplification:"))));
 	simplification = memnew(SpinBox);
 	simplification->set_min(0.01);
 	simplification->set_max(10.00);
@@ -546,7 +546,7 @@ SpriteEditor::SpriteEditor() {
 	simplification->set_value(2);
 	hb->add_child(simplification);
 	hb->add_spacer();
-	hb->add_child(memnew(Label(TTR("Shrink (Pixels): "))));
+	hb->add_child(memnew(Label(TTR("Shrink (Pixels):"))));
 	shrink_pixels = memnew(SpinBox);
 	shrink_pixels->set_min(0);
 	shrink_pixels->set_max(10);
@@ -554,7 +554,7 @@ SpriteEditor::SpriteEditor() {
 	shrink_pixels->set_value(0);
 	hb->add_child(shrink_pixels);
 	hb->add_spacer();
-	hb->add_child(memnew(Label(TTR("Grow (Pixels): "))));
+	hb->add_child(memnew(Label(TTR("Grow (Pixels):"))));
 	grow_pixels = memnew(SpinBox);
 	grow_pixels->set_min(0);
 	grow_pixels->set_max(10);

@@ -493,7 +493,7 @@ struct GDScriptCompletionIdentifier {
 };
 
 static void _get_directory_contents(EditorFileSystemDirectory *p_dir, Map<String, ScriptCodeCompletionOption> &r_list, String p_ends_with = "") {
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", false) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 
 	for (int i = 0; i < p_dir->get_file_count(); i++) {
 		ScriptCodeCompletionOption option(p_dir->get_file_path(i), ScriptCodeCompletionOption::KIND_FILE_PATH);
@@ -2239,7 +2239,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 	Variant base = p_base.value;
 	GDScriptParser::DataType base_type = p_base.type;
 
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", false) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 
 #define IS_METHOD_SIGNAL(m_method) (m_method == "connect" || m_method == "disconnect" || m_method == "is_connected" || m_method == "emit_signal")
 
@@ -2408,7 +2408,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 }
 
 static void _find_call_arguments(GDScriptCompletionContext &p_context, const GDScriptParser::Node *p_node, int p_argidx, Map<String, ScriptCodeCompletionOption> &r_result, bool &r_forced, String &r_arghint) {
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", false) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 
 	if (!p_node || p_node->type != GDScriptParser::Node::TYPE_OPERATOR) {
 		return;
@@ -2536,7 +2536,7 @@ static void _find_call_arguments(GDScriptCompletionContext &p_context, const GDS
 }
 
 Error GDScriptLanguage::complete_code(const String &p_code, const String &p_path, Object *p_owner, List<ScriptCodeCompletionOption> *r_options, bool &r_forced, String &r_call_hint) {
-	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", false) ? "'" : "\"";
+	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 
 	GDScriptParser parser;
 
@@ -3032,10 +3032,10 @@ Error GDScriptLanguage::complete_code(const String &p_code, const String &p_path
 String GDScriptLanguage::_get_indentation() const {
 #ifdef TOOLS_ENABLED
 	if (Engine::get_singleton()->is_editor_hint()) {
-		bool use_space_indentation = EDITOR_DEF("text_editor/indent/type", false);
+		bool use_space_indentation = EDITOR_GET("text_editor/indent/type");
 
 		if (use_space_indentation) {
-			int indent_size = EDITOR_DEF("text_editor/indent/size", 4);
+			int indent_size = EDITOR_GET("text_editor/indent/size");
 
 			String space_indent = "";
 			for (int i = 0; i < indent_size; i++) {
@@ -3300,7 +3300,7 @@ static Error _lookup_symbol_from_base(const GDScriptParser::DataType &p_base, co
 }
 
 Error GDScriptLanguage::lookup_code(const String &p_code, const String &p_symbol, const String &p_path, Object *p_owner, LookupResult &r_result) {
-	//before parsing, try the usual stuff
+	// Before parsing, try the usual stuff.
 	if (ClassDB::class_exists(p_symbol)) {
 		r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS;
 		r_result.class_name = p_symbol;
@@ -3534,14 +3534,22 @@ Error GDScriptLanguage::lookup_code(const String &p_code, const String &p_symbol
 		}
 	}
 
+	// Must check GDScript functions after parsing to ensure functions like Array.max() are handled correctly.
+	bool function_in_gdscript_functions = false;
 	for (int i = 0; i < GDScriptFunctions::FUNC_MAX; i++) {
-		// this has to get run after parsing because otherwise functions like Array.max() will trigger it
 		if (GDScriptFunctions::get_func_name(GDScriptFunctions::Function(i)) == p_symbol) {
-			r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_METHOD;
-			r_result.class_name = "@GDScript";
-			r_result.class_member = p_symbol;
-			return OK;
+			function_in_gdscript_functions = true;
+			break;
 		}
+	}
+
+	// Need special checks for assert, preload, and yield as they are technically
+	// keywords, so are not registered in GDScriptFunctions.
+	if (function_in_gdscript_functions || "yield" == p_symbol || "assert" == p_symbol || "preload" == p_symbol) {
+		r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_METHOD;
+		r_result.class_name = "@GDScript";
+		r_result.class_member = p_symbol;
+		return OK;
 	}
 
 	return ERR_CANT_RESOLVE;

@@ -92,6 +92,7 @@ class SceneTreeDock : public VBoxContainer {
 		TOOL_SCENE_CLEAR_INHERITANCE,
 		TOOL_SCENE_CLEAR_INHERITANCE_CONFIRM,
 		TOOL_SCENE_OPEN_INHERITED,
+		TOOL_TOGGLE_SCENE_UNIQUE_NAME,
 
 		TOOL_CREATE_2D_SCENE,
 		TOOL_CREATE_3D_SCENE,
@@ -105,7 +106,6 @@ class SceneTreeDock : public VBoxContainer {
 
 	Vector<ObjectID> subresources;
 
-	bool restore_script_editor_on_drag;
 	bool reset_create_dialog = false;
 
 	int current_option;
@@ -170,7 +170,9 @@ class SceneTreeDock : public VBoxContainer {
 	void _do_create(Node *p_parent);
 	Node *scene_root;
 	Node *edited_scene;
+	Node *pending_click_select;
 	EditorNode *editor;
+	bool tree_clicked;
 
 	VBoxContainer *create_root_dialog;
 	String selected_favorite_root;
@@ -195,6 +197,7 @@ class SceneTreeDock : public VBoxContainer {
 	void _load_request(const String &p_path);
 	void _script_open_request(const Ref<Script> &p_script);
 	void _push_item(Object *p_object);
+	void _handle_select(Node *p_node);
 
 	bool _cyclical_dependency_exists(const String &p_target_scene_path, Node *p_desired_node);
 	bool _track_inherit(const String &p_target_scene_path, Node *p_desired_node);

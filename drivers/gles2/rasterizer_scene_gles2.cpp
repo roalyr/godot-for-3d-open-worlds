@@ -1435,7 +1435,7 @@ bool RasterizerSceneGLES2::_setup_material(RasterizerStorageGLES2::Material *p_m
 		}
 
 		if (t->redraw_if_visible) { //must check before proxy because this is often used with proxies
-			VisualServerRaster::redraw_request();
+			VisualServerRaster::redraw_request(false);
 		}
 
 		t = t->get_ptr();
@@ -1812,7 +1812,7 @@ void RasterizerSceneGLES2::_render_geometry(RenderList::Element *p_element) {
 					RasterizerStorageGLES2::Texture *t = storage->texture_owner.get(c.texture);
 
 					if (t->redraw_if_visible) {
-						VisualServerRaster::redraw_request();
+						VisualServerRaster::redraw_request(false);
 					}
 					t = t->get_ptr();
 
@@ -2392,7 +2392,7 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 						if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
 							glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 						} else {
-							glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+							glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);
 						}
 
 					} break;
@@ -2794,9 +2794,8 @@ void RasterizerSceneGLES2::_post_process(Environment *env, const CameraMatrix &p
 	glDepthFunc(GL_LEQUAL);
 	glColorMask(1, 1, 1, 1);
 
-	//no post process on small, transparent or render targets without an env
-	bool use_post_process = env && !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT];
-	use_post_process = use_post_process && storage->frame.current_rt->width >= 4 && storage->frame.current_rt->height >= 4;
+	//no post process on small or render targets without an env
+	bool use_post_process = env && storage->frame.current_rt->width >= 4 && storage->frame.current_rt->height >= 4;
 	use_post_process = use_post_process && storage->frame.current_rt->mip_maps_allocated;
 
 	if (env) {
@@ -3193,6 +3192,7 @@ void RasterizerSceneGLES2::_post_process(Environment *env, const CameraMatrix &p
 		}
 	}
 
+	state.tonemap_shader.set_conditional(TonemapShaderGLES2::DISABLE_ALPHA, !storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]);
 	state.tonemap_shader.bind();
 	if (env) {
 		if (max_glow_level >= 0) {
@@ -3231,6 +3231,7 @@ void RasterizerSceneGLES2::_post_process(Environment *env, const CameraMatrix &p
 	state.tonemap_shader.set_conditional(TonemapShaderGLES2::USE_MULTI_TEXTURE_GLOW, false);
 	state.tonemap_shader.set_conditional(TonemapShaderGLES2::USE_BCS, false);
 	state.tonemap_shader.set_conditional(TonemapShaderGLES2::USE_COLOR_CORRECTION, false);
+	state.tonemap_shader.set_conditional(TonemapShaderGLES2::DISABLE_ALPHA, false);
 }
 
 void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const CameraMatrix &p_cam_projection, const int p_eye, bool p_cam_ortogonal, InstanceBase **p_cull_result, int p_cull_count, RID *p_light_cull_result, int p_light_cull_count, RID *p_reflection_probe_cull_result, int p_reflection_probe_cull_count, RID p_environment, RID p_shadow_atlas, RID p_reflection_atlas, RID p_reflection_probe, int p_reflection_probe_pass) {

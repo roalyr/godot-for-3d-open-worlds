@@ -334,9 +334,9 @@ static const char *godot2dom_cursor(OS::CursorShape p_shape) {
 		case OS::CURSOR_CROSS:
 			return "crosshair";
 		case OS::CURSOR_WAIT:
-			return "progress";
-		case OS::CURSOR_BUSY:
 			return "wait";
+		case OS::CURSOR_BUSY:
+			return "progress";
 		case OS::CURSOR_DRAG:
 			return "grab";
 		case OS::CURSOR_CAN_DROP:
@@ -899,6 +899,10 @@ Error OS_JavaScript::kill(const ProcessID &p_pid) {
 
 int OS_JavaScript::get_process_id() const {
 	ERR_FAIL_V_MSG(0, "OS::get_process_id() is not available on the HTML5 platform.");
+}
+
+bool OS_JavaScript::is_process_running(const ProcessID &p_pid) const {
+	return false;
 }
 
 int OS_JavaScript::get_processor_count() const {

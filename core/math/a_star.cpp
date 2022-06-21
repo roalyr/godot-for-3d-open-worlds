@@ -48,7 +48,7 @@ int AStar::get_available_point_id() const {
 
 void AStar::add_point(int p_id, const Vector3 &p_pos, real_t p_weight_scale) {
 	ERR_FAIL_COND_MSG(p_id < 0, vformat("Can't add a point with negative id: %d.", p_id));
-	ERR_FAIL_COND_MSG(p_weight_scale < 1, vformat("Can't add a point with weight scale less than one: %f.", p_weight_scale));
+	ERR_FAIL_COND_MSG(p_weight_scale < 0, vformat("Can't add a point with weight scale less than 0.0: %f.", p_weight_scale));
 
 	Point *found_pt;
 	bool p_exists = points.lookup(p_id, found_pt);
@@ -97,7 +97,7 @@ void AStar::set_point_weight_scale(int p_id, real_t p_weight_scale) {
 	Point *p;
 	bool p_exists = points.lookup(p_id, p);
 	ERR_FAIL_COND_MSG(!p_exists, vformat("Can't set point's weight scale. Point with id: %d doesn't exist.", p_id));
-	ERR_FAIL_COND_MSG(p_weight_scale < 1, vformat("Can't set point's weight scale less than one: %f.", p_weight_scale));
+	ERR_FAIL_COND_MSG(p_weight_scale < 0, vformat("Can't set point's weight scale less than 0.0: %f.", p_weight_scale));
 
 	p->weight_scale = p_weight_scale;
 }
@@ -625,12 +625,12 @@ void AStar2D::connect_points(int p_id, int p_with_id, bool p_bidirectional) {
 	astar.connect_points(p_id, p_with_id, p_bidirectional);
 }
 
-void AStar2D::disconnect_points(int p_id, int p_with_id) {
-	astar.disconnect_points(p_id, p_with_id);
+void AStar2D::disconnect_points(int p_id, int p_with_id, bool p_bidirectional) {
+	astar.disconnect_points(p_id, p_with_id, p_bidirectional);
 }
 
-bool AStar2D::are_points_connected(int p_id, int p_with_id) const {
-	return astar.are_points_connected(p_id, p_with_id);
+bool AStar2D::are_points_connected(int p_id, int p_with_id, bool p_bidirectional) const {
+	return astar.are_points_connected(p_id, p_with_id, p_bidirectional);
 }
 
 int AStar2D::get_point_count() const {
@@ -866,8 +866,8 @@ void AStar2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_point_disabled", "id"), &AStar2D::is_point_disabled);
 
 	ClassDB::bind_method(D_METHOD("connect_points", "id", "to_id", "bidirectional"), &AStar2D::connect_points, DEFVAL(true));
-	ClassDB::bind_method(D_METHOD("disconnect_points", "id", "to_id"), &AStar2D::disconnect_points);
-	ClassDB::bind_method(D_METHOD("are_points_connected", "id", "to_id"), &AStar2D::are_points_connected);
+	ClassDB::bind_method(D_METHOD("disconnect_points", "id", "to_id", "bidirectional"), &AStar2D::disconnect_points, DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("are_points_connected", "id", "to_id", "bidirectional"), &AStar2D::are_points_connected, DEFVAL(true));
 
 	ClassDB::bind_method(D_METHOD("get_point_count"), &AStar2D::get_point_count);
 	ClassDB::bind_method(D_METHOD("get_point_capacity"), &AStar2D::get_point_capacity);

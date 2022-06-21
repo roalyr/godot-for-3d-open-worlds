@@ -4304,6 +4304,16 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 										break;
 									}
 
+									if (tokenizer->get_token() == GDScriptTokenizer::TK_IDENTIFIER && tokenizer->get_token_identifier() == "LAYERS_2D_NAVIGATION") {
+										_ADVANCE_AND_CONSUME_NEWLINES;
+										if (tokenizer->get_token() != GDScriptTokenizer::TK_PARENTHESIS_CLOSE) {
+											_set_error("Expected \")\" in the layers 2D navigation hint.");
+											return;
+										}
+										current_export.hint = PROPERTY_HINT_LAYERS_2D_PHYSICS;
+										break;
+									}
+
 									if (tokenizer->get_token() == GDScriptTokenizer::TK_IDENTIFIER && tokenizer->get_token_identifier() == "LAYERS_3D_RENDER") {
 										_ADVANCE_AND_CONSUME_NEWLINES;
 										if (tokenizer->get_token() != GDScriptTokenizer::TK_PARENTHESIS_CLOSE) {
@@ -4321,6 +4331,16 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 											return;
 										}
 										current_export.hint = PROPERTY_HINT_LAYERS_3D_PHYSICS;
+										break;
+									}
+
+									if (tokenizer->get_token() == GDScriptTokenizer::TK_IDENTIFIER && tokenizer->get_token_identifier() == "LAYERS_3D_NAVIGATION") {
+										_ADVANCE_AND_CONSUME_NEWLINES;
+										if (tokenizer->get_token() != GDScriptTokenizer::TK_PARENTHESIS_CLOSE) {
+											_set_error("Expected \")\" in the layers 3D navigation hint.");
+											return;
+										}
+										current_export.hint = PROPERTY_HINT_LAYERS_3D_NAVIGATION;
 										break;
 									}
 
@@ -4914,6 +4934,7 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 				if (autoexport && member.data_type.has_type) {
 					if (member.data_type.kind == DataType::BUILTIN) {
 						member._export.type = member.data_type.builtin_type;
+						member._export.usage |= PROPERTY_USAGE_SCRIPT_VARIABLE;
 					} else if (member.data_type.kind == DataType::NATIVE) {
 						if (ClassDB::is_parent_class(member.data_type.native_type, "Resource")) {
 							member._export.type = Variant::OBJECT;

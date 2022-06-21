@@ -275,6 +275,7 @@ public:
 		Size2 window_size = get_window_size();
 		return Rect2(0, 0, window_size.width, window_size.height);
 	}
+	virtual Array get_display_cutouts() const { return Array(); }
 
 	virtual void set_borderless_window(bool p_borderless) {}
 	virtual bool get_borderless_window() { return false; }
@@ -323,6 +324,7 @@ public:
 	virtual Error execute(const String &p_path, const List<String> &p_arguments, bool p_blocking = true, ProcessID *r_child_id = nullptr, String *r_pipe = nullptr, int *r_exitcode = nullptr, bool read_stderr = false, Mutex *p_pipe_mutex = nullptr, bool p_open_console = false) = 0;
 	virtual Error kill(const ProcessID &p_pid) = 0;
 	virtual int get_process_id() const;
+	virtual bool is_process_running(const ProcessID &p_pid) const = 0;
 	virtual void vibrate_handheld(int p_duration_ms = 500);
 
 	virtual Error shell_open(String p_uri);
@@ -463,6 +465,8 @@ public:
 	virtual String get_locale() const;
 	String get_locale_language() const;
 
+	virtual uint64_t get_embedded_pck_offset() const;
+
 	String get_safe_dir_name(const String &p_dir_name, bool p_allow_dir_separator = false) const;
 	virtual String get_godot_dir_name() const;
 
@@ -528,6 +532,7 @@ public:
 
 	virtual int get_processor_count() const;
 	virtual String get_processor_name() const;
+	virtual int get_default_thread_pool_size() const { return get_processor_count(); }
 
 	virtual String get_unique_id() const;
 

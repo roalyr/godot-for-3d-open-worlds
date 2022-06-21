@@ -37,15 +37,15 @@
 #include "editor/editor_settings.h"
 #include "platform/windows/logo.gen.h"
 
-static Error fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size);
-
 class EditorExportPlatformWindows : public EditorExportPlatformPC {
-	void _rcedit_add_data(const Ref<EditorExportPreset> &p_preset, const String &p_path);
+	Error _rcedit_add_data(const Ref<EditorExportPreset> &p_preset, const String &p_path);
 	Error _code_sign(const Ref<EditorExportPreset> &p_preset, const String &p_path);
 
 public:
 	virtual Error export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags = 0);
 	virtual Error sign_shared_object(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path);
+	virtual Error modify_template(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags);
+	virtual Error fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size);
 	virtual void get_export_options(List<ExportOption> *r_options);
 	virtual bool get_option_visibility(const String &p_option, const Map<StringName, Variant> &p_options) const;
 	virtual bool can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const;
@@ -59,17 +59,30 @@ Error EditorExportPlatformWindows::sign_shared_object(const Ref<EditorExportPres
 	}
 }
 
-Error EditorExportPlatformWindows::export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
-	Error err = EditorExportPlatformPC::export_project(p_preset, p_debug, p_path, p_flags);
+Error EditorExportPlatformWindows::modify_template(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
+	if (p_preset->get("application/modify_resources")) {
+		_rcedit_add_data(p_preset, p_path);
+	}
+	return OK;
+}
 
-	if (err != OK) {
-		return err;
+Error EditorExportPlatformWindows::export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
+	String pck_path = p_path;
+	if (p_preset->get("binary_format/embed_pck")) {
+		pck_path = p_path.get_basename() + ".tmp";
 	}
 
-	_rcedit_add_data(p_preset, p_path);
-
+	Error err = EditorExportPlatformPC::export_project(p_preset, p_debug, pck_path, p_flags);
 	if (p_preset->get("codesign/enable") && err == OK) {
-		err = _code_sign(p_preset, p_path);
+		_code_sign(p_preset, pck_path);
+	}
+
+	if (p_preset->get("binary_format/embed_pck") && err == OK) {
+		DirAccessRef tmp_dir = DirAccess::create_for_path(p_path.get_base_dir());
+		err = tmp_dir->rename(pck_path, p_path);
+		if (err != OK) {
+			add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), vformat(TTR("Failed to rename temporary file \"%s\"."), pck_path));
+		}
 	}
 
 	return err;
@@ -96,6 +109,7 @@ void EditorExportPlatformWindows::get_export_options(List<ExportOption> *r_optio
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "codesign/description"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::POOL_STRING_ARRAY, "codesign/custom_options"), PoolStringArray()));
 
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "application/modify_resources"), true));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/icon", PROPERTY_HINT_FILE, "*.ico"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/file_version", PROPERTY_HINT_PLACEHOLDER_TEXT, "1.0.0.0"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/product_version", PROPERTY_HINT_PLACEHOLDER_TEXT, "1.0.0.0"), ""));
@@ -106,17 +120,16 @@ void EditorExportPlatformWindows::get_export_options(List<ExportOption> *r_optio
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "application/trademarks"), ""));
 }
 
-void EditorExportPlatformWindows::_rcedit_add_data(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
+Error EditorExportPlatformWindows::_rcedit_add_data(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
 	String rcedit_path = EditorSettings::get_singleton()->get("export/windows/rcedit");
 
-	if (rcedit_path.empty()) {
-		WARN_PRINT("The rcedit tool is not configured in the Editor Settings (Export > Windows > Rcedit). No custom icon or app information data will be embedded in the exported executable.");
-		return;
+	if (rcedit_path != String() && !FileAccess::exists(rcedit_path)) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Resources Modification"), vformat(TTR("Could not find rcedit executable at \"%s\"."), rcedit_path));
+		return ERR_FILE_NOT_FOUND;
 	}
 
-	if (!FileAccess::exists(rcedit_path)) {
-		ERR_PRINT("Could not find rcedit executable at " + rcedit_path + ", no icon or app information data will be included.");
-		return;
+	if (rcedit_path == String()) {
+		rcedit_path = "rcedit"; // try to run rcedit from PATH
 	}
 
 #ifndef WINDOWS_ENABLED
@@ -124,8 +137,8 @@ void EditorExportPlatformWindows::_rcedit_add_data(const Ref<EditorExportPreset>
 	String wine_path = EditorSettings::get_singleton()->get("export/windows/wine");
 
 	if (wine_path != String() && !FileAccess::exists(wine_path)) {
-		ERR_PRINT("Could not find wine executable at " + wine_path + ", no icon or app information data will be included.");
-		return;
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Resources Modification"), vformat(TTR("Could not find wine executable at \"%s\"."), wine_path));
+		return ERR_FILE_NOT_FOUND;
 	}
 
 	if (wine_path == String()) {
@@ -183,13 +196,26 @@ void EditorExportPlatformWindows::_rcedit_add_data(const Ref<EditorExportPreset>
 		args.push_back(trademarks);
 	}
 
-#ifdef WINDOWS_ENABLED
-	OS::get_singleton()->execute(rcedit_path, args, true);
-#else
+#ifndef WINDOWS_ENABLED
 	// On non-Windows we need WINE to run rcedit
 	args.push_front(rcedit_path);
-	OS::get_singleton()->execute(wine_path, args, true);
+	rcedit_path = wine_path;
 #endif
+
+	String str;
+	Error err = OS::get_singleton()->execute(rcedit_path, args, true, nullptr, &str, nullptr, true);
+	if (err != OK || (str.find("not found") != -1) || (str.find("not recognized") != -1)) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Resources Modification"), TTR("Could not start rcedit executable, configure rcedit path in the Editor Settings (Export > Windows > Rcedit)."));
+		return err;
+	}
+	print_line("rcedit (" + p_path + "): " + str);
+
+	if (str.find("Fatal error") != -1) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Resources Modification"), vformat(TTR("rcedit failed to modify executable:\n%s"), str));
+		return FAILED;
+	}
+
+	return OK;
 }
 
 Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
@@ -198,7 +224,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 #ifdef WINDOWS_ENABLED
 	String signtool_path = EditorSettings::get_singleton()->get("export/windows/signtool");
 	if (signtool_path != String() && !FileAccess::exists(signtool_path)) {
-		ERR_PRINT("Could not find signtool executable at " + signtool_path + ", aborting.");
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), vformat(TTR("Could not find signtool executable at \"%s\"."), signtool_path));
 		return ERR_FILE_NOT_FOUND;
 	}
 	if (signtool_path == String()) {
@@ -207,7 +233,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 #else
 	String signtool_path = EditorSettings::get_singleton()->get("export/windows/osslsigncode");
 	if (signtool_path != String() && !FileAccess::exists(signtool_path)) {
-		ERR_PRINT("Could not find osslsigncode executable at " + signtool_path + ", aborting.");
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), vformat(TTR("Could not find osslsigncode executable at \"%s\"."), signtool_path));
 		return ERR_FILE_NOT_FOUND;
 	}
 	if (signtool_path == String()) {
@@ -227,7 +253,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 			args.push_back("/f");
 			args.push_back(p_preset->get("codesign/identity"));
 		} else {
-			EditorNode::add_io_error("codesign: no identity found");
+			add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("No identity found."));
 			return FAILED;
 		}
 	} else if (id_type == 2) { //Windows certificate store
@@ -235,11 +261,11 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 			args.push_back("/sha1");
 			args.push_back(p_preset->get("codesign/identity"));
 		} else {
-			EditorNode::add_io_error("codesign: no identity found");
+			add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("No identity found."));
 			return FAILED;
 		}
 	} else {
-		EditorNode::add_io_error("codesign: invalid identity type");
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("Invalid identity type."));
 		return FAILED;
 	}
 #else
@@ -247,7 +273,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 		args.push_back("-pkcs12");
 		args.push_back(p_preset->get("codesign/identity"));
 	} else {
-		EditorNode::add_io_error("codesign: no identity found");
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("No identity found."));
 		return FAILED;
 	}
 #endif
@@ -279,7 +305,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 			args.push_back(p_preset->get("codesign/timestamp_server_url"));
 #endif
 		} else {
-			EditorNode::add_io_error("codesign: invalid timestamp server");
+			add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("Invalid timestamp server."));
 			return FAILED;
 		}
 	}
@@ -326,7 +352,10 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 
 	String str;
 	Error err = OS::get_singleton()->execute(signtool_path, args, true, nullptr, &str, nullptr, true);
-	ERR_FAIL_COND_V(err != OK, err);
+	if (err != OK || (str.find("not found") != -1) || (str.find("not recognized") != -1)) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), TTR("Could not start signtool executable, configure signtool path in the Editor Settings (Export > Windows > Signtool)."));
+		return err;
+	}
 
 	print_line("codesign (" + p_path + "): " + str);
 #ifndef WINDOWS_ENABLED
@@ -334,6 +363,7 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 #else
 	if (str.find("Failed") != -1) {
 #endif
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), vformat(TTR("Signtool failed to sign executable:\n%s"), str));
 		return FAILED;
 	}
 
@@ -341,10 +371,16 @@ Error EditorExportPlatformWindows::_code_sign(const Ref<EditorExportPreset> &p_p
 	DirAccessRef tmp_dir = DirAccess::create_for_path(p_path.get_base_dir());
 
 	err = tmp_dir->remove(p_path);
-	ERR_FAIL_COND_V(err != OK, err);
+	if (err != OK) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), vformat(TTR("Failed to remove temporary file \"%s\"."), p_path));
+		return err;
+	}
 
 	err = tmp_dir->rename(p_path + "_signed", p_path);
-	ERR_FAIL_COND_V(err != OK, err);
+	if (err != OK) {
+		add_message(EXPORT_MESSAGE_WARNING, TTR("Code Signing"), vformat(TTR("Failed to rename temporary file \"%s\"."), p_path + "_signed"));
+		return err;
+	}
 #endif
 
 	return OK;
@@ -355,7 +391,7 @@ bool EditorExportPlatformWindows::can_export(const Ref<EditorExportPreset> &p_pr
 	bool valid = EditorExportPlatformPC::can_export(p_preset, err, r_missing_templates);
 
 	String rcedit_path = EditorSettings::get_singleton()->get("export/windows/rcedit");
-	if (rcedit_path.empty()) {
+	if (p_preset->get("application/modify_resources") && rcedit_path.empty()) {
 		err += TTR("The rcedit tool must be configured in the Editor Settings (Export > Windows > Rcedit) to change the icon or app information data.") + "\n";
 	}
 
@@ -393,45 +429,17 @@ bool EditorExportPlatformWindows::can_export(const Ref<EditorExportPreset> &p_pr
 	return valid;
 }
 
-void register_windows_exporter() {
-	EDITOR_DEF("export/windows/rcedit", "");
-	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/rcedit", PROPERTY_HINT_GLOBAL_FILE, "*.exe"));
-#ifdef WINDOWS_ENABLED
-	EDITOR_DEF("export/windows/signtool", "");
-	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/signtool", PROPERTY_HINT_GLOBAL_FILE, "*.exe"));
-#else
-	EDITOR_DEF("export/windows/osslsigncode", "");
-	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/osslsigncode", PROPERTY_HINT_GLOBAL_FILE));
-	// On non-Windows we need WINE to run rcedit
-	EDITOR_DEF("export/windows/wine", "");
-	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/wine", PROPERTY_HINT_GLOBAL_FILE));
-#endif
-
-	Ref<EditorExportPlatformWindows> platform;
-	platform.instance();
-
-	Ref<Image> img = memnew(Image(_windows_logo));
-	Ref<ImageTexture> logo;
-	logo.instance();
-	logo->create_from_image(img);
-	platform->set_logo(logo);
-	platform->set_name("Windows Desktop");
-	platform->set_extension("exe");
-	platform->set_release_32("windows_32_release.exe");
-	platform->set_debug_32("windows_32_debug.exe");
-	platform->set_release_64("windows_64_release.exe");
-	platform->set_debug_64("windows_64_debug.exe");
-	platform->set_os_name("Windows");
-	platform->set_fixup_embedded_pck_func(&fixup_embedded_pck);
-
-	EditorExport::get_singleton()->add_export_platform(platform);
-}
-
-static Error fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size) {
+Error EditorExportPlatformWindows::fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size) {
 	// Patch the header of the "pck" section in the PE file so that it corresponds to the embedded data
+
+	if (p_embedded_size + p_embedded_start >= 0x100000000) { // Check for total executable size
+		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Windows executables cannot be >= 4 GiB."));
+		return ERR_INVALID_DATA;
+	}
 
 	FileAccess *f = FileAccess::open(p_path, FileAccess::READ_WRITE);
 	if (!f) {
+		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), vformat(TTR("Failed to open executable file \"%s\"."), p_path));
 		return ERR_CANT_OPEN;
 	}
 
@@ -444,6 +452,7 @@ static Error fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, 
 		uint32_t magic = f->get_32();
 		if (magic != 0x00004550) {
 			f->close();
+			add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Executable file header corrupted."));
 			return ERR_FILE_CORRUPT;
 		}
 	}
@@ -495,5 +504,42 @@ static Error fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, 
 
 	f->close();
 
-	return found ? OK : ERR_FILE_CORRUPT;
+	if (!found) {
+		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Executable \"pck\" section not found."));
+		return ERR_FILE_CORRUPT;
+	}
+	return OK;
+}
+
+void register_windows_exporter() {
+	EDITOR_DEF("export/windows/rcedit", "");
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/rcedit", PROPERTY_HINT_GLOBAL_FILE, "*.exe"));
+#ifdef WINDOWS_ENABLED
+	EDITOR_DEF("export/windows/signtool", "");
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/signtool", PROPERTY_HINT_GLOBAL_FILE, "*.exe"));
+#else
+	EDITOR_DEF("export/windows/osslsigncode", "");
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/osslsigncode", PROPERTY_HINT_GLOBAL_FILE));
+	// On non-Windows we need WINE to run rcedit
+	EDITOR_DEF("export/windows/wine", "");
+	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::STRING, "export/windows/wine", PROPERTY_HINT_GLOBAL_FILE));
+#endif
+
+	Ref<EditorExportPlatformWindows> platform;
+	platform.instance();
+
+	Ref<Image> img = memnew(Image(_windows_logo));
+	Ref<ImageTexture> logo;
+	logo.instance();
+	logo->create_from_image(img);
+	platform->set_logo(logo);
+	platform->set_name("Windows Desktop");
+	platform->set_extension("exe");
+	platform->set_release_32("windows_32_release.exe");
+	platform->set_debug_32("windows_32_debug.exe");
+	platform->set_release_64("windows_64_release.exe");
+	platform->set_debug_64("windows_64_debug.exe");
+	platform->set_os_name("Windows");
+
+	EditorExport::get_singleton()->add_export_platform(platform);
 }

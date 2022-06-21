@@ -233,19 +233,6 @@ String _get_xr_features_tag(const Ref<EditorExportPreset> &p_preset) {
 	return manifest_xr_features;
 }
 
-String _get_instrumentation_tag(const Ref<EditorExportPreset> &p_preset) {
-	String package_name = p_preset->get("package/unique_name");
-	String manifest_instrumentation_text = vformat(
-			"    <instrumentation\n"
-			"        tools:node=\"replace\"\n"
-			"        android:name=\".GodotInstrumentation\"\n"
-			"        android:icon=\"@mipmap/icon\"\n"
-			"        android:label=\"@string/godot_project_name_string\"\n"
-			"        android:targetPackage=\"%s\" />\n",
-			package_name);
-	return manifest_instrumentation_text;
-}
-
 String _get_activity_tag(const Ref<EditorExportPreset> &p_preset) {
 	int xr_mode_index = (int)(p_preset->get("xr_features/xr_mode"));
 	bool uses_xr = xr_mode_index == XR_MODE_OVR || xr_mode_index == XR_MODE_OPENXR;
@@ -282,6 +269,7 @@ String _get_application_tag(const Ref<EditorExportPreset> &p_preset, bool p_has_
 			"        tools:ignore=\"GoogleAppIndexingWarning\"\n"
 			"        android:icon=\"@mipmap/icon\" >\n\n"
 			"        <meta-data tools:node=\"remove\" android:name=\"xr_mode_metadata_name\" />\n"
+			"        <meta-data tools:node=\"remove\" android:name=\"xr_hand_tracking_version_name\" />\n"
 			"        <meta-data tools:node=\"remove\" android:name=\"xr_hand_tracking_metadata_name\" />\n",
 			bool_to_string(p_preset->get("user_data_backup/allow")),
 			bool_to_string(p_preset->get("package/classify_as_game")),
@@ -300,6 +288,7 @@ String _get_application_tag(const Ref<EditorExportPreset> &p_preset, bool p_has_
 			manifest_application_text += vformat(
 					"        <meta-data tools:node=\"replace\" android:name=\"com.oculus.handtracking.frequency\" android:value=\"%s\" />\n",
 					hand_tracking_frequency);
+			manifest_application_text += "        <meta-data tools:node=\"replace\" android:name=\"com.oculus.handtracking.version\" android:value=\"V2.0\" />\n";
 		}
 	} else {
 		manifest_application_text += "        <meta-data tools:node=\"remove\" android:name=\"com.oculus.supportedDevices\" />\n";

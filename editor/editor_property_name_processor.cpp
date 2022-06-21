@@ -111,6 +111,7 @@ EditorPropertyNameProcessor::EditorPropertyNameProcessor() {
 	capitalize_string_remaps["armeabi-v7a"] = "armeabi-v7a";
 	capitalize_string_remaps["arvr"] = "ARVR";
 	capitalize_string_remaps["bg"] = "BG";
+	capitalize_string_remaps["bidi"] = "BiDi";
 	capitalize_string_remaps["bp"] = "BP";
 	capitalize_string_remaps["bpc"] = "BPC";
 	capitalize_string_remaps["bptc"] = "BPTC";
@@ -132,6 +133,7 @@ EditorPropertyNameProcessor::EditorPropertyNameProcessor() {
 	capitalize_string_remaps["fbx"] = "FBX";
 	capitalize_string_remaps["fft"] = "FFT";
 	capitalize_string_remaps["fg"] = "FG";
+	capitalize_string_remaps["filesystem"] = "FileSystem";
 	capitalize_string_remaps["fov"] = "FOV";
 	capitalize_string_remaps["fps"] = "FPS";
 	capitalize_string_remaps["fs"] = "FS";
@@ -158,8 +160,8 @@ EditorPropertyNameProcessor::EditorPropertyNameProcessor() {
 	capitalize_string_remaps["ik"] = "IK";
 	capitalize_string_remaps["image@2x"] = "Image @2x";
 	capitalize_string_remaps["image@3x"] = "Image @3x";
-	capitalize_string_remaps["ios"] = "iOS";
 	capitalize_string_remaps["iod"] = "IOD";
+	capitalize_string_remaps["ios"] = "iOS";
 	capitalize_string_remaps["ip"] = "IP";
 	capitalize_string_remaps["ipad"] = "iPad";
 	capitalize_string_remaps["iphone"] = "iPhone";
@@ -177,9 +179,11 @@ EditorPropertyNameProcessor::EditorPropertyNameProcessor() {
 	capitalize_string_remaps["mb"] = "(MB)"; // Unit.
 	capitalize_string_remaps["mms"] = "MMS";
 	capitalize_string_remaps["ms"] = "(ms)"; // Unit
+	capitalize_string_remaps["msaa"] = "MSAA";
+	capitalize_string_remaps["msdf"] = "MSDF";
 	// Not used for now as AudioEffectReverb has a `msec` property.
 	//capitalize_string_remaps["msec"] = "(msec)"; // Unit.
-	capitalize_string_remaps["msaa"] = "MSAA";
+	capitalize_string_remaps["navmesh"] = "NavMesh";
 	capitalize_string_remaps["nfc"] = "NFC";
 	capitalize_string_remaps["normalmap"] = "Normal Map";
 	capitalize_string_remaps["ofs"] = "Offset";
@@ -190,8 +194,8 @@ EditorPropertyNameProcessor::EditorPropertyNameProcessor() {
 	capitalize_string_remaps["pck"] = "PCK";
 	capitalize_string_remaps["png"] = "PNG";
 	capitalize_string_remaps["po2"] = "(Power of 2)"; // Unit.
-	capitalize_string_remaps["pvs"] = "PVS";
 	capitalize_string_remaps["pvrtc"] = "PVRTC";
+	capitalize_string_remaps["pvs"] = "PVS";
 	capitalize_string_remaps["rgb"] = "RGB";
 	capitalize_string_remaps["rid"] = "RID";
 	capitalize_string_remaps["rmb"] = "RMB";

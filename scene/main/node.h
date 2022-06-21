@@ -41,16 +41,29 @@
 
 class Viewport;
 class SceneState;
+class SceneTreeTween;
+
 class Node : public Object {
 	GDCLASS(Node, Object);
 	OBJ_CATEGORY("Nodes");
 
 public:
-	enum PauseMode {
+	// N.B. Any enum stored as a bitfield should
+	// be specified as UNSIGNED to work around
+	// some compilers trying to store it as signed,
+	// and requiring 1 more bit than necessary.
+	enum PauseMode : unsigned int {
 
 		PAUSE_MODE_INHERIT,
 		PAUSE_MODE_STOP,
 		PAUSE_MODE_PROCESS
+	};
+
+	enum PhysicsInterpolationMode : unsigned int {
+
+		PHYSICS_INTERPOLATION_MODE_INHERIT,
+		PHYSICS_INTERPOLATION_MODE_OFF,
+		PHYSICS_INTERPOLATION_MODE_ON
 	};
 
 	enum DuplicateFlags {
@@ -95,6 +108,9 @@ private:
 		Node *parent;
 		Node *owner;
 		Vector<Node *> children; // list of children
+		HashMap<StringName, Node *> owned_unique_nodes;
+		bool unique_name_in_owner = false;
+
 		int pos;
 		int depth;
 		int blocked; // safeguard that throws an error when attempting to modify the tree in a harmful way while being traversed.
@@ -110,7 +126,6 @@ private:
 		List<Node *>::Element *OW; // owned element
 		List<Node *> owned;
 
-		PauseMode pause_mode;
 		Node *pause_owner;
 
 		int network_master;
@@ -118,6 +133,10 @@ private:
 		Map<StringName, MultiplayerAPI::RPCMode> rpc_properties;
 
 		int process_priority;
+
+		// Keep bitpacked values together to get better packing
+		PauseMode pause_mode : 2;
+		PhysicsInterpolationMode physics_interpolation_mode : 2;
 
 		// variables used to properly sort the node when processing, ignored otherwise
 		//should move all the stuff below to bits
@@ -135,6 +154,9 @@ private:
 		// This only takes effect when the SceneTree (or project setting) physics interpolation
 		// is switched on.
 		bool physics_interpolated : 1;
+
+		// We can auto-reset physics interpolation when e.g. adding a node for the first time
+		bool physics_interpolation_reset_requested : 1;
 
 		// Most nodes need not be interpolated in the scene tree, physics interpolation
 		// is normally only needed in the VisualServer. However if we need to read the
@@ -182,6 +204,7 @@ private:
 	void _propagate_exit_tree();
 	void _propagate_after_exit_branch(bool p_exiting_tree);
 	void _propagate_physics_interpolated(bool p_interpolated);
+	void _propagate_physics_interpolation_reset_requested();
 	void _print_stray_nodes();
 	void _propagate_pause_owner(Node *p_owner);
 	Array _get_node_and_resource(const NodePath &p_path);
@@ -201,6 +224,8 @@ private:
 	friend class SceneTree;
 
 	void _set_tree(SceneTree *p_tree);
+	void _release_unique_name_in_owner();
+	void _acquire_unique_name_in_owner();
 
 protected:
 	void _block() { data.blocked++; }
@@ -226,6 +251,8 @@ protected:
 	void _set_name_nocheck(const StringName &p_name);
 	void _set_physics_interpolated_client_side(bool p_enable);
 	bool _is_physics_interpolated_client_side() const { return data.physics_interpolated_client_side; }
+	void _set_physics_interpolation_reset_requested(bool p_enable);
+	bool _is_physics_interpolation_reset_requested() const { return data.physics_interpolation_reset_requested; }
 	void _set_use_identity_transform(bool p_enable);
 	bool _is_using_identity_transform() const { return data.use_identity_transform; }
 
@@ -324,8 +351,13 @@ public:
 	Node *get_owner() const;
 	void get_owned_by(Node *p_by, List<Node *> *p_owned);
 
+	void set_unique_name_in_owner(bool p_enabled);
+	bool is_unique_name_in_owner() const;
+
 	void remove_and_skip();
 	int get_index() const;
+
+	Ref<SceneTreeTween> create_tween();
 
 	void print_tree();
 	void print_tree_pretty();
@@ -412,7 +444,8 @@ public:
 	bool can_process() const;
 	bool can_process_notification(int p_what) const;
 
-	void set_physics_interpolated(bool p_interpolated);
+	void set_physics_interpolation_mode(PhysicsInterpolationMode p_mode);
+	PhysicsInterpolationMode get_physics_interpolation_mode() const { return data.physics_interpolation_mode; }
 	_FORCE_INLINE_ bool is_physics_interpolated() const { return data.physics_interpolated; }
 	_FORCE_INLINE_ bool is_physics_interpolated_and_enabled() const { return is_inside_tree() && get_tree()->is_physics_interpolation_enabled() && is_physics_interpolated(); }
 	void reset_physics_interpolation();

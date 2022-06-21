@@ -118,7 +118,7 @@
 				    child_node.get_parent().remove_child(child_node)
 				add_child(child_node)
 				[/codeblock]
-				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=$DOCS_URL/tutorials/misc/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
+				[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=$DOCS_URL/tutorials/plugins/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 			</description>
 		</method>
 		<method name="add_child_below_node">
@@ -145,6 +145,15 @@
 			<return type="bool" />
 			<description>
 				Returns [code]true[/code] if the node can process while the scene tree is paused (see [member pause_mode]). Always returns [code]true[/code] if the scene tree is not paused, and [code]false[/code] if the node is not in the tree.
+			</description>
+		</method>
+		<method name="create_tween">
+			<return type="SceneTreeTween" />
+			<description>
+				Creates a new [SceneTreeTween] and binds it to this node. This is equivalent of doing:
+				[codeblock]
+				get_tree().create_tween().bind_node(self)
+				[/codeblock]
 			</description>
 		</method>
 		<method name="duplicate" qualifiers="const">
@@ -382,14 +391,14 @@
 		<method name="is_physics_interpolated" qualifiers="const">
 			<return type="bool" />
 			<description>
-				Returns [code]true[/code] if the physics interpolated flag is set for this Node (see [method set_physics_interpolated]).
-				[b]Note:[/b] Interpolation will only be active is both the flag is set [b]and[/b] physics interpolation is enabled within the [SceneTree]. This can be tested using [method is_physics_interpolated_and_enabled].
+				Returns [code]true[/code] if the physics interpolated flag is set for this Node (see [member physics_interpolation_mode]).
+				[b]Note:[/b] Interpolation will only be active if both the flag is set [b]and[/b] physics interpolation is enabled within the [SceneTree]. This can be tested using [method is_physics_interpolated_and_enabled].
 			</description>
 		</method>
 		<method name="is_physics_interpolated_and_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>
-				Returns [code]true[/code] if physics interpolation is enabled (see [method set_physics_interpolated]) [b]and[/b] enabled in the [SceneTree].
+				Returns [code]true[/code] if physics interpolation is enabled (see [member physics_interpolation_mode]) [b]and[/b] enabled in the [SceneTree].
 				This is a convenience version of [method is_physics_interpolated] that also checks whether physics interpolation is enabled globally.
 				See [member SceneTree.physics_interpolation] and [member ProjectSettings.physics/common/physics_interpolation].
 			</description>
@@ -559,7 +568,7 @@
 			<return type="Variant" />
 			<argument index="0" name="method" type="String" />
 			<description>
-				Sends a remote procedure call request for the given [code]method[/code] to peers on the network (and locally), optionally sending all additional arguments as arguments to the method called by the RPC. The call request will only be received by nodes with the same [NodePath], including the exact same node name. Behaviour depends on the RPC configuration for the given method, see [method rpc_config]. Methods are not exposed to RPCs by default. See also [method rset] and [method rset_config] for properties. Returns an empty [Variant].
+				Sends a remote procedure call request for the given [code]method[/code] to peers on the network (and locally), optionally sending all additional arguments as arguments to the method called by the RPC. The call request will only be received by nodes with the same [NodePath], including the exact same node name. Behaviour depends on the RPC configuration for the given method, see [method rpc_config]. Methods are not exposed to RPCs by default. See also [method rset] and [method rset_config] for properties. Returns [code]null[/code].
 				[b]Note:[/b] You can only safely use RPCs on clients after you received the [code]connected_to_server[/code] signal from the [SceneTree]. You also need to keep track of the connection state, either by the [SceneTree] signals like [code]server_disconnected[/code] or by checking [code]SceneTree.network_peer.get_connection_status() == CONNECTION_CONNECTED[/code].
 			</description>
 		</method>
@@ -576,14 +585,14 @@
 			<argument index="0" name="peer_id" type="int" />
 			<argument index="1" name="method" type="String" />
 			<description>
-				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
+				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rpc_unreliable" qualifiers="vararg">
 			<return type="Variant" />
 			<argument index="0" name="method" type="String" />
 			<description>
-				Sends a [method rpc] using an unreliable protocol. Returns an empty [Variant].
+				Sends a [method rpc] using an unreliable protocol. Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rpc_unreliable_id" qualifiers="vararg">
@@ -591,7 +600,7 @@
 			<argument index="0" name="peer_id" type="int" />
 			<argument index="1" name="method" type="String" />
 			<description>
-				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] using an unreliable protocol (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns an empty [Variant].
+				Sends a [method rpc] to a specific peer identified by [code]peer_id[/code] using an unreliable protocol (see [method NetworkedMultiplayerPeer.set_target_peer]). Returns [code]null[/code].
 			</description>
 		</method>
 		<method name="rset">
@@ -649,14 +658,6 @@
 			<argument index="1" name="recursive" type="bool" default="true" />
 			<description>
 				Sets the node's network master to the peer with the given peer ID. The network master is the peer that has authority over the node on the network. Useful in conjunction with the [code]master[/code] and [code]puppet[/code] keywords. Inherited from the parent node by default, which ultimately defaults to peer ID 1 (the server). If [code]recursive[/code], the given peer is recursively set as the master for all children of this node.
-			</description>
-		</method>
-		<method name="set_physics_interpolated">
-			<return type="void" />
-			<argument index="0" name="enable" type="bool" />
-			<description>
-				Enables or disables physics interpolation per node, offering a finer grain of control than turning physics interpolation on and off globally.
-				[b]Note:[/b] This can be especially useful for [Camera]s, where custom interpolation can sometimes give superior results.
 			</description>
 		</method>
 		<method name="set_physics_process">
@@ -741,13 +742,21 @@
 		</member>
 		<member name="owner" type="Node" setter="set_owner" getter="get_owner">
 			The node owner. A node can have any other node as owner (as long as it is a valid parent, grandparent, etc. ascending in the tree). When saving a node (using [PackedScene]), all the nodes it owns will be saved with it. This allows for the creation of complex [SceneTree]s, with instancing and subinstancing.
-			[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=$DOCS_URL/tutorials/misc/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
+			[b]Note:[/b] If you want a child to be persisted to a [PackedScene], you must set [member owner] in addition to calling [method add_child]. This is typically relevant for [url=$DOCS_URL/tutorials/plugins/running_code_in_the_editor.html]tool scripts[/url] and [url=$DOCS_URL/tutorials/plugins/editor/index.html]editor plugins[/url]. If [method add_child] is called without setting [member owner], the newly added [Node] will not be visible in the scene tree, though it will be visible in the 2D/3D view.
 		</member>
 		<member name="pause_mode" type="int" setter="set_pause_mode" getter="get_pause_mode" enum="Node.PauseMode" default="0">
 			Pause mode. How the node will behave if the [SceneTree] is paused.
 		</member>
+		<member name="physics_interpolation_mode" type="int" setter="set_physics_interpolation_mode" getter="get_physics_interpolation_mode" enum="Node.PhysicsInterpolationMode" default="0">
+			Allows enabling or disabling physics interpolation per node, offering a finer grain of control than turning physics interpolation on and off globally.
+			[b]Note:[/b] This can be especially useful for [Camera]s, where custom interpolation can sometimes give superior results.
+		</member>
 		<member name="process_priority" type="int" setter="set_process_priority" getter="get_process_priority" default="0">
 			The node's priority in the execution order of the enabled processing callbacks (i.e. [constant NOTIFICATION_PROCESS], [constant NOTIFICATION_PHYSICS_PROCESS] and their internal counterparts). Nodes whose process priority value is [i]lower[/i] will have their processing callbacks executed first.
+		</member>
+		<member name="unique_name_in_owner" type="bool" setter="set_unique_name_in_owner" getter="is_unique_name_in_owner" default="false">
+			Sets this node's name as a unique name in its [member owner]. This allows the node to be accessed as [code]%Name[/code] instead of the full path, from any node within that scene.
+			If another node with the same owner already had that name declared as unique, that other node's name will no longer be set as having a unique name.
 		</member>
 	</members>
 	<signals>
@@ -755,12 +764,14 @@
 			<argument index="0" name="node" type="Node" />
 			<description>
 				Emitted when a child node enters the scene tree, either because it entered on its own or because this node entered with it.
+				This signal is emitted [i]after[/i] the child node's own [constant NOTIFICATION_ENTER_TREE] and [signal tree_entered].
 			</description>
 		</signal>
-		<signal name="child_exited_tree">
+		<signal name="child_exiting_tree">
 			<argument index="0" name="node" type="Node" />
 			<description>
-				Emitted when a child node exits the scene tree, either because it exited on its own or because this node exited.
+				Emitted when a child node is about to exit the scene tree, either because it is being removed or freed directly, or because this node is exiting the tree.
+				When this signal is received, the child [code]node[/code] is still in the tree and valid. This signal is emitted [i]after[/i] the child node's own [signal tree_exiting] and [constant NOTIFICATION_EXIT_TREE].
 			</description>
 		</signal>
 		<signal name="ready">
@@ -776,6 +787,7 @@
 		<signal name="tree_entered">
 			<description>
 				Emitted when the node enters the tree.
+				This signal is emitted [i]after[/i] the related [constant NOTIFICATION_ENTER_TREE] notification.
 			</description>
 		</signal>
 		<signal name="tree_exited">
@@ -786,15 +798,18 @@
 		<signal name="tree_exiting">
 			<description>
 				Emitted when the node is still active but about to exit the tree. This is the right place for de-initialization (or a "destructor", if you will).
+				This signal is emitted [i]before[/i] the related [constant NOTIFICATION_EXIT_TREE] notification.
 			</description>
 		</signal>
 	</signals>
 	<constants>
 		<constant name="NOTIFICATION_ENTER_TREE" value="10">
 			Notification received when the node enters a [SceneTree].
+			This notification is emitted [i]before[/i] the related [signal tree_entered].
 		</constant>
 		<constant name="NOTIFICATION_EXIT_TREE" value="11">
 			Notification received when the node is about to exit a [SceneTree].
+			This notification is emitted [i]after[/i] the related [signal tree_exiting].
 		</constant>
 		<constant name="NOTIFICATION_MOVED_IN_PARENT" value="12">
 			Notification received when the node is moved in the parent.
@@ -825,10 +840,13 @@
 			Notification received when the node is instanced.
 		</constant>
 		<constant name="NOTIFICATION_DRAG_BEGIN" value="21">
-			Notification received when a drag begins.
+			Notification received when a drag operation begins. All nodes receive this notification, not only the dragged one.
+			Can be triggered either by dragging a [Control] that provides drag data (see [method Control.get_drag_data]) or using [method Control.force_drag].
+			Use [method Viewport.gui_get_drag_data] to get the dragged data.
 		</constant>
 		<constant name="NOTIFICATION_DRAG_END" value="22">
-			Notification received when a drag ends.
+			Notification received when a drag operation ends.
+			Use [method Viewport.gui_is_drag_successful] to check if the drag succeeded.
 		</constant>
 		<constant name="NOTIFICATION_PATH_CHANGED" value="23">
 			Notification received when the node's [NodePath] changed.
@@ -908,6 +926,15 @@
 		</constant>
 		<constant name="PAUSE_MODE_PROCESS" value="2" enum="PauseMode">
 			Continue to process regardless of the [SceneTree] pause state.
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_INHERIT" value="0" enum="PhysicsInterpolationMode">
+			Inherits physics interpolation mode from the node's parent. For the root node, it is equivalent to [constant PHYSICS_INTERPOLATION_MODE_ON]. Default.
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_OFF" value="1" enum="PhysicsInterpolationMode">
+			Turn off physics interpolation in this node and children set to [constant PHYSICS_INTERPOLATION_MODE_INHERIT].
+		</constant>
+		<constant name="PHYSICS_INTERPOLATION_MODE_ON" value="2" enum="PhysicsInterpolationMode">
+			Turn on physics interpolation in this node and children set to [constant PHYSICS_INTERPOLATION_MODE_INHERIT].
 		</constant>
 		<constant name="DUPLICATE_SIGNALS" value="1" enum="DuplicateFlags">
 			Duplicate the node's signals.

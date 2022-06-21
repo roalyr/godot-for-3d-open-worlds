@@ -38,6 +38,7 @@
 #include "scene/3d/collision_shape.h"
 #include "scene/3d/cpu_particles.h"
 #include "scene/3d/gi_probe.h"
+#include "scene/3d/label_3d.h"
 #include "scene/3d/light.h"
 #include "scene/3d/listener.h"
 #include "scene/3d/mesh_instance.h"
@@ -1563,6 +1564,38 @@ void Sprite3DSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 ///
 
+Label3DSpatialGizmoPlugin::Label3DSpatialGizmoPlugin() {
+}
+
+bool Label3DSpatialGizmoPlugin::has_gizmo(Spatial *p_spatial) {
+	return Object::cast_to<Label3D>(p_spatial) != nullptr;
+}
+
+String Label3DSpatialGizmoPlugin::get_name() const {
+	return "Label3D";
+}
+
+int Label3DSpatialGizmoPlugin::get_priority() const {
+	return -1;
+}
+
+bool Label3DSpatialGizmoPlugin::can_be_hidden() const {
+	return false;
+}
+
+void Label3DSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
+	Label3D *label = Object::cast_to<Label3D>(p_gizmo->get_spatial_node());
+
+	p_gizmo->clear();
+
+	Ref<TriangleMesh> tm = label->generate_triangle_mesh();
+	if (tm.is_valid()) {
+		p_gizmo->add_collision_triangles(tm);
+	}
+}
+
+///
+
 Position3DSpatialGizmoPlugin::Position3DSpatialGizmoPlugin() {
 	pos3d_mesh = Ref<ArrayMesh>(memnew(ArrayMesh));
 	cursor_points = Vector<Vector3>();
@@ -1798,7 +1831,7 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 ////
 
 PhysicalBoneSpatialGizmoPlugin::PhysicalBoneSpatialGizmoPlugin() {
-	create_material("joint_material", EDITOR_DEF("editors/3d_gizmos/gizmo_colors/joint", Color(0.5, 0.8, 1)));
+	create_material("joint_material", EDITOR_GET("editors/3d_gizmos/gizmo_colors/joint"));
 }
 
 bool PhysicalBoneSpatialGizmoPlugin::has_gizmo(Spatial *p_spatial) {
@@ -1931,7 +1964,7 @@ void PhysicalBoneSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 /////
 
 RayCastSpatialGizmoPlugin::RayCastSpatialGizmoPlugin() {
-	const Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	const Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 	const float gizmo_value = gizmo_color.get_v();
 	const Color gizmo_color_disabled = Color(gizmo_value, gizmo_value, gizmo_value, 0.65);
@@ -1985,7 +2018,7 @@ void SpringArmSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 }
 
 SpringArmSpatialGizmoPlugin::SpringArmSpatialGizmoPlugin() {
-	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 }
 
@@ -2004,7 +2037,7 @@ int SpringArmSpatialGizmoPlugin::get_priority() const {
 /////
 
 VehicleWheelSpatialGizmoPlugin::VehicleWheelSpatialGizmoPlugin() {
-	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 }
 
@@ -2075,7 +2108,7 @@ void VehicleWheelSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 ///////////
 
 SoftBodySpatialGizmoPlugin::SoftBodySpatialGizmoPlugin() {
-	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 	create_handle_material("handles");
 }
@@ -2994,7 +3027,7 @@ void BakedIndirectLightGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 ////
 
 CollisionObjectGizmoPlugin::CollisionObjectGizmoPlugin() {
-	const Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	const Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 	const float gizmo_value = gizmo_color.get_v();
 	const Color gizmo_color_disabled = Color(gizmo_value, gizmo_value, gizmo_value, 0.65);
@@ -3045,7 +3078,7 @@ void CollisionObjectGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 ////
 
 CollisionShapeSpatialGizmoPlugin::CollisionShapeSpatialGizmoPlugin() {
-	const Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	const Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 	const float gizmo_value = gizmo_color.get_v();
 	const Color gizmo_color_disabled = Color(gizmo_value, gizmo_value, gizmo_value, 0.65);
@@ -3643,7 +3676,7 @@ void CollisionShapeSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 /////
 
 CollisionPolygonSpatialGizmoPlugin::CollisionPolygonSpatialGizmoPlugin() {
-	const Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/shape", Color(0.5, 0.7, 1));
+	const Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/shape");
 	create_material("shape_material", gizmo_color);
 	const float gizmo_value = gizmo_color.get_v();
 	const Color gizmo_color_disabled = Color(gizmo_value, gizmo_value, gizmo_value, 0.65);
@@ -4042,7 +4075,7 @@ void JointGizmosDrawer::draw_cone(const Transform &p_offset, const Basis &p_base
 ////
 
 JointSpatialGizmoPlugin::JointSpatialGizmoPlugin() {
-	create_material("joint_material", EDITOR_DEF("editors/3d_gizmos/gizmo_colors/joint", Color(0.5, 0.8, 1)));
+	create_material("joint_material", EDITOR_GET("editors/3d_gizmos/gizmo_colors/joint"));
 	create_material("joint_body_a_material", EDITOR_DEF("editors/3d_gizmos/gizmo_colors/joint_body_a", Color(0.6, 0.8, 1)));
 	create_material("joint_body_b_material", EDITOR_DEF("editors/3d_gizmos/gizmo_colors/joint_body_b", Color(0.6, 0.9, 1)));
 
@@ -5365,10 +5398,14 @@ void OccluderSpatialGizmo::redraw() {
 	const OccluderShapePolygon *occ_poly = get_occluder_shape_poly();
 	if (occ_poly) {
 		// main poly
-		_redraw_poly(false, occ_poly->_poly_pts_local, occ_poly->_poly_pts_local_raw);
+		if (occ_poly->_poly_pts_local_raw.size()) {
+			_redraw_poly(false, occ_poly->_poly_pts_local, occ_poly->_poly_pts_local_raw);
+		}
 
 		// hole
-		_redraw_poly(true, occ_poly->_hole_pts_local, occ_poly->_hole_pts_local_raw);
+		if (occ_poly->_hole_pts_local_raw.size()) {
+			_redraw_poly(true, occ_poly->_hole_pts_local, occ_poly->_hole_pts_local_raw);
+		}
 	}
 }
 
