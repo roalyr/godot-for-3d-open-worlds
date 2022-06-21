@@ -6878,9 +6878,9 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	// Far is from 1.0 to 9e18.
 	settings_zfar = memnew(SpinBox);
 	settings_zfar->set_max(MAX_Z);
-	settings_zfar->set_min(MIN_Z);
-	settings_zfar->set_step(0.01);
-	settings_zfar->set_value(EDITOR_GET("editors/3d/default_z_far"));
+	settings_zfar->set_min(1.0);
+	settings_zfar->set_step(1.0);
+	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far"));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 
