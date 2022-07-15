@@ -171,6 +171,8 @@ void Navigation2DServer::_emit_map_changed(RID p_map) {
 }
 
 void Navigation2DServer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_maps"), &Navigation2DServer::get_maps);
+
 	ClassDB::bind_method(D_METHOD("map_create"), &Navigation2DServer::map_create);
 	ClassDB::bind_method(D_METHOD("map_set_active", "map", "active"), &Navigation2DServer::map_set_active);
 	ClassDB::bind_method(D_METHOD("map_is_active", "nap"), &Navigation2DServer::map_is_active);
@@ -186,12 +188,14 @@ void Navigation2DServer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("map_get_regions", "map"), &Navigation2DServer::map_get_regions);
 	ClassDB::bind_method(D_METHOD("map_get_agents", "map"), &Navigation2DServer::map_get_agents);
+	ClassDB::bind_method(D_METHOD("map_force_update", "map"), &Navigation2DServer::map_force_update);
 
 	ClassDB::bind_method(D_METHOD("region_create"), &Navigation2DServer::region_create);
 	ClassDB::bind_method(D_METHOD("region_set_enter_cost", "region", "enter_cost"), &Navigation2DServer::region_set_enter_cost);
 	ClassDB::bind_method(D_METHOD("region_get_enter_cost", "region"), &Navigation2DServer::region_get_enter_cost);
 	ClassDB::bind_method(D_METHOD("region_set_travel_cost", "region", "travel_cost"), &Navigation2DServer::region_set_travel_cost);
 	ClassDB::bind_method(D_METHOD("region_get_travel_cost", "region"), &Navigation2DServer::region_get_travel_cost);
+	ClassDB::bind_method(D_METHOD("region_owns_point", "region", "point"), &Navigation2DServer::region_owns_point);
 	ClassDB::bind_method(D_METHOD("region_set_map", "region", "map"), &Navigation2DServer::region_set_map);
 	ClassDB::bind_method(D_METHOD("region_get_map", "region"), &Navigation2DServer::region_get_map);
 	ClassDB::bind_method(D_METHOD("region_set_navigation_layers", "region", "navigation_layers"), &Navigation2DServer::region_set_navigation_layers);
@@ -232,6 +236,8 @@ Navigation2DServer::~Navigation2DServer() {
 	singleton = nullptr;
 }
 
+Array FORWARD_0_C(get_maps);
+
 Array FORWARD_1_C(map_get_regions, RID, p_map, rid_to_rid);
 
 Array FORWARD_1_C(map_get_agents, RID, p_map, rid_to_rid);
@@ -245,6 +251,10 @@ RID FORWARD_0_C(map_create);
 void FORWARD_2_C(map_set_active, RID, p_map, bool, p_active, rid_to_rid, bool_to_bool);
 
 bool FORWARD_1_C(map_is_active, RID, p_map, rid_to_rid);
+
+void Navigation2DServer::map_force_update(RID p_map) {
+	NavigationServer::get_singleton_mut()->map_force_update(p_map);
+}
 
 void FORWARD_2_C(map_set_cell_size, RID, p_map, real_t, p_cell_size, rid_to_rid, real_to_real);
 real_t FORWARD_1_C(map_get_cell_size, RID, p_map, rid_to_rid);
@@ -266,6 +276,7 @@ void FORWARD_2_C(region_set_enter_cost, RID, p_region, real_t, p_enter_cost, rid
 real_t FORWARD_1_C(region_get_enter_cost, RID, p_region, rid_to_rid);
 void FORWARD_2_C(region_set_travel_cost, RID, p_region, real_t, p_travel_cost, rid_to_rid, real_to_real);
 real_t FORWARD_1_C(region_get_travel_cost, RID, p_region, rid_to_rid);
+bool FORWARD_2_C(region_owns_point, RID, p_region, const Vector2 &, p_point, rid_to_rid, v2_to_v3);
 
 void FORWARD_2_C(region_set_map, RID, p_region, RID, p_map, rid_to_rid, rid_to_rid);
 void FORWARD_2_C(region_set_navigation_layers, RID, p_region, uint32_t, p_navigation_layers, rid_to_rid, uint32_to_uint32);

@@ -1563,7 +1563,12 @@ void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data
 					continue;
 				}
 
-				String path = sn->get_path_to(node);
+				String path;
+				if (node->is_unique_name_in_owner()) {
+					path = "%" + node->get_name();
+				} else {
+					path = sn->get_path_to(node);
+				}
 				Vector<String> segments = path.split("/");
 				for (int j = 0; j < segments.size(); j++) {
 					if (!segments[j].is_valid_identifier()) {
@@ -1582,7 +1587,7 @@ void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data
 		} else {
 			for (int i = 0; i < nodes.size(); i++) {
 				if (i > 0) {
-					text_to_drop += ",";
+					text_to_drop += ", ";
 				}
 
 				NodePath np = nodes[i];
@@ -1591,8 +1596,20 @@ void ScriptTextEditor::drop_data_fw(const Point2 &p_point, const Variant &p_data
 					continue;
 				}
 
-				String path = sn->get_path_to(node);
-				text_to_drop += path.c_escape().quote(quote_style);
+				String path;
+				if (node->is_unique_name_in_owner()) {
+					path = "%" + node->get_name();
+				} else {
+					path = sn->get_path_to(node);
+				}
+				Vector<String> segments = path.split("/");
+				for (int j = 0; j < segments.size(); j++) {
+					if (!segments[j].is_valid_identifier()) {
+						path = path.c_escape().quote(quote_style);
+						break;
+					}
+				}
+				text_to_drop += "$" + path;
 			}
 		}
 

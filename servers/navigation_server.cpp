@@ -33,6 +33,8 @@
 NavigationServer *NavigationServer::singleton = nullptr;
 
 void NavigationServer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_maps"), &NavigationServer::get_maps);
+
 	ClassDB::bind_method(D_METHOD("map_create"), &NavigationServer::map_create);
 	ClassDB::bind_method(D_METHOD("map_set_active", "map", "active"), &NavigationServer::map_set_active);
 	ClassDB::bind_method(D_METHOD("map_is_active", "nap"), &NavigationServer::map_is_active);
@@ -52,12 +54,14 @@ void NavigationServer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("map_get_regions", "map"), &NavigationServer::map_get_regions);
 	ClassDB::bind_method(D_METHOD("map_get_agents", "map"), &NavigationServer::map_get_agents);
+	ClassDB::bind_method(D_METHOD("map_force_update", "map"), &NavigationServer::map_force_update);
 
 	ClassDB::bind_method(D_METHOD("region_create"), &NavigationServer::region_create);
 	ClassDB::bind_method(D_METHOD("region_set_enter_cost", "region", "enter_cost"), &NavigationServer::region_set_enter_cost);
 	ClassDB::bind_method(D_METHOD("region_get_enter_cost", "region"), &NavigationServer::region_get_enter_cost);
 	ClassDB::bind_method(D_METHOD("region_set_travel_cost", "region", "travel_cost"), &NavigationServer::region_set_travel_cost);
 	ClassDB::bind_method(D_METHOD("region_get_travel_cost", "region"), &NavigationServer::region_get_travel_cost);
+	ClassDB::bind_method(D_METHOD("region_owns_point", "region", "point"), &NavigationServer::region_owns_point);
 	ClassDB::bind_method(D_METHOD("region_set_map", "region", "map"), &NavigationServer::region_set_map);
 	ClassDB::bind_method(D_METHOD("region_get_map", "region"), &NavigationServer::region_get_map);
 

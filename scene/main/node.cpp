@@ -458,6 +458,9 @@ void Node::move_child_notify(Node *p_child) {
 	// to be used when not wanted
 }
 
+void Node::owner_changed_notify() {
+}
+
 void Node::_physics_interpolated_changed() {}
 
 void Node::set_physics_process(bool p_process) {
@@ -1605,6 +1608,8 @@ void Node::_set_owner_nocheck(Node *p_owner) {
 	data.owner = p_owner;
 	data.owner->data.owned.push_back(this);
 	data.OW = data.owner->data.owned.back();
+
+	owner_changed_notify();
 }
 
 void Node::_release_unique_name_in_owner() {
@@ -2837,7 +2842,16 @@ static void _Node_debug_sn(Object *p_obj) {
 	} else {
 		path = String(p->get_name()) + "/" + p->get_path_to(n);
 	}
-	print_line(itos(p_obj->get_instance_id()) + " - Stray Node: " + path + " (Type: " + n->get_class() + ")");
+
+	String script_file_string;
+	if (!n->get_script().is_null()) {
+		Ref<Script> script = n->get_script();
+		if (script.is_valid()) {
+			script_file_string = ", Script: " + script->get_path();
+		}
+	}
+
+	print_line(itos(p_obj->get_instance_id()) + " - Stray Node: " + path + " (Type: " + n->get_class() + script_file_string + ")");
 }
 #endif // DEBUG_ENABLED
 

@@ -134,7 +134,6 @@ Size2 OS_JavaScript::get_window_size() const {
 }
 
 void OS_JavaScript::set_window_maximized(bool p_enabled) {
-	WARN_PRINT_ONCE("Maximizing windows is not supported for the HTML5 platform.");
 }
 
 bool OS_JavaScript::is_window_maximized() const {
@@ -326,7 +325,7 @@ static const char *godot2dom_cursor(OS::CursorShape p_shape) {
 	switch (p_shape) {
 		case OS::CURSOR_ARROW:
 		default:
-			return "auto";
+			return "default";
 		case OS::CURSOR_IBEAM:
 			return "text";
 		case OS::CURSOR_POINTING_HAND:

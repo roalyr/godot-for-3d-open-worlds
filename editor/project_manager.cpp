@@ -1022,6 +1022,8 @@ public:
 		}
 	};
 
+	bool project_opening_initiated;
+
 	ProjectList();
 	~ProjectList();
 
@@ -1099,6 +1101,7 @@ ProjectList::ProjectList() {
 	add_child(_scroll_children);
 
 	_icon_load_index = 0;
+	project_opening_initiated = false;
 }
 
 ProjectList::~ProjectList() {
@@ -1707,7 +1710,9 @@ void ProjectList::_panel_input(const Ref<InputEvent> &p_ev, Node *p_hb) {
 
 		emit_signal(SIGNAL_SELECTION_CHANGED);
 
-		if (!mb->get_control() && mb->is_doubleclick()) {
+		// Do not allow opening a project more than once using a single project manager instance.
+		// Opening the same project in several editor instances at once can lead to various issues.
+		if (!mb->get_control() && mb->is_doubleclick() && !project_opening_initiated) {
 			emit_signal(SIGNAL_PROJECT_ASK_OPEN);
 		}
 	}
@@ -1774,7 +1779,6 @@ void ProjectManager::_notification(int p_what) {
 			}
 			if (asset_library) {
 				real_t size = get_size().x / EDSCALE;
-				asset_library->set_columns(size < 1000 ? 1 : 2);
 				// Adjust names of tabs to fit the new size.
 				if (size < 650) {
 					local_projects_hb->set_name(TTR("Local"));
@@ -2034,6 +2038,8 @@ void ProjectManager::_open_selected_projects() {
 		Error err = OS::get_singleton()->execute(exec, args, false, &pid);
 		ERR_FAIL_COND(err);
 	}
+
+	_project_list->project_opening_initiated = true;
 
 	_dim_window();
 	get_tree()->quit();
@@ -2592,18 +2598,14 @@ ProjectManager::ProjectManager() {
 	about_btn->connect("pressed", this, "_show_about");
 	tree_vb->add_child(about_btn);
 
-	// Asset Library can't work on Web editor for now as most assets are sourced
-	// directly from GitHub which does not set CORS.
-#ifndef JAVASCRIPT_ENABLED
-	if (StreamPeerSSL::is_available()) {
+	if (AssetLibraryEditorPlugin::is_available()) {
 		asset_library = memnew(EditorAssetLibrary(true));
 		asset_library->set_name(TTR("Asset Library Projects"));
 		tabs->add_child(asset_library);
 		asset_library->connect("install_asset", this, "_install_project");
 	} else {
-		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
+		print_verbose("Asset Library not available (due to using Web editor, or SSL support disabled).");
 	}
-#endif
 
 	HBoxContainer *settings_hb = memnew(HBoxContainer);
 	settings_hb->set_alignment(BoxContainer::ALIGN_END);

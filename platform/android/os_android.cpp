@@ -43,6 +43,7 @@
 
 #include "dir_access_jandroid.h"
 #include "file_access_android.h"
+#include "file_access_filesystem_jandroid.h"
 #include "net_socket_android.h"
 
 #include <android/input.h>
@@ -114,7 +115,7 @@ void OS_Android::initialize_core() {
 	}
 #endif
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
-	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
+	FileAccess::make_default<FileAccessFilesystemJAndroid>(FileAccess::ACCESS_FILESYSTEM);
 
 #ifdef TOOLS_ENABLED
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_RESOURCES);
@@ -126,7 +127,7 @@ void OS_Android::initialize_core() {
 	}
 #endif
 	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_USERDATA);
-	DirAccess::make_default<DirAccessUnix>(DirAccess::ACCESS_FILESYSTEM);
+	DirAccess::make_default<DirAccessJAndroid>(DirAccess::ACCESS_FILESYSTEM);
 
 	NetSocketAndroid::make_default();
 }
@@ -535,6 +536,33 @@ String OS_Android::get_unique_id() const {
 
 String OS_Android::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
 	return godot_io_java->get_system_dir(p_dir, p_shared_storage);
+}
+
+Error OS_Android::move_to_trash(const String &p_path) {
+	DirAccessRef da_ref = DirAccess::create_for_path(p_path);
+	if (!da_ref) {
+		return FAILED;
+	}
+
+	// Check if it's a directory
+	if (da_ref->dir_exists(p_path)) {
+		Error err = da_ref->change_dir(p_path);
+		if (err) {
+			return err;
+		}
+		// This is directory, let's erase its contents
+		err = da_ref->erase_contents_recursive();
+		if (err) {
+			return err;
+		}
+		// Remove the top directory
+		return da_ref->remove(p_path);
+	} else if (da_ref->file_exists(p_path)) {
+		// This is a file, let's remove it.
+		return da_ref->remove(p_path);
+	} else {
+		return FAILED;
+	}
 }
 
 void OS_Android::set_offscreen_gl_available(bool p_available) {

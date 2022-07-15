@@ -133,11 +133,13 @@ class OS_X11 : public OS_Unix {
 		Map<int, Vector2> pen_pressure_range;
 		Map<int, Vector2> pen_tilt_x_range;
 		Map<int, Vector2> pen_tilt_y_range;
+		Map<int, bool> pen_inverted_devices;
 		XIEventMask all_event_mask;
 		XIEventMask all_master_event_mask;
 		Map<int, Vector2> state;
 		double pressure;
 		bool pressure_supported;
+		bool pen_inverted;
 		Vector2 tilt;
 		Vector2 mouse_pos_to_filter;
 		Vector2 relative_motion;
@@ -247,6 +249,7 @@ protected:
 	void _window_changed(XEvent *event);
 
 	bool window_maximize_check(const char *p_atom_name) const;
+	bool window_fullscreen_check() const;
 	bool is_window_maximize_allowed() const;
 
 public:

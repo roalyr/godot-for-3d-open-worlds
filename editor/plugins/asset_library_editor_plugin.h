@@ -294,6 +294,8 @@ class EditorAssetLibrary : public PanelContainer {
 
 	void _install_external_asset(String p_zip_path, String p_title);
 
+	void _update_asset_items_columns();
+
 	friend class EditorAssetLibraryItemDescription;
 	friend class EditorAssetLibraryItem;
 
@@ -303,7 +305,6 @@ protected:
 
 public:
 	void disable_community_support();
-	void set_columns(int p_columns);
 
 	EditorAssetLibrary(bool p_templates_only = false);
 };
@@ -315,6 +316,8 @@ class AssetLibraryEditorPlugin : public EditorPlugin {
 	EditorNode *editor;
 
 public:
+	static bool is_available();
+
 	virtual String get_name() const { return "AssetLib"; }
 	bool has_main_screen() const { return true; }
 	virtual void edit(Object *p_object) {}

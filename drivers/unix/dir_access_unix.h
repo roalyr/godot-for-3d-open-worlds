@@ -43,13 +43,11 @@
 class DirAccessUnix : public DirAccess {
 	DIR *dir_stream;
 
-	static DirAccess *create_fs();
-
-	String current_dir;
 	bool _cisdir;
 	bool _cishidden;
 
 protected:
+	String current_dir;
 	virtual String fix_unicode_name(const char *p_name) const { return String::utf8(p_name); }
 	virtual bool is_hidden(const String &p_name);
 

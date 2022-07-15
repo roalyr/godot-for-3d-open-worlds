@@ -660,6 +660,7 @@ bool OS_X11::refresh_device_info() {
 
 	xi.absolute_devices.clear();
 	xi.touch_devices.clear();
+	xi.pen_inverted_devices.clear();
 
 	int dev_count;
 	XIDeviceInfo *info = XIQueryDevice(x11_display, XIAllDevices, &dev_count);
@@ -669,7 +670,7 @@ bool OS_X11::refresh_device_info() {
 		if (!dev->enabled) {
 			continue;
 		}
-		if (!(dev->use == XIMasterPointer || dev->use == XIFloatingSlave)) {
+		if (!(dev->use == XISlavePointer || dev->use == XIFloatingSlave)) {
 			continue;
 		}
 
@@ -738,6 +739,7 @@ bool OS_X11::refresh_device_info() {
 		xi.pen_pressure_range[dev->deviceid] = Vector2(pressure_min, pressure_max);
 		xi.pen_tilt_x_range[dev->deviceid] = Vector2(tilt_x_min, tilt_x_max);
 		xi.pen_tilt_y_range[dev->deviceid] = Vector2(tilt_y_min, tilt_y_max);
+		xi.pen_inverted_devices[dev->deviceid] = (bool)strstr(dev->name, "eraser");
 	}
 
 	XIFreeDeviceInfo(info);
@@ -1814,6 +1816,49 @@ bool OS_X11::window_maximize_check(const char *p_atom_name) const {
 	return retval;
 }
 
+bool OS_X11::window_fullscreen_check() const {
+	// Using EWMH -- Extended Window Manager Hints
+	Atom property = XInternAtom(x11_display, "_NET_WM_STATE", False);
+	Atom type;
+	int format;
+	unsigned long len;
+	unsigned long remaining;
+	unsigned char *data = nullptr;
+	bool retval = false;
+
+	if (property == None) {
+		return retval;
+	}
+
+	int result = XGetWindowProperty(
+			x11_display,
+			x11_window,
+			property,
+			0,
+			1024,
+			False,
+			XA_ATOM,
+			&type,
+			&format,
+			&len,
+			&remaining,
+			&data);
+
+	if (result == Success) {
+		Atom *atoms = (Atom *)data;
+		Atom wm_fullscreen = XInternAtom(x11_display, "_NET_WM_STATE_FULLSCREEN", False);
+		for (uint64_t i = 0; i < len; i++) {
+			if (atoms[i] == wm_fullscreen) {
+				retval = true;
+				break;
+			}
+		}
+		XFree(data);
+	}
+
+	return retval;
+}
+
 bool OS_X11::is_window_maximize_allowed() const {
 	return window_maximize_check("_NET_WM_ALLOWED_ACTIONS");
 }
@@ -2513,7 +2558,7 @@ void OS_X11::process_xevents() {
 					} break;
 					case XI_RawMotion: {
 						XIRawEvent *raw_event = (XIRawEvent *)event_data;
-						int device_id = raw_event->deviceid;
+						int device_id = raw_event->sourceid;
 
 						// Determine the axis used (called valuators in XInput for some forsaken reason)
 						//  Mask is a bitmask indicating which axes are involved.
@@ -2577,6 +2622,11 @@ void OS_X11::process_xevents() {
 							}
 
 							values++;
+						}
+
+						Map<int, bool>::Element *pen_inverted = xi.pen_inverted_devices.find(device_id);
+						if (pen_inverted) {
+							xi.pen_inverted = pen_inverted->value();
 						}
 
 						// https://bugs.freedesktop.org/show_bug.cgi?id=71609
@@ -2663,6 +2713,7 @@ void OS_X11::process_xevents() {
 		switch (event.type) {
 			case Expose: {
 				DEBUG_LOG_X11("[%u] Expose window=%lu, count='%u' \n", frame, event.xexpose.window, event.xexpose.count);
+				current_videomode.fullscreen = window_fullscreen_check();
 
 				Main::force_redraw();
 			} break;
@@ -2922,6 +2973,7 @@ void OS_X11::process_xevents() {
 				} else {
 					mm->set_pressure((get_mouse_button_state() & (1 << (BUTTON_LEFT - 1))) ? 1.0f : 0.0f);
 				}
+				mm->set_pen_inverted(xi.pen_inverted);
 				mm->set_tilt(xi.tilt);
 
 				// Make the absolute position integral so it doesn't look _too_ weird :)
