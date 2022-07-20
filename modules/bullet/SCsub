@@ -158,10 +158,7 @@ if env["builtin_bullet"]:
         "BulletDynamics/MLCPSolvers/btMLCPSolver.cpp",
         "BulletDynamics/MLCPSolvers/btLemkeAlgorithm.cpp",
         # BulletInverseDynamics
-        "BulletInverseDynamics/IDMath.cpp",
-        "BulletInverseDynamics/MultiBodyTree.cpp",
-        "BulletInverseDynamics/details/MultiBodyTreeInitCache.cpp",
-        "BulletInverseDynamics/details/MultiBodyTreeImpl.cpp",
+        # -- Unused for now so not included.
         # BulletSoftBody
         "BulletSoftBody/btSoftBody.cpp",
         "BulletSoftBody/btSoftBodyConcaveCollisionAlgorithm.cpp",
@@ -183,8 +180,6 @@ if env["builtin_bullet"]:
         "BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBodySolver.cpp",
         "BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableContactConstraint.cpp",
         "BulletSoftBody/poly34.cpp",
-        # clew
-        "clew/clew.c",
         # LinearMath
         "LinearMath/btAlignedAllocator.cpp",
         "LinearMath/btConvexHull.cpp",
