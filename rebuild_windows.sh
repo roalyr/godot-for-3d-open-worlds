@@ -31,10 +31,9 @@ ${MINGW64_PREFIX}gcc --version
 #   <choose x86_64-w64-mingw32-g++-posix from the list>
 
 # Editor (tools)
-scons -j1 tools=yes target=release_debug debug_symbols=no platform=windows bits=64;
-
+scons -j1 tools=yes target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_tools_build.log;
 # Template(s)
-scons -j1 tools=no target=release_debug debug_symbols=no platform=windows bits=64;
+scons -j1 tools=no target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_debug_build.log;
 
 # Removing debug symbols
 strip ./bin/godot.windows.*

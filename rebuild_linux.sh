@@ -15,10 +15,10 @@ mkdir -p $SCONS_CACHE
 # 		functionality and run-time checks to run.
 
 # Editor (tools)
-scons -j1 tools=yes target=release_debug debug_symbols=no platform=x11 bits=64;
+scons -j1 tools=yes target=release_debug debug_symbols=no platform=x11 bits=64 2>&1 | tee ./logs/scons_x11_tools_build.log;
 
 # Template(s)
-scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=64;
+scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=64 2>&1 | tee ./logs/scons_x11_debug_build.log;
 
 # Removing debug symbols
 strip ./bin/godot.x11.*
