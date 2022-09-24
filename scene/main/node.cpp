@@ -429,11 +429,7 @@ void Node::move_child(Node *p_child, int p_pos) {
 	for (int i = motion_from; i <= motion_to; i++) {
 		data.children[i]->notification(NOTIFICATION_MOVED_IN_PARENT);
 	}
-	for (const Map<StringName, GroupData>::Element *E = p_child->data.grouped.front(); E; E = E->next()) {
-		if (E->get().group) {
-			E->get().group->changed = true;
-		}
-	}
+	p_child->_propagate_groups_dirty();
 
 	data.blocked--;
 }
@@ -444,6 +440,18 @@ void Node::raise() {
 	}
 
 	data.parent->move_child(this, data.parent->data.children.size() - 1);
+}
+
+void Node::_propagate_groups_dirty() {
+	for (const Map<StringName, GroupData>::Element *E = data.grouped.front(); E; E = E->next()) {
+		if (E->get().group) {
+			E->get().group->changed = true;
+		}
+	}
+
+	for (int i = 0; i < data.children.size(); i++) {
+		data.children[i]->_propagate_groups_dirty();
+	}
 }
 
 void Node::add_child_notify(Node *p_child) {
@@ -2118,6 +2126,8 @@ void Node::get_storable_properties(Set<StringName> &r_storable_properties) const
 }
 
 String Node::to_string() {
+	// This code doesn't print the script's name, it calls to_string() if you override it in a Node's script,
+	// which you only do if you specifically want to customize how the node should be represented by print().
 	if (get_script_instance()) {
 		bool valid;
 		String ret = get_script_instance()->to_string(&valid);

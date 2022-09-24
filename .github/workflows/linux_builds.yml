@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 # Global Settings
 env:
+  # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: 3.x
   SCONSFLAGS: verbose=yes warnings=all werror=yes
 
@@ -27,11 +28,11 @@ jobs:
             build-mono: true
             artifact: true
 
-          - name: Editor and sanitizers (target=debug, tools=yes, use_asan=yes, use_ubsan=yes)
+          - name: Editor and sanitizers (target=debug, tools=yes, use_asan=yes, use_ubsan=yes, linker=gold)
             cache-name: linux-editor-sanitizers
             target: debug
             tools: true
-            sconsflags: use_asan=yes use_ubsan=yes
+            sconsflags: use_asan=yes use_ubsan=yes linker=gold
             test: true
             bin: "./bin/godot.x11.tools.64s"
             build-mono: false
@@ -47,7 +48,7 @@ jobs:
             artifact: true
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Linux dependencies
         shell: bash
@@ -59,7 +60,8 @@ jobs:
           # The actual dependencies
           sudo apt-get install build-essential pkg-config libx11-dev libxcursor-dev \
               libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev \
-              libdbus-1-dev libudev-dev libxi-dev libxrandr-dev yasm xvfb wget unzip
+              libdbus-1-dev libudev-dev libxi-dev libxrandr-dev yasm xvfb wget unzip \
+              libspeechd-dev speech-dispatcher
 
       - name: Setup Godot build cache
         uses: ./.github/actions/godot-cache
@@ -129,6 +131,7 @@ jobs:
         if: ${{ matrix.artifact }}
         run: |
           strip bin/godot.*
+          chmod +x bin/godot.*
 
       - name: Upload artifact
         uses: ./.github/actions/upload-artifact

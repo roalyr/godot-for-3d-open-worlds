@@ -228,7 +228,7 @@ public:
 
 class ResourceFormatLoaderStreamTexture : public ResourceFormatLoader {
 public:
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr, bool p_no_subresource_cache = false);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
 	virtual String get_resource_type(const String &p_path) const;
@@ -551,7 +551,7 @@ public:
 
 class ResourceFormatLoaderTextureLayered : public ResourceFormatLoader {
 public:
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr, bool p_no_subresource_cache = false);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
 	virtual String get_resource_type(const String &p_path) const;
@@ -622,6 +622,7 @@ private:
 	bool update_pending;
 	RID texture;
 	int width;
+	bool use_hdr = false;
 
 	void _queue_update();
 	void _update();
@@ -635,6 +636,9 @@ public:
 
 	void set_width(int p_width);
 	int get_width() const;
+
+	void set_use_hdr(bool p_enabled);
+	bool is_using_hdr() const;
 
 	virtual RID get_rid() const { return texture; }
 	virtual int get_height() const { return 1; }
@@ -895,4 +899,4 @@ public:
 	~ExternalTexture();
 };
 
-#endif
+#endif // TEXTURE_H

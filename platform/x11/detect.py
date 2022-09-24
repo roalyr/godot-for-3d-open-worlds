@@ -64,9 +64,8 @@ def get_opts():
     from SCons.Variables import BoolVariable, EnumVariable
 
     return [
+        EnumVariable("linker", "Linker program", "default", ("default", "bfd", "gold", "lld", "mold")),
         BoolVariable("use_llvm", "Use the LLVM compiler", False),
-        BoolVariable("use_lld", "Use the LLD linker", False),
-        BoolVariable("use_thinlto", "Use ThinLTO", False),
         BoolVariable("use_static_cpp", "Link libgcc and libstdc++ statically for better portability", True),
         BoolVariable("use_ubsan", "Use LLVM/GCC compiler undefined behavior sanitizer (UBSAN)", False),
         BoolVariable("use_asan", "Use LLVM/GCC compiler address sanitizer (ASAN))", False),
@@ -74,6 +73,7 @@ def get_opts():
         BoolVariable("use_tsan", "Use LLVM/GCC compiler thread sanitizer (TSAN))", False),
         BoolVariable("use_msan", "Use LLVM/GCC compiler memory sanitizer (MSAN))", False),
         BoolVariable("pulseaudio", "Detect and use PulseAudio", True),
+        BoolVariable("speechd", "Detect and use Speech Dispatcher for Text-to-Speech support", True),
         BoolVariable("udev", "Use udev for gamepad connection callbacks", True),
         BoolVariable("debug_symbols", "Add debugging symbols to release/release_debug builds", True),
         BoolVariable("separate_debug_symbols", "Create a separate file containing debugging symbols", False),
@@ -145,16 +145,28 @@ def configure(env):
             env["CXX"] = "clang++"
         env.extra_suffix = ".llvm" + env.extra_suffix
 
-    if env["use_lld"]:
-        if env["use_llvm"]:
-            env.Append(LINKFLAGS=["-fuse-ld=lld"])
-            if env["use_thinlto"]:
-                # A convenience so you don't need to write use_lto too when using SCons
-                env["use_lto"] = True
-        else:
-            print("Using LLD with GCC is not supported yet. Try compiling with 'use_llvm=yes'.")
-            sys.exit(255)
+    # Linker
 
+    if env["linker"] != "default":
+        print("Using linker program: " + env["linker"])
+        if env["linker"] == "mold" and using_gcc(env):  # GCC < 12.1 doesn't support -fuse-ld=mold.
+            cc_semver = tuple(get_compiler_version(env))
+            if cc_semver < (12, 1):
+                found_wrapper = False
+                for path in ["/usr/libexec", "/usr/local/libexec", "/usr/lib", "/usr/local/lib"]:
+                    if os.path.isfile(path + "/mold/ld"):
+                        env.Append(LINKFLAGS=["-B" + path + "/mold"])
+                        found_wrapper = True
+                        break
+                if not found_wrapper:
+                    print("Couldn't locate mold installation path. Make sure it's installed in /usr or /usr/local.")
+                    sys.exit(255)
+            else:
+                env.Append(LINKFLAGS=["-fuse-ld=mold"])
+        else:
+            env.Append(LINKFLAGS=["-fuse-ld=%s" % env["linker"]])
+
+    # Sanitizers
     if env["use_ubsan"] or env["use_asan"] or env["use_lsan"] or env["use_tsan"] or env["use_msan"]:
         env.extra_suffix += "s"
 
@@ -191,24 +203,30 @@ def configure(env):
             env.Append(CCFLAGS=["-fsanitize=memory"])
             env.Append(LINKFLAGS=["-fsanitize=memory"])
 
-    if env["use_lto"]:
-        if not env["use_llvm"] and env.GetOption("num_jobs") > 1:
+    # LTO
+
+    if env["lto"] == "auto":  # Full LTO for production.
+        env["lto"] = "full"
+
+    if env["lto"] != "none":
+        if env["lto"] == "thin":
+            if not env["use_llvm"]:
+                print("ThinLTO is only compatible with LLVM, use `use_llvm=yes` or `lto=full`.")
+                sys.exit(255)
+            env.Append(CCFLAGS=["-flto=thin"])
+            env.Append(LINKFLAGS=["-flto=thin"])
+        elif not env["use_llvm"] and env.GetOption("num_jobs") > 1:
             env.Append(CCFLAGS=["-flto"])
             env.Append(LINKFLAGS=["-flto=" + str(env.GetOption("num_jobs"))])
         else:
-            if env["use_lld"] and env["use_thinlto"]:
-                env.Append(CCFLAGS=["-flto=thin"])
-                env.Append(LINKFLAGS=["-flto=thin"])
-            else:
-                env.Append(CCFLAGS=["-flto"])
-                env.Append(LINKFLAGS=["-flto"])
+            env.Append(CCFLAGS=["-flto"])
+            env.Append(LINKFLAGS=["-flto"])
 
         if not env["use_llvm"]:
             env["RANLIB"] = "gcc-ranlib"
             env["AR"] = "gcc-ar"
 
     env.Append(CCFLAGS=["-pipe"])
-    env.Append(LINKFLAGS=["-pipe"])
 
     # Check for gcc version >= 6 before adding -no-pie
     version = get_compiler_version(env) or [-1, -1]
@@ -345,7 +363,16 @@ def configure(env):
             env.Append(CPPDEFINES=["PULSEAUDIO_ENABLED"])
             env.ParseConfig("pkg-config libpulse --cflags")  # Only cflags, we dlopen the library.
         else:
+            env["pulseaudio"] = False
             print("Warning: PulseAudio development libraries not found. Disabling the PulseAudio audio driver.")
+
+    if env["speechd"]:
+        if os.system("pkg-config --exists speech-dispatcher") == 0:  # 0 means found
+            env.Append(CPPDEFINES=["SPEECHD_ENABLED"])
+            env.ParseConfig("pkg-config speech-dispatcher --cflags")  # Only cflags, we dlopen the library.
+        else:
+            env["speechd"] = False
+            print("Warning: Speech Dispatcher development libraries not found. Disabling Text-to-Speech support.")
 
     if platform.system() == "Linux":
         env.Append(CPPDEFINES=["JOYDEV_ENABLED"])
@@ -354,6 +381,7 @@ def configure(env):
                 env.Append(CPPDEFINES=["UDEV_ENABLED"])
                 env.ParseConfig("pkg-config libudev --cflags")  # Only cflags, we dlopen the library.
             else:
+                env["udev"] = False
                 print("Warning: libudev development libraries not found. Disabling controller hotplugging support.")
     else:
         env["udev"] = False  # Linux specific
@@ -382,7 +410,9 @@ def configure(env):
         import subprocess
         import re
 
-        linker_version_str = subprocess.check_output([env.subst(env["LINK"]), "-Wl,--version"]).decode("utf-8")
+        linker_version_str = subprocess.check_output(
+            [env.subst(env["LINK"]), "-Wl,--version"] + env.subst(env["LINKFLAGS"])
+        ).decode("utf-8")
         gnu_ld_version = re.search("^GNU ld [^$]*(\d+\.\d+)$", linker_version_str, re.MULTILINE)
         if not gnu_ld_version:
             print(

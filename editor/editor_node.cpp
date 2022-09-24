@@ -81,6 +81,7 @@
 #include "editor/editor_plugin.h"
 #include "editor/editor_properties.h"
 #include "editor/editor_property_name_processor.h"
+#include "editor/editor_quick_open.h"
 #include "editor/editor_resource_picker.h"
 #include "editor/editor_resource_preview.h"
 #include "editor/editor_run_native.h"
@@ -171,7 +172,6 @@
 #include "editor/progress_dialog.h"
 #include "editor/project_export.h"
 #include "editor/project_settings_editor.h"
-#include "editor/quick_open.h"
 #include "editor/register_exporters.h"
 #include "editor/run_settings_dialog.h"
 #include "editor/script_editor_debugger.h"
@@ -749,6 +749,7 @@ void EditorNode::_fs_changed() {
 
 	// FIXME: Move this to a cleaner location, it's hacky to do this is _fs_changed.
 	String export_error;
+	Error err = OK;
 	if (export_defer.preset != "" && !EditorFileSystem::get_singleton()->is_scanning()) {
 		String preset_name = export_defer.preset;
 		// Ensures export_project does not loop infinitely, because notifications may
@@ -766,6 +767,7 @@ void EditorNode::_fs_changed() {
 		if (preset.is_null()) {
 			DirAccessRef da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
 			if (da->file_exists("res://export_presets.cfg")) {
+				err = FAILED;
 				export_error = vformat(
 						"Invalid export preset name: %s.\nThe following presets were detected in this project's `export_presets.cfg`:\n\n",
 						preset_name);
@@ -774,17 +776,19 @@ void EditorNode::_fs_changed() {
 					export_error += vformat("        \"%s\"\n", EditorExport::get_singleton()->get_export_preset(i)->get_name());
 				}
 			} else {
+				err = FAILED;
 				export_error = "This project doesn't have an `export_presets.cfg` file at its root.\nCreate an export preset from the \"Project > Export\" dialog and try again.";
 			}
 		} else {
 			Ref<EditorExportPlatform> platform = preset->get_platform();
 			const String export_path = export_defer.path.empty() ? preset->get_export_path() : export_defer.path;
 			if (export_path.empty()) {
+				err = FAILED;
 				export_error = vformat("Export preset \"%s\" doesn't have a default export path, and none was specified.", preset_name);
 			} else if (platform.is_null()) {
+				err = FAILED;
 				export_error = vformat("Export preset \"%s\" doesn't have a matching platform.", preset_name);
 			} else {
-				Error err = OK;
 				if (export_defer.pack_only) { // Only export .pck or .zip data pack.
 					if (export_path.ends_with(".zip")) {
 						err = platform->export_zip(preset, export_defer.debug, export_path);
@@ -805,14 +809,16 @@ void EditorNode::_fs_changed() {
 				if (err != OK) {
 					export_error = vformat("Project export for preset \"%s\" failed.", preset_name);
 				} else if (platform->get_worst_message_type() >= EditorExportPlatform::EXPORT_MESSAGE_WARNING) {
-					export_error = vformat("Project export for preset \"%s\" completed with errors.", preset_name);
+					export_error = vformat("Project export for preset \"%s\" completed with warnings.", preset_name);
 				}
 			}
 		}
 
-		if (!export_error.empty()) {
+		if (err != OK) {
 			ERR_PRINT(export_error);
 			OS::get_singleton()->set_exit_code(EXIT_FAILURE);
+		} else if (!export_error.empty()) {
+			WARN_PRINT(export_error);
 		}
 		_exit_editor();
 	}
@@ -1433,34 +1439,6 @@ bool EditorNode::_validate_scene_recursive(const String &p_filename, Node *p_nod
 	return false;
 }
 
-static bool _find_edited_resources(const Ref<Resource> &p_resource, Set<Ref<Resource>> &edited_resources) {
-	if (p_resource->is_edited()) {
-		edited_resources.insert(p_resource);
-		return true;
-	}
-
-	List<PropertyInfo> plist;
-
-	p_resource->get_property_list(&plist);
-
-	for (List<PropertyInfo>::Element *E = plist.front(); E; E = E->next()) {
-		if (E->get().type == Variant::OBJECT && E->get().usage & PROPERTY_USAGE_STORAGE && !(E->get().usage & PROPERTY_USAGE_RESOURCE_NOT_PERSISTENT)) {
-			RES res = p_resource->get(E->get().name);
-			if (res.is_null()) {
-				continue;
-			}
-			if (res->get_path().is_resource_file()) { //not a subresource, continue
-				continue;
-			}
-			if (_find_edited_resources(res, edited_resources)) {
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
 int EditorNode::_save_external_resources() {
 	//save external resources and its subresources if any was modified
 
@@ -1470,28 +1448,41 @@ int EditorNode::_save_external_resources() {
 	}
 	flg |= ResourceSaver::FLAG_REPLACE_SUBRESOURCE_PATHS;
 
-	Set<Ref<Resource>> edited_subresources;
+	Set<String> edited_resources;
 	int saved = 0;
 	List<Ref<Resource>> cached;
 	ResourceCache::get_cached_resources(&cached);
 	for (List<Ref<Resource>>::Element *E = cached.front(); E; E = E->next()) {
 		Ref<Resource> res = E->get();
-		if (!res->get_path().is_resource_file()) {
+		if (!res->is_edited()) {
 			continue;
 		}
-		//not only check if this resourec is edited, check contained subresources too
-		if (_find_edited_resources(res, edited_subresources)) {
-			ResourceSaver::save(res->get_path(), res, flg);
-			saved++;
+
+		String path = res->get_path();
+		if (path.begins_with("res://")) {
+			int subres_pos = path.find("::");
+			if (subres_pos == -1) {
+				// Actual resource.
+				edited_resources.insert(path);
+			} else {
+				edited_resources.insert(path.substr(0, subres_pos));
+			}
 		}
+
+		res->set_edited(false);
 	}
 
-	// clear later, because user may have put the same subresource in two different resources,
-	// which will be shared until the next reload
-
-	for (Set<Ref<Resource>>::Element *E = edited_subresources.front(); E; E = E->next()) {
-		Ref<Resource> res = E->get();
-		res->set_edited(false);
+	for (Set<String>::Element *E = edited_resources.front(); E; E = E->next()) {
+		Ref<Resource> res = Ref<Resource>(ResourceCache::get(E->get()));
+		if (!res.is_valid()) {
+			continue; // Maybe it was erased in a thread, who knows.
+		}
+		Ref<PackedScene> ps = res;
+		if (ps.is_valid()) {
+			continue; // Do not save PackedScenes, this will mess up the editor.
+		}
+		ResourceSaver::save(res->get_path(), res, flg);
+		saved++;
 	}
 
 	return saved;
@@ -1619,9 +1610,17 @@ void EditorNode::restart_editor() {
 	_exit_editor();
 
 	List<String> args;
+
+	const Vector<String> &forwardable_args = Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL);
+	for (int i = 0; i < forwardable_args.size(); i++) {
+		args.push_back(forwardable_args[i]);
+	}
+
 	args.push_back("--path");
 	args.push_back(ProjectSettings::get_singleton()->get_resource_path());
+
 	args.push_back("-e");
+
 	if (to_reopen != String()) {
 		args.push_back(to_reopen);
 	}
@@ -2024,6 +2023,8 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 	bool disable_folding = bool(EDITOR_GET("interface/inspector/disable_folding"));
 	bool is_resource = current_obj->is_class("Resource");
 	bool is_node = current_obj->is_class("Node");
+	bool stay_in_script_editor_on_node_selected = bool(EDITOR_GET("text_editor/navigation/stay_in_script_editor_on_node_selected"));
+	bool skip_main_plugin = false;
 
 	String editable_warning; //none by default
 
@@ -2060,6 +2061,9 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 			node_dock->set_node(current_node);
 			scene_tree_dock->set_selected(current_node);
 			inspector_dock->update(current_node);
+			if (!inspector_only && !skip_main_plugin) {
+				skip_main_plugin = stay_in_script_editor_on_node_selected && ScriptEditor::get_singleton()->is_visible_in_tree();
+			}
 		} else {
 			node_dock->set_node(nullptr);
 			scene_tree_dock->set_selected(nullptr);
@@ -2134,7 +2138,7 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 			}
 		}
 
-		if (main_plugin) {
+		if (main_plugin && !skip_main_plugin) {
 			// special case if use of external editor is true
 			Resource *current_res = Object::cast_to<Resource>(current_obj);
 			if (main_plugin->get_name() == "Script" && current_obj->get_class_name() != StringName("VisualScript") && current_res && !current_res->get_path().empty() && current_res->get_path().find("::") == -1 && (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor")) || overrides_external_editor(current_obj))) {
@@ -3054,8 +3058,16 @@ void EditorNode::_discard_changes(const String &p_str) {
 			String exec = OS::get_singleton()->get_executable_path();
 
 			List<String> args;
-			args.push_back("--path");
-			args.push_back(exec.get_base_dir());
+			const Vector<String> &forwardable_args = Main::get_forwardable_cli_arguments(Main::CLI_SCOPE_TOOL);
+			for (int i = 0; i < forwardable_args.size(); i++) {
+				args.push_back(forwardable_args[i]);
+			}
+
+			String exec_base_dir = exec.get_base_dir();
+			if (!exec_base_dir.empty()) {
+				args.push_back("--path");
+				args.push_back(exec_base_dir);
+			}
 			args.push_back("--project-manager");
 
 			OS::ProcessID pid = 0;
@@ -6417,8 +6429,10 @@ EditorNode::EditorNode() {
 
 	p->add_separator();
 	p->add_shortcut(ED_SHORTCUT("editor/export", TTR("Export...")), FILE_EXPORT_PROJECT);
+#ifndef ANDROID_ENABLED
 	p->add_item(TTR("Install Android Build Template..."), FILE_INSTALL_ANDROID_SOURCE);
 	p->add_item(TTR("Open User Data Folder"), RUN_USER_DATA_FOLDER);
+#endif
 
 	plugin_config_dialog = memnew(PluginConfigDialog);
 	plugin_config_dialog->connect("plugin_ready", this, "_on_plugin_ready");
@@ -6530,13 +6544,16 @@ EditorNode::EditorNode() {
 	p->add_shortcut(ED_SHORTCUT("editor/take_screenshot", TTR("Take Screenshot"), KEY_MASK_CTRL | KEY_F12), EDITOR_SCREENSHOT);
 #endif
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("Screenshots are stored in the Editor Data/Settings Folder."));
+#ifndef ANDROID_ENABLED
 #ifdef OSX_ENABLED
 	p->add_shortcut(ED_SHORTCUT("editor/fullscreen_mode", TTR("Toggle Fullscreen"), KEY_MASK_CMD | KEY_MASK_CTRL | KEY_F), SETTINGS_TOGGLE_FULLSCREEN);
 #else
 	p->add_shortcut(ED_SHORTCUT("editor/fullscreen_mode", TTR("Toggle Fullscreen"), KEY_MASK_SHIFT | KEY_F11), SETTINGS_TOGGLE_FULLSCREEN);
 #endif
+#endif
 	p->add_separator();
 
+#ifndef ANDROID_ENABLED
 	if (OS::get_singleton()->get_data_path() == OS::get_singleton()->get_config_path()) {
 		// Configuration and data folders are located in the same place (Windows/macOS)
 		p->add_item(TTR("Open Editor Data/Settings Folder"), SETTINGS_EDITOR_DATA_FOLDER);
@@ -6546,9 +6563,12 @@ EditorNode::EditorNode() {
 		p->add_item(TTR("Open Editor Settings Folder"), SETTINGS_EDITOR_CONFIG_FOLDER);
 	}
 	p->add_separator();
+#endif
 
 	p->add_item(TTR("Manage Editor Features..."), SETTINGS_MANAGE_FEATURE_PROFILES);
+#ifndef ANDROID_ENABLED
 	p->add_item(TTR("Manage Export Templates..."), SETTINGS_MANAGE_EXPORT_TEMPLATES);
+#endif
 
 	// Help Menu
 	help_menu = memnew(MenuButton);

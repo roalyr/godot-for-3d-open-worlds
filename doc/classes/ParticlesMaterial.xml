@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ParticlesMaterial" inherits="Material" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="ParticlesMaterial" inherits="Material" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Particle properties for [Particles] and [Particles2D] nodes.
 	</brief_description>
@@ -227,7 +227,7 @@
 			Radial acceleration randomness ratio.
 		</member>
 		<member name="scale" type="float" setter="set_param" getter="get_param" default="1.0">
-			Initial scale applied to each particle.
+			Initial scale applied to each particle. This can be set to a negative value to flip the particle on all axes.
 		</member>
 		<member name="scale_curve" type="Texture" setter="set_param_texture" getter="get_param_texture">
 			Each particle's scale will vary along this [CurveTexture].

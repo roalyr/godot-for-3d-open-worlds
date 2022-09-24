@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ResourceInteractiveLoader" inherits="Reference" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="ResourceInteractiveLoader" inherits="Reference" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Interactive [Resource] loader.
 	</brief_description>
@@ -45,6 +45,11 @@
 			</description>
 		</method>
 	</methods>
+	<members>
+		<member name="no_subresource_cache" type="bool" setter="set_no_subresource_cache" getter="get_no_subresource_cache">
+			Configures whether nested resources, if included, should not be cached.
+		</member>
+	</members>
 	<constants>
 	</constants>
 </class>

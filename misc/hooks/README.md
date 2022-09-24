@@ -28,10 +28,15 @@ so they should work out of the box on Linux/macOS.
 #### Windows
 
 ##### clang-format
-- Download LLVM for Windows (version 8 or later) from
+- Download LLVM for Windows (version 13 or later) from
   <https://releases.llvm.org/download.html>
 - Make sure LLVM is added to the `PATH` during installation
 
 ##### black
 - Python installation: make sure Python is added to the `PATH`
 - Install `black` - in any console: `pip3 install black`
+
+## Custom hooks
+
+The pre-commit hook will run any other script in `.git/hooks` whose filename
+matches `pre-commit-custom-*`, after the Godot ones.

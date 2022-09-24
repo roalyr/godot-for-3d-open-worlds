@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  quick_open.h                                                         */
+/*  tts_ios.h                                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,45 +28,36 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EDITOR_QUICK_OPEN_H
-#define EDITOR_QUICK_OPEN_H
+#ifndef TTS_IOS_H
+#define TTS_IOS_H
 
-#include "core/pair.h"
-#include "editor_file_system.h"
-#include "scene/gui/dialogs.h"
-#include "scene/gui/tree.h"
+#if __has_include(<AVFAudio/AVSpeechSynthesis.h>)
+#import <AVFAudio/AVSpeechSynthesis.h>
+#else
+#import <AVFoundation/AVFoundation.h>
+#endif
 
-class EditorQuickOpen : public ConfirmationDialog {
-	GDCLASS(EditorQuickOpen, ConfirmationDialog);
+#include "core/array.h"
+#include "core/list.h"
+#include "core/map.h"
+#include "core/os/os.h"
+#include "core/ustring.h"
 
-	LineEdit *search_box;
-	Tree *search_options;
-	StringName base_type;
-	StringName ei;
-	StringName ot;
+@interface TTS_IOS : NSObject <AVSpeechSynthesizerDelegate> {
+	bool speaking;
+	Map<id, int> ids;
 
-	void _update_search();
+	AVSpeechSynthesizer *av_synth;
+	List<OS::TTSUtterance> queue;
+}
 
-	void _sbox_input(const Ref<InputEvent> &p_ie);
-	void _parse_fs(EditorFileSystemDirectory *efsd, Vector<Pair<String, Ref<Texture>>> &list);
-	Vector<Pair<String, Ref<Texture>>> _sort_fs(Vector<Pair<String, Ref<Texture>>> &list);
-	float _path_cmp(String search, String path) const;
+- (void)pauseSpeaking;
+- (void)resumeSpeaking;
+- (void)stopSpeaking;
+- (bool)isSpeaking;
+- (bool)isPaused;
+- (void)speak:(const String &)text voice:(const String &)voice volume:(int)volume pitch:(float)pitch rate:(float)rate utterance_id:(int)utterance_id interrupt:(bool)interrupt;
+- (Array)getVoices;
+@end
 
-	void _confirmed();
-	void _text_changed(const String &p_newtext);
-
-protected:
-	void _notification(int p_what);
-	static void _bind_methods();
-
-public:
-	StringName get_base_type() const;
-
-	String get_selected() const;
-	Vector<String> get_selected_files() const;
-
-	void popup_dialog(const StringName &p_base, bool p_enable_multi = false, bool p_dontclear = false);
-	EditorQuickOpen();
-};
-
-#endif // EDITOR_QUICK_OPEN_H
+#endif // TTS_IOS_H

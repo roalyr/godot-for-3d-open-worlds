@@ -1668,7 +1668,7 @@ uniform mediump vec4[12] lightmap_captures;
 
 #ifdef USE_GI_PROBES //ubershader-skip
 
-#if !defined(IS_UBERSHADER)
+#if !defined(UBERSHADER_COMPAT)
 uniform mediump sampler3D gi_probe1; //texunit:-10
 #else
 uniform mediump sampler3D gi_probe1_uber; //texunit:-12
@@ -1682,7 +1682,7 @@ uniform highp float gi_probe_bias1;
 uniform highp float gi_probe_normal_bias1;
 uniform bool gi_probe_blend_ambient1;
 
-#if !defined(IS_UBERSHADER)
+#if !defined(UBERSHADER_COMPAT)
 uniform mediump sampler3D gi_probe2; //texunit:-11
 #else
 uniform mediump sampler3D gi_probe2_uber; //texunit:-13
@@ -2021,21 +2021,18 @@ FRAGMENT_SHADER_CODE
 #if defined(AMBIENT_LIGHT_DISABLED)
 	ambient_light = vec3(0.0, 0.0, 0.0);
 #else
-	{
-		{ //read radiance from dual paraboloid
-
-			vec3 ref_vec = reflect(-eye_vec, normal);
-			float horizon = min(1.0 + dot(ref_vec, normal), 1.0);
-			ref_vec = normalize((radiance_inverse_xform * vec4(ref_vec, 0.0)).xyz);
-			vec3 radiance;
+	{ //read radiance from dual paraboloid
+		vec3 ref_vec = reflect(-eye_vec, normal);
+		float horizon = min(1.0 + dot(ref_vec, normal), 1.0);
+		ref_vec = normalize((radiance_inverse_xform * vec4(ref_vec, 0.0)).xyz);
+		vec3 radiance;
 #ifdef USE_RADIANCE_MAP_ARRAY //ubershader-runtime
-			radiance = textureDualParaboloidArray(radiance_map_array, ref_vec, roughness) * bg_energy;
+		radiance = textureDualParaboloidArray(radiance_map_array, ref_vec, roughness) * bg_energy;
 #else //ubershader-runtime
-			radiance = textureDualParaboloid(radiance_map, ref_vec, roughness) * bg_energy;
+		radiance = textureDualParaboloid(radiance_map, ref_vec, roughness) * bg_energy;
 #endif //ubershader-runtime
-			env_reflection_light = radiance;
-			env_reflection_light *= horizon * horizon;
-		}
+		env_reflection_light = radiance;
+		env_reflection_light *= horizon * horizon;
 	}
 #ifndef USE_LIGHTMAP //ubershader-runtime
 	{
@@ -2302,7 +2299,6 @@ FRAGMENT_SHADER_CODE
 #ifdef USE_VERTEX_LIGHTING //ubershader-runtime
 	diffuse_light *= mix(vec3(1.0), light_attenuation, diffuse_light_interp.a);
 	specular_light *= mix(vec3(1.0), light_attenuation, specular_light_interp.a);
-
 #else //ubershader-runtime
 	light_compute(normal, -light_direction_attenuation.xyz, eye_vec, binormal, tangent, light_color_energy.rgb, light_attenuation, albedo, transmission, light_params.z * specular_blob_intensity, roughness, metallic, specular, rim, rim_tint, clearcoat, clearcoat_gloss, anisotropy, diffuse_light, specular_light, alpha);
 #endif //ubershader-runtime
@@ -2421,9 +2417,9 @@ FRAGMENT_SHADER_CODE
 	float max_ambient = max(ambient_light.r, max(ambient_light.g, ambient_light.b));
 	float max_diffuse = max(diffuse_light.r, max(diffuse_light.g, diffuse_light.b));
 	float total_ambient = max_ambient + max_diffuse;
-#ifdef USE_FORWARD_LIGHTING
+#ifdef USE_FORWARD_LIGHTING //ubershader-runtime
 	total_ambient += max_emission;
-#endif
+#endif //ubershader-runtime
 	float ambient_scale = (total_ambient > 0.0) ? (max_ambient + ambient_occlusion_affect_light * max_diffuse) / total_ambient : 0.0;
 
 #if defined(ENABLE_AO)
@@ -2432,9 +2428,9 @@ FRAGMENT_SHADER_CODE
 	diffuse_buffer = vec4(diffuse_light + ambient_light, ambient_scale);
 	specular_buffer = vec4(specular_light, metallic);
 
-#ifdef USE_FORWARD_LIGHTING
+#ifdef USE_FORWARD_LIGHTING //ubershader-runtime
 	diffuse_buffer.rgb += emission;
-#endif
+#endif //ubershader-runtime
 #endif //SHADELESS //ubershader-runtime
 
 	normal_mr_buffer = vec4(normalize(normal) * 0.5 + 0.5, roughness);
@@ -2449,9 +2445,9 @@ FRAGMENT_SHADER_CODE
 	frag_color = vec4(albedo, alpha);
 #else //ubershader-runtime
 	frag_color = vec4(ambient_light + diffuse_light + specular_light, alpha);
-#ifdef USE_FORWARD_LIGHTING
+#ifdef USE_FORWARD_LIGHTING //ubershader-runtime
 	frag_color.rgb += emission;
-#endif
+#endif //ubershader-runtime
 #endif //SHADELESS //ubershader-runtime
 
 #endif //USE_MULTIPLE_RENDER_TARGETS //ubershader-runtime

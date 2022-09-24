@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="CollisionObject" inherits="Spatial" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="CollisionObject" inherits="Spatial" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base node for collision objects.
 	</brief_description>
@@ -72,8 +72,8 @@
 			<argument index="0" name="bit" type="int" />
 			<argument index="1" name="value" type="bool" />
 			<description>
-				If [code]value[/code] is [code]true[/code], sets the specified [code]bit[/code] in the the [member collision_layer].
-				If [code]value[/code] is [code]false[/code], clears the specified [code]bit[/code] in the the [member collision_layer].
+				If [code]value[/code] is [code]true[/code], sets the specified [code]bit[/code] in the [member collision_layer].
+				If [code]value[/code] is [code]false[/code], clears the specified [code]bit[/code] in the [member collision_layer].
 			</description>
 		</method>
 		<method name="set_collision_mask_bit">
@@ -81,8 +81,8 @@
 			<argument index="0" name="bit" type="int" />
 			<argument index="1" name="value" type="bool" />
 			<description>
-				If [code]value[/code] is [code]true[/code], sets the specified [code]bit[/code] in the the [member collision_mask].
-				If [code]value[/code] is [code]false[/code], clears the specified [code]bit[/code] in the the [member collision_mask].
+				If [code]value[/code] is [code]true[/code], sets the specified [code]bit[/code] in the [member collision_mask].
+				If [code]value[/code] is [code]false[/code], clears the specified [code]bit[/code] in the [member collision_mask].
 			</description>
 		</method>
 		<method name="shape_find_owner" qualifiers="const">

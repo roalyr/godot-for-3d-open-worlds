@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="NavigationPolygonInstance" inherits="Node2D" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="NavigationPolygonInstance" inherits="Node2D" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A region of the 2D navigation map.
 	</brief_description>
@@ -9,7 +9,7 @@
 		Two regions can be connected to each other if they share a similar edge. You can set the minimum distance between two vertices required to connect two edges by using [method Navigation2DServer.map_set_edge_connection_margin].
 		[b]Note:[/b] Overlapping two regions' polygons is not enough for connecting two regions. They must share a similar edge.
 		The pathfinding cost of entering this region from another region can be controlled with the [member enter_cost] value.
-		[b]Note[/b]: This value is not added to the path cost when the start position is already inside this region.
+		[b]Note:[/b] This value is not added to the path cost when the start position is already inside this region.
 		The pathfinding cost of traveling distances inside this region can be controlled with the [member travel_cost] multiplier.
 	</description>
 	<tutorials>

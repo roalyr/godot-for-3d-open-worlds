@@ -52,6 +52,7 @@
 
 #include "java_godot_io_wrapper.h"
 #include "java_godot_wrapper.h"
+#include "tts_android.h"
 
 const char *OS_Android::ANDROID_EXEC_PATH = "apk";
 
@@ -80,6 +81,34 @@ public:
 
 	virtual ~AndroidLogger() {}
 };
+
+bool OS_Android::tts_is_speaking() const {
+	return TTS_Android::is_speaking();
+}
+
+bool OS_Android::tts_is_paused() const {
+	return TTS_Android::is_paused();
+}
+
+Array OS_Android::tts_get_voices() const {
+	return TTS_Android::get_voices();
+}
+
+void OS_Android::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
+	TTS_Android::speak(p_text, p_voice, p_volume, p_pitch, p_rate, p_utterance_id, p_interrupt);
+}
+
+void OS_Android::tts_pause() {
+	TTS_Android::pause();
+}
+
+void OS_Android::tts_resume() {
+	TTS_Android::resume();
+}
+
+void OS_Android::tts_stop() {
+	TTS_Android::stop();
+}
 
 int OS_Android::get_video_driver_count() const {
 	return 2;
@@ -387,9 +416,9 @@ int OS_Android::get_virtual_keyboard_height() const {
 	return godot_io_java->get_vk_height();
 }
 
-void OS_Android::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
+void OS_Android::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, VirtualKeyboardType p_type, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
 	if (godot_io_java->has_vk()) {
-		godot_io_java->show_vk(p_existing_text, p_multiline, p_max_input_length, p_cursor_start, p_cursor_end);
+		godot_io_java->show_vk(p_existing_text, (int)p_type, p_max_input_length, p_cursor_start, p_cursor_end);
 	} else {
 		ERR_PRINT("Virtual keyboard not available");
 	}

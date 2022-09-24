@@ -64,6 +64,9 @@ bool EditorExportPreset::_set(const StringName &p_name, const Variant &p_value) 
 	if (values.has(p_name)) {
 		values[p_name] = p_value;
 		EditorExport::singleton->save_presets();
+		if (update_visibility[p_name]) {
+			property_list_changed_notify();
+		}
 		return true;
 	}
 
@@ -81,7 +84,7 @@ bool EditorExportPreset::_get(const StringName &p_name, Variant &r_ret) const {
 
 void EditorExportPreset::_get_property_list(List<PropertyInfo> *p_list) const {
 	for (const List<PropertyInfo>::Element *E = properties.front(); E; E = E->next()) {
-		if (platform->get_option_visibility(E->get().name, values)) {
+		if (platform->get_option_visibility(this, E->get().name, values)) {
 			p_list->push_back(E->get());
 		}
 	}
@@ -235,7 +238,7 @@ bool EditorExportPlatform::fill_log_messages(RichTextLabel *p_log, Error p_err) 
 		if (get_worst_message_type() >= EditorExportPlatform::EXPORT_MESSAGE_WARNING) {
 			p_log->add_image(EditorNode::get_singleton()->get_gui_base()->get_icon("StatusWarning", "EditorIcons"), 16 * EDSCALE, 16 * EDSCALE, RichTextLabel::INLINE_ALIGN_CENTER);
 			p_log->add_text(" ");
-			p_log->add_text(TTR("Completed with errors."));
+			p_log->add_text(TTR("Completed with warnings."));
 			has_messages = true;
 		} else {
 			p_log->add_image(EditorNode::get_singleton()->get_gui_base()->get_icon("StatusSuccess", "EditorIcons"), 16 * EDSCALE, 16 * EDSCALE, RichTextLabel::INLINE_ALIGN_CENTER);
@@ -451,6 +454,7 @@ Ref<EditorExportPreset> EditorExportPlatform::create_preset() {
 	for (List<ExportOption>::Element *E = options.front(); E; E = E->next()) {
 		preset->properties.push_back(E->get().option);
 		preset->values[E->get().option.name] = E->get().default_value;
+		preset->update_visibility[E->get().option.name] = E->get().update_visibility;
 	}
 
 	return preset;
@@ -1567,12 +1571,14 @@ void EditorExport::update_export_presets() {
 			// Clear the preset properties and values prior to reloading
 			preset->properties.clear();
 			preset->values.clear();
+			preset->update_visibility.clear();
 
 			for (List<EditorExportPlatform::ExportOption>::Element *E = options.front(); E; E = E->next()) {
 				preset->properties.push_back(E->get().option);
 
 				StringName option_name = E->get().option.name;
 				preset->values[option_name] = previous_values.has(option_name) ? previous_values[option_name] : E->get().default_value;
+				preset->update_visibility[option_name] = E->get().update_visibility;
 			}
 		}
 	}
@@ -1656,7 +1662,7 @@ Ref<Texture> EditorExportPlatformPC::get_logo() const {
 	return logo;
 }
 
-bool EditorExportPlatformPC::can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
+bool EditorExportPlatformPC::has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
 	String err;
 	bool valid = false;
 
@@ -1685,6 +1691,31 @@ bool EditorExportPlatformPC::can_export(const Ref<EditorExportPreset> &p_preset,
 	if (!err.empty()) {
 		r_error = err;
 	}
+	return valid;
+}
+
+bool EditorExportPlatformPC::has_valid_project_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error) const {
+	return true;
+}
+
+bool EditorExportPlatform::can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
+	bool valid = true;
+#ifndef ANDROID_ENABLED
+	String templates_error;
+	valid = valid && has_valid_export_configuration(p_preset, templates_error, r_missing_templates);
+
+	if (!templates_error.empty()) {
+		r_error += templates_error;
+	}
+#endif
+
+	String project_configuration_error;
+	valid = valid && has_valid_project_configuration(p_preset, project_configuration_error);
+
+	if (!project_configuration_error.empty()) {
+		r_error += project_configuration_error;
+	}
+
 	return valid;
 }
 

@@ -222,6 +222,7 @@ void ProjectExportDialog::_edit_preset(int p_index) {
 	export_path->show();
 	duplicate_preset->set_disabled(false);
 	delete_preset->set_disabled(false);
+	get_ok()->set_disabled(false);
 	name->set_text(current->get_name());
 
 	List<String> extension_list = current->get_platform()->get_binary_extensions(current);
@@ -267,8 +268,6 @@ void ProjectExportDialog::_edit_preset(int p_index) {
 		}
 
 		export_button->set_disabled(true);
-		get_ok()->set_disabled(true);
-
 	} else {
 		if (error != String()) {
 			Vector<String> items = error.split("\n", false);
@@ -287,7 +286,6 @@ void ProjectExportDialog::_edit_preset(int p_index) {
 		export_error->hide();
 		export_templates_error->hide();
 		export_button->set_disabled(false);
-		get_ok()->set_disabled(false);
 	}
 
 	custom_features->set_text(current->get_custom_features());
@@ -895,8 +893,10 @@ void ProjectExportDialog::_export_project_to_path(const String &p_path) {
 }
 
 void ProjectExportDialog::_export_all_dialog() {
+#ifndef ANDROID_ENABLED
 	export_all_dialog->show();
 	export_all_dialog->popup_centered_minsize(Size2(300, 80));
+#endif
 }
 
 void ProjectExportDialog::_export_all_dialog_action(const String &p_str) {
@@ -1154,11 +1154,16 @@ ProjectExportDialog::ProjectExportDialog() {
 
 	get_cancel()->set_text(TTR("Close"));
 	get_ok()->set_text(TTR("Export PCK/Zip..."));
+	get_ok()->set_disabled(true);
+#ifdef ANDROID_ENABLED
+	export_button = memnew(Button);
+	export_button->hide();
+#else
 	export_button = add_button(TTR("Export Project..."), !OS::get_singleton()->get_swap_ok_cancel(), "export");
+#endif
 	export_button->connect("pressed", this, "_export_project");
 	// Disable initially before we select a valid preset
 	export_button->set_disabled(true);
-	get_ok()->set_disabled(true);
 
 	export_all_dialog = memnew(ConfirmationDialog);
 	add_child(export_all_dialog);
@@ -1168,8 +1173,14 @@ ProjectExportDialog::ProjectExportDialog() {
 	export_all_dialog->add_button(TTR("Debug"), true, "debug");
 	export_all_dialog->add_button(TTR("Release"), true, "release");
 	export_all_dialog->connect("custom_action", this, "_export_all_dialog_action");
+#ifdef ANDROID_ENABLED
+	export_all_dialog->hide();
 
+	export_all_button = memnew(Button);
+	export_all_button->hide();
+#else
 	export_all_button = add_button(TTR("Export All..."), !OS::get_singleton()->get_swap_ok_cancel(), "export");
+#endif
 	export_all_button->connect("pressed", this, "_export_all_dialog");
 	export_all_button->set_disabled(true);
 

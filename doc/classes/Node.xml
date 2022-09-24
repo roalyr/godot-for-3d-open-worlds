@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Node" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="Node" inherits="Object" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Base class for all [i]scene[/i] objects.
 	</brief_description>
@@ -880,7 +880,7 @@
 			Implemented on all platforms.
 		</constant>
 		<constant name="NOTIFICATION_WM_QUIT_REQUEST" value="1006">
-			Notification received from the OS when a quit request is sent (e.g. closing the window with a "Close" button or Alt+F4).
+			Notification received from the OS when a quit request is sent (e.g. closing the window with a "Close" button or [kbd]Alt + F4[/kbd]).
 			Implemented on desktop platforms.
 		</constant>
 		<constant name="NOTIFICATION_WM_GO_BACK_REQUEST" value="1007">

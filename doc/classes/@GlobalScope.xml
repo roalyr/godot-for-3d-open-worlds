@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="@GlobalScope" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="@GlobalScope" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Global scope constants and variables.
 	</brief_description>
@@ -155,7 +155,7 @@
 			Tab key.
 		</constant>
 		<constant name="KEY_BACKTAB" value="16777219" enum="KeyList">
-			Shift+Tab key.
+			Shift + Tab key.
 		</constant>
 		<constant name="KEY_BACKSPACE" value="16777220" enum="KeyList">
 			Backspace key.
@@ -1484,6 +1484,9 @@
 		</constant>
 		<constant name="PROPERTY_HINT_IMAGE_COMPRESS_LOSSLESS" value="24" enum="PropertyHint">
 			Hints that an image is compressed using lossless compression.
+		</constant>
+		<constant name="PROPERTY_HINT_LOCALE_ID" value="40" enum="PropertyHint">
+			Hints that a string property is a locale code. Editing it will show a locale dialog for picking language and country.
 		</constant>
 		<constant name="PROPERTY_USAGE_STORAGE" value="1" enum="PropertyUsageFlags">
 			The property is serialized and saved in the scene file (default).

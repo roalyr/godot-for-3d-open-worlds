@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Font" inherits="Resource" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="Font" inherits="Resource" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Internationalized font and text drawing support.
 	</brief_description>
@@ -35,6 +35,7 @@
 			<argument index="5" name="outline" type="bool" default="false" />
 			<description>
 				Draw character [code]char[/code] into a canvas item using the font at a given position, with [code]modulate[/code] color, and optionally kerning if [code]next[/code] is passed. clipping the width. [code]position[/code] specifies the baseline, not the top. To draw from the top, [i]ascent[/i] must be added to the Y axis. The width used by the character is returned, making this function useful for drawing strings character by character.
+				If [code]outline[/code] is [code]true[/code], the outline of the character is drawn instead of the character itself.
 			</description>
 		</method>
 		<method name="get_ascent" qualifiers="const">

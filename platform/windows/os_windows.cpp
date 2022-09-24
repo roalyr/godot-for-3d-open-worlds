@@ -255,6 +255,41 @@ void OS_Windows::_touch_event(bool p_pressed, float p_x, float p_y, int idx) {
 	}
 };
 
+bool OS_Windows::tts_is_speaking() const {
+	ERR_FAIL_COND_V(!tts, false);
+	return tts->is_speaking();
+}
+
+bool OS_Windows::tts_is_paused() const {
+	ERR_FAIL_COND_V(!tts, false);
+	return tts->is_paused();
+}
+
+Array OS_Windows::tts_get_voices() const {
+	ERR_FAIL_COND_V(!tts, Array());
+	return tts->get_voices();
+}
+
+void OS_Windows::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
+	ERR_FAIL_COND(!tts);
+	tts->speak(p_text, p_voice, p_volume, p_pitch, p_rate, p_utterance_id, p_interrupt);
+}
+
+void OS_Windows::tts_pause() {
+	ERR_FAIL_COND(!tts);
+	tts->pause();
+}
+
+void OS_Windows::tts_resume() {
+	ERR_FAIL_COND(!tts);
+	tts->resume();
+}
+
+void OS_Windows::tts_stop() {
+	ERR_FAIL_COND(!tts);
+	tts->stop();
+}
+
 void OS_Windows::_drag_event(float p_x, float p_y, int idx) {
 	Map<int, Vector2>::Element *curr = touch_state.find(idx);
 	// Defensive
@@ -497,8 +532,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					ScreenToClient(hWnd, &coords);
 
 					// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-					if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+					if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 						break;
+					}
 
 					Ref<InputEventMouseMotion> mm;
 					mm.instance();
@@ -628,8 +664,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			}
 
 			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 				break;
+			}
 
 			Ref<InputEventMouseMotion> mm;
 			mm.instance();
@@ -730,8 +767,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			}
 
 			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED)
+			if (!window_has_focus && mouse_mode == MOUSE_MODE_CAPTURED) {
 				break;
+			}
 
 			Ref<InputEventMouseMotion> mm;
 			mm.instance();
@@ -1111,7 +1149,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		} break;
 		case WM_SETCURSOR: {
 			if (LOWORD(lParam) == HTCLIENT) {
-				if (window_has_focus && (mouse_mode == MOUSE_MODE_HIDDEN || mouse_mode == MOUSE_MODE_CAPTURED)) {
+				if (window_has_focus && (mouse_mode == MOUSE_MODE_HIDDEN || mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN)) {
 					//Hide the cursor
 					if (hCursor == NULL) {
 						hCursor = SetCursor(NULL);
@@ -1351,6 +1389,9 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 		MessageBox(NULL, "Failed To Register The Window Class.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
 		return ERR_UNAVAILABLE;
 	}
+
+	// Init TTS
+	tts = memnew(TTS_Windows);
 
 	use_raw_input = true;
 
@@ -1782,6 +1823,11 @@ void OS_Windows::finalize() {
 	if (restore_mouse_trails > 1) {
 		SystemParametersInfoA(SPI_SETMOUSETRAILS, restore_mouse_trails, 0, 0);
 	}
+
+	if (tts) {
+		memdelete(tts);
+	}
+	CoUninitialize();
 }
 
 void OS_Windows::finalize_core() {
@@ -1810,7 +1856,8 @@ void OS_Windows::set_mouse_mode(MouseMode p_mode) {
 }
 
 void OS_Windows::_set_mouse_mode_impl(MouseMode p_mode) {
-	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED) {
+	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
+		// Mouse is grabbed (captured or confined).
 		RECT clipRect;
 		GetClientRect(hWnd, &clipRect);
 		ClientToScreen(hWnd, (POINT *)&clipRect.left);
@@ -1824,11 +1871,12 @@ void OS_Windows::_set_mouse_mode_impl(MouseMode p_mode) {
 			SetCapture(hWnd);
 		}
 	} else {
+		// Mouse is free to move around (not captured or confined).
 		ReleaseCapture();
 		ClipCursor(NULL);
 	}
 
-	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_HIDDEN) {
+	if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_HIDDEN || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		if (hCursor == NULL) {
 			hCursor = SetCursor(NULL);
 		} else {
@@ -2058,7 +2106,7 @@ void OS_Windows::set_window_position(const Point2 &p_position) {
 	MoveWindow(hWnd, p_position.x, p_position.y, r.right - r.left, r.bottom - r.top, TRUE);
 
 	// Don't let the mouse leave the window when moved
-	if (mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		RECT rect;
 		GetClientRect(hWnd, &rect);
 		ClientToScreen(hWnd, (POINT *)&rect.left);
@@ -2139,7 +2187,7 @@ void OS_Windows::set_window_size(const Size2 p_size) {
 	MoveWindow(hWnd, rect.left, rect.top, w, h, TRUE);
 
 	// Don't let the mouse leave the window when resizing to a smaller resolution
-	if (mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		RECT crect;
 		GetClientRect(hWnd, &crect);
 		ClientToScreen(hWnd, (POINT *)&crect.left);
@@ -2534,6 +2582,23 @@ uint64_t OS_Windows::get_system_time_msecs() const {
 	ret |= ft.dwLowDateTime;
 
 	return (uint64_t)(ret / WINDOWS_TICK - MSEC_TO_UNIX_EPOCH);
+}
+
+double OS_Windows::get_subsecond_unix_time() const {
+	// 1 Windows tick is 100ns
+	const uint64_t WINDOWS_TICKS_PER_SECOND = 10000000;
+	const uint64_t TICKS_TO_UNIX_EPOCH = 116444736000000000LL;
+
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	FILETIME ft;
+	SystemTimeToFileTime(&st, &ft);
+	uint64_t ticks_time;
+	ticks_time = ft.dwHighDateTime;
+	ticks_time <<= 32;
+	ticks_time |= ft.dwLowDateTime;
+
+	return (double)(ticks_time - TICKS_TO_UNIX_EPOCH) / WINDOWS_TICKS_PER_SECOND;
 }
 
 void OS_Windows::delay_usec(uint32_t p_usec) const {
@@ -3932,6 +3997,21 @@ OS_Windows::OS_Windows(HINSTANCE _hInstance) {
 #ifdef XAUDIO2_ENABLED
 	AudioDriverManager::add_driver(&driver_xaudio2);
 #endif
+
+	// Enable ANSI escape code support on Windows 10 v1607 (Anniversary Update) and later.
+	// This lets the engine and projects use ANSI escape codes to color text just like on macOS and Linux.
+	//
+	// NOTE: The engine does not use ANSI escape codes to color error/warning messages; it uses Windows API calls instead.
+	// Therefore, error/warning messages are still colored on Windows versions older than 10.
+	HANDLE stdoutHandle;
+	stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD outMode = 0;
+	outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+	if (!SetConsoleMode(stdoutHandle, outMode)) {
+		// Windows 8.1 or below, or Windows 10 prior to Anniversary Update.
+		print_verbose("Can't set the ENABLE_VIRTUAL_TERMINAL_PROCESSING Windows console mode.");
+	}
 
 	Vector<Logger *> loggers;
 	loggers.push_back(memnew(WindowsTerminalLogger));

@@ -107,6 +107,45 @@ static String get_atom_name(Display *p_disp, Atom p_atom) {
 	return ret;
 }
 
+#ifdef SPEECHD_ENABLED
+
+bool OS_X11::tts_is_speaking() const {
+	ERR_FAIL_COND_V(!tts, false);
+	return tts->is_speaking();
+}
+
+bool OS_X11::tts_is_paused() const {
+	ERR_FAIL_COND_V(!tts, false);
+	return tts->is_paused();
+}
+
+Array OS_X11::tts_get_voices() const {
+	ERR_FAIL_COND_V(!tts, Array());
+	return tts->get_voices();
+}
+
+void OS_X11::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
+	ERR_FAIL_COND(!tts);
+	tts->speak(p_text, p_voice, p_volume, p_pitch, p_rate, p_utterance_id, p_interrupt);
+}
+
+void OS_X11::tts_pause() {
+	ERR_FAIL_COND(!tts);
+	tts->pause();
+}
+
+void OS_X11::tts_resume() {
+	ERR_FAIL_COND(!tts);
+	tts->resume();
+}
+
+void OS_X11::tts_stop() {
+	ERR_FAIL_COND(!tts);
+	tts->stop();
+}
+
+#endif
+
 void OS_X11::initialize_core() {
 	crash_handler.initialize();
 
@@ -378,6 +417,11 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	context_gl->set_use_vsync(current_videomode.use_vsync);
 
+#endif
+
+#ifdef SPEECHD_ENABLED
+	// Init TTS
+	tts = memnew(TTS_Linux);
 #endif
 
 	visual_server = memnew(VisualServerRaster);
@@ -739,7 +783,7 @@ bool OS_X11::refresh_device_info() {
 		xi.pen_pressure_range[dev->deviceid] = Vector2(pressure_min, pressure_max);
 		xi.pen_tilt_x_range[dev->deviceid] = Vector2(tilt_x_min, tilt_x_max);
 		xi.pen_tilt_y_range[dev->deviceid] = Vector2(tilt_y_min, tilt_y_max);
-		xi.pen_inverted_devices[dev->deviceid] = (bool)strstr(dev->name, "eraser");
+		xi.pen_inverted_devices[dev->deviceid] = String(dev->name).findn("eraser") > 0;
 	}
 
 	XIFreeDeviceInfo(info);
@@ -849,6 +893,10 @@ void OS_X11::finalize() {
 	driver_alsamidi.close();
 #endif
 
+#ifdef SPEECHD_ENABLED
+	memdelete(tts);
+#endif
+
 #ifdef JOYDEV_ENABLED
 	memdelete(joypad);
 #endif
@@ -924,7 +972,7 @@ void OS_X11::set_mouse_mode(MouseMode p_mode) {
 		return;
 	}
 
-	if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		XUngrabPointer(x11_display, CurrentTime);
 	}
 
@@ -939,7 +987,7 @@ void OS_X11::set_mouse_mode(MouseMode p_mode) {
 
 	mouse_mode = p_mode;
 
-	if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED) {
+	if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		//flush pending motion events
 		flush_mouse_motion();
 
@@ -2525,7 +2573,7 @@ void OS_X11::process_xevents() {
 	do_mouse_warp = false;
 
 	// Is the current mouse mode one where it needs to be grabbed.
-	bool mouse_mode_grab = mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED;
+	bool mouse_mode_grab = mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN;
 
 	xi.pressure = 0;
 	xi.tilt = Vector2();
@@ -2760,7 +2808,7 @@ void OS_X11::process_xevents() {
 					// Show and update the cursor if confined and the window regained focus.
 					if (mouse_mode == MOUSE_MODE_CONFINED) {
 						XUndefineCursor(x11_display, x11_window);
-					} else if (mouse_mode == MOUSE_MODE_CAPTURED) { // or re-hide it in captured mode
+					} else if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) { // or re-hide it in captured mode
 						XDefineCursor(x11_display, x11_window, null_cursor);
 					}
 

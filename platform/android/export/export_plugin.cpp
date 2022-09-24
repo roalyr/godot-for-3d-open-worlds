@@ -228,6 +228,7 @@ static const char *AAB_ASSETS_DIRECTORY = "res://android/build/assetPacks/instal
 static const int DEFAULT_MIN_SDK_VERSION = 19; // Should match the value in 'platform/android/java/app/config.gradle#minSdk'
 static const int DEFAULT_TARGET_SDK_VERSION = 32; // Should match the value in 'platform/android/java/app/config.gradle#targetSdk'
 
+#ifndef ANDROID_ENABLED
 void EditorExportPlatformAndroid::_check_for_changes_poll_thread(void *ud) {
 	EditorExportPlatformAndroid *ea = (EditorExportPlatformAndroid *)ud;
 
@@ -259,7 +260,6 @@ void EditorExportPlatformAndroid::_check_for_changes_poll_thread(void *ud) {
 			}
 		}
 
-#ifndef ANDROID_ENABLED
 		// Check for devices updates
 		String adb = get_adb_path();
 		if (FileAccess::exists(adb)) {
@@ -373,7 +373,6 @@ void EditorExportPlatformAndroid::_check_for_changes_poll_thread(void *ud) {
 
 			ea->device_lock.unlock();
 		}
-#endif
 
 		uint64_t sleep = 300'000;
 		uint64_t wait = 3'000'000;
@@ -386,7 +385,6 @@ void EditorExportPlatformAndroid::_check_for_changes_poll_thread(void *ud) {
 		}
 	}
 
-#ifndef ANDROID_ENABLED
 	if (EditorSettings::get_singleton()->get("export/android/shutdown_adb_on_exit")) {
 		String adb = get_adb_path();
 		if (!FileAccess::exists(adb)) {
@@ -397,8 +395,8 @@ void EditorExportPlatformAndroid::_check_for_changes_poll_thread(void *ud) {
 		args.push_back("kill-server");
 		OS::get_singleton()->execute(adb, args, true);
 	}
-#endif
 }
+#endif
 
 String EditorExportPlatformAndroid::get_project_name(const String &p_name) const {
 	String aname;
@@ -2059,7 +2057,7 @@ String EditorExportPlatformAndroid::get_apksigner_path() {
 	return apksigner_path;
 }
 
-bool EditorExportPlatformAndroid::can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
+bool EditorExportPlatformAndroid::has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
 	String err;
 	bool valid = false;
 	const bool custom_build_enabled = p_preset->get("custom_build/use_custom_build");
@@ -2107,7 +2105,7 @@ bool EditorExportPlatformAndroid::can_export(const Ref<EditorExportPreset> &p_pr
 		valid = installed_android_build_template && !r_missing_templates;
 	}
 
-	// Validate the rest of the configuration.
+	// Validate the rest of the export configuration.
 
 	String dk = p_preset->get("keystore/debug");
 	String dk_user = p_preset->get("keystore/debug_user");
@@ -2183,6 +2181,19 @@ bool EditorExportPlatformAndroid::can_export(const Ref<EditorExportPreset> &p_pr
 		}
 	}
 
+	if (!err.empty()) {
+		r_error = err;
+	}
+
+	return valid;
+}
+
+bool EditorExportPlatformAndroid::has_valid_project_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error) const {
+	String err;
+	bool valid = true;
+	const bool custom_build_enabled = p_preset->get("custom_build/use_custom_build");
+
+	// Validate the project configuration.
 	bool apk_expansion = p_preset->get("apk_expansion/enable");
 
 	if (apk_expansion) {
@@ -2249,8 +2260,7 @@ bool EditorExportPlatformAndroid::can_export(const Ref<EditorExportPreset> &p_pr
 		}
 	}
 
-	if (int(p_preset->get("custom_build/export_format")) == EXPORT_FORMAT_AAB &&
-			!custom_build_enabled) {
+	if (int(p_preset->get("custom_build/export_format")) == EXPORT_FORMAT_AAB && !custom_build_enabled) {
 		valid = false;
 		err += TTR("\"Export AAB\" is only valid when \"Use Custom Build\" is enabled.");
 		err += "\n";
@@ -2308,7 +2318,9 @@ bool EditorExportPlatformAndroid::can_export(const Ref<EditorExportPreset> &p_pr
 		err += "\n";
 	}
 
-	r_error = err;
+	if (!err.empty()) {
+		r_error = err;
+	}
 	return valid;
 }
 
@@ -3438,10 +3450,14 @@ EditorExportPlatformAndroid::EditorExportPlatformAndroid() {
 
 	devices_changed.set();
 	plugins_changed.set();
+#ifndef ANDROID_ENABLED
 	check_for_changes_thread.start(_check_for_changes_poll_thread, this);
+#endif
 }
 
 EditorExportPlatformAndroid::~EditorExportPlatformAndroid() {
+#ifndef ANDROID_ENABLED
 	quit_request.set();
 	check_for_changes_thread.wait_to_finish();
+#endif
 }

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  eq.h                                                                 */
+/*  tts_android.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,82 +28,42 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-// Author: reduzio@gmail.com (C) 2006
+#ifndef TTS_ANDROID_H
+#define TTS_ANDROID_H
 
-#ifndef EQ_FILTER_H
-#define EQ_FILTER_H
+#include "core/array.h"
+#include "core/os/os.h"
+#include "core/ustring.h"
 
-#include "core/typedefs.h"
-#include "core/vector.h"
+#include <jni.h>
 
-/**
-@author Juan Linietsky
-*/
+class TTS_Android {
+	static jobject tts;
+	static jclass cls;
 
-class EQ {
-public:
-	enum Preset {
+	static jmethodID _is_speaking;
+	static jmethodID _is_paused;
+	static jmethodID _get_voices;
+	static jmethodID _speak;
+	static jmethodID _pause_speaking;
+	static jmethodID _resume_speaking;
+	static jmethodID _stop_speaking;
 
-		PRESET_6_BANDS,
-		PRESET_8_BANDS,
-		PRESET_10_BANDS,
-		PRESET_21_BANDS,
-		PRESET_31_BANDS
-	};
+	static HashMap<int, Vector<char16_t>> ids;
 
-	class BandProcess {
-		friend class EQ;
-		float c1, c2, c3;
-		struct History {
-			float a1, a2, a3;
-			float b1, b2, b3;
-
-		} history;
-
-	public:
-		inline void process_one(float &p_data);
-
-		BandProcess();
-	};
-
-private:
-	struct Band {
-		float freq;
-		float c1, c2, c3;
-	};
-
-	Vector<Band> band;
-
-	float mix_rate;
-
-	void recalculate_band_coefficients();
+	static Vector<char16_t> str_to_utf16(const String &p_string);
 
 public:
-	void set_mix_rate(float p_mix_rate);
+	static void setup(jobject p_tts);
+	static void _java_utterance_callback(int p_event, int p_id, int p_pos);
 
-	int get_band_count() const;
-	void set_preset_band_mode(Preset p_preset);
-	void set_bands(const Vector<float> &p_bands);
-	BandProcess get_band_processor(int p_band) const;
-	float get_band_frequency(int p_band);
-
-	EQ();
-	~EQ();
+	static bool is_speaking();
+	static bool is_paused();
+	static Array get_voices();
+	static void speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt);
+	static void pause();
+	static void resume();
+	static void stop();
 };
 
-/* Inline Function */
-
-inline void EQ::BandProcess::process_one(float &p_data) {
-	history.a1 = p_data;
-
-	history.b1 = c1 * (history.a1 - history.a3) + c3 * history.b2 - c2 * history.b3;
-
-	p_data = history.b1;
-
-	history.a3 = history.a2;
-	history.a2 = history.a1;
-	history.b3 = history.b2;
-	history.b2 = history.b1;
-}
-
-#endif
+#endif // TTS_ANDROID_H

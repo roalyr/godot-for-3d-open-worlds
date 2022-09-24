@@ -35,7 +35,7 @@ Includes some patches in the `patches` folder which have been sent upstream.
 ## certs
 
 - Upstream: Mozilla, via https://github.com/bagder/ca-bundle
-- Version: git (8b263a18fca98ea371e54227837321c5cdaa1ba7, 2021)
+- Version: git (7f33e7eb8472dbcf31fdcf50cd216c89a282825d, 2022)
 - License: MPL 2.0
 
 
@@ -186,7 +186,7 @@ Files extracted from upstream source:
 ## libpng
 
 - Upstream: http://libpng.org/pub/png/libpng.html
-- Version: 1.6.37 (a40189cf881e9f0db80511c382292a5604c3c3d1, 2019)
+- Version: 1.6.38 (0a158f3506502dfa23edfc42790dfaed82efba17, 2022)
 - License: libpng/zlib
 
 Files extracted from upstream source:
@@ -266,12 +266,12 @@ from the Android NDK r18.
 ## libwebp
 
 - Upstream: https://chromium.googlesource.com/webm/libwebp/
-- Version: 1.2.2 (b0a860891dcd4c0c2d7c6149e5cccb6eb881cc21, 2022)
+- Version: 1.2.4 (0d1f12546bd803099a60c070517a552483f3790e, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
 
-- `src/*` except from: `.am`, `.rc` and `.in` files
+- `src/` and `sharpyuv/` except from: `.am`, `.rc` and `.in` files
 - `AUTHORS`, `COPYING`, `PATENTS`
 
 
@@ -399,7 +399,7 @@ Collection of single-file libraries used in Godot components.
 ## nanosvg
 
 - Upstream: https://github.com/memononen/nanosvg
-- Version: git (4c8f0139b62c6e7faa3b67ce1fbe6e63590ed148, 2022)
+- Version: git (bd16c4e6b2842e1f0286dc374d21f85c659862e5, 2022)
 - License: zlib
 
 Files extracted from the upstream source:
@@ -608,7 +608,7 @@ Files extracted from upstream source:
 ## zstd
 
 - Upstream: https://github.com/facebook/zstd
-- Version: 1.5.0 (a488ba114ec17ea1054b9057c26a046fc122b3b6, 2021)
+- Version: 1.5.2 (e47e674cd09583ff0503f0f6defd6d23d8b718d3, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:

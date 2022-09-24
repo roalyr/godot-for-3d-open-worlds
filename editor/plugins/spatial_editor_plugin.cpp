@@ -49,6 +49,7 @@
 #include "scene/3d/physics_body.h"
 #include "scene/3d/room_manager.h"
 #include "scene/3d/visual_instance.h"
+#include "scene/gui/flow_container.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/resources/surface_tool.h"
@@ -1172,26 +1173,18 @@ void SpatialEditorViewport::_sinput(const Ref<InputEvent> &p_event) {
 		float zoom_factor = 1 + (ZOOM_FREELOOK_MULTIPLIER - 1) * b->get_factor();
 		switch (b->get_button_index()) {
 			case BUTTON_WHEEL_UP: {
-				if (b->get_alt()) {
-					scale_fov(-0.05);
+				if (is_freelook_active()) {
+					scale_freelook_speed(zoom_factor);
 				} else {
-					if (is_freelook_active()) {
-						scale_freelook_speed(zoom_factor);
-					} else {
-						scale_cursor_distance(1.0 / zoom_factor);
-					}
+					scale_cursor_distance(1.0 / zoom_factor);
 				}
 			} break;
 
 			case BUTTON_WHEEL_DOWN: {
-				if (b->get_alt()) {
-					scale_fov(0.05);
+				if (is_freelook_active()) {
+					scale_freelook_speed(1.0 / zoom_factor);
 				} else {
-					if (is_freelook_active()) {
-						scale_freelook_speed(1.0 / zoom_factor);
-					} else {
-						scale_cursor_distance(zoom_factor);
-					}
+					scale_cursor_distance(zoom_factor);
 				}
 			} break;
 
@@ -3829,7 +3822,23 @@ bool SpatialEditorViewport::_create_instance(Node *parent, String &path, const P
 		if (mesh != nullptr) {
 			MeshInstance *mesh_instance = memnew(MeshInstance);
 			mesh_instance->set_mesh(mesh);
-			mesh_instance->set_name(path.get_file().get_basename());
+
+			// Adjust casing according to project setting. The file name is expected to be in snake_case, but will work for others.
+			String name = path.get_file().get_basename();
+			switch (ProjectSettings::get_singleton()->get("node/name_casing").operator int()) {
+				case NAME_CASING_PASCAL_CASE:
+					name = name.capitalize().replace(" ", "");
+					break;
+				case NAME_CASING_CAMEL_CASE:
+					name = name.capitalize().replace(" ", "");
+					name[0] = name.to_lower()[0];
+					break;
+				case NAME_CASING_SNAKE_CASE:
+					name = name.capitalize().replace(" ", "_").to_lower();
+					break;
+			}
+			mesh_instance->set_name(name);
+
 			instanced_scene = mesh_instance;
 		} else {
 			if (!scene.is_valid()) { // invalid scene
@@ -3980,6 +3989,7 @@ void SpatialEditorViewport::drop_data_fw(const Point2 &p_point, const Variant &p
 	}
 
 	bool is_shift = Input::get_singleton()->is_key_pressed(KEY_SHIFT);
+	bool is_ctrl = Input::get_singleton()->is_key_pressed(KEY_CONTROL);
 
 	selected_files.clear();
 	Dictionary d = p_data;
@@ -3987,29 +3997,31 @@ void SpatialEditorViewport::drop_data_fw(const Point2 &p_point, const Variant &p
 		selected_files = d["files"];
 	}
 
-	List<Node *> list = editor->get_editor_selection()->get_selected_node_list();
-	if (list.size() == 0) {
-		Node *root_node = editor->get_edited_scene();
-		if (root_node) {
-			list.push_back(root_node);
-		} else {
-			accept->set_text(TTR("No parent to instance a child at."));
-			accept->popup_centered_minsize();
-			_remove_preview();
-			return;
+	List<Node *> selected_nodes = editor->get_editor_selection()->get_selected_node_list();
+	Node *root_node = editor->get_edited_scene();
+	if (selected_nodes.size() == 1) {
+		Node *selected_node = selected_nodes[0];
+		target_node = root_node;
+		if (is_ctrl) {
+			target_node = selected_node;
+		} else if (is_shift && selected_node != root_node) {
+			target_node = selected_node->get_parent();
 		}
-	}
-	if (list.size() != 1) {
-		accept->set_text(TTR("This operation requires a single selected node."));
-		accept->popup_centered_minsize();
+	} else if (selected_nodes.size() == 0) {
+		if (root_node) {
+			target_node = root_node;
+		} else {
+			// Create a root node so we can add child nodes to it.
+			EditorNode::get_singleton()->get_scene_tree_dock()->add_root_node(memnew(Spatial));
+			target_node = get_tree()->get_edited_scene_root();
+		}
+	} else {
+		accept->set_text(TTR("Cannot drag and drop into multiple selected nodes."));
+		accept->popup_centered();
 		_remove_preview();
 		return;
 	}
 
-	target_node = list[0];
-	if (is_shift && target_node != editor->get_edited_scene()) {
-		target_node = target_node->get_parent();
-	}
 	drop_pos = p_point;
 
 	_perform_drop_data();
@@ -4065,6 +4077,7 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	view_menu->set_flat(false);
 	vbox->add_child(view_menu);
 	view_menu->set_h_size_flags(0);
+	view_menu->get_popup()->set_hide_on_checkable_item_selection(false);
 
 	view_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("spatial_editor/top_view"), VIEW_TOP);
 	view_menu->get_popup()->add_shortcut(ED_GET_SHORTCUT("spatial_editor/bottom_view"), VIEW_BOTTOM);
@@ -5811,7 +5824,7 @@ void SpatialEditor::_update_context_menu_stylebox() {
 	context_menu_stylebox->set_border_color(accent_color);
 	context_menu_stylebox->set_border_width(MARGIN_BOTTOM, Math::round(2 * EDSCALE));
 	context_menu_stylebox->set_default_margin(MARGIN_BOTTOM, 0);
-	context_menu_container->add_style_override("panel", context_menu_stylebox);
+	context_menu_panel->add_style_override("panel", context_menu_stylebox);
 }
 
 void SpatialEditor::_update_gizmos_menu() {
@@ -6331,11 +6344,11 @@ void SpatialEditor::_notification(int p_what) {
 }
 
 void SpatialEditor::add_control_to_menu_panel(Control *p_control) {
-	hbc_context_menu->add_child(p_control);
+	context_menu_hbox->add_child(p_control);
 }
 
 void SpatialEditor::remove_control_from_menu_panel(Control *p_control) {
-	hbc_context_menu->remove_child(p_control);
+	context_menu_hbox->remove_child(p_control);
 }
 
 void SpatialEditor::set_can_preview(Camera *p_preview) {
@@ -6495,6 +6508,7 @@ void SpatialEditor::_register_all_gizmos() {
 	add_gizmo_plugin(Ref<SkeletonSpatialGizmoPlugin>(memnew(SkeletonSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<Position3DSpatialGizmoPlugin>(memnew(Position3DSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<RayCastSpatialGizmoPlugin>(memnew(RayCastSpatialGizmoPlugin)));
+	add_gizmo_plugin(Ref<ShapeCastGizmoPlugin>(memnew(ShapeCastGizmoPlugin)));
 	add_gizmo_plugin(Ref<SpringArmSpatialGizmoPlugin>(memnew(SpringArmSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<VehicleWheelSpatialGizmoPlugin>(memnew(VehicleWheelSpatialGizmoPlugin)));
 	add_gizmo_plugin(Ref<VisibilityNotifierGizmoPlugin>(memnew(VisibilityNotifierGizmoPlugin)));
@@ -6577,15 +6591,20 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 
 	camera_override_viewport_id = 0;
 
-	hbc_menu = memnew(HBoxContainer);
-	vbc->add_child(hbc_menu);
+	// A fluid container for all toolbars.
+	HFlowContainer *main_flow = memnew(HFlowContainer);
+	vbc->add_child(main_flow);
+
+	// Main toolbars.
+	HBoxContainer *main_menu_hbox = memnew(HBoxContainer);
+	main_flow->add_child(main_menu_hbox);
 
 	Vector<Variant> button_binds;
 	button_binds.resize(1);
 	String sct;
 
 	tool_button[TOOL_MODE_SELECT] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_MODE_SELECT]);
+	main_menu_hbox->add_child(tool_button[TOOL_MODE_SELECT]);
 	tool_button[TOOL_MODE_SELECT]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_SELECT]->set_flat(true);
 	tool_button[TOOL_MODE_SELECT]->set_pressed(true);
@@ -6593,10 +6612,10 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_SELECT]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_MODE_SELECT]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_select", TTR("Select Mode"), KEY_Q));
 	tool_button[TOOL_MODE_SELECT]->set_tooltip(keycode_get_string(KEY_MASK_CMD) + TTR("Drag: Rotate selected node around pivot.") + "\n" + TTR("Alt+RMB: Show list of all nodes at position clicked, including locked."));
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
 	tool_button[TOOL_MODE_MOVE] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_MODE_MOVE]);
+	main_menu_hbox->add_child(tool_button[TOOL_MODE_MOVE]);
 	tool_button[TOOL_MODE_MOVE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_MOVE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_MOVE;
@@ -6604,7 +6623,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_MOVE]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_move", TTR("Move Mode"), KEY_W));
 
 	tool_button[TOOL_MODE_ROTATE] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_MODE_ROTATE]);
+	main_menu_hbox->add_child(tool_button[TOOL_MODE_ROTATE]);
 	tool_button[TOOL_MODE_ROTATE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_ROTATE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_ROTATE;
@@ -6612,17 +6631,17 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_ROTATE]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_rotate", TTR("Rotate Mode"), KEY_E));
 
 	tool_button[TOOL_MODE_SCALE] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_MODE_SCALE]);
+	main_menu_hbox->add_child(tool_button[TOOL_MODE_SCALE]);
 	tool_button[TOOL_MODE_SCALE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_SCALE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_SCALE;
 	tool_button[TOOL_MODE_SCALE]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_MODE_SCALE]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_scale", TTR("Scale Mode"), KEY_R));
 
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
 	tool_button[TOOL_MODE_LIST_SELECT] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_MODE_LIST_SELECT]);
+	main_menu_hbox->add_child(tool_button[TOOL_MODE_LIST_SELECT]);
 	tool_button[TOOL_MODE_LIST_SELECT]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_LIST_SELECT]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_LIST_SELECT;
@@ -6630,37 +6649,37 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_LIST_SELECT]->set_tooltip(TTR("Show a list of all objects at the position clicked\n(same as Alt+RMB in select mode)."));
 
 	tool_button[TOOL_LOCK_SELECTED] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_LOCK_SELECTED]);
+	main_menu_hbox->add_child(tool_button[TOOL_LOCK_SELECTED]);
 	button_binds.write[0] = MENU_LOCK_SELECTED;
 	tool_button[TOOL_LOCK_SELECTED]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_LOCK_SELECTED]->set_tooltip(TTR("Lock the selected object in place (can't be moved)."));
 	tool_button[TOOL_LOCK_SELECTED]->set_shortcut(ED_SHORTCUT("editor/lock_selected_nodes", TTR("Lock Selected Node(s)"), KEY_MASK_CMD | KEY_L));
 
 	tool_button[TOOL_UNLOCK_SELECTED] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_UNLOCK_SELECTED]);
+	main_menu_hbox->add_child(tool_button[TOOL_UNLOCK_SELECTED]);
 	button_binds.write[0] = MENU_UNLOCK_SELECTED;
 	tool_button[TOOL_UNLOCK_SELECTED]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_UNLOCK_SELECTED]->set_tooltip(TTR("Unlock the selected object (can be moved)."));
 	tool_button[TOOL_UNLOCK_SELECTED]->set_shortcut(ED_SHORTCUT("editor/unlock_selected_nodes", TTR("Unlock Selected Node(s)"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_L));
 
 	tool_button[TOOL_GROUP_SELECTED] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_GROUP_SELECTED]);
+	main_menu_hbox->add_child(tool_button[TOOL_GROUP_SELECTED]);
 	button_binds.write[0] = MENU_GROUP_SELECTED;
 	tool_button[TOOL_GROUP_SELECTED]->connect("pressed", this, "_menu_item_pressed", button_binds);
-	tool_button[TOOL_GROUP_SELECTED]->set_tooltip(TTR("Makes sure the object's children are not selectable."));
+	tool_button[TOOL_GROUP_SELECTED]->set_tooltip(TTR("Make selected node's children not selectable."));
 	tool_button[TOOL_GROUP_SELECTED]->set_shortcut(ED_SHORTCUT("editor/group_selected_nodes", TTR("Group Selected Node(s)"), KEY_MASK_CMD | KEY_G));
 
 	tool_button[TOOL_UNGROUP_SELECTED] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_UNGROUP_SELECTED]);
+	main_menu_hbox->add_child(tool_button[TOOL_UNGROUP_SELECTED]);
 	button_binds.write[0] = MENU_UNGROUP_SELECTED;
 	tool_button[TOOL_UNGROUP_SELECTED]->connect("pressed", this, "_menu_item_pressed", button_binds);
-	tool_button[TOOL_UNGROUP_SELECTED]->set_tooltip(TTR("Restores the object's children's ability to be selected."));
+	tool_button[TOOL_UNGROUP_SELECTED]->set_tooltip(TTR("Make selected node's children selectable."));
 	tool_button[TOOL_UNGROUP_SELECTED]->set_shortcut(ED_SHORTCUT("editor/ungroup_selected_nodes", TTR("Ungroup Selected Node(s)"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_G));
 
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
 	tool_option_button[TOOL_OPT_LOCAL_COORDS] = memnew(ToolButton);
-	hbc_menu->add_child(tool_option_button[TOOL_OPT_LOCAL_COORDS]);
+	main_menu_hbox->add_child(tool_option_button[TOOL_OPT_LOCAL_COORDS]);
 	tool_option_button[TOOL_OPT_LOCAL_COORDS]->set_toggle_mode(true);
 	tool_option_button[TOOL_OPT_LOCAL_COORDS]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_LOCAL_COORDS;
@@ -6668,17 +6687,17 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_option_button[TOOL_OPT_LOCAL_COORDS]->set_shortcut(ED_SHORTCUT("spatial_editor/local_coords", TTR("Use Local Space"), KEY_T));
 
 	tool_option_button[TOOL_OPT_USE_SNAP] = memnew(ToolButton);
-	hbc_menu->add_child(tool_option_button[TOOL_OPT_USE_SNAP]);
+	main_menu_hbox->add_child(tool_option_button[TOOL_OPT_USE_SNAP]);
 	tool_option_button[TOOL_OPT_USE_SNAP]->set_toggle_mode(true);
 	tool_option_button[TOOL_OPT_USE_SNAP]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_USE_SNAP;
 	tool_option_button[TOOL_OPT_USE_SNAP]->connect("toggled", this, "_menu_item_toggled", button_binds);
 	tool_option_button[TOOL_OPT_USE_SNAP]->set_shortcut(ED_SHORTCUT("spatial_editor/snap", TTR("Use Snap"), KEY_Y));
 
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
 	tool_option_button[TOOL_OPT_OVERRIDE_CAMERA] = memnew(ToolButton);
-	hbc_menu->add_child(tool_option_button[TOOL_OPT_OVERRIDE_CAMERA]);
+	main_menu_hbox->add_child(tool_option_button[TOOL_OPT_OVERRIDE_CAMERA]);
 	tool_option_button[TOOL_OPT_OVERRIDE_CAMERA]->set_toggle_mode(true);
 	tool_option_button[TOOL_OPT_OVERRIDE_CAMERA]->set_flat(true);
 	tool_option_button[TOOL_OPT_OVERRIDE_CAMERA]->set_disabled(true);
@@ -6687,7 +6706,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	_update_camera_override_button(false);
 
 	tool_button[TOOL_CONVERT_ROOMS] = memnew(ToolButton);
-	hbc_menu->add_child(tool_button[TOOL_CONVERT_ROOMS]);
+	main_menu_hbox->add_child(tool_button[TOOL_CONVERT_ROOMS]);
 	tool_button[TOOL_CONVERT_ROOMS]->set_toggle_mode(false);
 	tool_button[TOOL_CONVERT_ROOMS]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_CONVERT_ROOMS;
@@ -6695,7 +6714,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_CONVERT_ROOMS]->set_shortcut(ED_SHORTCUT("spatial_editor/convert_rooms", TTR("Convert Rooms"), KEY_MASK_ALT | KEY_C));
 	tool_button[TOOL_CONVERT_ROOMS]->set_tooltip(TTR("Converts rooms for portal culling."));
 
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
 	// Drag and drop support;
 	preview_node = memnew(Spatial);
@@ -6728,7 +6747,7 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	transform_menu = memnew(MenuButton);
 	transform_menu->set_text(TTR("Transform"));
 	transform_menu->set_switch_on_hover(true);
-	hbc_menu->add_child(transform_menu);
+	main_menu_hbox->add_child(transform_menu);
 
 	p = transform_menu->get_popup();
 	p->add_shortcut(ED_SHORTCUT("spatial_editor/snap_to_floor", TTR("Snap Object to Floor"), KEY_PAGEDOWN), MENU_SNAP_TO_FLOOR);
@@ -6743,17 +6762,17 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	// TRANSLATORS: Noun, name of the 2D/3D View menus.
 	view_menu->set_text(TTR("View"));
 	view_menu->set_switch_on_hover(true);
-	hbc_menu->add_child(view_menu);
+	main_menu_hbox->add_child(view_menu);
 
-	hbc_menu->add_child(memnew(VSeparator));
+	main_menu_hbox->add_child(memnew(VSeparator));
 
-	context_menu_container = memnew(PanelContainer);
-	hbc_context_menu = memnew(HBoxContainer);
-	context_menu_container->add_child(hbc_context_menu);
+	context_menu_panel = memnew(PanelContainer);
+	context_menu_hbox = memnew(HBoxContainer);
+	context_menu_panel->add_child(context_menu_hbox);
 	// Use a custom stylebox to make contextual menu items stand out from the rest.
 	// This helps with editor usability as contextual menu items change when selecting nodes,
 	// even though it may not be immediately obvious at first.
-	hbc_menu->add_child(context_menu_container);
+	main_flow->add_child(context_menu_panel);
 	_update_context_menu_stylebox();
 
 	// Get the view menu popup and have it stay open when a checkable item is selected

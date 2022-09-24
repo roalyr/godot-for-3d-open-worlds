@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  reverb.h                                                             */
+/*  reverb_filter.h                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -30,8 +30,8 @@
 
 // Author: Juan Linietsky <reduzio@gmail.com>, (C) 2006
 
-#ifndef REVERB_H
-#define REVERB_H
+#ifndef REVERB_FILTER_H
+#define REVERB_FILTER_H
 
 #include "core/math/audio_frame.h"
 #include "core/os/memory.h"
@@ -131,4 +131,4 @@ public:
 	~Reverb();
 };
 
-#endif
+#endif // REVERB_FILTER_H

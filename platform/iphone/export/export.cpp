@@ -57,8 +57,10 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 
 	// Plugins
 	SafeFlag plugins_changed;
+#ifndef ANDROID_ENABLED
 	Thread check_for_changes_thread;
 	SafeFlag quit_request;
+#endif
 	Mutex plugins_lock;
 	Vector<PluginConfigIOS> plugins;
 
@@ -79,6 +81,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		String modules_buildphase;
 		String modules_buildgrp;
 		Vector<String> capabilities;
+		bool use_swift_runtime;
 	};
 	struct ExportArchitecture {
 		String name;
@@ -141,6 +144,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		return true;
 	}
 
+#ifndef ANDROID_ENABLED
 	static void _check_for_changes_poll_thread(void *ud) {
 		EditorExportPlatformIOS *ea = (EditorExportPlatformIOS *)ud;
 
@@ -176,6 +180,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 			}
 		}
 	}
+#endif
 
 protected:
 	virtual void get_preset_features(const Ref<EditorExportPreset> &p_preset, List<String> *r_features);
@@ -203,7 +208,8 @@ public:
 
 	virtual Error export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags = 0);
 
-	virtual bool can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const;
+	virtual bool has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const;
+	virtual bool has_valid_project_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error) const;
 
 	virtual void get_platform_features(List<String> *r_features) {
 		r_features->push_back("mobile");
@@ -409,27 +415,27 @@ void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/microphone_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need to use the microphone"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/photolibrary_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need access to the photo library"), ""));
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_120x120", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPhone/iPod Touch with Retina display
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_180x180", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPhone with Retina HD display
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_120x120", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPhone/iPod Touch with Retina display
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/iphone_180x180", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPhone with Retina HD display
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_76x76", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPad
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_152x152", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPad with Retina display
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_167x167", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPad Pro
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_76x76", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPad
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_152x152", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPad with Retina display
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/ipad_167x167", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Home screen on iPad Pro
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/app_store_1024x1024", PROPERTY_HINT_FILE, "*.png"), "")); // App Store
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/app_store_1024x1024", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // App Store
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_40x40", PROPERTY_HINT_FILE, "*.png"), "")); // Spotlight
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_80x80", PROPERTY_HINT_FILE, "*.png"), "")); // Spotlight on devices with Retina display
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_40x40", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Spotlight
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "icons/spotlight_80x80", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), "")); // Spotlight on devices with Retina display
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "storyboard/use_launch_screen_storyboard"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "storyboard/image_scale_mode", PROPERTY_HINT_ENUM, "Same as Logo,Center,Scale to Fit,Scale to Fill,Scale"), 0));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@2x", PROPERTY_HINT_FILE, "*.png"), ""));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@3x", PROPERTY_HINT_FILE, "*.png"), ""));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@2x", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "storyboard/custom_image@3x", PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "storyboard/use_custom_bg_color"), false));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::COLOR, "storyboard/custom_bg_color"), Color()));
 
 	for (uint64_t i = 0; i < sizeof(loading_screen_infos) / sizeof(loading_screen_infos[0]); ++i) {
-		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, loading_screen_infos[i].preset_key, PROPERTY_HINT_FILE, "*.png"), ""));
+		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, loading_screen_infos[i].preset_key, PROPERTY_HINT_FILE, "*.png,*.jpg,*.jpeg"), ""));
 	}
 }
 
@@ -660,12 +666,18 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 			String locale_files;
 			Vector<String> translations = ProjectSettings::get_singleton()->get("locale/translations");
 			if (translations.size() > 0) {
+				Set<String> languages;
 				for (int j = 0; j < translations.size(); j++) {
 					Ref<Translation> tr = ResourceLoader::load(translations[j]);
-					if (tr.is_valid()) {
-						String lang = tr->get_locale();
-						locale_files += "D0BCFE4518AEBDA2004A" + itos(j).pad_zeros(4) + " /* " + lang + " */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = " + lang + "; path = " + lang + ".lproj/InfoPlist.strings; sourceTree = \"<group>\"; };";
+					if (tr.is_valid() && tr->get_locale() != "en") {
+						languages.insert(tr->get_locale());
 					}
+				}
+				int index = 0;
+				for (const Set<String>::Element *E = languages.front(); E; E = E->next()) {
+					const String &lang = E->get();
+					locale_files += "D0BCFE4518AEBDA2004A" + itos(index).pad_zeros(4) + " /* " + lang + " */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = " + lang + "; path = " + lang + ".lproj/InfoPlist.strings; sourceTree = \"<group>\"; };\n";
+					index++;
 				}
 			}
 			strnew += lines[i].replace("$pbx_locale_file_reference", locale_files);
@@ -673,15 +685,49 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 			String locale_files;
 			Vector<String> translations = ProjectSettings::get_singleton()->get("locale/translations");
 			if (translations.size() > 0) {
+				Set<String> languages;
 				for (int j = 0; j < translations.size(); j++) {
 					Ref<Translation> tr = ResourceLoader::load(translations[j]);
-					if (tr.is_valid()) {
-						String lang = tr->get_locale();
-						locale_files += "D0BCFE4518AEBDA2004A" + itos(j).pad_zeros(4) + " /* " + lang + " */,";
+					if (tr.is_valid() && tr->get_locale() != "en") {
+						languages.insert(tr->get_locale());
 					}
+				}
+				int index = 0;
+				for (const Set<String>::Element *E = languages.front(); E; E = E->next()) {
+					locale_files += "D0BCFE4518AEBDA2004A" + itos(index).pad_zeros(4) + " /* " + E->get() + " */,\n";
+					index++;
 				}
 			}
 			strnew += lines[i].replace("$pbx_locale_build_reference", locale_files);
+		} else if (lines[i].find("$swift_runtime_migration") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : "LastSwiftMigration = 1250;";
+			strnew += lines[i].replace("$swift_runtime_migration", value) + "\n";
+		} else if (lines[i].find("$swift_runtime_build_settings") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : R"(
+            CLANG_ENABLE_MODULES = YES;
+            SWIFT_OBJC_BRIDGING_HEADER = "$binary/dummy.h";
+            SWIFT_VERSION = 5.0;
+            )";
+			value = value.replace("$binary", p_config.binary_name);
+			strnew += lines[i].replace("$swift_runtime_build_settings", value) + "\n";
+		} else if (lines[i].find("$swift_runtime_fileref") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : R"(
+            90B4C2AA2680BC560039117A /* dummy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "dummy.h"; sourceTree = "<group>"; };
+            90B4C2B52680C7E90039117A /* dummy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "dummy.swift"; sourceTree = "<group>"; };
+            )";
+			strnew += lines[i].replace("$swift_runtime_fileref", value) + "\n";
+		} else if (lines[i].find("$swift_runtime_binary_files") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : R"(
+            90B4C2AA2680BC560039117A /* dummy.h */,
+            90B4C2B52680C7E90039117A /* dummy.swift */,
+            )";
+			strnew += lines[i].replace("$swift_runtime_binary_files", value) + "\n";
+		} else if (lines[i].find("$swift_runtime_buildfile") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : "90B4C2B62680C7E90039117A /* dummy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90B4C2B52680C7E90039117A /* dummy.swift */; };";
+			strnew += lines[i].replace("$swift_runtime_buildfile", value) + "\n";
+		} else if (lines[i].find("$swift_runtime_build_phase") != -1) {
+			String value = !p_config.use_swift_runtime ? "" : "90B4C2B62680C7E90039117A /* dummy.swift */,";
+			strnew += lines[i].replace("$swift_runtime_build_phase", value) + "\n";
 		} else {
 			strnew += lines[i] + "\n";
 		}
@@ -777,26 +823,27 @@ struct IconInfo {
 	const char *actual_size_side;
 	const char *scale;
 	const char *unscaled_size;
+	const bool force_opaque;
 };
 
 static const IconInfo icon_infos[] = {
 	// Home screen on iPhone
-	{ "icons/iphone_120x120", "iphone", "Icon-120.png", "120", "2x", "60x60" },
-	{ "icons/iphone_120x120", "iphone", "Icon-120.png", "120", "3x", "40x40" },
-	{ "icons/iphone_180x180", "iphone", "Icon-180.png", "180", "3x", "60x60" },
+	{ "icons/iphone_120x120", "iphone", "Icon-120.png", "120", "2x", "60x60", false },
+	{ "icons/iphone_120x120", "iphone", "Icon-120.png", "120", "3x", "40x40", false },
+	{ "icons/iphone_180x180", "iphone", "Icon-180.png", "180", "3x", "60x60", false },
 
 	// Home screen on iPad
-	{ "icons/ipad_76x76", "ipad", "Icon-76.png", "76", "1x", "76x76" },
-	{ "icons/ipad_152x152", "ipad", "Icon-152.png", "152", "2x", "76x76" },
-	{ "icons/ipad_167x167", "ipad", "Icon-167.png", "167", "2x", "83.5x83.5" },
+	{ "icons/ipad_76x76", "ipad", "Icon-76.png", "76", "1x", "76x76", false },
+	{ "icons/ipad_152x152", "ipad", "Icon-152.png", "152", "2x", "76x76", false },
+	{ "icons/ipad_167x167", "ipad", "Icon-167.png", "167", "2x", "83.5x83.5", false },
 
 	// App Store
-	{ "icons/app_store_1024x1024", "ios-marketing", "Icon-1024.png", "1024", "1x", "1024x1024" },
+	{ "icons/app_store_1024x1024", "ios-marketing", "Icon-1024.png", "1024", "1x", "1024x1024", true },
 
 	// Spotlight
-	{ "icons/spotlight_40x40", "ipad", "Icon-40.png", "40", "1x", "40x40" },
-	{ "icons/spotlight_80x80", "iphone", "Icon-80.png", "80", "2x", "40x40" },
-	{ "icons/spotlight_80x80", "ipad", "Icon-80.png", "80", "2x", "40x40" }
+	{ "icons/spotlight_40x40", "ipad", "Icon-40.png", "40", "1x", "40x40", false },
+	{ "icons/spotlight_80x80", "iphone", "Icon-80.png", "80", "2x", "40x40", false },
+	{ "icons/spotlight_80x80", "ipad", "Icon-80.png", "80", "2x", "40x40", false }
 };
 
 Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_preset, const String &p_iconset_dir) {
@@ -816,14 +863,20 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 			Ref<Image> img = memnew(Image);
 			Error err = ImageLoader::load_image(icon_path, img);
 			if (err != OK) {
-				ERR_PRINT("Invalid icon (" + String(info.preset_key) + "): '" + icon_path + "'.");
+				memdelete(da);
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Invalid icon (%s): '%s'.", info.preset_key, icon_path));
+				return ERR_UNCONFIGURED;
+			}
+			if (info.force_opaque && img->detect_alpha() != Image::ALPHA_NONE) {
+				memdelete(da);
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Icon (%s) must be opaque.", info.preset_key));
 				return ERR_UNCONFIGURED;
 			}
 			img->resize(side_size, side_size);
 			err = img->save_png(p_iconset_dir + info.export_name);
 			if (err) {
-				String err_str = String("Failed to export icon(" + String(info.preset_key) + "): '" + icon_path + "'.");
-				ERR_PRINT(err_str.utf8().get_data());
+				memdelete(da);
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Failed to export icon (%s): '%s'.", info.preset_key, icon_path));
 				return err;
 			}
 		} else {
@@ -831,11 +884,17 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 			Ref<Image> img = memnew(Image);
 			Error err = ImageLoader::load_image(icon_path, img);
 			if (err != OK) {
-				ERR_PRINT("Invalid icon (" + String(info.preset_key) + "): '" + icon_path + "'.");
+				memdelete(da);
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Invalid icon (%s): '%s'.", info.preset_key, icon_path));
+				return ERR_UNCONFIGURED;
+			}
+			if (info.force_opaque && img->detect_alpha() != Image::ALPHA_NONE) {
+				memdelete(da);
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Icon (%s) must be opaque.", info.preset_key));
 				return ERR_UNCONFIGURED;
 			}
 			if (img->get_width() != side_size || img->get_height() != side_size) {
-				WARN_PRINT("Icon (" + String(info.preset_key) + "): '" + icon_path + "' has incorrect size (" + String::num_int64(img->get_width()) + "x" + String::num_int64(img->get_height()) + ") and was automatically resized to " + String::num_int64(side_size) + "x" + String::num_int64(side_size) + ".");
+				add_message(EXPORT_MESSAGE_WARNING, TTR("Export Icons"), vformat("Icon (%s): '%s' has incorrect size %s and was automatically resized to %s.", info.preset_key, icon_path, img->get_size(), Vector2(side_size, side_size)));
 				img->resize(side_size, side_size);
 				err = img->save_png(p_iconset_dir + info.export_name);
 			} else {
@@ -844,8 +903,7 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 
 			if (err) {
 				memdelete(da);
-				String err_str = String("Failed to export icon(" + String(info.preset_key) + "): '" + icon_path + "'.");
-				ERR_PRINT(err_str.utf8().get_data());
+				add_message(EXPORT_MESSAGE_ERROR, TTR("Export Icons"), vformat("Failed to export icon (%s): '%s'.", info.preset_key, icon_path));
 				return err;
 			}
 		}
@@ -1591,6 +1649,10 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 
 		plugin_initialization_cpp_code += "\t" + initialization_method;
 		plugin_deinitialization_cpp_code += "\t" + deinitialization_method;
+
+		if (plugin.use_swift_runtime) {
+			p_config_data.use_swift_runtime = true;
+		}
 	}
 
 	// Updating `Info.plist`
@@ -1775,7 +1837,8 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		"",
 		"",
 		"",
-		Vector<String>()
+		Vector<String>(),
+		false
 	};
 
 	Vector<IOSExportAsset> assets;
@@ -1905,16 +1968,20 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 			f->store_line("CFBundleDisplayName = \"" + ProjectSettings::get_singleton()->get("application/config/name").operator String() + "\";");
 		}
 
-		for (int i = 0; i < translations.size(); i++) {
-			Ref<Translation> tr = ResourceLoader::load(translations[i]);
-			if (tr.is_valid()) {
-				String fname = dest_dir + binary_name + "/" + tr->get_locale() + ".lproj";
-				tmp_app_path->make_dir_recursive(fname);
-				FileAccessRef f = FileAccess::open(fname + "/InfoPlist.strings", FileAccess::WRITE);
-				String prop = "application/config/name_" + tr->get_locale();
-				if (ProjectSettings::get_singleton()->has_setting(prop)) {
-					f->store_line("CFBundleDisplayName = \"" + ProjectSettings::get_singleton()->get(prop).operator String() + "\";");
-				}
+		Set<String> languages;
+		for (int j = 0; j < translations.size(); j++) {
+			Ref<Translation> tr = ResourceLoader::load(translations[j]);
+			if (tr.is_valid() && tr->get_locale() != "en") {
+				languages.insert(tr->get_locale());
+			}
+		}
+		for (const Set<String>::Element *E = languages.front(); E; E = E->next()) {
+			String fname = dest_dir + binary_name + "/" + E->get() + ".lproj";
+			tmp_app_path->make_dir_recursive(fname);
+			FileAccessRef f = FileAccess::open(fname + "/InfoPlist.strings", FileAccess::WRITE);
+			String prop = "application/config/name_" + E->get();
+			if (ProjectSettings::get_singleton()->has_setting(prop)) {
+				f->store_line("CFBundleDisplayName = \"" + ProjectSettings::get_singleton()->get(prop).operator String() + "\";");
 			}
 		}
 	}
@@ -2064,7 +2131,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	return OK;
 }
 
-bool EditorExportPlatformIOS::can_export(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
+bool EditorExportPlatformIOS::has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates) const {
 	String err;
 	bool valid = false;
 
@@ -2089,7 +2156,18 @@ bool EditorExportPlatformIOS::can_export(const Ref<EditorExportPreset> &p_preset
 	valid = dvalid || rvalid;
 	r_missing_templates = !valid;
 
-	// Validate the rest of the configuration.
+	if (!err.empty()) {
+		r_error = err;
+	}
+
+	return valid;
+}
+
+bool EditorExportPlatformIOS::has_valid_project_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error) const {
+	String err;
+	bool valid = true;
+
+	// Validate the project configuration.
 
 	String team_id = p_preset->get("application/app_store_team_id");
 	if (team_id.length() == 0) {
@@ -2124,12 +2202,16 @@ EditorExportPlatformIOS::EditorExportPlatformIOS() {
 
 	plugins_changed.set();
 
+#ifndef ANDROID_ENABLED
 	check_for_changes_thread.start(_check_for_changes_poll_thread, this);
+#endif
 }
 
 EditorExportPlatformIOS::~EditorExportPlatformIOS() {
+#ifndef ANDROID_ENABLED
 	quit_request.set();
 	check_for_changes_thread.wait_to_finish();
+#endif
 }
 
 void register_iphone_exporter() {

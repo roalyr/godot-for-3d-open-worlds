@@ -51,7 +51,6 @@ class VisualServerWrapMT : public VisualServer {
 	SafeFlag draw_thread_up;
 	bool create_thread;
 
-	SafeNumeric<uint64_t> draw_pending;
 	void thread_draw(bool p_swap_buffers, double frame_step);
 	void thread_flush();
 
@@ -210,7 +209,7 @@ public:
 
 	FUNC3(multimesh_set_as_bulk_array_interpolated, RID, const PoolVector<float> &, const PoolVector<float> &)
 	FUNC2(multimesh_set_physics_interpolated, RID, bool)
-	FUNC2(multimesh_set_physics_interpolation_quality, RID, int)
+	FUNC2(multimesh_set_physics_interpolation_quality, RID, MultimeshPhysicsInterpolationQuality)
 	FUNC2(multimesh_instance_reset_physics_interpolation, RID, int)
 
 	FUNC2(multimesh_set_visible_instances, RID, int)
@@ -485,6 +484,7 @@ public:
 	FUNC2(instance_set_base, RID, RID)
 	FUNC2(instance_set_scenario, RID, RID)
 	FUNC2(instance_set_layer_mask, RID, uint32_t)
+	FUNC3(instance_set_pivot_data, RID, float, bool)
 	FUNC2(instance_set_transform, RID, const Transform &)
 	FUNC2(instance_set_interpolated, RID, bool)
 	FUNC1(instance_reset_physics_interpolation, RID)
@@ -732,4 +732,4 @@ public:
 #endif
 #undef SYNC_DEBUG
 
-#endif
+#endif // VISUAL_SERVER_WRAP_MT_H

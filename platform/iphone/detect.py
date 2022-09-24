@@ -64,11 +64,20 @@ def configure(env):
         env.Append(CCFLAGS=["-gdwarf-2", "-O0"])
         env.Append(CPPDEFINES=["_DEBUG", ("DEBUG", 1)])
 
-    if env["use_lto"]:
-        env.Append(CCFLAGS=["-flto"])
-        env.Append(LINKFLAGS=["-flto"])
+    ## LTO
 
-    ## Architecture
+    if env["lto"] == "auto":  # Disable by default as it makes linking in Xcode very slow.
+        env["lto"] = "none"
+
+    if env["lto"] != "none":
+        if env["lto"] == "thin":
+            env.Append(CCFLAGS=["-flto=thin"])
+            env.Append(LINKFLAGS=["-flto=thin"])
+        else:
+            env.Append(CCFLAGS=["-flto"])
+            env.Append(LINKFLAGS=["-flto"])
+
+    # Architecture
     if env["arch"] == "x86":  # i386
         env["bits"] = "32"
     elif env["arch"] == "x86_64":
@@ -109,15 +118,21 @@ def configure(env):
 
     if env["ios_simulator"]:
         detect_darwin_sdk_path("iphonesimulator", env)
+        env.Append(ASFLAGS=["-mios-simulator-version-min=10.0"])
         env.Append(CCFLAGS=["-mios-simulator-version-min=10.0"])
         env.Append(LINKFLAGS=["-mios-simulator-version-min=10.0"])
         env.extra_suffix = ".simulator" + env.extra_suffix
     else:
         detect_darwin_sdk_path("iphone", env)
+        env.Append(ASFLAGS=["-miphoneos-version-min=10.0"])
         env.Append(CCFLAGS=["-miphoneos-version-min=10.0"])
         env.Append(LINKFLAGS=["-miphoneos-version-min=10.0"])
 
     if env["arch"] == "x86" or env["arch"] == "x86_64":
+        if not env["ios_simulator"]:
+            print("ERROR: Building for iOS with 'arch=x86_64' or 'arch=x86' requires 'ios_simulator=yes'.")
+            sys.exit(255)
+
         env["ENV"]["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
         arch_flag = "i386" if env["arch"] == "x86" else env["arch"]
         env.Append(
@@ -127,16 +142,19 @@ def configure(env):
                 + " -fobjc-arc -fobjc-abi-version=2 -fobjc-legacy-dispatch -fmessage-length=0 -fpascal-strings -fblocks -fasm-blocks -isysroot $IPHONESDK"
             ).split()
         )
+        env.Append(ASFLAGS=["-arch", arch_flag])
     elif env["arch"] == "arm":
         detect_darwin_sdk_path("iphone", env)
         env.Append(
             CCFLAGS='-fobjc-arc -arch armv7 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -isysroot $IPHONESDK -fvisibility=hidden -mthumb "-DIBOutlet=__attribute__((iboutlet))" "-DIBOutletCollection(ClassName)=__attribute__((iboutletcollection(ClassName)))" "-DIBAction=void)__attribute__((ibaction)" -MMD -MT dependencies'.split()
         )
+        env.Append(ASFLAGS=["-arch", "armv7"])
     elif env["arch"] == "arm64":
         detect_darwin_sdk_path("iphone", env)
         env.Append(
             CCFLAGS="-fobjc-arc -arch arm64 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -fvisibility=hidden -MMD -MT dependencies -isysroot $IPHONESDK".split()
         )
+        env.Append(ASFLAGS=["-arch", "arm64"])
         env.Append(CPPDEFINES=["NEED_LONG_INT"])
         env.Append(CPPDEFINES=["LIBYUV_DISABLE_NEON"])
 

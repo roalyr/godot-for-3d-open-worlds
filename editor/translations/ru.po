@@ -78,14 +78,14 @@
 # Alex Tern <ternvein@gmail.com>, 2020.
 # Varion Drakon Neonovich <variondrakon@gmail.com>, 2020.
 # d2cyb <dmitrydpb@gmail.com>, 2020.
-# Алексей Смирнов <tir74@mail.ru>, 2020.
+# Алексей Смирнов <tir74@mail.ru>, 2020, 2022.
 # Calamander <Calamander@yandex.ru>, 2020.
 # Terminator <fresh-ter@yandex.com>, 2020.
 # Anatoly Kuznetsov <muffinnorth@yandex.ru>, 2020.
 # kyanukovich <ianu0001@algonquinlive.com>, 2020.
 # Ron788 <ustinov200511@gmail.com>, 2020.
 # Daniel <dan.ef1999@gmail.com>, 2020.
-# NeoLan Qu <it.bulla@mail.ru>, 2020.
+# NeoLan Qu <it.bulla@mail.ru>, 2020, 2022.
 # Nikita Epifanov <nikgreens@protonmail.com>, 2020.
 # Cube Show <griiv.06@gmail.com>, 2020.
 # Roman Tolkachyov <roman@tolkachyov.name>, 2020.
@@ -118,13 +118,19 @@
 # Jasuse <jasusemaele@gmail.com>, 2022.
 # Vadim Mitroshkin <Vadim7540@yandex.ru>, 2022.
 # Maksim Marchukov <mar.maksim63@gmail.com>, 2022.
+# Slava Beloglazov <slavathedeveloper@gmail.com>, 2022.
+# Sned Of Bread <d.cto20181389@gmail.com>, 2022.
+# Kedr <lava20121991@gmail.com>, 2022.
+# Gulpy <yak.aryslan.1999@gmail.com>, 2022.
+# Sergey Karmanov <ppoocpel8888@gmail.com>, 2022.
+# Дмитрий <Dimega@inbox.ru>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2022-07-17 07:14+0000\n"
-"Last-Translator: Maksim Marchukov <mar.maksim63@gmail.com>\n"
+"PO-Revision-Date: 2022-09-01 15:11+0000\n"
+"Last-Translator: Дмитрий <Dimega@inbox.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/godot-engine/"
 "godot/ru/>\n"
 "Language: ru\n"
@@ -133,7 +139,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 4.14-dev\n"
+"X-Generator: Weblate 4.14.1-dev\n"
 
 #: core/bind/core_bind.cpp main/main.cpp
 msgid "Tablet Driver"
@@ -505,9 +511,8 @@ msgid "Command"
 msgstr "Command"
 
 #: core/os/input_event.cpp
-#, fuzzy
 msgid "Physical"
-msgstr "(Физическая)"
+msgstr "Физический"
 
 #: core/os/input_event.cpp scene/2d/touch_screen_button.cpp
 #: scene/gui/base_button.cpp scene/gui/texture_button.cpp
@@ -561,7 +566,7 @@ msgstr "Давление"
 
 #: core/os/input_event.cpp
 msgid "Pen Inverted"
-msgstr ""
+msgstr "Перо Инвертировано"
 
 #: core/os/input_event.cpp
 msgid "Relative"
@@ -763,14 +768,12 @@ msgid "Script Templates Search Path"
 msgstr "Путь поиска шаблонов скриптов"
 
 #: core/project_settings.cpp
-#, fuzzy
 msgid "Version Control Autoload On Startup"
-msgstr "Автозагрузка при запуске"
+msgstr "Автозагрузка системы управления версиями при запуске"
 
 #: core/project_settings.cpp
-#, fuzzy
 msgid "Version Control Plugin Name"
-msgstr "Контроль версий"
+msgstr "Название плагина контроля версий"
 
 #: core/project_settings.cpp scene/2d/collision_object_2d.cpp
 #: scene/3d/collision_object.cpp scene/gui/control.cpp
@@ -1244,9 +1247,8 @@ msgid "Value"
 msgstr "Значение"
 
 #: editor/animation_track_editor.cpp
-#, fuzzy
 msgid "Arg Count"
-msgstr "Количество"
+msgstr "Количество Аргументов"
 
 #: editor/animation_track_editor.cpp main/main.cpp
 #: modules/mono/mono_gd/gd_mono.cpp
@@ -1437,24 +1439,22 @@ msgid "(Invalid, expected type: %s)"
 msgstr "(Неверный, ожидаемый тип: %s)"
 
 #: editor/animation_track_editor.cpp
-#, fuzzy
 msgid "Easing:"
-msgstr "Переход В-ИЗ"
+msgstr "Переход В-ИЗ:"
 
 #: editor/animation_track_editor.cpp
 #, fuzzy
 msgid "In-Handle:"
-msgstr "Задать обработчик"
+msgstr "Обработчик Ввода:"
 
 #: editor/animation_track_editor.cpp
 #, fuzzy
 msgid "Out-Handle:"
-msgstr "Задать обработчик"
+msgstr "Обработчик Вывода:"
 
 #: editor/animation_track_editor.cpp
-#, fuzzy
 msgid "Stream:"
-msgstr "Поток"
+msgstr "Поток:"
 
 #: editor/animation_track_editor.cpp
 msgid "Start (s):"
@@ -2215,14 +2215,15 @@ msgstr "Избранное:"
 msgid "Recent:"
 msgstr "Недавнее:"
 
-#: editor/create_dialog.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp editor/rename_dialog.cpp
+#: editor/create_dialog.cpp editor/editor_quick_open.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
+#: editor/rename_dialog.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 msgid "Search:"
 msgstr "Поиск:"
 
-#: editor/create_dialog.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp
+#: editor/create_dialog.cpp editor/editor_quick_open.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 msgid "Matches:"
 msgstr "Совпадения:"
@@ -2282,8 +2283,8 @@ msgstr "Найти заменяемый ресурс:"
 
 #: editor/dependency_editor.cpp editor/editor_file_dialog.cpp
 #: editor/editor_help_search.cpp editor/editor_node.cpp
-#: editor/filesystem_dock.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp
+#: editor/editor_quick_open.cpp editor/filesystem_dock.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
 #: editor/script_create_dialog.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 #: scene/gui/file_dialog.cpp
@@ -2292,7 +2293,7 @@ msgstr "Открыть"
 
 #: editor/dependency_editor.cpp
 msgid "Owners of: %s (Total: %d)"
-msgstr ""
+msgstr "Владельцы: %s (Всего: %d)"
 
 #: editor/dependency_editor.cpp
 msgid ""
@@ -2342,9 +2343,8 @@ msgid "Fix Dependencies"
 msgstr "Исправить зависимости"
 
 #: editor/dependency_editor.cpp
-#, fuzzy
 msgid "Errors loading!"
-msgstr "Ошибки загружаются!"
+msgstr "Ошибки при загрузке!"
 
 #: editor/dependency_editor.cpp
 msgid "Permanently delete %d item(s)? (No undo!)"
@@ -2851,22 +2851,19 @@ msgstr "Выбрать"
 
 #: editor/editor_export.cpp
 msgid "Project export for platform:"
-msgstr ""
+msgstr "Экспорт проекта для платформы:"
 
 #: editor/editor_export.cpp
-#, fuzzy
-msgid "Completed with errors."
-msgstr "Завершать пути файлов"
+msgid "Completed with warnings."
+msgstr "Завершено с ошибками."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Completed successfully."
-msgstr "Пакет успешно установлен!"
+msgstr "Завершено без ошибок."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Failed."
-msgstr "Не удалось:"
+msgstr "Ошибка."
 
 #: editor/editor_export.cpp
 msgid "Storing File:"
@@ -2881,45 +2878,40 @@ msgid "Packing"
 msgstr "Упаковывание"
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Save PCK"
-msgstr "Сохранить как"
+msgstr "Сохранить PCK"
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Cannot create file \"%s\"."
-msgstr "Невозможно создать папку."
+msgstr "Невозможно создать файл \"%s\"."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Failed to export project files."
-msgstr "Не удалось экспортировать файлы проекта"
+msgstr "Не удалось экспортировать файлы проекта."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Can't open file to read from path \"%s\"."
-msgstr "Невозможно открыть файл для записи:"
+msgstr "Не удается открыть файл для чтения из пути \"%s\"."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Save ZIP"
-msgstr "Сохранить как"
+msgstr "Сохранить ZIP"
 
 #: editor/editor_export.cpp
 msgid ""
 "Target platform requires 'ETC' texture compression for GLES2. Enable 'Import "
 "Etc' in Project Settings."
 msgstr ""
-"Целевая платформа требует сжатие текстур «ETC» для GLES2. Включите «Import "
-"Etc» в Настройках проекта."
+"Целевая платформа требует сжатие текстур «ETC» для GLES2. Включите "
+"«Импортировать Etc» в Настройках Проекта."
 
 #: editor/editor_export.cpp
 msgid ""
 "Target platform requires 'ETC2' texture compression for GLES3. Enable "
 "'Import Etc 2' in Project Settings."
 msgstr ""
-"Целевая платформа требует компрессию текстур «ETC2» для GLES2. Включите "
-"«Import Etc 2» в Настройках проекта."
+"Целевая платформа требует компрессию текстур «ETC2» для GLES3. Включите "
+"«Импортировать Etc 2» в Настройках Проекта."
 
 #: editor/editor_export.cpp
 msgid ""
@@ -2929,8 +2921,8 @@ msgid ""
 "Enabled'."
 msgstr ""
 "Целевая платформа требует сжатия текстур «ETC» для отката драйвера к GLES2.\n"
-"Включите «Import Etc» в Настройках проекта или отключите «Driver Fallback "
-"Enabled»."
+"Включите «Импортировать Etc» в Настройках проекта или отключите «Driver "
+"Fallback Enabled»."
 
 #: editor/editor_export.cpp
 msgid ""
@@ -2946,7 +2938,8 @@ msgid ""
 "Enable 'Import Etc 2' or 'Import Pvrtc' in Project Settings."
 msgstr ""
 "Целевая платформа требует компрессию текстур «ETC2» или «PVRTC» для GLES3. "
-"Включите «Import Etc 2» или «Import Pvrtc» в Настройках проекта."
+"Включите «Импортировать Etc 2» или «Импортировать Pvrtc» в Настройках "
+"Проекта."
 
 #: editor/editor_export.cpp
 msgid ""
@@ -3022,30 +3015,25 @@ msgid "Custom release template not found."
 msgstr "Пользовательский релизный шаблон не найден."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Prepare Template"
-msgstr "Управление шаблонами"
+msgstr "Подготовить шаблон"
 
 #: editor/editor_export.cpp platform/osx/export/export.cpp
-#, fuzzy
 msgid "The given export path doesn't exist."
-msgstr "Данный путь экспорта не существует:"
+msgstr "Указанный путь экспорта не существует."
 
 #: editor/editor_export.cpp platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Template file not found: \"%s\"."
-msgstr "Файл шаблона не найден:"
+msgstr "Не найден файл шаблона: \"%s\"."
 
 #: editor/editor_export.cpp
-#, fuzzy
 msgid "Failed to copy export template."
-msgstr "Неверный шаблон экспорта:"
+msgstr "Не удалось скопировать шаблон экспорта."
 
 #: editor/editor_export.cpp platform/windows/export/export.cpp
 #: platform/x11/export/export.cpp
-#, fuzzy
 msgid "PCK Embedding"
-msgstr "Отступ"
+msgstr "Встраивание PCK"
 
 #: editor/editor_export.cpp
 msgid "On 32-bit exports the embedded PCK cannot be bigger than 4 GiB."
@@ -4597,6 +4585,7 @@ msgstr "Прочие инструменты."
 
 #: editor/editor_node.cpp editor/project_manager.cpp
 #: editor/script_create_dialog.cpp modules/mono/editor/csharp_project.cpp
+#: modules/mono/godotsharp_dirs.cpp
 msgid "Project"
 msgstr "Проект"
 
@@ -5314,9 +5303,8 @@ msgstr ""
 "существующий пресет как активный."
 
 #: editor/editor_run_native.cpp
-#, fuzzy
 msgid "Project Run"
-msgstr "Проект"
+msgstr "Запуск проекта"
 
 #: editor/editor_run_script.cpp
 msgid "Write your logic in the _run() method."
@@ -5599,9 +5587,12 @@ msgid "Mouse Extra Buttons Navigate History"
 msgstr "Навигация по истории дополнительными кнопками мыши"
 
 #: editor/editor_settings.cpp
-#, fuzzy
 msgid "Drag And Drop Selection"
-msgstr "Выделение сетки"
+msgstr "DragAndDrop выделение"
+
+#: editor/editor_settings.cpp
+msgid "Stay In Script Editor On Node Selected"
+msgstr "Остаться в Редакторе Скриптов На Выбранном Узле"
 
 #: editor/editor_settings.cpp
 msgid "Appearance"
@@ -7257,12 +7248,17 @@ msgid ""
 "%s: Texture detected as used as a normal map in 3D. Enabling red-green "
 "texture compression to reduce memory usage (blue channel is discarded)."
 msgstr ""
+"%s: Выбранная текстура используется как карта нормалей в 3D. Включено красно-"
+"зелёное сжатие текстуры для уменьшения использования памяти (синий канал "
+"отбрасывается)."
 
 #: editor/import/resource_importer_texture.cpp
 msgid ""
 "%s: Texture detected as used in 3D. Enabling filter, repeat, mipmap "
 "generation and VRAM texture compression."
 msgstr ""
+"%s: Текстура используется в 3D. Включена фильтрация, повторение и генерация "
+"mipmap-карт, а также VRAM сжатие текстуры."
 
 #: editor/import/resource_importer_texture.cpp
 msgid "2D, Detect 3D"
@@ -7360,7 +7356,8 @@ msgid "8 Bit"
 msgstr "8-бит"
 
 #: editor/import/resource_importer_wav.cpp main/main.cpp
-#: modules/mono/editor/csharp_project.cpp modules/mono/mono_gd/gd_mono.cpp
+#: modules/mono/editor/csharp_project.cpp modules/mono/godotsharp_dirs.cpp
+#: modules/mono/mono_gd/gd_mono.cpp
 msgid "Mono"
 msgstr "Моно"
 
@@ -11593,9 +11590,8 @@ msgid "Invalid geometry, can't replace by mesh."
 msgstr "Недопустимая геометрия, не может быть заменена полисеткой."
 
 #: editor/plugins/sprite_editor_plugin.cpp
-#, fuzzy
 msgid "Convert to MeshInstance2D"
-msgstr "Преобразовать в Mesh2D"
+msgstr "Преобразование в MeshInstance2D"
 
 #: editor/plugins/sprite_editor_plugin.cpp
 msgid "Invalid geometry, can't create polygon."
@@ -11697,6 +11693,11 @@ msgstr "Анимации:"
 #: editor/plugins/sprite_frames_editor_plugin.cpp
 msgid "New Animation"
 msgstr "Новая анимация"
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+#, fuzzy
+msgid "Filter animations"
+msgstr "Фильтровать анимации"
 
 #: editor/plugins/sprite_frames_editor_plugin.cpp
 msgid "Speed:"
@@ -14220,12 +14221,10 @@ msgid "Export All"
 msgstr "Экспортировать всё"
 
 #: editor/project_export.cpp
-#, fuzzy
 msgid "Choose an export mode:"
-msgstr "Пожалуйста, выберите пустую папку."
+msgstr "Пожалуйста, выберите режим экспорта:"
 
 #: editor/project_export.cpp
-#, fuzzy
 msgid "Export All..."
 msgstr "Экспортировать всё"
 
@@ -14382,7 +14381,7 @@ msgstr "Отрисовщик:"
 
 #: editor/project_manager.cpp
 msgid "OpenGL ES 3.0"
-msgstr "ОткрытыйGL ES 3.0"
+msgstr "OpenGL ES 3.0"
 
 #: editor/project_manager.cpp
 msgid "Not supported by your GPU drivers."
@@ -14402,7 +14401,7 @@ msgstr ""
 
 #: editor/project_manager.cpp
 msgid "OpenGL ES 2.0"
-msgstr "ОткрытыйGL ES 2.0"
+msgstr "OpenGL ES 2.0"
 
 #: editor/project_manager.cpp
 msgid ""
@@ -15359,16 +15358,19 @@ msgstr ""
 msgid "Make Local"
 msgstr "Сделать локальным"
 
-#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
-msgid "Another node already uses this unique name in the scene."
-msgstr "Имя узла уже использовано в сцене"
-
 #: editor/scene_tree_dock.cpp
-msgid "Enable Scene Unique Name"
+#, fuzzy
+msgid "Enable Scene Unique Name(s)"
 msgstr "Добавить уникальное имя сцене"
 
-#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
-msgid "Disable Scene Unique Name"
+#: editor/scene_tree_dock.cpp
+#, fuzzy
+msgid "Unique names already used by another node in the scene:"
+msgstr "Данное уникальное имя уже использовано у другого узла в сцене."
+
+#: editor/scene_tree_dock.cpp
+#, fuzzy
+msgid "Disable Scene Unique Name(s)"
 msgstr "Убрать уникальное имя в сцене"
 
 #: editor/scene_tree_dock.cpp
@@ -15569,6 +15571,10 @@ msgid "Button Group"
 msgstr "Группа кнопок"
 
 #: editor/scene_tree_editor.cpp
+msgid "Disable Scene Unique Name"
+msgstr "Убрать уникальное имя в сцене"
+
+#: editor/scene_tree_editor.cpp
 msgid "(Connecting From)"
 msgstr "(Источник)"
 
@@ -15644,6 +15650,10 @@ msgstr ""
 #: editor/scene_tree_editor.cpp
 msgid "Invalid node name, the following characters are not allowed:"
 msgstr "Некорректное имя узла, следующие символы недопустимы:"
+
+#: editor/scene_tree_editor.cpp
+msgid "Another node already uses this unique name in the scene."
+msgstr "Данное уникальное имя уже использовано у другого узла в сцене."
 
 #: editor/scene_tree_editor.cpp
 msgid "Rename Node"
@@ -15794,9 +15804,8 @@ msgid "Attach Node Script"
 msgstr "Прикрепить скрипт"
 
 #: editor/script_editor_debugger.cpp
-#, fuzzy
 msgid "Remote %s:"
-msgstr "Удаленный "
+msgstr "Удаленный %s:"
 
 #: editor/script_editor_debugger.cpp
 msgid "Bytes:"
@@ -16774,7 +16783,7 @@ msgstr "Выключен GDNative синглтон"
 #: modules/gdnative/gdnative_library_singleton_editor.cpp
 #, fuzzy
 msgid "Libraries:"
-msgstr "Библиотеки: "
+msgstr "Библиотеки:"
 
 #: modules/gdnative/nativescript/nativescript.cpp
 msgid "Class Name"
@@ -17041,29 +17050,29 @@ msgstr "Узел кости Godot"
 #: modules/gltf/gltf_skin.cpp
 #, fuzzy
 msgid "Skin Root"
-msgstr "Новый корень сцены"
+msgstr "Корневой скин"
 
 #: modules/gltf/gltf_skin.cpp
 #, fuzzy
 msgid "Joints Original"
-msgstr "Сфокусироваться на начале координат"
+msgstr "Суставы Оригинал"
 
 #: modules/gltf/gltf_skin.cpp
 msgid "Inverse Binds"
-msgstr ""
+msgstr "Инвертировать Связи"
 
 #: modules/gltf/gltf_skin.cpp
 #, fuzzy
 msgid "Non Joints"
-msgstr "Передвинуть сустав"
+msgstr "Не Суставы"
 
 #: modules/gltf/gltf_skin.cpp
 msgid "Joint I To Bone I"
-msgstr ""
+msgstr "Узел I к Кости I"
 
 #: modules/gltf/gltf_skin.cpp
 msgid "Joint I To Name"
-msgstr ""
+msgstr "Узел I К Имени"
 
 #: modules/gltf/gltf_skin.cpp
 msgid "Godot Skin"
@@ -17079,7 +17088,7 @@ msgstr "Диффузный фактор"
 
 #: modules/gltf/gltf_spec_gloss.cpp
 msgid "Gloss Factor"
-msgstr ""
+msgstr "Коэфф. Глянца"
 
 #: modules/gltf/gltf_spec_gloss.cpp
 #, fuzzy
@@ -17088,7 +17097,7 @@ msgstr "Зеркальный коэффициент"
 
 #: modules/gltf/gltf_spec_gloss.cpp
 msgid "Spec Gloss Img"
-msgstr ""
+msgstr "Зеркальное Глянцевое Изображение"
 
 #: modules/gltf/gltf_state.cpp
 msgid "Json"
@@ -17105,16 +17114,16 @@ msgstr "Младшая версия"
 #: modules/gltf/gltf_state.cpp
 #, fuzzy
 msgid "GLB Data"
-msgstr "С данными"
-
-#: modules/gltf/gltf_state.cpp
-msgid "Use Named Skin Binds"
-msgstr ""
+msgstr "GLB Данные"
 
 #: modules/gltf/gltf_state.cpp
 #, fuzzy
+msgid "Use Named Skin Binds"
+msgstr "Использовать Связи Именованного Скина"
+
+#: modules/gltf/gltf_state.cpp
 msgid "Buffer Views"
-msgstr "Вид сзади"
+msgstr "Буфер видов"
 
 #: modules/gltf/gltf_state.cpp
 msgid "Accessors"
@@ -17379,23 +17388,23 @@ msgstr "Построение карт освещения"
 #: modules/lightmapper_cpu/register_types.cpp
 #, fuzzy
 msgid "CPU Lightmapper"
-msgstr "Запекать карты освещения"
+msgstr "CPU Карты освещения"
 
 #: modules/lightmapper_cpu/register_types.cpp
 msgid "Low Quality Ray Count"
-msgstr ""
+msgstr "Количество Лучей Низкого Качества"
 
 #: modules/lightmapper_cpu/register_types.cpp
 msgid "Medium Quality Ray Count"
-msgstr ""
+msgstr "Количество Лучей Среднего Качества"
 
 #: modules/lightmapper_cpu/register_types.cpp
 msgid "High Quality Ray Count"
-msgstr ""
+msgstr "Количество Лучей Высокого Качества"
 
 #: modules/lightmapper_cpu/register_types.cpp
 msgid "Ultra Quality Ray Count"
-msgstr ""
+msgstr "Количество Лучей Ультра Качества"
 
 #: modules/minimp3/audio_stream_mp3.cpp
 #: modules/minimp3/resource_importer_mp3.cpp
@@ -17410,7 +17419,7 @@ msgstr "Высота глаз"
 
 #: modules/mobile_vr/mobile_vr_interface.cpp
 msgid "IOD"
-msgstr ""
+msgstr "IOD"
 
 #: modules/mobile_vr/mobile_vr_interface.cpp
 #, fuzzy
@@ -17424,15 +17433,15 @@ msgstr "Режим без теней"
 
 #: modules/mobile_vr/mobile_vr_interface.cpp
 msgid "Oversample"
-msgstr ""
+msgstr "Передискретизация"
 
 #: modules/mobile_vr/mobile_vr_interface.cpp
 msgid "K1"
-msgstr ""
+msgstr "K1"
 
 #: modules/mobile_vr/mobile_vr_interface.cpp
 msgid "K2"
-msgstr ""
+msgstr "K2"
 
 #: modules/mono/csharp_script.cpp
 msgid "Class name can't be a reserved keyword"
@@ -17445,6 +17454,21 @@ msgstr "Собрать решение"
 #: modules/mono/editor/csharp_project.cpp
 msgid "Auto Update Project"
 msgstr "Автообновление проекта"
+
+#: modules/mono/godotsharp_dirs.cpp
+#, fuzzy
+msgid "Assembly Name"
+msgstr "Масштаб отображения"
+
+#: modules/mono/godotsharp_dirs.cpp
+#, fuzzy
+msgid "Solution Directory"
+msgstr "Выбрать каталог"
+
+#: modules/mono/godotsharp_dirs.cpp
+#, fuzzy
+msgid "C# Project Directory"
+msgstr "Выбрать каталог"
 
 #: modules/mono/mono_gd/gd_mono_utils.cpp
 msgid "End of inner exception stack trace"
@@ -17526,7 +17550,7 @@ msgstr "Как карта нормалей"
 
 #: modules/opensimplex/noise_texture.cpp
 msgid "Bump Strength"
-msgstr ""
+msgstr "Сила Bump"
 
 #: modules/opensimplex/noise_texture.cpp
 msgid "Noise"
@@ -17552,7 +17576,7 @@ msgstr "Перспективный"
 
 #: modules/opensimplex/open_simplex_noise.cpp
 msgid "Lacunarity"
-msgstr ""
+msgstr "Лакунарность"
 
 #: modules/regex/regex.cpp
 msgid "Subject"
@@ -17568,7 +17592,7 @@ msgstr "Строки"
 
 #: modules/upnp/upnp.cpp
 msgid "Discover Multicast If"
-msgstr ""
+msgstr "Обнаружить Многоадресную Рассылку, Если"
 
 #: modules/upnp/upnp.cpp
 msgid "Discover Local Port"
@@ -17576,7 +17600,7 @@ msgstr "Обнаружить локальный порт"
 
 #: modules/upnp/upnp.cpp
 msgid "Discover IPv6"
-msgstr ""
+msgstr "Обнаружить IPv6"
 
 #: modules/upnp/upnp_device.cpp
 msgid "Description URL"
@@ -17588,7 +17612,7 @@ msgstr "Тип сервиса"
 
 #: modules/upnp/upnp_device.cpp
 msgid "IGD Control URL"
-msgstr ""
+msgstr "IDG Контроль URL"
 
 #: modules/upnp/upnp_device.cpp
 #, fuzzy
@@ -17597,7 +17621,7 @@ msgstr "Установить тип переменной"
 
 #: modules/upnp/upnp_device.cpp
 msgid "IGD Our Addr"
-msgstr ""
+msgstr "IGD Наш Адр"
 
 #: modules/upnp/upnp_device.cpp
 #, fuzzy
@@ -17628,9 +17652,8 @@ msgstr ""
 "памяти! Исправьте узел пожалуйста."
 
 #: modules/visual_script/visual_script.cpp
-#, fuzzy
 msgid "Node returned an invalid sequence output:"
-msgstr "Узел вернул ошибочную последовательность: "
+msgstr "Узел вернул ошибочный вывод последовательности:"
 
 #: modules/visual_script/visual_script.cpp
 msgid "Found sequence bit but not the node in the stack, report bug!"
@@ -17640,7 +17663,7 @@ msgstr ""
 #: modules/visual_script/visual_script.cpp
 #, fuzzy
 msgid "Stack overflow with stack depth:"
-msgstr "Переполнение стека с глубиной стека: "
+msgstr "Переполнение стека с глубиной стека:"
 
 #: modules/visual_script/visual_script.cpp
 msgid "Visual Script"
@@ -18009,7 +18032,7 @@ msgstr "для (элемент) в (вход):"
 #: modules/visual_script/visual_script_flow_control.cpp
 #, fuzzy
 msgid "Input type not iterable:"
-msgstr "Входной тип не итерируемый: "
+msgstr "Входной тип не итерируемый:"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Iterator became invalid"
@@ -18018,7 +18041,7 @@ msgstr "Итератор стал недействительным"
 #: modules/visual_script/visual_script_flow_control.cpp
 #, fuzzy
 msgid "Iterator became invalid:"
-msgstr "Итератор стал недействительным: "
+msgstr "Итератор стал недействительным:"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Sequence"
@@ -18172,14 +18195,12 @@ msgid "Operator"
 msgstr "Оператор"
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid "Invalid argument of type:"
-msgstr ": Недопустимый аргумент типа: "
+msgstr "Недопустимый аргумент типа:"
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid "Invalid arguments:"
-msgstr ": Недопустимые аргументы: "
+msgstr "Недопустимые аргументы:"
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "a if cond, else b"
@@ -18190,14 +18211,13 @@ msgid "Var Name"
 msgstr "Имя переменной"
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid "VariableGet not found in script:"
-msgstr "VariableGet не найден в скрипте: "
+msgstr "VariableGet отсутствует в скрипте:"
 
 #: modules/visual_script/visual_script_nodes.cpp
 #, fuzzy
 msgid "VariableSet not found in script:"
-msgstr "VariableSet не найден в скрипте: "
+msgstr "VariableSet не найден в скрипте:"
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "Preload"
@@ -18334,7 +18354,7 @@ msgstr "Режим записи"
 
 #: modules/webrtc/webrtc_data_channel.h
 msgid "WebRTC"
-msgstr ""
+msgstr "WebRTC"
 
 #: modules/webrtc/webrtc_data_channel.h
 #, fuzzy
@@ -18350,36 +18370,32 @@ msgid "Trusted SSL Certificate"
 msgstr "Доверенный SSL-сертификат"
 
 #: modules/websocket/websocket_macros.h
-#, fuzzy
 msgid "WebSocket Client"
-msgstr "Сетевой узел"
+msgstr "Клиент WebSocket"
 
 #: modules/websocket/websocket_macros.h
-#, fuzzy
 msgid "Max In Buffer (KB)"
-msgstr "Максимальный размер (КБ)"
+msgstr "Максимальный Входной Буфер (КБ)"
 
 #: modules/websocket/websocket_macros.h
 msgid "Max In Packets"
-msgstr ""
+msgstr "Максимальные Входящие Пакеты"
 
 #: modules/websocket/websocket_macros.h
-#, fuzzy
 msgid "Max Out Buffer (KB)"
-msgstr "Максимальный размер (КБ)"
+msgstr "Максимальный Буфер Вывода (КБ)"
 
 #: modules/websocket/websocket_macros.h
 msgid "Max Out Packets"
-msgstr ""
+msgstr "Максимальный Вывод Пакетов"
 
 #: modules/websocket/websocket_macros.h
-#, fuzzy
 msgid "WebSocket Server"
-msgstr "Сетевой узел"
+msgstr "Сервер WebSocket"
 
 #: modules/websocket/websocket_server.cpp
 msgid "Bind IP"
-msgstr ""
+msgstr "Привязать IP"
 
 #: modules/websocket/websocket_server.cpp
 msgid "Private Key"
@@ -18403,27 +18419,26 @@ msgid "Session Mode"
 msgstr "Режим сессии"
 
 #: modules/webxr/webxr_interface.cpp
-#, fuzzy
 msgid "Required Features"
-msgstr "Необходимые функции"
+msgstr "Необходимые Компоненты"
 
 #: modules/webxr/webxr_interface.cpp
-#, fuzzy
 msgid "Optional Features"
-msgstr "Дополнительные функции"
-
-#: modules/webxr/webxr_interface.cpp
-msgid "Requested Reference Space Types"
-msgstr ""
-
-#: modules/webxr/webxr_interface.cpp
-msgid "Reference Space Type"
-msgstr ""
+msgstr "Дополнительные Компоненты"
 
 #: modules/webxr/webxr_interface.cpp
 #, fuzzy
+msgid "Requested Reference Space Types"
+msgstr "Запрошенные Типы Опорного Пространства"
+
+#: modules/webxr/webxr_interface.cpp
+#, fuzzy
+msgid "Reference Space Type"
+msgstr "Тип Опорного Пространства"
+
+#: modules/webxr/webxr_interface.cpp
 msgid "Visibility State"
-msgstr "Переключить видимость"
+msgstr "Видимость"
 
 #: modules/webxr/webxr_interface.cpp
 #, fuzzy
@@ -18431,9 +18446,8 @@ msgid "Bounds Geometry"
 msgstr "Повторить"
 
 #: modules/webxr/webxr_interface.cpp
-#, fuzzy
 msgid "XR Standard Mapping"
-msgstr "Интеллектуальная привязка"
+msgstr "Стандартный Маппинг XR"
 
 #: platform/android/export/export.cpp
 msgid "Android SDK Path"
@@ -18445,12 +18459,14 @@ msgid "Debug Keystore"
 msgstr "Отладочное хранилище ключей"
 
 #: platform/android/export/export.cpp
+#, fuzzy
 msgid "Debug Keystore User"
-msgstr ""
+msgstr "Отладочное Хранилище ключей Пользователя"
 
 #: platform/android/export/export.cpp
+#, fuzzy
 msgid "Debug Keystore Pass"
-msgstr ""
+msgstr "Отладочное Хранилище ключей Паролей"
 
 #: platform/android/export/export.cpp
 msgid "Force System User"
@@ -18462,19 +18478,19 @@ msgstr "Выключение ADB при выходе"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Launcher Icons"
-msgstr ""
+msgstr "Иконки Лаунчера"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Main 192 X 192"
-msgstr ""
+msgstr "Основная 192 X 192"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Adaptive Foreground 432 X 432"
-msgstr ""
+msgstr "Адаптивный Передний Фон 432 X 432"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Adaptive Background 432 X 432"
-msgstr ""
+msgstr "Адаптивный Задний Фон 432 X 432"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Package name is missing."
@@ -18501,39 +18517,32 @@ msgid "The package must have at least one '.' separator."
 msgstr "Пакет должен иметь хотя бы один разделитель «.»."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Custom Build"
-msgstr "Использовать собственную директорию данных пользователя"
+msgstr "Настраиваемая Сборка"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Use Custom Build"
-msgstr "Использовать собственную директорию данных пользователя"
+msgstr "Использовать Настраиваемую Сборку"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Export Format"
-msgstr "Путь экспорта"
+msgstr "Формат Экспорта"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Min SDK"
-msgstr "Минимальный размер"
+msgstr "Min SDK"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Target SDK"
-msgstr "Целевой FPS"
+msgstr "Целевой SDK"
 
 #: platform/android/export/export_plugin.cpp platform/iphone/export/export.cpp
-#, fuzzy
 msgid "Architectures"
-msgstr "Добавить поле архитектуры"
+msgstr "Архитектуры"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Keystore"
-msgstr "Отладочное хранилище ключей"
+msgstr "Хранилище ключей"
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
@@ -18557,31 +18566,27 @@ msgstr "Пароль"
 
 #: platform/android/export/export_plugin.cpp
 msgid "One Click Deploy"
-msgstr ""
+msgstr "Развёртывание в Один Клик"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Clear Previous Install"
-msgstr "Осмотреть предыдущий экземпляр"
+msgstr "Очистить Предыдущую Установку"
 
 #: platform/android/export/export_plugin.cpp
 msgid "Code"
 msgstr "Код"
 
 #: platform/android/export/export_plugin.cpp platform/uwp/export/export.cpp
-#, fuzzy
 msgid "Package"
-msgstr "Упаковывание"
+msgstr "Пакет"
 
 #: platform/android/export/export_plugin.cpp platform/uwp/export/export.cpp
-#, fuzzy
 msgid "Unique Name"
-msgstr "Уникальные имена"
+msgstr "Уникальное Имя"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Signed"
-msgstr "Сигнал"
+msgstr "Подписано"
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
@@ -18603,9 +18608,8 @@ msgid "Graphics"
 msgstr "Смещение графа"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "OpenGL Debug"
-msgstr "Открыть"
+msgstr "OpenGL Отладка"
 
 #: platform/android/export/export_plugin.cpp
 #, fuzzy
@@ -18891,14 +18895,12 @@ msgid "Code Signing"
 msgstr "Подпись кода DMG"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid ""
 "'apksigner' could not be found. Please check that the command is available "
 "in the Android SDK build-tools directory. The resulting %s is unsigned."
 msgstr ""
-"Не удалось найти команду «apksigner».\n"
-"Пожалуйста, проверьте наличие программы в каталоге Android SDK build-tools.\n"
-"Результат %s не подписан."
+"Не удалось найти «apksigner». Пожалуйста, убедитесь в наличии команды в "
+"каталоге build-tools Android SDK. Результирующий %s не подписан."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Signing debug %s..."
@@ -18913,9 +18915,8 @@ msgid "Could not find keystore, unable to export."
 msgstr "Не удалось найти хранилище ключей, невозможно экспортировать."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Could not start apksigner executable."
-msgstr "Не удаётся запустить подпроцесс!"
+msgstr "Не удаётся запустить исполняемый файл apksigner."
 
 #: platform/android/export/export_plugin.cpp
 msgid "'apksigner' returned with error #%d"
@@ -18946,9 +18947,8 @@ msgid "Invalid filename! Android APK requires the *.apk extension."
 msgstr "Неверное имя файла! Android APK требует расширения *.apk."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Unsupported export format!"
-msgstr "Неподдерживаемый формат экспорта!\n"
+msgstr "Неподдерживаемый формат экспорта!"
 
 #: platform/android/export/export_plugin.cpp
 msgid ""
@@ -18959,27 +18959,21 @@ msgstr ""
 "не существует. Пожалуйста, переустановите из меню «Проект»."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid ""
 "Android build version mismatch: Template installed: %s, Godot version: %s. "
 "Please reinstall Android build template from 'Project' menu."
 msgstr ""
-"Несоответствие версии сборки Android:\n"
-"   Установлен шаблон: %s\n"
-"   Версия Godot: %s\n"
-"Пожалуйста, переустановите шаблон сборки Android из меню «Проект»."
+"Несоответствие версии сборки Android: Установлен шаблон: %s, версия Godot: "
+"%s. Пожалуйста, переустановите шаблон сборки Android из меню «Проект»."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid ""
 "Unable to overwrite res://android/build/res/*.xml files with project name."
-msgstr ""
-"Невозможно перезаписать файлы res://android/build/res/*.xml с именем проекта"
+msgstr "Невозможно перезаписать res://android/build/res/*.xml с именем проекта"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Could not export project files to gradle project."
-msgstr "Не удалось экспортировать файлы проекта в проект gradle\n"
+msgstr "Не удалось экспортировать файлы проекта в проект gradle."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Could not write expansion package file!"
@@ -18990,14 +18984,13 @@ msgid "Building Android Project (gradle)"
 msgstr "Сборка проекта Android (gradle)"
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid ""
 "Building of Android project failed, check output for the error. "
 "Alternatively visit docs.godotengine.org for Android build documentation."
 msgstr ""
-"Сборка проекта Android не удалась, проверьте вывод на ошибки.\n"
-"Также посетите docs.godotengine.org для получения документации по сборке "
-"Android."
+"Сборка Android проекта не удалась, проверьте вывод на ошибки. Вы также "
+"можете посетить docs.godotengine.org для получения документации по сборке "
+"для Android."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Moving output"
@@ -19012,40 +19005,34 @@ msgstr ""
 "проекта gradle на наличие выходных данных."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Package not found: \"%s\"."
-msgstr "Пакет не найден: %s"
+msgstr "Пакет не найден: \"%s\"."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Creating APK..."
 msgstr "Создание APK..."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Could not find template APK to export: \"%s\"."
-msgstr ""
-"Не удалось найти шаблон APK для экспорта:\n"
-"%s"
+msgstr "Не удалось найти шаблон APK для экспорта: \"%s\"."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid ""
 "Missing libraries in the export template for the selected architectures: %s. "
 "Please build a template with all required libraries, or uncheck the missing "
 "architectures in the export preset."
 msgstr ""
-"В шаблоне экспорта отсутствуют библиотеки для выбранных архитектур: %s.\n"
-"Пожалуйста, создайте шаблон со всеми необходимыми библиотеками или снимите "
-"флажки с отсутствующих архитектур в пресете экспорта."
+"В шаблоне экспорта отсутствуют библиотеки для выбранных архитектур: %s. "
+"Пожалуйста, постройте шаблон со всеми необходимыми библиотеками или снимите "
+"флажки с отсутствующих архитектур в предустановках экспорта."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Adding files..."
 msgstr "Добавление файлов..."
 
 #: platform/android/export/export_plugin.cpp
-#, fuzzy
 msgid "Could not export project files."
-msgstr "Не удалось экспортировать файлы проекта"
+msgstr "Не удалось экспортировать файлы проекта."
 
 #: platform/android/export/export_plugin.cpp
 msgid "Aligning APK..."
@@ -19283,6 +19270,11 @@ msgstr "Пользовательский цвет"
 msgid "Custom BG Color"
 msgstr "Пользовательский цвет"
 
+#: platform/iphone/export/export.cpp
+#, fuzzy
+msgid "Export Icons"
+msgstr "Развернуть все"
+
 #: platform/iphone/export/export.cpp platform/javascript/export/export.cpp
 #: platform/osx/export/export.cpp
 #, fuzzy
@@ -19315,19 +19307,16 @@ msgid "Run exported HTML in the system's default browser."
 msgstr "Запустить HTML в системном браузере по умолчанию."
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Could not open template for export: \"%s\"."
-msgstr "Не удалось открыть шаблон для экспорта:"
+msgstr "Не удалось открыть шаблон для экспорта: \"%s\"."
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Invalid export template: \"%s\"."
-msgstr "Неверный шаблон экспорта:"
+msgstr "Неверный шаблон экспорта: \"%s\"."
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Could not write file: \"%s\"."
-msgstr "Не удалось записать файл:"
+msgstr "Не удалось записать файл: \"%s\"."
 
 #: platform/javascript/export/export.cpp platform/osx/export/export.cpp
 #, fuzzy
@@ -19335,9 +19324,8 @@ msgid "Icon Creation"
 msgstr "Задать отступ"
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Could not read file: \"%s\"."
-msgstr "Не удалось прочитать файл:"
+msgstr "Не удалось прочитать файл: \"%s\"."
 
 #: platform/javascript/export/export.cpp
 msgid "PWA"
@@ -19418,14 +19406,12 @@ msgid "Icon 512 X 512"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Could not read HTML shell: \"%s\"."
-msgstr "Не удалось прочитать HTML-оболочку:"
+msgstr "Не удалось прочитать HTML-оболочку: \"%s\"."
 
 #: platform/javascript/export/export.cpp
-#, fuzzy
 msgid "Could not create HTTP server directory: %s."
-msgstr "Не удалось создать каталог HTTP-сервера:"
+msgstr "Не удалось создать каталог HTTP-сервера: %s."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
@@ -19726,9 +19712,8 @@ msgid "Could not open icon file \"%s\"."
 msgstr "Не удалось экспортировать файлы проекта"
 
 #: platform/osx/export/export.cpp
-#, fuzzy
 msgid "Could not start xcrun executable."
-msgstr "Не удаётся запустить подпроцесс!"
+msgstr "Не удаётся запустить исполняемый файл xcrun."
 
 #: platform/osx/export/export.cpp
 #, fuzzy
@@ -19812,9 +19797,8 @@ msgid "DMG Creation"
 msgstr "Направление"
 
 #: platform/osx/export/export.cpp
-#, fuzzy
 msgid "Could not start hdiutil executable."
-msgstr "Не удаётся запустить подпроцесс!"
+msgstr "Не удаётся запустить исполняемый файл hdiutil."
 
 #: platform/osx/export/export.cpp
 msgid "`hdiutil create` failed - file exists."
@@ -19901,9 +19885,8 @@ msgid "ZIP Creation"
 msgstr "Проекция"
 
 #: platform/osx/export/export.cpp
-#, fuzzy
 msgid "Could not open file to read from path \"%s\"."
-msgstr "Не удалось экспортировать файлы проекта в проект gradle\n"
+msgstr "Не удалось открыть файл для чтения по пути \"%s\"."
 
 #: platform/osx/export/export.cpp
 msgid "Invalid bundle identifier:"
@@ -20173,6 +20156,12 @@ msgid "Show Name On Square 310 X 310"
 msgstr ""
 
 #: platform/uwp/export/export.cpp
+msgid ""
+"Godot's Mono version does not support the UWP platform. Use the standard "
+"build (no C# support) if you wish to target UWP."
+msgstr ""
+
+#: platform/uwp/export/export.cpp
 msgid "Invalid package short name."
 msgstr "Недопустимое короткое имя пакета."
 
@@ -20310,17 +20299,17 @@ msgstr "Не удалось найти хранилище ключей, нево
 #: platform/windows/export/export.cpp
 #, fuzzy
 msgid ""
-"Could not start rcedit executable, configure rcedit path in the Editor "
-"Settings (Export > Windows > Rcedit)."
+"Could not start rcedit executable. Configure rcedit path in the Editor "
+"Settings (Export > Windows > Rcedit), or disable \"Application > Modify "
+"Resources\" in the export preset."
 msgstr ""
 "Инструмент rcedit должен быть настроен в Настройках редактора (Export > "
 "Windows > Rcedit) для изменения значка или информационных данных приложения."
 
 #: platform/windows/export/export.cpp
-msgid ""
-"rcedit failed to modify executable:\n"
-"%s"
-msgstr ""
+#, fuzzy
+msgid "rcedit failed to modify executable: %s."
+msgstr "Недопустимый исполняемый файл."
 
 #: platform/windows/export/export.cpp
 #, fuzzy
@@ -20345,17 +20334,17 @@ msgstr "Недопустимое имя."
 #: platform/windows/export/export.cpp
 #, fuzzy
 msgid ""
-"Could not start signtool executable, configure signtool path in the Editor "
-"Settings (Export > Windows > Signtool)."
+"Could not start signtool executable. Configure signtool path in the Editor "
+"Settings (Export > Windows > Signtool), or disable \"Codesign\" in the "
+"export preset."
 msgstr ""
 "Инструмент rcedit должен быть настроен в Настройках редактора (Export > "
 "Windows > Rcedit) для изменения значка или информационных данных приложения."
 
 #: platform/windows/export/export.cpp
-msgid ""
-"Signtool failed to sign executable:\n"
-"%s"
-msgstr ""
+#, fuzzy
+msgid "Signtool failed to sign executable: %s."
+msgstr "Недопустимый исполняемый файл."
 
 #: platform/windows/export/export.cpp
 #, fuzzy
@@ -22940,11 +22929,11 @@ msgstr ""
 
 #: scene/3d/physics_body.cpp
 msgid "Angular Spring Damping"
-msgstr ""
+msgstr "Угловое Затухание Пружины"
 
 #: scene/3d/physics_body.cpp
 msgid "Angular Equilibrium Point"
-msgstr ""
+msgstr "Угловая Точка Равновесия"
 
 #: scene/3d/physics_body.cpp
 #, fuzzy
@@ -22973,7 +22962,7 @@ msgstr "Узел А и Узел В должны быть различными о
 
 #: scene/3d/physics_joint.cpp
 msgid "Solver"
-msgstr ""
+msgstr "Разрешитель"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -22987,7 +22976,7 @@ msgstr "Параметры"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit"
-msgstr ""
+msgstr "Угловой Предел"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23001,7 +22990,7 @@ msgstr "нижний регистр"
 
 #: scene/3d/physics_joint.cpp
 msgid "Motor"
-msgstr ""
+msgstr "Мотор"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23085,11 +23074,11 @@ msgstr "Межстрочный интервал"
 
 #: scene/3d/physics_joint.cpp
 msgid "Equilibrium Point"
-msgstr ""
+msgstr "Точка Равновесия"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit X"
-msgstr ""
+msgstr "X Углового Предела"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23098,7 +23087,7 @@ msgstr "Угловая скорость"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Spring X"
-msgstr ""
+msgstr "X Угловой Пружины"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23117,7 +23106,7 @@ msgstr "Межстрочный интервал"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit Y"
-msgstr ""
+msgstr "Y Углового Предела"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23126,7 +23115,7 @@ msgstr "Угловая скорость"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Spring Y"
-msgstr ""
+msgstr "Y Угловой Пружины"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23145,7 +23134,7 @@ msgstr "Межстрочный интервал"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Limit Z"
-msgstr ""
+msgstr "Z Углового Предела"
 
 #: scene/3d/physics_joint.cpp
 #, fuzzy
@@ -23154,7 +23143,7 @@ msgstr "Угловая скорость"
 
 #: scene/3d/physics_joint.cpp
 msgid "Angular Spring Z"
-msgstr ""
+msgstr "Z Угловой Пружины"
 
 #: scene/3d/portal.cpp
 msgid "The RoomManager should not be a child or grandchild of a Portal."
@@ -23174,7 +23163,7 @@ msgstr "Портал активен"
 
 #: scene/3d/portal.cpp scene/resources/occluder_shape_polygon.cpp
 msgid "Two Way"
-msgstr ""
+msgstr "В обе Стороны"
 
 #: scene/3d/portal.cpp
 msgid "Linked Room"
@@ -26252,9 +26241,8 @@ msgid "Camera Feed ID"
 msgstr ""
 
 #: scene/resources/environment.cpp
-#, fuzzy
 msgid "Ambient Light"
-msgstr "Отступ вправо"
+msgstr "Рассеянный свет"
 
 #: scene/resources/environment.cpp
 #, fuzzy
@@ -26487,7 +26475,7 @@ msgstr ""
 
 #: scene/resources/environment.cpp
 msgid "Adjustments"
-msgstr ""
+msgstr "Adjustments (настройки)"
 
 #: scene/resources/environment.cpp
 #, fuzzy
@@ -27789,14 +27777,12 @@ msgid "Import S3TC"
 msgstr "Импорт"
 
 #: servers/visual_server.cpp
-#, fuzzy
 msgid "Import ETC"
-msgstr "Импорт"
+msgstr "Импортировать ETC"
 
 #: servers/visual_server.cpp
-#, fuzzy
 msgid "Import ETC2"
-msgstr "Импорт"
+msgstr "Импортировать ETC2"
 
 #: servers/visual_server.cpp
 #, fuzzy
@@ -27931,7 +27917,7 @@ msgstr "Режим интерполяции"
 
 #: servers/visual_server.cpp
 msgid "OpenGL"
-msgstr "ОткрытыйGL"
+msgstr "OpenGL"
 
 #: servers/visual_server.cpp
 msgid "Batching Send Null"
@@ -28021,8 +28007,9 @@ msgid "Precision"
 msgstr "Точность"
 
 #: servers/visual_server.cpp
+#, fuzzy
 msgid "UV Contract"
-msgstr ""
+msgstr "UV Контракт"
 
 #: servers/visual_server.cpp
 msgid "UV Contract Amount"
@@ -28048,7 +28035,7 @@ msgstr "Удалить тайл"
 #: servers/visual_server.cpp
 #, fuzzy
 msgid "Flip Imported Portals"
-msgstr "Перевернуть порталы"
+msgstr "Перевернуть Импортированные Порталы"
 
 #: servers/visual_server.cpp
 #, fuzzy

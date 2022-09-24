@@ -193,6 +193,7 @@ public:
 	virtual Time get_time(bool utc) const;
 	virtual TimeZoneInfo get_time_zone_info() const;
 	virtual uint64_t get_unix_time() const;
+	virtual double get_subsecond_unix_time() const;
 
 	virtual bool can_draw() const;
 	virtual Error set_cwd(const String &p_cwd);
@@ -235,7 +236,7 @@ public:
 	virtual bool has_touchscreen_ui_hint() const;
 
 	virtual bool has_virtual_keyboard() const;
-	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), bool p_multiline = false, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1);
+	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), VirtualKeyboardType p_type = KEYBOARD_TYPE_DEFAULT, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1);
 	virtual void hide_virtual_keyboard();
 
 	virtual Error open_dynamic_library(const String p_path, void *&p_library_handle, bool p_also_set_library_path = false);
@@ -260,4 +261,4 @@ public:
 	~OS_UWP();
 };
 
-#endif
+#endif // OS_UWP_H

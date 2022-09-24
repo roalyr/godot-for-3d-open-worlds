@@ -207,6 +207,7 @@ private:
 	void _propagate_physics_interpolation_reset_requested();
 	void _print_stray_nodes();
 	void _propagate_pause_owner(Node *p_owner);
+	void _propagate_groups_dirty();
 	Array _get_node_and_resource(const NodePath &p_path);
 
 	void _duplicate_signals(const Node *p_original, Node *p_copy) const;
@@ -520,4 +521,4 @@ VARIANT_ENUM_CAST(Node::DuplicateFlags);
 
 typedef Set<Node *, Node::Comparator> NodeSet;
 
-#endif
+#endif // NODE_H

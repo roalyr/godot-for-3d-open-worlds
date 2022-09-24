@@ -935,6 +935,16 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 								break;
 							}
 
+							int amount = MIN(multi_mesh->size, multi_mesh->visible_instances);
+
+							if (amount == -1) {
+								amount = multi_mesh->size;
+							}
+
+							if (!amount) {
+								break;
+							}
+
 							state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_INSTANCE_CUSTOM, multi_mesh->custom_data_format != VS::MULTIMESH_CUSTOM_DATA_NONE);
 							state.canvas_shader.set_conditional(CanvasShaderGLES2::USE_INSTANCING, true);
 							_set_texture_rect_mode(false);
@@ -952,12 +962,6 @@ void RasterizerCanvasGLES2::render_batches(Item *p_current_clip, bool &r_reclip,
 							}
 
 							//reset shader and force rebind
-
-							int amount = MIN(multi_mesh->size, multi_mesh->visible_instances);
-
-							if (amount == -1) {
-								amount = multi_mesh->size;
-							}
 
 							int stride = multi_mesh->color_floats + multi_mesh->custom_data_floats + multi_mesh->xform_floats;
 
@@ -1682,6 +1686,9 @@ void RasterizerCanvasGLES2::_legacy_canvas_render_item(Item *p_ci, RenderItemSta
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK: {
 							glBindTexture(GL_TEXTURE_2D, storage->resources.black_tex);
 						} break;
+						case ShaderLanguage::ShaderNode::Uniform::HINT_TRANSPARENT: {
+							glBindTexture(GL_TEXTURE_2D, storage->resources.transparent_tex);
+						} break;
 						case ShaderLanguage::ShaderNode::Uniform::HINT_ANISO: {
 							glBindTexture(GL_TEXTURE_2D, storage->resources.aniso_tex);
 						} break;
@@ -2043,6 +2050,9 @@ void RasterizerCanvasGLES2::render_joined_item(const BItemJoined &p_bij, RenderI
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK_ALBEDO:
 						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK: {
 							glBindTexture(GL_TEXTURE_2D, storage->resources.black_tex);
+						} break;
+						case ShaderLanguage::ShaderNode::Uniform::HINT_TRANSPARENT: {
+							glBindTexture(GL_TEXTURE_2D, storage->resources.transparent_tex);
 						} break;
 						case ShaderLanguage::ShaderNode::Uniform::HINT_ANISO: {
 							glBindTexture(GL_TEXTURE_2D, storage->resources.aniso_tex);

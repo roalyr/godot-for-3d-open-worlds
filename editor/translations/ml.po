@@ -2090,14 +2090,15 @@ msgstr ""
 msgid "Recent:"
 msgstr ""
 
-#: editor/create_dialog.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp editor/rename_dialog.cpp
+#: editor/create_dialog.cpp editor/editor_quick_open.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
+#: editor/rename_dialog.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 msgid "Search:"
 msgstr ""
 
-#: editor/create_dialog.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp
+#: editor/create_dialog.cpp editor/editor_quick_open.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 msgid "Matches:"
 msgstr ""
@@ -2153,8 +2154,8 @@ msgstr ""
 
 #: editor/dependency_editor.cpp editor/editor_file_dialog.cpp
 #: editor/editor_help_search.cpp editor/editor_node.cpp
-#: editor/filesystem_dock.cpp editor/plugins/script_editor_plugin.cpp
-#: editor/property_selector.cpp editor/quick_open.cpp
+#: editor/editor_quick_open.cpp editor/filesystem_dock.cpp
+#: editor/plugins/script_editor_plugin.cpp editor/property_selector.cpp
 #: editor/script_create_dialog.cpp
 #: modules/visual_script/visual_script_property_selector.cpp
 #: scene/gui/file_dialog.cpp
@@ -2714,8 +2715,9 @@ msgid "Project export for platform:"
 msgstr ""
 
 #: editor/editor_export.cpp
-msgid "Completed with errors."
-msgstr ""
+#, fuzzy
+msgid "Completed with warnings."
+msgstr "ചലനം ചുറ്റൽ"
 
 #: editor/editor_export.cpp
 msgid "Completed successfully."
@@ -4355,6 +4357,7 @@ msgstr ""
 
 #: editor/editor_node.cpp editor/project_manager.cpp
 #: editor/script_create_dialog.cpp modules/mono/editor/csharp_project.cpp
+#: modules/mono/godotsharp_dirs.cpp
 msgid "Project"
 msgstr ""
 
@@ -5299,6 +5302,10 @@ msgstr ""
 
 #: editor/editor_settings.cpp
 msgid "Drag And Drop Selection"
+msgstr ""
+
+#: editor/editor_settings.cpp
+msgid "Stay In Script Editor On Node Selected"
 msgstr ""
 
 #: editor/editor_settings.cpp
@@ -7041,7 +7048,8 @@ msgid "8 Bit"
 msgstr ""
 
 #: editor/import/resource_importer_wav.cpp main/main.cpp
-#: modules/mono/editor/csharp_project.cpp modules/mono/mono_gd/gd_mono.cpp
+#: modules/mono/editor/csharp_project.cpp modules/mono/godotsharp_dirs.cpp
+#: modules/mono/mono_gd/gd_mono.cpp
 msgid "Mono"
 msgstr ""
 
@@ -11290,6 +11298,11 @@ msgid "New Animation"
 msgstr ""
 
 #: editor/plugins/sprite_frames_editor_plugin.cpp
+#, fuzzy
+msgid "Filter animations"
+msgstr "ചലനം ചുറ്റൽ"
+
+#: editor/plugins/sprite_frames_editor_plugin.cpp
 msgid "Speed:"
 msgstr ""
 
@@ -14731,18 +14744,18 @@ msgstr ""
 msgid "Make Local"
 msgstr ""
 
-#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
-msgid "Another node already uses this unique name in the scene."
+#: editor/scene_tree_dock.cpp
+#, fuzzy
+msgid "Enable Scene Unique Name(s)"
+msgstr "ചലനത്തിൻറെ നേരം മാറ്റുക"
+
+#: editor/scene_tree_dock.cpp
+msgid "Unique names already used by another node in the scene:"
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
 #, fuzzy
-msgid "Enable Scene Unique Name"
-msgstr "ചലനത്തിൻറെ നേരം മാറ്റുക"
-
-#: editor/scene_tree_dock.cpp editor/scene_tree_editor.cpp
-#, fuzzy
-msgid "Disable Scene Unique Name"
+msgid "Disable Scene Unique Name(s)"
 msgstr "ചലനത്തിൻറെ നേരം മാറ്റുക"
 
 #: editor/scene_tree_dock.cpp
@@ -14932,6 +14945,11 @@ msgid "Button Group"
 msgstr ""
 
 #: editor/scene_tree_editor.cpp
+#, fuzzy
+msgid "Disable Scene Unique Name"
+msgstr "ചലനത്തിൻറെ നേരം മാറ്റുക"
+
+#: editor/scene_tree_editor.cpp
 msgid "(Connecting From)"
 msgstr ""
 
@@ -14992,6 +15010,10 @@ msgstr ""
 
 #: editor/scene_tree_editor.cpp
 msgid "Invalid node name, the following characters are not allowed:"
+msgstr ""
+
+#: editor/scene_tree_editor.cpp
+msgid "Another node already uses this unique name in the scene."
 msgstr ""
 
 #: editor/scene_tree_editor.cpp
@@ -16781,6 +16803,18 @@ msgstr ""
 msgid "Auto Update Project"
 msgstr ""
 
+#: modules/mono/godotsharp_dirs.cpp
+msgid "Assembly Name"
+msgstr ""
+
+#: modules/mono/godotsharp_dirs.cpp
+msgid "Solution Directory"
+msgstr ""
+
+#: modules/mono/godotsharp_dirs.cpp
+msgid "C# Project Directory"
+msgstr ""
+
 #: modules/mono/mono_gd/gd_mono_utils.cpp
 msgid "End of inner exception stack trace"
 msgstr ""
@@ -18479,6 +18513,11 @@ msgstr "പ്രവൃത്തികൾ:"
 msgid "Custom BG Color"
 msgstr "പ്രവൃത്തികൾ:"
 
+#: platform/iphone/export/export.cpp
+#, fuzzy
+msgid "Export Icons"
+msgstr "ത്രിമാന പരിവർത്തനം നോക്കുക"
+
 #: platform/iphone/export/export.cpp platform/javascript/export/export.cpp
 #: platform/osx/export/export.cpp
 msgid "Prepare Templates"
@@ -19267,6 +19306,12 @@ msgid "Show Name On Square 310 X 310"
 msgstr ""
 
 #: platform/uwp/export/export.cpp
+msgid ""
+"Godot's Mono version does not support the UWP platform. Use the standard "
+"build (no C# support) if you wish to target UWP."
+msgstr ""
+
+#: platform/uwp/export/export.cpp
 msgid "Invalid package short name."
 msgstr ""
 
@@ -19392,14 +19437,13 @@ msgstr ""
 
 #: platform/windows/export/export.cpp
 msgid ""
-"Could not start rcedit executable, configure rcedit path in the Editor "
-"Settings (Export > Windows > Rcedit)."
+"Could not start rcedit executable. Configure rcedit path in the Editor "
+"Settings (Export > Windows > Rcedit), or disable \"Application > Modify "
+"Resources\" in the export preset."
 msgstr ""
 
 #: platform/windows/export/export.cpp
-msgid ""
-"rcedit failed to modify executable:\n"
-"%s"
+msgid "rcedit failed to modify executable: %s."
 msgstr ""
 
 #: platform/windows/export/export.cpp
@@ -19421,14 +19465,13 @@ msgstr ""
 
 #: platform/windows/export/export.cpp
 msgid ""
-"Could not start signtool executable, configure signtool path in the Editor "
-"Settings (Export > Windows > Signtool)."
+"Could not start signtool executable. Configure signtool path in the Editor "
+"Settings (Export > Windows > Signtool), or disable \"Codesign\" in the "
+"export preset."
 msgstr ""
 
 #: platform/windows/export/export.cpp
-msgid ""
-"Signtool failed to sign executable:\n"
-"%s"
+msgid "Signtool failed to sign executable: %s."
 msgstr ""
 
 #: platform/windows/export/export.cpp

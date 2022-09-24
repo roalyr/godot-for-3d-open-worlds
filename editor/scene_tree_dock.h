@@ -34,9 +34,9 @@
 #include "editor/connections_dialog.h"
 #include "editor/create_dialog.h"
 #include "editor/editor_data.h"
+#include "editor/editor_quick_open.h"
 #include "editor/editor_sub_scene.h"
 #include "editor/groups_editor.h"
-#include "editor/quick_open.h"
 #include "editor/rename_dialog.h"
 #include "editor/reparent_dialog.h"
 #include "editor/script_create_dialog.h"
@@ -291,6 +291,7 @@ public:
 	void show_tab_buttons();
 	void hide_tab_buttons();
 
+	void add_root_node(Node *p_node);
 	void replace_node(Node *p_node, Node *p_by_node, bool p_keep_properties = true, bool p_remove_old = true);
 
 	void attach_script_to_selected(bool p_extend);

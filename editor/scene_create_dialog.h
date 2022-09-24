@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  emws_server.h                                                        */
+/*  scene_create_dialog.h                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,37 +28,78 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EMWSSERVER_H
-#define EMWSSERVER_H
+#ifndef SCENE_CREATE_DIALOG_H
+#define SCENE_CREATE_DIALOG_H
 
-#ifdef JAVASCRIPT_ENABLED
+#include "scene/gui/dialogs.h"
 
-#include "core/reference.h"
-#include "emws_peer.h"
-#include "websocket_server.h"
+class ButtonGroup;
+class CheckBox;
+class CreateDialog;
+class EditorFileDialog;
+class Label;
+class LineEdit;
+class OptionButton;
+class PanelContainer;
 
-class EMWSServer : public WebSocketServer {
-	GDCIIMPL(EMWSServer, WebSocketServer);
+class SceneCreateDialog : public ConfirmationDialog {
+	GDCLASS(SceneCreateDialog, ConfirmationDialog);
+
+	enum MsgType {
+		MSG_OK,
+		MSG_ERROR,
+	};
+
+	const StringName type_meta = StringName("type");
 
 public:
-	Error set_buffers(int p_in_buffer, int p_in_packets, int p_out_buffer, int p_out_packets);
-	void set_extra_headers(const Vector<String> &p_headers);
-	Error listen(int p_port, Vector<String> p_protocols = Vector<String>(), bool gd_mp_api = false);
-	void stop();
-	bool is_listening() const;
-	bool has_peer(int p_id) const;
-	Ref<WebSocketPeer> get_peer(int p_id) const;
-	IP_Address get_peer_address(int p_peer_id) const;
-	int get_peer_port(int p_peer_id) const;
-	void disconnect_peer(int p_peer_id, int p_code = 1000, String p_reason = "");
-	int get_max_packet_size() const;
-	virtual void poll();
-	virtual PoolVector<String> get_protocols() const;
+	enum RootType {
+		ROOT_2D_SCENE,
+		ROOT_3D_SCENE,
+		ROOT_USER_INTERFACE,
+		ROOT_OTHER,
+	};
 
-	EMWSServer();
-	~EMWSServer();
+private:
+	String directory;
+	String scene_name;
+	String root_name;
+
+	Ref<ButtonGroup> node_type_group;
+	CheckBox *node_type_2d = nullptr;
+	CheckBox *node_type_3d = nullptr;
+	CheckBox *node_type_gui = nullptr;
+	CheckBox *node_type_other = nullptr;
+
+	LineEdit *other_type_display = nullptr;
+	Button *select_node_button = nullptr;
+	CreateDialog *select_node_dialog = nullptr;
+
+	LineEdit *scene_name_edit = nullptr;
+	OptionButton *scene_extension_picker = nullptr;
+	LineEdit *root_name_edit = nullptr;
+
+	PanelContainer *status_panel = nullptr;
+	Label *file_error_label = nullptr;
+	Label *node_error_label = nullptr;
+
+	void accept_create(Variant p_discard = Variant()); // Extra unused argument, because unbind() doesn't exist in 3.x.
+	void browse_types();
+	void on_type_picked();
+	void update_dialog(Variant p_discard = Variant());
+	void update_error(Label *p_label, MsgType p_type, const String &p_msg);
+
+protected:
+	void _notification(int p_what);
+	static void _bind_methods();
+
+public:
+	void config(const String &p_dir);
+
+	String get_scene_path() const;
+	Node *create_scene_root();
+
+	SceneCreateDialog();
 };
 
-#endif
-
-#endif // LWSSERVER_H
+#endif // SCENE_CREATE_DIALOG_H

@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RASTERIZERSCENEGLES2_H
-#define RASTERIZERSCENEGLES2_H
+#ifndef RASTERIZER_SCENE_GLES2_H
+#define RASTERIZER_SCENE_GLES2_H
 
 /* Must come before shaders or the Windows build fails... */
 #include "rasterizer_storage_gles2.h"
@@ -39,7 +39,6 @@
 #include "shaders/scene.glsl.gen.h"
 #include "shaders/tonemap.glsl.gen.h"
 /*
-
 
 #include "drivers/gles3/shaders/exposure.glsl.gen.h"
 #include "drivers/gles3/shaders/resolve.glsl.gen.h"
@@ -289,13 +288,13 @@ public:
 	bool shadow_atlas_update_light(RID p_atlas, RID p_light_intance, float p_coverage, uint64_t p_light_version);
 
 	struct DirectionalShadow {
-		GLuint fbo;
-		GLuint depth;
-		GLuint color;
+		GLuint fbo = 0;
+		GLuint depth = 0;
+		GLuint color = 0;
 
-		int light_count;
-		int size;
-		int current_light;
+		int light_count = 0;
+		int size = 0;
+		int current_light = 0;
 	} directional_shadow;
 
 	virtual int get_directional_light_shadow_size(RID p_light_intance);
@@ -780,4 +779,4 @@ public:
 	~RasterizerSceneGLES2();
 };
 
-#endif // RASTERIZERSCENEGLES2_H
+#endif // RASTERIZER_SCENE_GLES2_H

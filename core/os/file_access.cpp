@@ -117,6 +117,10 @@ FileAccess::CreateFunc FileAccess::get_create_func(AccessType p_access) {
 	return create_func[p_access];
 };
 
+FileAccess::AccessType FileAccess::get_access_type() const {
+	return _access_type;
+}
+
 String FileAccess::fix_path(const String &p_path) const {
 	//helper used by file accesses that use a single filesystem
 
@@ -378,7 +382,7 @@ uint64_t FileAccess::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
 	return i;
 }
 
-String FileAccess::get_as_utf8_string() const {
+String FileAccess::get_as_utf8_string(bool p_skip_cr) const {
 	PoolVector<uint8_t> sourcef;
 	uint64_t len = get_len();
 	sourcef.resize(len + 1);
@@ -389,7 +393,7 @@ String FileAccess::get_as_utf8_string() const {
 	w[len] = 0;
 
 	String s;
-	if (s.parse_utf8((const char *)w.ptr())) {
+	if (s.parse_utf8((const char *)w.ptr(), -1, p_skip_cr)) {
 		return String();
 	}
 	return s;

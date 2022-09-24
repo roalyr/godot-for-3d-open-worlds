@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef RASTERIZERSTORAGEGLES3_H
-#define RASTERIZERSTORAGEGLES3_H
+#ifndef RASTERIZER_STORAGE_GLES3_H
+#define RASTERIZER_STORAGE_GLES3_H
 
 #include "core/self_list.h"
 #include "drivers/gles_common/rasterizer_asserts.h"
@@ -140,6 +140,7 @@ public:
 	struct Resources {
 		GLuint white_tex;
 		GLuint black_tex;
+		GLuint transparent_tex;
 		GLuint normal_tex;
 		GLuint aniso_tex;
 		GLuint depth_tex;
@@ -920,6 +921,7 @@ public:
 	struct Skeleton : RID_Data {
 		bool use_2d;
 		int size;
+		uint32_t revision;
 		Vector<float> skel_texture;
 		GLuint texture;
 		SelfList<Skeleton> update_list;
@@ -929,6 +931,7 @@ public:
 		Skeleton() :
 				use_2d(false),
 				size(0),
+				revision(1),
 				texture(0),
 				update_list(this) {
 		}
@@ -948,6 +951,7 @@ public:
 	virtual void skeleton_bone_set_transform_2d(RID p_skeleton, int p_bone, const Transform2D &p_transform);
 	virtual Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const;
 	virtual void skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform);
+	virtual uint32_t skeleton_get_revision(RID p_skeleton) const;
 
 	/* Light API */
 
@@ -1559,4 +1563,4 @@ inline void RasterizerStorageGLES3::buffer_orphan_and_upload(unsigned int p_buff
 	glBufferSubData(p_target, p_offset_bytes, p_data_size_bytes, p_data);
 }
 
-#endif // RASTERIZERSTORAGEGLES3_H
+#endif // RASTERIZER_STORAGE_GLES3_H

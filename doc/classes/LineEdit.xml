@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="LineEdit" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="LineEdit" inherits="Control" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Control that provides single-line string editing.
 	</brief_description>
 	<description>
 		LineEdit provides a single-line string editor, used for text fields.
 		It features many built-in shortcuts which will always be available ([code]Ctrl[/code] here maps to [code]Command[/code] on macOS):
-		- Ctrl + C: Copy
-		- Ctrl + X: Cut
-		- Ctrl + V or Ctrl + Y: Paste/"yank"
-		- Ctrl + Z: Undo
-		- Ctrl + Shift + Z: Redo
-		- Ctrl + U: Delete text from the cursor position to the beginning of the line
-		- Ctrl + K: Delete text from the cursor position to the end of the line
-		- Ctrl + A: Select all text
-		- Up/Down arrow: Move the cursor to the beginning/end of the line
+		- [kbd]Ctrl + C[/kbd]: Copy
+		- [kbd]Ctrl + X[/kbd]: Cut
+		- [kbd]Ctrl + V or Ctrl + Y[/kbd]: Paste/"yank"
+		- [kbd]Ctrl + Z[/kbd]: Undo
+		- [kbd]Ctrl + Shift + Z[/kbd]: Redo
+		- [kbd]Ctrl + U[/kbd]: Delete text from the cursor position to the beginning of the line
+		- [kbd]Ctrl + K[/kbd]: Delete text from the cursor position to the end of the line
+		- [kbd]Ctrl + A[/kbd]: Select all text
+		- [kbd]Up Arrow[/kbd]/[kbd]Down arrow[/kbd]: Move the cursor to the beginning/end of the line
 		On macOS, some extra keyboard shortcuts are available:
-		- Ctrl + F: Like the right arrow key, move the cursor one character right
-		- Ctrl + B: Like the left arrow key, move the cursor one character left
-		- Ctrl + P: Like the up arrow key, move the cursor to the previous line
-		- Ctrl + N: Like the down arrow key, move the cursor to the next line
-		- Ctrl + D: Like the Delete key, delete the character on the right side of cursor
-		- Ctrl + H: Like the Backspace key, delete the character on the left side of the cursor
-		- Command + Left arrow: Like the Home key, move the cursor to the beginning of the line
-		- Command + Right arrow: Like the End key, move the cursor to the end of the line
+		- [kbd]Ctrl + F[/kbd]: Same as [kbd]Right Arrow[/kbd], move the cursor one character right
+		- [kbd]Ctrl + B[/kbd]: Same as [kbd]Left Arrow[/kbd], move the cursor one character left
+		- [kbd]Ctrl + P[/kbd]: Same as [kbd]Up Arrow[/kbd], move the cursor to the previous line
+		- [kbd]Ctrl + N[/kbd]: Same as [kbd]Down Arrow[/kbd], move the cursor to the next line
+		- [kbd]Ctrl + D[/kbd]: Same as [kbd]Delete[/kbd], delete the character on the right side of cursor
+		- [kbd]Ctrl + H[/kbd]: Same as [kbd]Backspace[/kbd], delete the character on the left side of the cursor
+		- [kbd]Cmd + Left arrow[/kbd]: Same as [kbd]Home[/kbd], move the cursor to the beginning of the line
+		- [kbd]Cmd + Right arrow[/kbd]: Same as [kbd]End[/kbd], move the cursor to the end of the line
 	</description>
 	<tutorials>
 	</tutorials>
@@ -196,6 +196,9 @@
 		<member name="virtual_keyboard_enabled" type="bool" setter="set_virtual_keyboard_enabled" getter="is_virtual_keyboard_enabled" default="true">
 			If [code]true[/code], the native virtual keyboard is shown when focused on platforms that support it.
 		</member>
+		<member name="virtual_keyboard_type" type="int" setter="set_virtual_keyboard_type" getter="get_virtual_keyboard_type" enum="LineEdit.VirtualKeyboardType" default="0">
+			Specifies the type of virtual keyboard to show.
+		</member>
 	</members>
 	<signals>
 		<signal name="text_change_rejected">
@@ -254,6 +257,31 @@
 		</constant>
 		<constant name="MENU_MAX" value="7" enum="MenuItems">
 			Represents the size of the [enum MenuItems] enum.
+		</constant>
+		<constant name="KEYBOARD_TYPE_DEFAULT" value="0" enum="VirtualKeyboardType">
+			Default text virtual keyboard.
+		</constant>
+		<constant name="KEYBOARD_TYPE_MULTILINE" value="1" enum="VirtualKeyboardType">
+			Multiline virtual keyboard.
+		</constant>
+		<constant name="KEYBOARD_TYPE_NUMBER" value="2" enum="VirtualKeyboardType">
+			Virtual number keypad, useful for PIN entry.
+		</constant>
+		<constant name="KEYBOARD_TYPE_NUMBER_DECIMAL" value="3" enum="VirtualKeyboardType">
+			Virtual number keypad, useful for entering fractional numbers.
+		</constant>
+		<constant name="KEYBOARD_TYPE_PHONE" value="4" enum="VirtualKeyboardType">
+			Virtual phone number keypad.
+		</constant>
+		<constant name="KEYBOARD_TYPE_EMAIL_ADDRESS" value="5" enum="VirtualKeyboardType">
+			Virtual keyboard with additional keys to assist with typing email addresses.
+		</constant>
+		<constant name="KEYBOARD_TYPE_PASSWORD" value="6" enum="VirtualKeyboardType">
+			Virtual keyboard for entering a password. On most platforms, this should disable autocomplete and autocapitalization.
+			[b]Note:[/b] This is not supported on HTML5 or below iOS version 11.0. Instead, this will behave identically to [constant KEYBOARD_TYPE_DEFAULT].
+		</constant>
+		<constant name="KEYBOARD_TYPE_URL" value="7" enum="VirtualKeyboardType">
+			Virtual keyboard with additional keys to assist with typing URLs.
 		</constant>
 	</constants>
 	<theme_items>

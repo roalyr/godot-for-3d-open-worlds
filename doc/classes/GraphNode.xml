@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="GraphNode" inherits="Container" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="GraphNode" inherits="Container" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A GraphNode is a container with potentially several input and output slots allowing connections between GraphNodes. Slots can have different, incompatible types.
 	</brief_description>
@@ -245,10 +245,20 @@
 				Emitted when the GraphNode is requested to be resized. Happens on dragging the resizer handle (see [member resizable]).
 			</description>
 		</signal>
+		<signal name="selected">
+			<description>
+				Emitted when the GraphNode is selected.
+			</description>
+		</signal>
 		<signal name="slot_updated">
 			<argument index="0" name="idx" type="int" />
 			<description>
 				Emitted when any GraphNode's slot is updated.
+			</description>
+		</signal>
+		<signal name="unselected">
+			<description>
+				Emitted when the GraphNode is unselected.
 			</description>
 		</signal>
 	</signals>

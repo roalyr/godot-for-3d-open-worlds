@@ -435,14 +435,12 @@ void OS_UWP::ManagedType::on_gyroscope_reading_changed(Gyrometer ^ sender, Gyrom
 void OS_UWP::set_mouse_mode(MouseMode p_mode) {
 	if (p_mode == MouseMode::MOUSE_MODE_CAPTURED) {
 		CoreWindow::GetForCurrentThread()->SetPointerCapture();
-
 	} else {
 		CoreWindow::GetForCurrentThread()->ReleasePointerCapture();
 	}
 
-	if (p_mode == MouseMode::MOUSE_MODE_CAPTURED || p_mode == MouseMode::MOUSE_MODE_HIDDEN) {
+	if (p_mode == MouseMode::MOUSE_MODE_HIDDEN || p_mode == MouseMode::MOUSE_MODE_CAPTURED || p_mode == MouseMode::MOUSE_MODE_CONFINED_HIDDEN) {
 		CoreWindow::GetForCurrentThread()->PointerCursor = nullptr;
-
 	} else {
 		CoreWindow::GetForCurrentThread()->PointerCursor = ref new CoreCursor(CoreCursorType::Arrow, 0);
 	}
@@ -549,6 +547,23 @@ uint64_t OS_UWP::get_unix_time() const {
 	return (*(uint64_t *)&ft - *(uint64_t *)&fep) / 10000000;
 };
 
+double OS_UWP::get_subsecond_unix_time() const {
+	// 1 Windows tick is 100ns
+	const uint64_t WINDOWS_TICKS_PER_SECOND = 10000000;
+	const uint64_t TICKS_TO_UNIX_EPOCH = 116444736000000000LL;
+
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	FILETIME ft;
+	SystemTimeToFileTime(&st, &ft);
+	uint64_t ticks_time;
+	ticks_time = ft.dwHighDateTime;
+	ticks_time <<= 32;
+	ticks_time |= ft.dwLowDateTime;
+
+	return (double)(ticks_time - TICKS_TO_UNIX_EPOCH) / WINDOWS_TICKS_PER_SECOND;
+}
+
 void OS_UWP::delay_usec(uint32_t p_usec) const {
 	int msec = p_usec < 1000 ? 1 : p_usec / 1000;
 
@@ -588,6 +603,7 @@ uint64_t OS_UWP::get_ticks_usec() const {
 void OS_UWP::process_events() {
 	joypad->process_controllers();
 	process_key_events();
+	input->flush_buffered_events();
 }
 
 void OS_UWP::process_key_events() {
@@ -741,7 +757,7 @@ bool OS_UWP::has_virtual_keyboard() const {
 	return UIViewSettings::GetForCurrentView()->UserInteractionMode == UserInteractionMode::Touch;
 }
 
-void OS_UWP::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
+void OS_UWP::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, VirtualKeyboardType p_type, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
 	InputPane ^ pane = InputPane::GetForCurrentView();
 	pane->TryShow();
 }

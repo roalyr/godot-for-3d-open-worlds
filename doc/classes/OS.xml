@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="OS" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="OS" inherits="Object" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Operating System functions.
 	</brief_description>
@@ -552,6 +552,7 @@
 			<description>
 				Returns the current UNIX epoch timestamp in seconds.
 				[b]Important:[/b] This is the system clock that the user can manually set. [b]Never use[/b] this method for precise time calculation since its results are also subject to automatic adjustments by the operating system. [b]Always use[/b] [method get_ticks_usec] or [method get_ticks_msec] for precise time calculation instead, since they are guaranteed to be monotonic (i.e. never decrease).
+				[b]Note:[/b] To get a floating point timestamp with sub-second precision, use [method Time.get_unix_time_from_system].
 			</description>
 		</method>
 		<method name="get_unix_time_from_datetime" qualifiers="const">
@@ -1017,7 +1018,107 @@
 				Shows the virtual keyboard if the platform has one.
 				The [code]existing_text[/code] parameter is useful for implementing your own [LineEdit] or [TextEdit], as it tells the virtual keyboard what text has already been typed (the virtual keyboard uses it for auto-correct and predictions).
 				The [code]multiline[/code] parameter needs to be set to [code]true[/code] to be able to enter multiple lines of text, as in [TextEdit].
-				[b]Note:[/b] This method is implemented on Android, iOS and UWP.
+				[b]Note:[/b] This method is equivalent to calling [method show_virtual_keyboard_type] with either default or multiline keyboard type. It is kept for compatibility with previous Godot releases and should be considered [i]deprecated[/i] and replaced by [method show_virtual_keyboard_type].
+				[b]Note:[/b] This method is implemented on Android, iOS, UWP, and HTML5.
+			</description>
+		</method>
+		<method name="show_virtual_keyboard_type">
+			<return type="void" />
+			<argument index="0" name="existing_text" type="String" default="&quot;&quot;" />
+			<argument index="1" name="type" type="int" enum="OS.VirtualKeyboardType" default="0" />
+			<description>
+				Shows the virtual keyboard if the platform has one.
+				The [code]existing_text[/code] parameter is useful for implementing your own [LineEdit] or [TextEdit], as it tells the virtual keyboard what text has already been typed (the virtual keyboard uses it for auto-correct and predictions).
+				The [code]type[/code] parameter allows selecting which virtual keyboard to show.
+				[b]Note:[/b] This method is implemented on Android, iOS, UWP, and HTML5.
+			</description>
+		</method>
+		<method name="tts_get_voices" qualifiers="const">
+			<return type="Array" />
+			<description>
+				Returns an [Array] of voice information dictionaries.
+				Each [Dictionary] contains two [String] entries:
+				- [code]name[/code] is voice name.
+				- [code]id[/code] is voice identifier.
+				- [code]language[/code] is language code in [code]lang_Variant[/code] format. [code]lang[/code] part is a 2 or 3-letter code based on the ISO-639 standard, in lowercase. And [code]Variant[/code] part is an engine dependent string describing country, region or/and dialect.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_get_voices_for_language" qualifiers="const">
+			<return type="PoolStringArray" />
+			<argument index="0" name="language" type="String" />
+			<description>
+				Returns an [PoolStringArray] of voice identifiers for the [code]language[/code].
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_is_paused" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the synthesizer is in a paused state.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_is_speaking" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the synthesizer is generating speech, or have utterance waiting in the queue.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_pause">
+			<return type="void" />
+			<description>
+				Puts the synthesizer into a paused state.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_resume">
+			<return type="void" />
+			<description>
+				Resumes the synthesizer if it was paused.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_set_utterance_callback">
+			<return type="void" />
+			<argument index="0" name="event" type="int" enum="OS.TTSUtteranceEvent" />
+			<argument index="1" name="object" type="Object" />
+			<argument index="2" name="callback" type="String" />
+			<description>
+				Adds a callback, which is called when the utterance has started, finished, canceled or reached a text boundary.
+				- [code]TTS_UTTERANCE_STARTED[/code], [code]TTS_UTTERANCE_ENDED[/code], and [code]TTS_UTTERANCE_CANCELED[/code] callable's method should take one [int] parameter, the utterance id.
+				- [code]TTS_UTTERANCE_BOUNDARY[/code] callable's method should take two [int] parameters, the index of the character and the utterance id.
+				[b]Note:[/b] The granularity of the boundary callbacks is engine dependent.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_speak">
+			<return type="void" />
+			<argument index="0" name="text" type="String" />
+			<argument index="1" name="voice" type="String" />
+			<argument index="2" name="volume" type="int" default="50" />
+			<argument index="3" name="pitch" type="float" default="1.0" />
+			<argument index="4" name="rate" type="float" default="1.0" />
+			<argument index="5" name="utterance_id" type="int" default="0" />
+			<argument index="6" name="interrupt" type="bool" default="false" />
+			<description>
+				Adds an utterance to the queue. If [code]interrupt[/code] is [code]true[/code], the queue is cleared first.
+				- [code]voice[/code] identifier is one of the [code]"id"[/code] values returned by [method tts_get_voices] or one of the values returned by [method tts_get_voices_for_language].
+				- [code]volume[/code] ranges from [code]0[/code] (lowest) to [code]100[/code] (highest).
+				- [code]pitch[/code] ranges from [code]0.0[/code] (lowest) to [code]2.0[/code] (highest), [code]1.0[/code] is default pitch for the current voice.
+				- [code]rate[/code] ranges from [code]0.1[/code] (lowest) to [code]10.0[/code] (highest), [code]1.0[/code] is a normal speaking rate. Other values act as a percentage relative.
+				- [code]utterance_id[/code] is passed as a parameter to the callback functions.
+				[b]Note:[/b] On Windows and Linux, utterance [code]text[/code] can use SSML markup. SSML support is engine and voice dependent. If the engine does not support SSML, you should strip out all XML markup before calling [method tts_speak].
+				[b]Note:[/b] The granularity of pitch, rate, and volume is engine and voice dependent. Values may be truncated.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
+			</description>
+		</method>
+		<method name="tts_stop">
+			<return type="void" />
+			<description>
+				Stops synthesis in progress and removes all utterances from the queue.
+				[b]Note:[/b] This method is implemented on Android, iOS, HTML5, Linux, macOS, and Windows.
 			</description>
 		</method>
 	</methods>
@@ -1207,6 +1308,31 @@
 		<constant name="SCREEN_ORIENTATION_SENSOR" value="6" enum="ScreenOrientation">
 			Uses most suitable orientation based on the hardware sensor.
 		</constant>
+		<constant name="KEYBOARD_TYPE_DEFAULT" value="0" enum="VirtualKeyboardType">
+			Default text virtual keyboard.
+		</constant>
+		<constant name="KEYBOARD_TYPE_MULTILINE" value="1" enum="VirtualKeyboardType">
+			Multiline virtual keyboard.
+		</constant>
+		<constant name="KEYBOARD_TYPE_NUMBER" value="2" enum="VirtualKeyboardType">
+			Virtual number keypad, useful for PIN entry.
+		</constant>
+		<constant name="KEYBOARD_TYPE_NUMBER_DECIMAL" value="3" enum="VirtualKeyboardType">
+			Virtual number keypad, useful for entering fractional numbers.
+		</constant>
+		<constant name="KEYBOARD_TYPE_PHONE" value="4" enum="VirtualKeyboardType">
+			Virtual phone number keypad.
+		</constant>
+		<constant name="KEYBOARD_TYPE_EMAIL_ADDRESS" value="5" enum="VirtualKeyboardType">
+			Virtual keyboard with additional keys to assist with typing email addresses.
+		</constant>
+		<constant name="KEYBOARD_TYPE_PASSWORD" value="6" enum="VirtualKeyboardType">
+			Virtual keyboard for entering a password. On most platforms, this should disable autocomplete and autocapitalization.
+			[b]Note:[/b] This is not supported on HTML5 or below iOS version 11.0. Instead, this will behave identically to [constant KEYBOARD_TYPE_DEFAULT].
+		</constant>
+		<constant name="KEYBOARD_TYPE_URL" value="7" enum="VirtualKeyboardType">
+			Virtual keyboard with additional keys to assist with typing URLs.
+		</constant>
 		<constant name="SYSTEM_DIR_DESKTOP" value="0" enum="SystemDir">
 			Desktop directory path.
 		</constant>
@@ -1245,6 +1371,18 @@
 		</constant>
 		<constant name="POWERSTATE_CHARGED" value="4" enum="PowerState">
 			Plugged in, battery fully charged.
+		</constant>
+		<constant name="TTS_UTTERANCE_STARTED" value="0" enum="TTSUtteranceEvent">
+			Utterance has begun to be spoken.
+		</constant>
+		<constant name="TTS_UTTERANCE_ENDED" value="1" enum="TTSUtteranceEvent">
+			Utterance was successfully finished.
+		</constant>
+		<constant name="TTS_UTTERANCE_CANCELED" value="2" enum="TTSUtteranceEvent">
+			Utterance was canceled, or TTS service was unable to process it.
+		</constant>
+		<constant name="TTS_UTTERANCE_BOUNDARY" value="3" enum="TTSUtteranceEvent">
+			Utterance reached a word or sentence boundary.
 		</constant>
 	</constants>
 </class>

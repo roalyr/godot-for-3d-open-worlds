@@ -45,7 +45,7 @@ Input *Input::get_singleton() {
 }
 
 void Input::set_mouse_mode(MouseMode p_mode) {
-	ERR_FAIL_INDEX((int)p_mode, 4);
+	ERR_FAIL_INDEX((int)p_mode, 5);
 	OS::get_singleton()->set_mouse_mode((OS::MouseMode)p_mode);
 }
 
@@ -113,6 +113,7 @@ void Input::_bind_methods() {
 	BIND_ENUM_CONSTANT(MOUSE_MODE_HIDDEN);
 	BIND_ENUM_CONSTANT(MOUSE_MODE_CAPTURED);
 	BIND_ENUM_CONSTANT(MOUSE_MODE_CONFINED);
+	BIND_ENUM_CONSTANT(MOUSE_MODE_CONFINED_HIDDEN);
 
 	BIND_ENUM_CONSTANT(CURSOR_ARROW);
 	BIND_ENUM_CONSTANT(CURSOR_IBEAM);
@@ -141,11 +142,9 @@ void Input::get_argument_options(const StringName &p_function, int p_idx, List<S
 	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
 
 	String pf = p_function;
-	if (p_idx == 0 &&
-			(pf == "is_action_pressed" || pf == "action_press" || pf == "action_release" ||
-					pf == "is_action_just_pressed" || pf == "is_action_just_released" ||
-					pf == "get_action_strength" || pf == "get_action_raw_strength" ||
-					pf == "get_axis" || pf == "get_vector")) {
+	if ((p_idx == 0 && (pf == "is_action_pressed" || pf == "action_press" || pf == "action_release" || pf == "is_action_just_pressed" || pf == "is_action_just_released" || pf == "get_action_strength" || pf == "get_action_raw_strength")) ||
+			(p_idx < 2 && pf == "get_axis") ||
+			(p_idx < 4 && pf == "get_vector")) {
 		List<PropertyInfo> pinfo;
 		ProjectSettings::get_singleton()->get_property_list(&pinfo);
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="PoolByteArray" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="PoolByteArray" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A pooled array of bytes.
 	</brief_description>
@@ -40,6 +40,11 @@
 			<argument index="0" name="array" type="PoolByteArray" />
 			<description>
 				Appends a [PoolByteArray] at the end of this array.
+			</description>
+		</method>
+		<method name="clear">
+			<description>
+				Clears the array. This is equivalent to using [method resize] with a size of [code]0[/code].
 			</description>
 		</method>
 		<method name="compress">

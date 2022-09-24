@@ -1177,7 +1177,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 				}
 				p_item->set_meta("__focus_rect", Rect2(r.position, r.size));
 
-				if (p_item->cells[i].selected) {
+				if (select_mode != SELECT_ROW && p_item->cells[i].selected) {
 					if (has_focus()) {
 						cache.selected_focus->draw(ci, r);
 					} else {
@@ -2405,7 +2405,7 @@ void Tree::_gui_input(Ref<InputEvent> p_event) {
 				TreeItem *old_it = cache.hover_item;
 				int old_col = cache.hover_cell;
 
-				int col, h, section;
+				int col = 0, h = 0, section = 0;
 				TreeItem *it = _find_item_at_pos(root, mpos, col, h, section);
 
 				if (drop_mode_flags) {

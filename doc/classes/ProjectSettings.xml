@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ProjectSettings" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="ProjectSettings" inherits="Object" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Contains global variables accessible from everywhere.
 	</brief_description>
@@ -182,6 +182,9 @@
 			Path to an image used as the boot splash. If left empty, the default Godot Engine splash will be displayed instead.
 			[b]Note:[/b] Only effective if [member application/boot_splash/show_image] is [code]true[/code].
 		</member>
+		<member name="application/boot_splash/minimum_display_time" type="int" setter="" getter="" default="0">
+			Minimum boot splash display time (in milliseconds). It is not recommended to set too high values for this setting.
+		</member>
 		<member name="application/boot_splash/show_image" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], displays the image specified in [member application/boot_splash/image] when the engine starts. If [code]false[/code], only displays the plain color specified in [member application/boot_splash/bg_color].
 		</member>
@@ -259,6 +262,12 @@
 		<member name="application/run/main_scene" type="String" setter="" getter="" default="&quot;&quot;">
 			Path to the main scene file that will be loaded when the project runs.
 		</member>
+		<member name="audio/2d_panning_strength" type="float" setter="" getter="" default="1.0">
+			The base strength of the panning effect for all AudioStreamPlayer2D nodes. The panning strength can be further scaled on each Node using [member AudioStreamPlayer2D.panning_strength].
+		</member>
+		<member name="audio/3d_panning_strength" type="float" setter="" getter="" default="1.0">
+			The base strength of the panning effect for all AudioStreamPlayer3D nodes. The panning strength can be further scaled on each Node using [member AudioStreamPlayer3D.panning_strength].
+		</member>
 		<member name="audio/channel_disable_threshold_db" type="float" setter="" getter="" default="-60.0">
 			Audio buses will disable automatically when sound goes below a given dB threshold for a given time. This saves CPU as effects assigned to that bus will no longer do any processing.
 		</member>
@@ -273,6 +282,7 @@
 		</member>
 		<member name="audio/enable_audio_input" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], microphone input will be allowed. This requires appropriate permissions to be set when exporting to Android or iOS.
+			[b]Note:[/b] If the operating system blocks access to audio input devices (due to the user's privacy settings), audio capture will only return silence. On Windows 10 and later, make sure that apps are allowed to access the microphone in the OS' privacy settings.
 		</member>
 		<member name="audio/mix_rate" type="int" setter="" getter="" default="44100">
 			The mixing rate used for audio (in Hz). In general, it's better to not touch this and leave it to the host operating system.
@@ -1660,7 +1670,9 @@
 			[b]Note:[/b] The two video drivers are not drop-in replacements for each other, so a game designed for GLES3 might not work properly when falling back to GLES2. In particular, some features of the GLES3 backend are not available in GLES2. Enabling this setting also means that both ETC and ETC2 VRAM-compressed textures will be exported on Android and iOS, increasing the data pack's size.
 		</member>
 		<member name="rendering/quality/filters/anisotropic_filter_level" type="int" setter="" getter="" default="4">
-			Maximum anisotropic filter level used for textures with anisotropy enabled. Higher values will result in sharper textures when viewed from oblique angles, at the cost of performance. Only power-of-two values are valid (2, 4, 8, 16).
+			Maximum anisotropic filter level used for textures with anisotropy enabled. Higher values will result in sharper textures when viewed from oblique angles, at the cost of performance. With the exception of [code]1[/code], only power-of-two values are valid ([code]2[/code], [code]4[/code], [code]8[/code], [code]16[/code]). A value of [code]1[/code] forcibly disables anisotropic filtering, even on textures where it is enabled.
+			[b]Note:[/b] For performance reasons, anisotropic filtering [i]is not enabled by default[/i] on textures. For this setting to have an effect, anisotropic texture filtering can be enabled by selecting a texture in the FileSystem dock, going to the Import dock, checking the [b]Anisotropic[/b] checkbox then clicking [b]Reimport[/b]. However, anisotropic filtering is rarely useful in 2D, so only enable it for textures in 2D if it makes a meaningful visual difference.
+			[b]Note:[/b] This property is only read when the project starts. There is currently no way to change this setting at run-time.
 		</member>
 		<member name="rendering/quality/filters/msaa" type="int" setter="" getter="" default="0">
 			Sets the number of MSAA samples to use. MSAA is used to reduce aliasing around the edges of polygons. A higher MSAA value results in smoother edges but can be significantly slower on some hardware.

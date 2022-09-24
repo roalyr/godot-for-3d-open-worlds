@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TextEdit" inherits="Control" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="TextEdit" inherits="Control" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Multiline text editing control.
 	</brief_description>
@@ -412,7 +412,7 @@
 			<argument index="0" name="line" type="int" />
 			<argument index="1" name="bookmark" type="bool" />
 			<description>
-				Bookmarks the [code]line[/code] if [code]bookmark[/code] is true. Deletes the bookmark if [code]bookmark[/code] is false.
+				Bookmarks the [code]line[/code] if [code]bookmark[/code] is [code]true[/code]. Deletes the bookmark if [code]bookmark[/code] is [code]false[/code].
 				Bookmarks are shown in the [member breakpoint_gutter].
 			</description>
 		</method>

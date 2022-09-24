@@ -28,12 +28,13 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef PROJECT_SETTINGS_H
-#define PROJECT_SETTINGS_H
+#ifndef PROJECT_SETTINGS_EDITOR_H
+#define PROJECT_SETTINGS_EDITOR_H
 
 #include "core/undo_redo.h"
 #include "editor/editor_autoload_settings.h"
 #include "editor/editor_data.h"
+#include "editor/editor_locale_dialog.h"
 #include "editor/editor_plugin_settings.h"
 #include "editor/editor_sectioned_inspector.h"
 #include "editor/import_defaults_editor.h"
@@ -49,11 +50,6 @@ class ProjectSettingsEditor : public AcceptDialog {
 		INPUT_JOY_BUTTON,
 		INPUT_JOY_MOTION,
 		INPUT_MOUSE_BUTTON
-	};
-
-	enum LocaleFilter {
-		SHOW_ALL_LOCALES,
-		SHOW_ONLY_SELECTED_LOCALES,
 	};
 
 	TabContainer *tab_container;
@@ -94,6 +90,7 @@ class ProjectSettingsEditor : public AcceptDialog {
 
 	Ref<InputEventKey> last_wait_for_key;
 
+	EditorLocaleDialog *locale_select;
 	EditorFileDialog *translation_file_open;
 	Tree *translation_list;
 
@@ -102,11 +99,6 @@ class ProjectSettingsEditor : public AcceptDialog {
 	EditorFileDialog *translation_res_option_file_open;
 	Tree *translation_remap;
 	Tree *translation_remap_options;
-	Tree *translation_filter;
-	bool translation_locales_list_created;
-	OptionButton *translation_locale_filter_mode;
-	Vector<TreeItem *> translation_filter_treeitems;
-	Vector<int> translation_locales_idxs_remap;
 
 	EditorAutoloadSettings *autoload_settings;
 
@@ -153,9 +145,8 @@ class ProjectSettingsEditor : public AcceptDialog {
 	void _translation_res_option_add(const PoolStringArray &p_paths);
 	void _translation_res_option_changed();
 	void _translation_res_option_delete(Object *p_item, int p_column, int p_button);
-
-	void _translation_filter_option_changed();
-	void _translation_filter_mode_changed(int p_mode);
+	void _translation_res_option_popup(bool p_arrow_clicked);
+	void _translation_res_option_selected(const String &p_locale);
 
 	void _toggle_search_bar(bool p_pressed);
 
@@ -205,4 +196,4 @@ public:
 	ProjectSettingsEditor(EditorData *p_data);
 };
 
-#endif // PROJECT_SETTINGS_H
+#endif // PROJECT_SETTINGS_EDITOR_H

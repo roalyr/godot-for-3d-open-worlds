@@ -1932,6 +1932,10 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("multimesh_set_visible_instances", "multimesh", "visible"), &VisualServer::multimesh_set_visible_instances);
 	ClassDB::bind_method(D_METHOD("multimesh_get_visible_instances", "multimesh"), &VisualServer::multimesh_get_visible_instances);
 	ClassDB::bind_method(D_METHOD("multimesh_set_as_bulk_array", "multimesh", "array"), &VisualServer::multimesh_set_as_bulk_array);
+	ClassDB::bind_method(D_METHOD("multimesh_set_as_bulk_array_interpolated", "multimesh", "array", "array_previous"), &VisualServer::multimesh_set_as_bulk_array_interpolated);
+	ClassDB::bind_method(D_METHOD("multimesh_set_physics_interpolated", "multimesh", "interpolated"), &VisualServer::multimesh_set_physics_interpolated);
+	ClassDB::bind_method(D_METHOD("multimesh_set_physics_interpolation_quality", "multimesh", "quality"), &VisualServer::multimesh_set_physics_interpolation_quality);
+	ClassDB::bind_method(D_METHOD("multimesh_instance_reset_physics_interpolation", "multimesh", "index"), &VisualServer::multimesh_instance_reset_physics_interpolation);
 #ifndef _3D_DISABLED
 	ClassDB::bind_method(D_METHOD("immediate_create"), &VisualServer::immediate_create);
 	ClassDB::bind_method(D_METHOD("immediate_begin", "immediate", "primitive", "texture"), &VisualServer::immediate_begin, DEFVAL(RID()));
@@ -2060,6 +2064,8 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("camera_set_orthogonal", "camera", "size", "z_near", "z_far"), &VisualServer::camera_set_orthogonal);
 	ClassDB::bind_method(D_METHOD("camera_set_frustum", "camera", "size", "offset", "z_near", "z_far"), &VisualServer::camera_set_frustum);
 	ClassDB::bind_method(D_METHOD("camera_set_transform", "camera", "transform"), &VisualServer::camera_set_transform);
+	ClassDB::bind_method(D_METHOD("camera_set_interpolated", "camera", "interpolated"), &VisualServer::camera_set_interpolated);
+	ClassDB::bind_method(D_METHOD("camera_reset_physics_interpolation", "camera"), &VisualServer::camera_reset_physics_interpolation);
 	ClassDB::bind_method(D_METHOD("camera_set_cull_mask", "camera", "layers"), &VisualServer::camera_set_cull_mask);
 	ClassDB::bind_method(D_METHOD("camera_set_environment", "camera", "env"), &VisualServer::camera_set_environment);
 	ClassDB::bind_method(D_METHOD("camera_set_use_vertical_aspect", "camera", "enable"), &VisualServer::camera_set_use_vertical_aspect);
@@ -2095,6 +2101,7 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("viewport_set_use_debanding", "viewport", "debanding"), &VisualServer::viewport_set_use_debanding);
 	ClassDB::bind_method(D_METHOD("viewport_set_sharpen_intensity", "viewport", "intensity"), &VisualServer::viewport_set_sharpen_intensity);
 	ClassDB::bind_method(D_METHOD("viewport_set_hdr", "viewport", "enabled"), &VisualServer::viewport_set_hdr);
+	ClassDB::bind_method(D_METHOD("viewport_set_use_32_bpc_depth", "viewport", "enabled"), &VisualServer::viewport_set_use_32_bpc_depth);
 	ClassDB::bind_method(D_METHOD("viewport_set_usage", "viewport", "usage"), &VisualServer::viewport_set_usage);
 	ClassDB::bind_method(D_METHOD("viewport_get_render_info", "viewport", "info"), &VisualServer::viewport_get_render_info);
 	ClassDB::bind_method(D_METHOD("viewport_set_debug_draw", "viewport", "draw"), &VisualServer::viewport_set_debug_draw);
@@ -2135,6 +2142,8 @@ void VisualServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("instance_set_scenario", "instance", "scenario"), &VisualServer::instance_set_scenario);
 	ClassDB::bind_method(D_METHOD("instance_set_layer_mask", "instance", "mask"), &VisualServer::instance_set_layer_mask);
 	ClassDB::bind_method(D_METHOD("instance_set_transform", "instance", "transform"), &VisualServer::instance_set_transform);
+	ClassDB::bind_method(D_METHOD("instance_set_interpolated", "instance", "interpolated"), &VisualServer::instance_set_interpolated);
+	ClassDB::bind_method(D_METHOD("instance_reset_physics_interpolation", "instance"), &VisualServer::instance_reset_physics_interpolation);
 	ClassDB::bind_method(D_METHOD("instance_attach_object_instance_id", "instance", "id"), &VisualServer::instance_attach_object_instance_id);
 	ClassDB::bind_method(D_METHOD("instance_set_blend_shape_weight", "instance", "shape", "weight"), &VisualServer::instance_set_blend_shape_weight);
 	ClassDB::bind_method(D_METHOD("instance_set_surface_material", "instance", "surface", "material"), &VisualServer::instance_set_surface_material);
@@ -2486,6 +2495,8 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(MULTIMESH_CUSTOM_DATA_NONE);
 	BIND_ENUM_CONSTANT(MULTIMESH_CUSTOM_DATA_8BIT);
 	BIND_ENUM_CONSTANT(MULTIMESH_CUSTOM_DATA_FLOAT);
+	BIND_ENUM_CONSTANT(MULTIMESH_INTERP_QUALITY_FAST);
+	BIND_ENUM_CONSTANT(MULTIMESH_INTERP_QUALITY_HIGH);
 
 	BIND_ENUM_CONSTANT(REFLECTION_PROBE_UPDATE_ONCE);
 	BIND_ENUM_CONSTANT(REFLECTION_PROBE_UPDATE_ALWAYS);

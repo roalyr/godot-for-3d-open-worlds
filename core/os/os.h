@@ -123,6 +123,31 @@ public:
 		}
 	};
 
+	struct TTSUtterance {
+		String text;
+		String voice;
+		int volume = 50;
+		float pitch = 1.f;
+		float rate = 1.f;
+		int id = 0;
+	};
+
+	enum TTSUtteranceEvent {
+		TTS_UTTERANCE_STARTED,
+		TTS_UTTERANCE_ENDED,
+		TTS_UTTERANCE_CANCELED,
+		TTS_UTTERANCE_BOUNDARY,
+		TTS_UTTERANCE_MAX,
+	};
+
+private:
+	struct Callback {
+		Object *object = nullptr;
+		StringName cb_name;
+	};
+
+	Callback utterance_callback[TTS_UTTERANCE_MAX];
+
 protected:
 	friend class Main;
 
@@ -166,11 +191,26 @@ public:
 		MOUSE_MODE_VISIBLE,
 		MOUSE_MODE_HIDDEN,
 		MOUSE_MODE_CAPTURED,
-		MOUSE_MODE_CONFINED
+		MOUSE_MODE_CONFINED,
+		MOUSE_MODE_CONFINED_HIDDEN,
 	};
 
 	virtual void set_mouse_mode(MouseMode p_mode);
 	virtual MouseMode get_mouse_mode() const;
+
+	virtual bool tts_is_speaking() const;
+	virtual bool tts_is_paused() const;
+	virtual Array tts_get_voices() const;
+
+	virtual PoolStringArray tts_get_voices_for_language(const String &p_language) const;
+
+	virtual void tts_speak(const String &p_text, const String &p_voice, int p_volume = 50, float p_pitch = 1.f, float p_rate = 1.f, int p_utterance_id = 0, bool p_interrupt = false);
+	virtual void tts_pause();
+	virtual void tts_resume();
+	virtual void tts_stop();
+
+	virtual void tts_set_utterance_callback(TTSUtteranceEvent p_event, Object *p_object, const StringName &p_callback);
+	virtual void tts_post_utterance_event(TTSUtteranceEvent p_event, int p_id, int p_pos = 0);
 
 	virtual void warp_mouse_position(const Point2 &p_to) {}
 	virtual Point2 get_mouse_position() const = 0;
@@ -397,6 +437,7 @@ public:
 	virtual uint64_t get_unix_time() const;
 	virtual uint64_t get_system_time_secs() const;
 	virtual uint64_t get_system_time_msecs() const;
+	virtual double get_subsecond_unix_time() const; // For use in Time::get_unix_time().
 
 	virtual void delay_usec(uint32_t p_usec) const = 0;
 	virtual void add_frame_delay(bool p_can_draw);
@@ -437,8 +478,19 @@ public:
 		CURSOR_MAX
 	};
 
+	enum VirtualKeyboardType {
+		KEYBOARD_TYPE_DEFAULT,
+		KEYBOARD_TYPE_MULTILINE,
+		KEYBOARD_TYPE_NUMBER,
+		KEYBOARD_TYPE_NUMBER_DECIMAL,
+		KEYBOARD_TYPE_PHONE,
+		KEYBOARD_TYPE_EMAIL_ADDRESS,
+		KEYBOARD_TYPE_PASSWORD,
+		KEYBOARD_TYPE_URL
+	};
+
 	virtual bool has_virtual_keyboard() const;
-	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), bool p_multiline = false, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1);
+	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), VirtualKeyboardType p_type = KEYBOARD_TYPE_DEFAULT, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1);
 	virtual void hide_virtual_keyboard();
 
 	// returns height of the currently shown virtual keyboard (0 if keyboard is hidden)
@@ -620,4 +672,4 @@ public:
 
 VARIANT_ENUM_CAST(OS::PowerState);
 
-#endif
+#endif // OS_H

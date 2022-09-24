@@ -42,32 +42,37 @@ void InputDefault::SpeedTrack::update(const Vector2 &p_delta_p) {
 	float delta_t = tdiff / 1000000.0;
 	last_tick = tick;
 
+	if (delta_t > max_ref_frame) {
+		// First movement in a long time, reset and start again.
+		speed = Vector2();
+		accum = p_delta_p;
+		accum_t = 0;
+		return;
+	}
+
 	accum += p_delta_p;
 	accum_t += delta_t;
 
-	if (accum_t > max_ref_frame * 10) {
-		accum_t = max_ref_frame * 10;
+	if (accum_t < min_ref_frame) {
+		// Not enough time has passed to calculate speed precisely.
+		return;
 	}
 
-	while (accum_t >= min_ref_frame) {
-		float slice_t = min_ref_frame / accum_t;
-		Vector2 slice = accum * slice_t;
-		accum = accum - slice;
-		accum_t -= min_ref_frame;
-
-		speed = (slice / min_ref_frame).linear_interpolate(speed, min_ref_frame / max_ref_frame);
-	}
+	speed = accum / accum_t;
+	accum = Vector2();
+	accum_t = 0;
 }
 
 void InputDefault::SpeedTrack::reset() {
 	last_tick = OS::get_singleton()->get_ticks_usec();
 	speed = Vector2();
+	accum = Vector2();
 	accum_t = 0;
 }
 
 InputDefault::SpeedTrack::SpeedTrack() {
 	min_ref_frame = 0.1;
-	max_ref_frame = 0.3;
+	max_ref_frame = 3.0;
 	reset();
 }
 
@@ -560,7 +565,8 @@ void InputDefault::set_mouse_position(const Point2 &p_posf) {
 Point2 InputDefault::get_mouse_position() const {
 	return mouse_pos;
 }
-Point2 InputDefault::get_last_mouse_speed() const {
+Point2 InputDefault::get_last_mouse_speed() {
+	mouse_speed_track.update(Vector2());
 	return mouse_speed_track.speed;
 }
 
@@ -841,11 +847,9 @@ void InputDefault::joy_axis(int p_device, int p_axis, float p_value) {
 		}
 
 		bool pressed = map.value > 0.5;
-		if (pressed == joy_buttons_pressed.has(_combine_device(map.index, p_device))) {
-			// Button already pressed or released; so ignore.
-			return;
+		if (pressed != joy_buttons_pressed.has(_combine_device(map.index, p_device))) {
+			_button_event(p_device, map.index, pressed);
 		}
-		_button_event(p_device, map.index, pressed);
 
 		// Ensure opposite D-Pad button is also released.
 		switch (map.index) {
@@ -992,7 +996,7 @@ InputDefault::JoyEvent InputDefault::_get_mapped_axis_event(const JoyDeviceMappi
 				value = -value;
 			}
 			if (binding.input.axis.range == FULL_AXIS ||
-					(binding.input.axis.range == POSITIVE_HALF_AXIS && value > 0) ||
+					(binding.input.axis.range == POSITIVE_HALF_AXIS && value >= 0) ||
 					(binding.input.axis.range == NEGATIVE_HALF_AXIS && value < 0)) {
 				event.type = binding.outputType;
 				float shifted_positive_value = 0;
@@ -1050,7 +1054,7 @@ InputDefault::JoyEvent InputDefault::_get_mapped_axis_event(const JoyDeviceMappi
 	return event;
 }
 
-void InputDefault::_get_mapped_hat_events(const JoyDeviceMapping &mapping, int p_hat, JoyEvent r_events[]) {
+void InputDefault::_get_mapped_hat_events(const JoyDeviceMapping &mapping, int p_hat, JoyEvent r_events[(size_t)HAT_MAX]) {
 	for (int i = 0; i < mapping.bindings.size(); i++) {
 		const JoyBinding binding = mapping.bindings[i];
 		if (binding.inputType == TYPE_HAT && binding.input.hat.hat == p_hat) {

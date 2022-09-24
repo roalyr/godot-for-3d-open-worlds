@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Input" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="Input" inherits="Object" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		A singleton that deals with inputs.
 	</brief_description>
@@ -169,10 +169,10 @@
 				Returns the strength of the joypad vibration: x is the strength of the weak motor, and y is the strength of the strong motor.
 			</description>
 		</method>
-		<method name="get_last_mouse_speed" qualifiers="const">
+		<method name="get_last_mouse_speed">
 			<return type="Vector2" />
 			<description>
-				Returns the mouse speed for the last time the cursor was moved, and this until the next frame where the mouse moves. This means that even if the mouse is not moving, this function will still return the value of the last motion.
+				Returns the last mouse speed. To provide a precise and jitter-free speed, mouse speed is only calculated every 0.1s. Therefore, mouse speed will lag mouse movements.
 			</description>
 		</method>
 		<method name="get_magnetometer" qualifiers="const">
@@ -379,9 +379,11 @@
 			<return type="void" />
 			<argument index="0" name="duration_ms" type="int" default="500" />
 			<description>
-				Vibrate Android and iOS devices.
+				Vibrate handheld devices.
+				[b]Note:[/b] This method is implemented on Android, iOS, and HTML5.
 				[b]Note:[/b] For Android, it requires enabling the [code]VIBRATE[/code] permission in the export preset.
 				[b]Note:[/b] For iOS, specifying the duration is supported in iOS 13 and later.
+				[b]Note:[/b] Some web browsers such as Safari and Firefox for Android do not support this method.
 			</description>
 		</method>
 		<method name="warp_mouse_position">
@@ -424,7 +426,10 @@
 			[b]Note:[/b] If you want to process the mouse's movement in this mode, you need to use [member InputEventMouseMotion.relative].
 		</constant>
 		<constant name="MOUSE_MODE_CONFINED" value="3" enum="MouseMode">
-			Makes the mouse cursor visible but confines it to the game window.
+			Confines the mouse cursor to the game window, and make it visible.
+		</constant>
+		<constant name="MOUSE_MODE_CONFINED_HIDDEN" value="4" enum="MouseMode">
+			Confines the mouse cursor to the game window, and make it hidden.
 		</constant>
 		<constant name="CURSOR_ARROW" value="0" enum="CursorShape">
 			Arrow cursor. Standard, default pointing cursor.

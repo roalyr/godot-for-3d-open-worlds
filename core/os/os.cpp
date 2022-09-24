@@ -86,6 +86,9 @@ uint64_t OS::get_system_time_secs() const {
 uint64_t OS::get_system_time_msecs() const {
 	return 0;
 }
+double OS::get_subsecond_unix_time() const {
+	return 0.0;
+}
 void OS::debug_break(){
 
 	// something
@@ -187,7 +190,7 @@ int OS::get_process_id() const {
 };
 
 void OS::vibrate_handheld(int p_duration_ms) {
-	WARN_PRINT("vibrate_handheld() only works with Android and iOS");
+	WARN_PRINT("vibrate_handheld() only works with Android, iOS and HTML5");
 }
 
 bool OS::is_stdout_verbose() const {
@@ -222,7 +225,7 @@ bool OS::has_virtual_keyboard() const {
 	return false;
 }
 
-void OS::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
+void OS::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, VirtualKeyboardType p_type, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
 }
 
 void OS::hide_virtual_keyboard() {
@@ -555,6 +558,75 @@ bool OS::can_use_threads() const {
 #else
 	return true;
 #endif
+}
+
+bool OS::tts_is_speaking() const {
+	WARN_PRINT("TTS is not supported by this platform.");
+	return false;
+}
+
+bool OS::tts_is_paused() const {
+	WARN_PRINT("TTS is not supported by this platform.");
+	return false;
+}
+
+void OS::tts_pause() {
+	WARN_PRINT("TTS is not supported by this platformr.");
+}
+
+void OS::tts_resume() {
+	WARN_PRINT("TTS is not supported by this platform.");
+}
+
+Array OS::tts_get_voices() const {
+	WARN_PRINT("TTS is not supported by this platform.");
+	return Array();
+}
+
+PoolStringArray OS::tts_get_voices_for_language(const String &p_language) const {
+	PoolStringArray ret;
+	Array voices = tts_get_voices();
+	for (int i = 0; i < voices.size(); i++) {
+		const Dictionary &voice = voices[i];
+		if (voice.has("id") && voice.has("language") && voice["language"].operator String().begins_with(p_language)) {
+			ret.push_back(voice["id"]);
+		}
+	}
+	return ret;
+}
+
+void OS::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
+	WARN_PRINT("TTS is not supported by this platform.");
+}
+
+void OS::tts_stop() {
+	WARN_PRINT("TTS is not supported by this platform.");
+}
+
+void OS::tts_set_utterance_callback(TTSUtteranceEvent p_event, Object *p_object, const StringName &p_callback) {
+	ERR_FAIL_INDEX(p_event, OS::TTS_UTTERANCE_MAX);
+	utterance_callback[p_event].object = p_object;
+	utterance_callback[p_event].cb_name = p_callback;
+}
+
+void OS::tts_post_utterance_event(TTSUtteranceEvent p_event, int p_id, int p_pos) {
+	ERR_FAIL_INDEX(p_event, OS::TTS_UTTERANCE_MAX);
+	switch (p_event) {
+		case OS::TTS_UTTERANCE_STARTED:
+		case OS::TTS_UTTERANCE_ENDED:
+		case OS::TTS_UTTERANCE_CANCELED: {
+			if (utterance_callback[p_event].object != nullptr) {
+				utterance_callback[p_event].object->call_deferred(utterance_callback[p_event].cb_name, p_id);
+			}
+		} break;
+		case OS::TTS_UTTERANCE_BOUNDARY: {
+			if (utterance_callback[p_event].object != nullptr) {
+				utterance_callback[p_event].object->call_deferred(utterance_callback[p_event].cb_name, p_pos, p_id);
+			}
+		} break;
+		default:
+			break;
+	}
 }
 
 OS::MouseMode OS::get_mouse_mode() const {

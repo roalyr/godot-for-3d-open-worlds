@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Navigation2DServer" inherits="Object" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="Navigation2DServer" inherits="Object" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Server interface for low-level 2D navigation access.
 	</brief_description>
@@ -124,7 +124,8 @@
 			<return type="void" />
 			<argument index="0" name="rid" type="RID" />
 			<description>
-				Destroys the given RID.
+				Destroys an object created by the Navigation2DServer.
+				[b]Note:[/b] See [method VisualServer.free_rid] for details on how to handle RIDs for freed objects.
 			</description>
 		</method>
 		<method name="get_maps" qualifiers="const">
@@ -213,7 +214,7 @@
 		</method>
 		<method name="map_is_active" qualifiers="const">
 			<return type="bool" />
-			<argument index="0" name="nap" type="RID" />
+			<argument index="0" name="map" type="RID" />
 			<description>
 				Returns [code]true[/code] if the map is active.
 			</description>

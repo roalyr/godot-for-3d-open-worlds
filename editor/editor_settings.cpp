@@ -256,7 +256,6 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	{
 		String lang_hint = "en";
 		String host_lang = OS::get_singleton()->get_locale();
-		host_lang = TranslationServer::standardize_locale(host_lang);
 
 		// Some locales are not properly supported currently in Godot due to lack of font shaping
 		// (e.g. Arabic or Hindi), so even though we have work in progress translations for them,
@@ -264,6 +263,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 		const Vector<String> locales_to_skip = String("ar,bn,fa,he,hi,ml,si,ta,te,ur").split(",");
 
 		String best;
+		int best_score = 0;
 		const Vector<String> &locales = get_editor_locales();
 		for (int i = 0; i < locales.size(); i++) {
 			const String &locale = locales[i];
@@ -278,16 +278,17 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 			lang_hint += ",";
 			lang_hint += locale;
 
-			if (host_lang == locale) {
+			int score = TranslationServer::get_singleton()->compare_locales(host_lang, locale);
+			if (score > 0 && score >= best_score) {
 				best = locale;
-			}
-
-			if (best == String() && host_lang.begins_with(locale)) {
-				best = locale;
+				best_score = score;
+				if (score == 10) {
+					break; // Exact match, skip the rest.
+				}
 			}
 		}
 
-		if (best == String()) {
+		if (best_score == 0) {
 			best = "en";
 		}
 
@@ -439,6 +440,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	hints["text_editor/navigation/minimap_width"] = PropertyInfo(Variant::INT, "text_editor/navigation/minimap_width", PROPERTY_HINT_RANGE, "50,250,1");
 	_initial_set("text_editor/navigation/mouse_extra_buttons_navigate_history", true);
 	_initial_set("text_editor/navigation/drag_and_drop_selection", true);
+	_initial_set("text_editor/navigation/stay_in_script_editor_on_node_selected", true);
 
 	// Appearance
 	_initial_set("text_editor/appearance/show_line_numbers", true);
@@ -465,7 +467,6 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("text_editor/files/auto_reload_scripts_on_external_change", false);
 
 	// Tools
-	_initial_set("text_editor/tools/create_signal_callbacks", true);
 	_initial_set("text_editor/tools/sort_members_outline_alphabetically", false);
 
 	// Cursor

@@ -807,6 +807,7 @@ class PhysicsServerManager {
 
 public:
 	static const String setting_property_name;
+	static int current_server_id;
 
 private:
 	static void on_servers_changed();
@@ -840,4 +841,4 @@ VARIANT_ENUM_CAST(PhysicsServer::G6DOFJointAxisFlag);
 VARIANT_ENUM_CAST(PhysicsServer::AreaBodyStatus);
 VARIANT_ENUM_CAST(PhysicsServer::ProcessInfo);
 
-#endif
+#endif // PHYSICS_SERVER_H

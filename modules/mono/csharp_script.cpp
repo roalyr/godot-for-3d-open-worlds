@@ -722,19 +722,24 @@ bool CSharpLanguage::is_assembly_reloading_needed() {
 	GDMonoAssembly *proj_assembly = gdmono->get_project_assembly();
 
 	String appname = ProjectSettings::get_singleton()->get("application/config/name");
-	String appname_safe = OS::get_singleton()->get_safe_dir_name(appname);
-	if (appname_safe.empty()) {
-		appname_safe = "UnnamedProject";
+	String assembly_name = ProjectSettings::get_singleton()->get_setting("mono/project/assembly_name");
+
+	if (assembly_name.empty()) {
+		String appname_safe = OS::get_singleton()->get_safe_dir_name(appname);
+		if (appname_safe.empty()) {
+			appname_safe = "UnnamedProject";
+		}
+		assembly_name = appname_safe;
 	}
 
-	appname_safe += ".dll";
+	assembly_name += ".dll";
 
 	if (proj_assembly) {
 		String proj_asm_path = proj_assembly->get_path();
 
 		if (!FileAccess::exists(proj_asm_path)) {
 			// Maybe it wasn't loaded from the default path, so check this as well
-			proj_asm_path = GodotSharpDirs::get_res_temp_assemblies_dir().plus_file(appname_safe);
+			proj_asm_path = GodotSharpDirs::get_res_temp_assemblies_dir().plus_file(assembly_name);
 			if (!FileAccess::exists(proj_asm_path))
 				return false; // No assembly to load
 		}
@@ -742,7 +747,7 @@ bool CSharpLanguage::is_assembly_reloading_needed() {
 		if (FileAccess::get_modified_time(proj_asm_path) <= proj_assembly->get_modified_time())
 			return false; // Already up to date
 	} else {
-		if (!FileAccess::exists(GodotSharpDirs::get_res_temp_assemblies_dir().plus_file(appname_safe)))
+		if (!FileAccess::exists(GodotSharpDirs::get_res_temp_assemblies_dir().plus_file(assembly_name)))
 			return false; // No assembly to load
 	}
 
@@ -2618,7 +2623,8 @@ int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, Manage
 	GD_MONO_ASSERT_THREAD_ATTACHED;
 
 	if (p_variant_type == Variant::INT && p_type.type_encoding == MONO_TYPE_VALUETYPE && mono_class_is_enum(p_type.type_class->get_mono_ptr())) {
-		r_hint = PROPERTY_HINT_ENUM;
+		MonoReflectionType *reftype = mono_type_get_object(mono_domain_get(), p_type.type_class->get_mono_type());
+		r_hint = GDMonoUtils::Marshal::type_has_flags_attribute(reftype) ? PROPERTY_HINT_FLAGS : PROPERTY_HINT_ENUM;
 
 		Vector<MonoClassField *> fields = p_type.type_class->get_enum_fields();
 
@@ -2655,7 +2661,8 @@ int CSharpScript::_try_get_member_export_hint(IMonoClassMember *p_member, Manage
 			uint64_t val = GDMonoUtils::unbox_enum_value(val_obj, enum_basetype, r_error);
 			ERR_FAIL_COND_V_MSG(r_error, -1, "Failed to unbox '" + enum_field_name + "' constant enum value.");
 
-			if (val != (unsigned int)i) {
+			unsigned int expected_val = r_hint == PROPERTY_HINT_FLAGS ? 1 << i : i;
+			if (val != expected_val) {
 				uses_default_values = false;
 			}
 
@@ -3372,7 +3379,7 @@ void CSharpScript::get_members(Set<StringName> *p_members) {
 
 /*************** RESOURCE ***************/
 
-RES ResourceFormatLoaderCSharpScript::load(const String &p_path, const String &p_original_path, Error *r_error) {
+RES ResourceFormatLoaderCSharpScript::load(const String &p_path, const String &p_original_path, Error *r_error, bool p_no_subresource_cache) {
 	if (r_error)
 		*r_error = ERR_FILE_CANT_OPEN;
 

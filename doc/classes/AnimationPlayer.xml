@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="AnimationPlayer" inherits="Node" version="3.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="AnimationPlayer" inherits="Node" version="3.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Container and player of [Animation] resources.
 	</brief_description>
@@ -67,7 +67,7 @@
 			<return type="Animation" />
 			<argument index="0" name="name" type="String" />
 			<description>
-				Returns the [Animation] with key [code]name[/code] or [code]null[/code] if not found.
+				Returns the [Animation] with the key [code]name[/code]. If the animation does not exist, [code]null[/code] is returned and an error is logged.
 			</description>
 		</method>
 		<method name="get_animation_list" qualifiers="const">

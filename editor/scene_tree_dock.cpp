@@ -63,7 +63,7 @@ void SceneTreeDock::_input(Ref<InputEvent> p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 
 	if (mb.is_valid() && (mb->get_button_index() == BUTTON_LEFT || mb->get_button_index() == BUTTON_RIGHT)) {
-		if (mb->is_pressed() && scene_tree->get_rect().has_point(mb->get_position())) {
+		if (mb->is_pressed() && scene_tree->get_rect().has_point(scene_tree->get_local_mouse_position())) {
 			tree_clicked = true;
 		} else if (!mb->is_pressed()) {
 			tree_clicked = false;
@@ -1129,24 +1129,63 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 			}
 		} break;
 		case TOOL_TOGGLE_SCENE_UNIQUE_NAME: {
-			List<Node *> selection = editor_selection->get_selected_node_list();
-			List<Node *>::Element *e = selection.front();
-			if (e) {
-				UndoRedo *undo_redo = &editor_data->get_undo_redo();
-				Node *node = e->get();
-				bool enabled = node->is_unique_name_in_owner();
-				if (!enabled && get_tree()->get_edited_scene_root()->get_node_or_null(UNIQUE_NODE_PREFIX + String(node->get_name())) != nullptr) {
-					accept->set_text(TTR("Another node already uses this unique name in the scene."));
+			// Enabling/disabling based on the same node based on which the checkbox in the menu is checked/unchecked.
+			List<Node *>::Element *first_selected = editor_selection->get_selected_node_list().front();
+			if (first_selected == nullptr) {
+				return;
+			}
+			bool enabling = !first_selected->get()->is_unique_name_in_owner();
+
+			List<Node *> full_selection = editor_selection->get_full_selected_node_list();
+			UndoRedo *undo_redo = &editor_data->get_undo_redo();
+
+			if (enabling) {
+				Vector<Node *> new_unique_nodes;
+				Vector<StringName> new_unique_names;
+				Vector<StringName> cant_be_set_unique_names;
+
+				for (List<Node *>::Element *e = full_selection.front(); e; e = e->next()) {
+					Node *node = e->get();
+					if (node->is_unique_name_in_owner()) {
+						continue;
+					}
+					StringName name = node->get_name();
+					if (new_unique_names.find(name) != -1 || get_tree()->get_edited_scene_root()->get_node_or_null(UNIQUE_NODE_PREFIX + String(name)) != nullptr) {
+						cant_be_set_unique_names.push_back(name);
+					} else {
+						new_unique_nodes.push_back(node);
+						new_unique_names.push_back(name);
+					}
+				}
+
+				if (new_unique_nodes.size()) {
+					undo_redo->create_action(TTR("Enable Scene Unique Name(s)"));
+					for (int i = 0; i < new_unique_nodes.size(); i++) {
+						undo_redo->add_do_method(new_unique_nodes[i], "set_unique_name_in_owner", true);
+						undo_redo->add_undo_method(new_unique_nodes[i], "set_unique_name_in_owner", false);
+					}
+					undo_redo->commit_action();
+				}
+
+				if (cant_be_set_unique_names.size()) {
+					String popup_text = TTR("Unique names already used by another node in the scene:");
+					popup_text += "\n";
+					for (int i = 0; i < cant_be_set_unique_names.size(); i++) {
+						popup_text += "\n" + String(cant_be_set_unique_names[i]);
+					}
+					accept->set_text(popup_text);
 					accept->popup_centered();
-					return;
 				}
-				if (!enabled) {
-					undo_redo->create_action(TTR("Enable Scene Unique Name"));
-				} else {
-					undo_redo->create_action(TTR("Disable Scene Unique Name"));
+			} else { // Disabling.
+				undo_redo->create_action(TTR("Disable Scene Unique Name(s)"));
+				for (List<Node *>::Element *e = full_selection.front(); e; e = e->next()) {
+					Node *node = e->get();
+					if (!node->is_unique_name_in_owner()) {
+						continue;
+					}
+					undo_redo->add_do_method(node, "set_unique_name_in_owner", false);
+					undo_redo->add_undo_method(node, "set_unique_name_in_owner", true);
 				}
-				undo_redo->add_do_method(node, "set_unique_name_in_owner", !enabled);
-				undo_redo->add_undo_method(node, "set_unique_name_in_owner", enabled);
 				undo_redo->commit_action();
 			}
 		} break;
@@ -1190,12 +1229,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				}
 			}
 
-			editor_data->get_undo_redo().create_action(TTR("New Scene Root"));
-			editor_data->get_undo_redo().add_do_method(editor, "set_edited_scene", new_node);
-			editor_data->get_undo_redo().add_do_method(scene_tree, "update_tree");
-			editor_data->get_undo_redo().add_do_reference(new_node);
-			editor_data->get_undo_redo().add_undo_method(editor, "set_edited_scene", (Object *)nullptr);
-			editor_data->get_undo_redo().commit_action();
+			add_root_node(new_node);
 
 			editor->edit_node(new_node);
 			editor_selection->clear();
@@ -1233,6 +1267,16 @@ void SceneTreeDock::_perform_property_drop(Node *p_node, String p_property, RES 
 	editor_data->get_undo_redo().add_undo_method(p_node, "property_list_changed_notify");
 	editor_data->get_undo_redo().commit_action();
 }
+
+void SceneTreeDock::add_root_node(Node *p_node) {
+	editor_data->get_undo_redo().create_action(TTR("New Scene Root"));
+	editor_data->get_undo_redo().add_do_method(editor, "set_edited_scene", p_node);
+	editor_data->get_undo_redo().add_do_method(scene_tree, "update_tree");
+	editor_data->get_undo_redo().add_do_reference(p_node);
+	editor_data->get_undo_redo().add_undo_method(editor, "set_edited_scene", (Object *)nullptr);
+	editor_data->get_undo_redo().commit_action();
+}
+
 void SceneTreeDock::_node_collapsed(Object *p_obj) {
 	TreeItem *ti = Object::cast_to<TreeItem>(p_obj);
 	if (!ti) {
@@ -2815,9 +2859,18 @@ void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 	}
 
 	if (profile_allow_editing) {
-		if (selection[0]->get_owner() == EditorNode::get_singleton()->get_edited_scene()) {
-			// Only for nodes owned by the edited scene root.
+		// Allow multi-toggling scene unique names but only if all selected nodes are owned by the edited scene root.
+		bool all_owned = true;
+		for (List<Node *>::Element *e = full_selection.front(); e; e = e->next()) {
+			Node *node = e->get();
+			if (node->get_owner() != EditorNode::get_singleton()->get_edited_scene()) {
+				all_owned = false;
+				break;
+			}
+		}
+		if (all_owned) {
 			menu->add_icon_check_item(get_icon("SceneUniqueName", "EditorIcons"), TTR("Access as Scene Unique Name"), TOOL_TOGGLE_SCENE_UNIQUE_NAME);
+			// Checked based on `selection[0]` because `full_selection` has undesired ordering.
 			menu->set_item_checked(menu->get_item_index(TOOL_TOGGLE_SCENE_UNIQUE_NAME), selection[0]->is_unique_name_in_owner());
 			menu->add_separator();
 		}

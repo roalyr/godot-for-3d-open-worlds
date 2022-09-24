@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef PYTHONSCRIPT_PY_LOADER_H
-#define PYTHONSCRIPT_PY_LOADER_H
+#ifndef PLUGINSCRIPT_LOADER_H
+#define PLUGINSCRIPT_LOADER_H
 
 // Godot imports
 #include "core/io/resource_loader.h"
@@ -43,7 +43,7 @@ class ResourceFormatLoaderPluginScript : public ResourceFormatLoader {
 
 public:
 	ResourceFormatLoaderPluginScript(PluginScriptLanguage *language);
-	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr);
+	virtual RES load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr, bool p_no_subresource_cache = false);
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
 	virtual bool handles_type(const String &p_type) const;
 	virtual String get_resource_type(const String &p_path) const;
@@ -59,4 +59,4 @@ public:
 	virtual bool recognize(const RES &p_resource) const;
 };
 
-#endif // PYTHONSCRIPT_PY_LOADER_H
+#endif // PLUGINSCRIPT_LOADER_H

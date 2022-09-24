@@ -343,10 +343,19 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 
 		Ref<Script> script = p_node->get_script();
 		if (!script.is_null()) {
-			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT, false, TTR("Open Script:") + " " + script->get_path());
-			if (EditorNode::get_singleton()->get_object_custom_type_base(p_node) == script) {
-				item->set_button_color(0, item->get_button_count(0) - 1, Color(1, 1, 1, 0.5));
+			String additional_notes;
+			Color button_color = Color(1, 1, 1);
+			// Can't set tooltip after adding button, need to do it before.
+			if (script->is_tool()) {
+				additional_notes += "\n" + TTR("This script is currently running in the editor.");
+				button_color = get_color("accent_color", "Editor");
 			}
+			if (EditorNode::get_singleton()->get_object_custom_type_base(p_node) == script) {
+				additional_notes += "\n" + TTR("This script is a custom type.");
+				button_color.a = 0.5;
+			}
+			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT, false, TTR("Open Script:") + " " + script->get_path() + additional_notes);
+			item->set_button_color(0, item->get_button_count(0) - 1, button_color);
 		}
 
 		if (p_node->is_class("CanvasItem")) {
@@ -357,7 +366,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 
 			bool is_grouped = p_node->has_meta("_edit_group_");
 			if (is_grouped) {
-				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make selectable."));
+				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make them selectable."));
 			}
 
 			bool v = p_node->call("is_visible");
@@ -391,7 +400,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 
 			bool is_grouped = p_node->has_meta("_edit_group_");
 			if (is_grouped) {
-				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make selectable."));
+				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make them selectable."));
 			}
 
 			bool v = p_node->call("is_visible");
@@ -1315,6 +1324,10 @@ void SceneTreeDialog::_select() {
 	}
 }
 
+void SceneTreeDialog::_selected_changed() {
+	get_ok()->set_disabled(!tree->get_selected());
+}
+
 void SceneTreeDialog::_filter_changed(const String &p_filter) {
 	tree->set_filter(p_filter);
 }
@@ -1322,6 +1335,7 @@ void SceneTreeDialog::_filter_changed(const String &p_filter) {
 void SceneTreeDialog::_bind_methods() {
 	ClassDB::bind_method("_select", &SceneTreeDialog::_select);
 	ClassDB::bind_method("_cancel", &SceneTreeDialog::_cancel);
+	ClassDB::bind_method(D_METHOD("_selected_changed"), &SceneTreeDialog::_selected_changed);
 	ClassDB::bind_method(D_METHOD("_filter_changed"), &SceneTreeDialog::_filter_changed);
 
 	ADD_SIGNAL(MethodInfo("selected", PropertyInfo(Variant::NODE_PATH, "path")));
@@ -1343,6 +1357,10 @@ SceneTreeDialog::SceneTreeDialog() {
 	tree->set_v_size_flags(SIZE_EXPAND_FILL);
 	tree->get_scene_tree()->connect("item_activated", this, "_select");
 	vbc->add_child(tree);
+
+	// Disable the OK button when no node is selected.
+	get_ok()->set_disabled(!tree->get_selected());
+	tree->connect("node_selected", this, "_selected_changed");
 }
 
 SceneTreeDialog::~SceneTreeDialog() {

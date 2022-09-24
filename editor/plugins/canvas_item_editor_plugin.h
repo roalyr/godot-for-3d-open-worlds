@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CONTROL_EDITOR_PLUGIN_H
-#define CONTROL_EDITOR_PLUGIN_H
+#ifndef CANVAS_ITEM_EDITOR_PLUGIN_H
+#define CANVAS_ITEM_EDITOR_PLUGIN_H
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
@@ -238,11 +238,10 @@ private:
 
 	HScrollBar *h_scroll;
 	VScrollBar *v_scroll;
-	HBoxContainer *hb;
 	// Used for secondary menu items which are displayed depending on the currently selected node
 	// (such as MeshInstance's "Mesh" menu).
-	PanelContainer *context_menu_container;
-	HBoxContainer *hbc_context_menu;
+	PanelContainer *context_menu_panel = nullptr;
+	HBoxContainer *context_menu_hbox = nullptr;
 
 	ToolButton *zoom_minus;
 	ToolButton *zoom_reset;
@@ -584,8 +583,6 @@ protected:
 
 	static void _bind_methods();
 
-	HBoxContainer *get_panel_hb() { return hb; }
-
 	struct compare_items_x {
 		bool operator()(const CanvasItem *a, const CanvasItem *b) const {
 			return a->get_global_transform().elements[2].x < b->get_global_transform().elements[2].x;
@@ -740,4 +737,4 @@ public:
 	~CanvasItemEditorViewport();
 };
 
-#endif
+#endif // CANVAS_ITEM_EDITOR_PLUGIN_H
