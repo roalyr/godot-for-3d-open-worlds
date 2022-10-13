@@ -39,6 +39,16 @@ Binaries available for Linux, Windows and Android.
 You can download binaries and templates (debug) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
 You can build it from source. Refer to `rebuild_` scripts in root folder for convenience.
 
+Reminder for cross-compiling for Windows:
+```
+To use posix mode for mingw by default:
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
+<choose x86_64-w64-mingw32-gcc-posix from the list>
+$ sudo update-alternatives --config x86_64-w64-mingw32-g++
+<choose x86_64-w64-mingw32-g++-posix from the list>
+```
+
 <br/><br/>
 <br/><br/>
 <br/><br/>
