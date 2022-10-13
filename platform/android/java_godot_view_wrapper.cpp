@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_texture.cpp                                                     */
+/*  java_godot_view_wrapper.cpp                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,30 +28,39 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gltf_texture.h"
+#include "java_godot_view_wrapper.h"
 
-void GLTFTexture::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_src_image"), &GLTFTexture::get_src_image);
-	ClassDB::bind_method(D_METHOD("set_src_image", "src_image"), &GLTFTexture::set_src_image);
-	ClassDB::bind_method(D_METHOD("get_sampler"), &GLTFTexture::get_sampler);
-	ClassDB::bind_method(D_METHOD("set_sampler", "sampler"), &GLTFTexture::set_sampler);
+GodotJavaViewWrapper::GodotJavaViewWrapper(jobject godot_view) {
+	JNIEnv *env = get_jni_env();
+	ERR_FAIL_NULL(env);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "src_image"), "set_src_image", "get_src_image"); // int
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "sampler"), "set_sampler", "get_sampler"); // int
+	_godot_view = env->NewGlobalRef(godot_view);
+
+	_cls = (jclass)env->NewGlobalRef(env->GetObjectClass(godot_view));
+
+	int android_device_api_level = android_get_device_api_level();
+	if (android_device_api_level >= __ANDROID_API_N__) {
+		_set_pointer_icon = env->GetMethodID(_cls, "setPointerIcon", "(I)V");
+	}
 }
 
-GLTFImageIndex GLTFTexture::get_src_image() const {
-	return src_image;
+bool GodotJavaViewWrapper::can_update_pointer_icon() const {
+	return _set_pointer_icon != nullptr;
 }
 
-void GLTFTexture::set_src_image(GLTFImageIndex val) {
-	src_image = val;
+void GodotJavaViewWrapper::set_pointer_icon(int pointer_type) {
+	if (_set_pointer_icon != nullptr) {
+		JNIEnv *env = get_jni_env();
+		ERR_FAIL_NULL(env);
+
+		env->CallVoidMethod(_godot_view, _set_pointer_icon, pointer_type);
+	}
 }
 
-GLTFTextureSamplerIndex GLTFTexture::get_sampler() const {
-	return sampler;
-}
+GodotJavaViewWrapper::~GodotJavaViewWrapper() {
+	JNIEnv *env = get_jni_env();
+	ERR_FAIL_NULL(env);
 
-void GLTFTexture::set_sampler(GLTFTextureSamplerIndex val) {
-	sampler = val;
+	env->DeleteGlobalRef(_godot_view);
+	env->DeleteGlobalRef(_cls);
 }

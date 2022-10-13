@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_texture.cpp                                                     */
+/*  java_godot_view_wrapper.h                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,30 +28,28 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gltf_texture.h"
+#ifndef JAVA_GODOT_VIEW_WRAPPER_H
+#define JAVA_GODOT_VIEW_WRAPPER_H
 
-void GLTFTexture::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_src_image"), &GLTFTexture::get_src_image);
-	ClassDB::bind_method(D_METHOD("set_src_image", "src_image"), &GLTFTexture::set_src_image);
-	ClassDB::bind_method(D_METHOD("get_sampler"), &GLTFTexture::get_sampler);
-	ClassDB::bind_method(D_METHOD("set_sampler", "sampler"), &GLTFTexture::set_sampler);
+#include <android/log.h>
+#include <jni.h>
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "src_image"), "set_src_image", "get_src_image"); // int
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "sampler"), "set_sampler", "get_sampler"); // int
-}
+#include "string_android.h"
 
-GLTFImageIndex GLTFTexture::get_src_image() const {
-	return src_image;
-}
+// Class that makes functions in java/src/org/godotengine/godot/GodotView.java callable from C++
+class GodotJavaViewWrapper {
+private:
+	jclass _cls;
+	jobject _godot_view;
+	jmethodID _set_pointer_icon = 0;
 
-void GLTFTexture::set_src_image(GLTFImageIndex val) {
-	src_image = val;
-}
+public:
+	GodotJavaViewWrapper(jobject godot_view);
 
-GLTFTextureSamplerIndex GLTFTexture::get_sampler() const {
-	return sampler;
-}
+	bool can_update_pointer_icon() const;
+	void set_pointer_icon(int pointer_type);
 
-void GLTFTexture::set_sampler(GLTFTextureSamplerIndex val) {
-	sampler = val;
-}
+	~GodotJavaViewWrapper();
+};
+
+#endif // JAVA_GODOT_VIEW_WRAPPER_H
