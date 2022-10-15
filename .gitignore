@@ -366,6 +366,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # GF3DOW other
-scons_cache_android/
-scons_cache_x11/
-scons_cache_windows/
+scons_cache/
