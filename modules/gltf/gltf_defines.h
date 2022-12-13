@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_buffer_view.h                                                   */
+/*  gltf_defines.h                                                       */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,43 +28,63 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_BUFFER_VIEW_H
-#define GLTF_BUFFER_VIEW_H
+#ifndef GLTF_DEFINES_H
+#define GLTF_DEFINES_H
 
-#include "core/resource.h"
+// This file should only be included by other headers.
 
-#include "gltf_document.h"
+// Godot classes used by GLTF headers.
+class AnimationPlayer;
+class BoneAttachment;
+class CSGShape;
+class DirectionalLight;
+class GridMap;
+class Light;
+class MultiMeshInstance;
+class Skeleton;
+class Skin;
 
-class GLTFBufferView : public Resource {
-	GDCLASS(GLTFBufferView, Resource);
-	friend class GLTFDocument;
+// GLTF classes.
+struct GLTFAccessor;
+class GLTFAnimation;
+class GLTFBufferView;
+class GLTFCamera;
+class GLTFDocument;
+class GLTFLight;
+class GLTFMesh;
+class GLTFNode;
+class GLTFSkeleton;
+class GLTFSkin;
+class GLTFSpecGloss;
+class GLTFState;
+class GLTFTexture;
+class GLTFTextureSampler;
+class PackedSceneGLTF;
 
-private:
-	GLTFBufferIndex buffer = -1;
-	int byte_offset = 0;
-	int byte_length = 0;
-	int byte_stride = -1;
-	bool indices = false;
+// GLTF index aliases.
+using GLTFAccessorIndex = int;
+using GLTFAnimationIndex = int;
+using GLTFBufferIndex = int;
+using GLTFBufferViewIndex = int;
+using GLTFCameraIndex = int;
+using GLTFImageIndex = int;
+using GLTFLightIndex = int;
+using GLTFMaterialIndex = int;
+using GLTFMeshIndex = int;
+using GLTFNodeIndex = int;
+using GLTFSkeletonIndex = int;
+using GLTFSkinIndex = int;
+using GLTFTextureIndex = int;
+using GLTFTextureSamplerIndex = int;
 
-protected:
-	static void _bind_methods();
-
-public:
-	GLTFBufferIndex get_buffer();
-	void set_buffer(GLTFBufferIndex p_buffer);
-
-	int get_byte_offset();
-	void set_byte_offset(int p_byte_offset);
-
-	int get_byte_length();
-	void set_byte_length(int p_byte_length);
-
-	int get_byte_stride();
-	void set_byte_stride(int p_byte_stride);
-
-	bool get_indices();
-	void set_indices(bool p_indices);
-	// matrices need to be transformed to this
+enum GLTFType {
+	TYPE_SCALAR,
+	TYPE_VEC2,
+	TYPE_VEC3,
+	TYPE_VEC4,
+	TYPE_MAT2,
+	TYPE_MAT3,
+	TYPE_MAT4,
 };
 
-#endif // GLTF_BUFFER_VIEW_H
+#endif // GLTF_DEFINES_H

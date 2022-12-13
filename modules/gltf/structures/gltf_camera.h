@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_spec_gloss.h                                                    */
+/*  gltf_camera.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,41 +28,48 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_SPEC_GLOSS_H
-#define GLTF_SPEC_GLOSS_H
+#ifndef GLTF_CAMERA_H
+#define GLTF_CAMERA_H
 
-#include "core/image.h"
 #include "core/resource.h"
 
-class GLTFSpecGloss : public Resource {
-	GDCLASS(GLTFSpecGloss, Resource);
-	friend class GLTFDocument;
+class Camera;
+
+// Reference and test file:
+// https://github.com/KhronosGroup/glTF-Tutorials/blob/master/gltfTutorial/gltfTutorial_015_SimpleCameras.md
+
+class GLTFCamera : public Resource {
+	GDCLASS(GLTFCamera, Resource);
 
 private:
-	Ref<Image> diffuse_img = nullptr;
-	Color diffuse_factor = Color(1.0f, 1.0f, 1.0f);
-	float gloss_factor = 1.0f;
-	Color specular_factor = Color(1.0f, 1.0f, 1.0f);
-	Ref<Image> spec_gloss_img = nullptr;
+	// GLTF has no default camera values, they should always be specified in
+	// the GLTF file. Here we default to Godot's default camera settings.
+	bool perspective = true;
+	real_t fov = Math::deg2rad(75.0);
+	real_t size_mag = 0.5;
+	real_t zfar = 4000.0;
+	real_t znear = 0.05;
 
 protected:
 	static void _bind_methods();
 
 public:
-	Ref<Image> get_diffuse_img();
-	void set_diffuse_img(Ref<Image> p_diffuse_img);
+	bool get_perspective() const { return perspective; }
+	void set_perspective(bool p_val) { perspective = p_val; }
+	real_t get_fov_size() const { return fov; }
+	void set_fov_size(real_t p_val) { fov = p_val; }
+	real_t get_size_mag() const { return size_mag; }
+	void set_size_mag(real_t p_val) { size_mag = p_val; }
+	real_t get_zfar() const { return zfar; }
+	void set_zfar(real_t p_val) { zfar = p_val; }
+	real_t get_znear() const { return znear; }
+	void set_znear(real_t p_val) { znear = p_val; }
 
-	Color get_diffuse_factor();
-	void set_diffuse_factor(Color p_diffuse_factor);
+	static Ref<GLTFCamera> from_node(const Camera *p_camera);
+	Camera *to_node() const;
 
-	float get_gloss_factor();
-	void set_gloss_factor(float p_gloss_factor);
-
-	Color get_specular_factor();
-	void set_specular_factor(Color p_specular_factor);
-
-	Ref<Image> get_spec_gloss_img();
-	void set_spec_gloss_img(Ref<Image> p_spec_gloss_img);
+	static Ref<GLTFCamera> from_dictionary(const Dictionary p_dictionary);
+	Dictionary to_dictionary() const;
 };
 
-#endif // GLTF_SPEC_GLOSS_H
+#endif // GLTF_CAMERA_H

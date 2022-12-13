@@ -3339,16 +3339,6 @@ BOOL is_wow64() {
 	return wow64;
 }
 
-int OS_Windows::get_processor_count() const {
-	SYSTEM_INFO sysinfo;
-	if (is_wow64())
-		GetNativeSystemInfo(&sysinfo);
-	else
-		GetSystemInfo(&sysinfo);
-
-	return sysinfo.dwNumberOfProcessors;
-}
-
 String OS_Windows::get_processor_name() const {
 	const String id = "Hardware\\Description\\System\\CentralProcessor\\0";
 
@@ -3652,14 +3642,6 @@ uint64_t OS_Windows::get_embedded_pck_offset() const {
 }
 
 String OS_Windows::get_config_path() const {
-	// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on Windows as well.
-	if (has_environment("XDG_CONFIG_HOME")) {
-		if (get_environment("XDG_CONFIG_HOME").is_abs_path()) {
-			return get_environment("XDG_CONFIG_HOME").replace("\\", "/");
-		} else {
-			WARN_PRINT_ONCE("`XDG_CONFIG_HOME` is a relative path. Ignoring its value and falling back to `%APPDATA%` or `.` per the XDG Base Directory specification.");
-		}
-	}
 	if (has_environment("APPDATA")) {
 		return get_environment("APPDATA").replace("\\", "/");
 	}
@@ -3667,29 +3649,13 @@ String OS_Windows::get_config_path() const {
 }
 
 String OS_Windows::get_data_path() const {
-	// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on Windows as well.
-	if (has_environment("XDG_DATA_HOME")) {
-		if (get_environment("XDG_DATA_HOME").is_abs_path()) {
-			return get_environment("XDG_DATA_HOME").replace("\\", "/");
-		} else {
-			WARN_PRINT_ONCE("`XDG_DATA_HOME` is a relative path. Ignoring its value and falling back to `get_config_path()` per the XDG Base Directory specification.");
-		}
-	}
 	return get_config_path();
 }
 
 String OS_Windows::get_cache_path() const {
 	static String cache_path_cache;
 	if (cache_path_cache == String()) {
-		// The XDG Base Directory specification technically only applies on Linux/*BSD, but it doesn't hurt to support it on Windows as well.
-		if (has_environment("XDG_CACHE_HOME")) {
-			if (get_environment("XDG_CACHE_HOME").is_abs_path()) {
-				cache_path_cache = get_environment("XDG_CACHE_HOME").replace("\\", "/");
-			} else {
-				WARN_PRINT_ONCE("`XDG_CACHE_HOME` is a relative path. Ignoring its value and falling back to `%LOCALAPPDATA%\\cache`, `%TEMP%` or `get_config_path()` per the XDG Base Directory specification.");
-			}
-		}
-		if (cache_path_cache == String() && has_environment("LOCALAPPDATA")) {
+		if (has_environment("LOCALAPPDATA")) {
 			cache_path_cache = get_environment("LOCALAPPDATA").replace("\\", "/");
 		}
 		if (cache_path_cache == String() && has_environment("TEMP")) {
@@ -4003,11 +3969,8 @@ OS_Windows::OS_Windows(HINSTANCE _hInstance) {
 	//
 	// NOTE: The engine does not use ANSI escape codes to color error/warning messages; it uses Windows API calls instead.
 	// Therefore, error/warning messages are still colored on Windows versions older than 10.
-	HANDLE stdoutHandle;
-	stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD outMode = 0;
-	outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
+	HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD outMode = ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	if (!SetConsoleMode(stdoutHandle, outMode)) {
 		// Windows 8.1 or below, or Windows 10 prior to Anniversary Update.
 		print_verbose("Can't set the ENABLE_VIRTUAL_TERMINAL_PROCESSING Windows console mode.");

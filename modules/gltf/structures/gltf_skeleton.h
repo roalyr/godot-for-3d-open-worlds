@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_camera.h                                                        */
+/*  gltf_skeleton.h                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,32 +28,55 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_CAMERA_H
-#define GLTF_CAMERA_H
+#ifndef GLTF_SKELETON_H
+#define GLTF_SKELETON_H
 
+#include "../gltf_defines.h"
 #include "core/resource.h"
 
-class GLTFCamera : public Resource {
-	GDCLASS(GLTFCamera, Resource);
+class GLTFSkeleton : public Resource {
+	GDCLASS(GLTFSkeleton, Resource);
+	friend class GLTFDocument;
 
 private:
-	bool perspective = true;
-	float fov_size = 75.0;
-	float zfar = 4000.0;
-	float znear = 0.05;
+	// The *synthesized* skeletons joints
+	PoolVector<GLTFNodeIndex> joints;
+
+	// The roots of the skeleton. If there are multiple, each root must have the
+	// same parent (ie roots are siblings)
+	PoolVector<GLTFNodeIndex> roots;
+
+	// The created Skeleton for the scene
+	Skeleton *godot_skeleton = nullptr;
+
+	// Set of unique bone names for the skeleton
+	Set<String> unique_names;
+
+	Map<int32_t, GLTFNodeIndex> godot_bone_node;
+
+	PoolVector<BoneAttachment *> bone_attachments;
 
 protected:
 	static void _bind_methods();
 
 public:
-	bool get_perspective() const { return perspective; }
-	void set_perspective(bool p_val) { perspective = p_val; }
-	float get_fov_size() const { return fov_size; }
-	void set_fov_size(float p_val) { fov_size = p_val; }
-	float get_zfar() const { return zfar; }
-	void set_zfar(float p_val) { zfar = p_val; }
-	float get_znear() const { return znear; }
-	void set_znear(float p_val) { znear = p_val; }
+	PoolVector<GLTFNodeIndex> get_joints();
+	void set_joints(PoolVector<GLTFNodeIndex> p_joints);
+
+	PoolVector<GLTFNodeIndex> get_roots();
+	void set_roots(PoolVector<GLTFNodeIndex> p_roots);
+
+	Skeleton *get_godot_skeleton();
+
+	Array get_unique_names();
+	void set_unique_names(Array p_unique_names);
+
+	Dictionary get_godot_bone_node();
+	void set_godot_bone_node(Dictionary p_indict);
+
+	BoneAttachment *get_bone_attachment(int idx);
+
+	int32_t get_bone_attachment_count();
 };
 
-#endif // GLTF_CAMERA_H
+#endif // GLTF_SKELETON_H

@@ -36,6 +36,7 @@ void CanvasLayer::set_layer(int p_xform) {
 	layer = p_xform;
 	if (viewport.is_valid()) {
 		VisualServer::get_singleton()->viewport_set_canvas_stacking(viewport, canvas, layer, get_position_in_parent());
+		vp->_gui_set_root_order_dirty();
 	}
 }
 
@@ -54,7 +55,7 @@ void CanvasLayer::set_visible(bool p_visible) {
 	// For CanvasItems that is explicitly top level or has non-CanvasItem parents.
 	if (is_inside_tree()) {
 		const String group = "root_canvas" + itos(canvas.get_id());
-		get_tree()->call_group_flags(SceneTree::GROUP_CALL_UNIQUE, group, "_toplevel_visibility_changed", p_visible);
+		get_tree()->call_group(group, "_toplevel_visibility_changed", p_visible);
 	}
 }
 

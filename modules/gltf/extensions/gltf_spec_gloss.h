@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_node.h                                                          */
+/*  gltf_spec_gloss.h                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,76 +28,42 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GLTF_NODE_H
-#define GLTF_NODE_H
+#ifndef GLTF_SPEC_GLOSS_H
+#define GLTF_SPEC_GLOSS_H
 
+#include "../gltf_defines.h"
+#include "core/image.h"
 #include "core/resource.h"
 
-#include "gltf_document.h"
-
-class GLTFNode : public Resource {
-	GDCLASS(GLTFNode, Resource);
+class GLTFSpecGloss : public Resource {
+	GDCLASS(GLTFSpecGloss, Resource);
 	friend class GLTFDocument;
-	friend class PackedSceneGLTF;
 
 private:
-	// matrices need to be transformed to this
-	GLTFNodeIndex parent = -1;
-	int height = -1;
-	Transform xform;
-	GLTFMeshIndex mesh = -1;
-	GLTFCameraIndex camera = -1;
-	GLTFSkinIndex skin = -1;
-	GLTFSkeletonIndex skeleton = -1;
-	bool joint = false;
-	Vector3 translation;
-	Quat rotation;
-	Vector3 scale = Vector3(1, 1, 1);
-	Vector<int> children;
-	GLTFLightIndex light = -1;
+	Ref<Image> diffuse_img = nullptr;
+	Color diffuse_factor = Color(1.0f, 1.0f, 1.0f);
+	float gloss_factor = 1.0f;
+	Color specular_factor = Color(1.0f, 1.0f, 1.0f);
+	Ref<Image> spec_gloss_img = nullptr;
 
 protected:
 	static void _bind_methods();
 
 public:
-	GLTFNodeIndex get_parent();
-	void set_parent(GLTFNodeIndex p_parent);
+	Ref<Image> get_diffuse_img();
+	void set_diffuse_img(Ref<Image> p_diffuse_img);
 
-	int get_height();
-	void set_height(int p_height);
+	Color get_diffuse_factor();
+	void set_diffuse_factor(Color p_diffuse_factor);
 
-	Transform get_xform();
-	void set_xform(Transform p_xform);
+	float get_gloss_factor();
+	void set_gloss_factor(float p_gloss_factor);
 
-	GLTFMeshIndex get_mesh();
-	void set_mesh(GLTFMeshIndex p_mesh);
+	Color get_specular_factor();
+	void set_specular_factor(Color p_specular_factor);
 
-	GLTFCameraIndex get_camera();
-	void set_camera(GLTFCameraIndex p_camera);
-
-	GLTFSkinIndex get_skin();
-	void set_skin(GLTFSkinIndex p_skin);
-
-	GLTFSkeletonIndex get_skeleton();
-	void set_skeleton(GLTFSkeletonIndex p_skeleton);
-
-	bool get_joint();
-	void set_joint(bool p_joint);
-
-	Vector3 get_translation();
-	void set_translation(Vector3 p_translation);
-
-	Quat get_rotation();
-	void set_rotation(Quat p_rotation);
-
-	Vector3 get_scale();
-	void set_scale(Vector3 p_scale);
-
-	Vector<int> get_children();
-	void set_children(Vector<int> p_children);
-
-	GLTFLightIndex get_light();
-	void set_light(GLTFLightIndex p_light);
+	Ref<Image> get_spec_gloss_img();
+	void set_spec_gloss_img(Ref<Image> p_spec_gloss_img);
 };
 
-#endif // GLTF_NODE_H
+#endif // GLTF_SPEC_GLOSS_H

@@ -714,7 +714,6 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 
 				if (p_mode != PROCESS_CACHE) {
 					lh = line < l.height_caches.size() ? l.height_caches[line] : 1;
-					line_is_blank = true;
 				}
 
 			} break;
@@ -1001,6 +1000,12 @@ void RichTextLabel::_update_fx(RichTextLabel::ItemFrame *p_frame, float p_delta_
 	}
 }
 
+void RichTextLabel::_validate_property(PropertyInfo &p_property) const {
+	if (use_bbcode && p_property.name == "text") {
+		p_property.usage &= ~PROPERTY_USAGE_EDITOR;
+	}
+}
+
 void RichTextLabel::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_MOUSE_EXIT: {
@@ -1158,6 +1163,8 @@ Control::CursorShape RichTextLabel::get_cursor_shape(const Point2 &p_pos) const 
 }
 
 void RichTextLabel::_gui_input(Ref<InputEvent> p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+
 	Ref<InputEventMouseButton> b = p_event;
 
 	if (b.is_valid()) {
@@ -2726,6 +2733,7 @@ void RichTextLabel::set_use_bbcode(bool p_enable) {
 	}
 	use_bbcode = p_enable;
 	set_bbcode(bbcode);
+	property_list_changed_notify();
 }
 
 bool RichTextLabel::is_using_bbcode() const {

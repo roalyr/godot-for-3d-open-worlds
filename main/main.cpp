@@ -1280,7 +1280,10 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		OS::get_singleton()->set_delta_smoothing(GLOBAL_GET("application/run/delta_smoothing"));
 	}
 
+	GLOBAL_DEF("display/window/ios/allow_high_refresh_rate", true);
 	GLOBAL_DEF("display/window/ios/hide_home_indicator", true);
+	GLOBAL_DEF("display/window/ios/hide_status_bar", true);
+	GLOBAL_DEF("display/window/ios/suppress_ui_gesture", true);
 	GLOBAL_DEF("input_devices/pointing/ios/touch_delay", 0.15);
 	ProjectSettings::get_singleton()->set_custom_property_info("input_devices/pointing/ios/touch_delay",
 			PropertyInfo(Variant::REAL,
@@ -2485,6 +2488,9 @@ void Main::cleanup(bool p_force) {
 
 	OS::get_singleton()->delete_main_loop();
 
+	// Storing it for use when restarting as it's being cleared right below.
+	const String execpath = OS::get_singleton()->get_executable_path();
+
 	OS::get_singleton()->_cmdline.clear();
 	OS::get_singleton()->_execpath = "";
 	OS::get_singleton()->_local_clipboard = "";
@@ -2555,10 +2561,9 @@ void Main::cleanup(bool p_force) {
 
 	if (OS::get_singleton()->is_restart_on_exit_set()) {
 		//attempt to restart with arguments
-		String exec = OS::get_singleton()->get_executable_path();
 		List<String> args = OS::get_singleton()->get_restart_on_exit_arguments();
 		OS::ProcessID pid = 0;
-		OS::get_singleton()->execute(exec, args, false, &pid);
+		OS::get_singleton()->execute(execpath, args, false, &pid);
 		OS::get_singleton()->set_restart_on_exit(false, List<String>()); //clear list (uses memory)
 	}
 

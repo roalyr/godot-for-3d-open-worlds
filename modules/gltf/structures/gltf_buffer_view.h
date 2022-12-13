@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gltf_camera.cpp                                                      */
+/*  gltf_buffer_view.h                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,20 +28,42 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "gltf_camera.h"
+#ifndef GLTF_BUFFER_VIEW_H
+#define GLTF_BUFFER_VIEW_H
 
-void GLTFCamera::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_perspective"), &GLTFCamera::get_perspective);
-	ClassDB::bind_method(D_METHOD("set_perspective", "perspective"), &GLTFCamera::set_perspective);
-	ClassDB::bind_method(D_METHOD("get_fov_size"), &GLTFCamera::get_fov_size);
-	ClassDB::bind_method(D_METHOD("set_fov_size", "fov_size"), &GLTFCamera::set_fov_size);
-	ClassDB::bind_method(D_METHOD("get_zfar"), &GLTFCamera::get_zfar);
-	ClassDB::bind_method(D_METHOD("set_zfar", "zfar"), &GLTFCamera::set_zfar);
-	ClassDB::bind_method(D_METHOD("get_znear"), &GLTFCamera::get_znear);
-	ClassDB::bind_method(D_METHOD("set_znear", "znear"), &GLTFCamera::set_znear);
+#include "../gltf_defines.h"
+#include "core/resource.h"
 
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "perspective"), "set_perspective", "get_perspective"); // bool
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fov_size"), "set_fov_size", "get_fov_size"); // float
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "zfar"), "set_zfar", "get_zfar"); // float
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "znear"), "set_znear", "get_znear"); // float
-}
+class GLTFBufferView : public Resource {
+	GDCLASS(GLTFBufferView, Resource);
+	friend class GLTFDocument;
+
+private:
+	GLTFBufferIndex buffer = -1;
+	int byte_offset = 0;
+	int byte_length = 0;
+	int byte_stride = -1;
+	bool indices = false;
+
+protected:
+	static void _bind_methods();
+
+public:
+	GLTFBufferIndex get_buffer();
+	void set_buffer(GLTFBufferIndex p_buffer);
+
+	int get_byte_offset();
+	void set_byte_offset(int p_byte_offset);
+
+	int get_byte_length();
+	void set_byte_length(int p_byte_length);
+
+	int get_byte_stride();
+	void set_byte_stride(int p_byte_stride);
+
+	bool get_indices();
+	void set_indices(bool p_indices);
+	// matrices need to be transformed to this
+};
+
+#endif // GLTF_BUFFER_VIEW_H

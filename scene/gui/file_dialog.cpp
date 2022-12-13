@@ -78,6 +78,8 @@ void FileDialog::_notification(int p_what) {
 }
 
 void FileDialog::_unhandled_input(const Ref<InputEvent> &p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+
 	Ref<InputEventKey> k = p_event;
 	if (k.is_valid() && is_window_modal_on_top()) {
 		if (k->is_pressed()) {
@@ -527,8 +529,11 @@ void FileDialog::update_file_list() {
 		files.pop_front();
 	}
 
-	if (tree->get_root() && tree->get_root()->get_children() && tree->get_selected() == nullptr) {
-		tree->get_root()->get_children()->select(0);
+	if (mode != MODE_SAVE_FILE) {
+		// Select the first file from list if nothing is selected.
+		if (tree->get_root() && tree->get_root()->get_children() && tree->get_selected() == nullptr) {
+			tree->get_root()->get_children()->select(0);
+		}
 	}
 }
 

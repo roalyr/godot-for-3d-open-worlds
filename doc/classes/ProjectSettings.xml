@@ -480,8 +480,18 @@
 			The default screen orientation to use on mobile devices.
 			[b]Note:[/b] When set to a portrait orientation, this project setting does not flip the project resolution's width and height automatically. Instead, you have to set [member display/window/size/width] and [member display/window/size/height] accordingly.
 		</member>
+		<member name="display/window/ios/allow_high_refresh_rate" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], iOS devices that support high refresh rate/"ProMotion" will be allowed to render at up to 120 frames per second.
+		</member>
 		<member name="display/window/ios/hide_home_indicator" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], the home indicator is hidden automatically. This only affects iOS devices without a physical home button.
+		</member>
+		<member name="display/window/ios/hide_status_bar" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], the status bar is hidden while the app is running.
+		</member>
+		<member name="display/window/ios/suppress_ui_gesture" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], it will require two swipes to access iOS UI that uses gestures.
+			[b]Note:[/b] This setting has no effect on the home indicator if [code]hide_home_indicator[/code] is [code]true[/code].
 		</member>
 		<member name="display/window/per_pixel_transparency/allowed" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], allows per-pixel transparency for the window background. This affects performance, so leave it on [code]false[/code] unless you need it.
@@ -1682,9 +1692,11 @@
 			If set to a value greater than [code]0.0[/code], contrast-adaptive sharpening will be applied to the 3D viewport. This has a low performance cost and can be used to recover some of the sharpness lost from using FXAA. Values around [code]0.5[/code] generally give the best results. See also [member rendering/quality/filters/use_fxaa].
 		</member>
 		<member name="rendering/quality/filters/use_debanding" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], uses a fast post-processing filter to make banding significantly less visible. In some cases, debanding may introduce a slightly noticeable dithering pattern. It's recommended to enable debanding only when actually needed since the dithering pattern will make lossless-compressed screenshots larger.
+			If [code]true[/code], uses a fast post-processing filter to make banding significantly less visible in 3D. 2D rendering is [i]not[/i] affected by debanding unless the [member Environment.background_mode] is [constant Environment.BG_CANVAS]. In this case, [member rendering/quality/intended_usage/framebuffer_allocation] must also be set to [b]3D[/b].
+			In some cases, debanding may introduce a slightly noticeable dithering pattern. It's recommended to enable debanding only when actually needed since the dithering pattern will make lossless-compressed screenshots larger.
 			[b]Note:[/b] Only available on the GLES3 backend. [member rendering/quality/depth/hdr] must also be [code]true[/code] for debanding to be effective.
 			[b]Note:[/b] There are known issues with debanding breaking rendering on mobile platforms. Due to this, it is recommended to leave this option disabled when targeting mobile platforms.
+			[b]Note:[/b] This property is only read when the project starts. To set debanding at run-time, set [member Viewport.debanding] on the root [Viewport] instead.
 		</member>
 		<member name="rendering/quality/filters/use_fxaa" type="bool" setter="" getter="" default="false">
 			Enables FXAA in the root Viewport. FXAA is a popular screen-space antialiasing method, which is fast but will make the image look blurry, especially at lower resolutions. It can still work relatively well at large resolutions such as 1440p and 4K. Some of the lost sharpness can be recovered by enabling contrast-adaptive sharpening (see [member rendering/quality/filters/sharpen_intensity]).
