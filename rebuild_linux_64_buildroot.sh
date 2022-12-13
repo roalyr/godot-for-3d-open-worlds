@@ -33,7 +33,8 @@ scons -j1 tools=yes target=release_debug debug_symbols=no platform=x11 bits=64 2
 scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=64 2>&1 | tee ./logs/scons_x11_86_64_debug_build.txt;
 
 # Removing debug symbols
-strip ./bin/godot.x11.*
+strip ./bin/godot.x11.opt.tools.64
+strip ./bin/godot.x11.opt.debug.64
 
 	echo
 	echo "          ==============================================="

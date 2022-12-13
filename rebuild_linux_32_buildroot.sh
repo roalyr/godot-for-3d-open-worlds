@@ -32,12 +32,13 @@ scons -j1 tools=yes target=release_debug debug_symbols=no platform=x11 bits=32 2
 # Template(s)
 scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=32 2>&1 | tee ./logs/scons_x11_32_debug_build.txt;
 
-# Removing debug symbols
-strip ./bin/godot.x11.*
-
 # Rename binaries
 mv ./bin/godot.x11.opt.tools.32 ./bin/godot.x11.opt.tools.i686
 mv ./bin/godot.x11.opt.debug.32 ./bin/godot.x11.opt.debug.i686
+
+# Removing debug symbols
+strip ./bin/godot.x11.opt.tools.i686
+strip ./bin/godot.x11.opt.debug.i686
 
 	echo
 	echo "          ==============================================="

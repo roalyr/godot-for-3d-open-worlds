@@ -33,7 +33,8 @@ scons -j1 tools=yes target=release_debug debug_symbols=no platform=windows bits=
 scons -j1 tools=no target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_64_debug_build.txt;
 
 # Removing debug symbols
-strip ./bin/godot.windows.*
+strip ./bin/godot.windows.opt.tools.64.exe
+strip ./bin/godot.windows.opt.debug.64.exe
 
 	echo
 	echo "          ==============================================="
