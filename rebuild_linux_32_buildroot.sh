@@ -13,7 +13,7 @@ if [ "${BUILDROOT_PATH}/scons" = $WHICHSCONS ]
 then
 	echo
 	echo "          ==============================================="
-	echo "          |            USING BUILDROOT 32 bit           |"
+	echo "          |      USING BUILDROOT LINUX i686 32 bit      |"
 	echo "          ==============================================="
 	echo
 else
@@ -34,3 +34,13 @@ scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=32 2>
 
 # Removing debug symbols
 strip ./bin/godot.x11.*
+
+# Rename binaries
+mv ./bin/godot.x11.opt.tools.32 ./bin/godot.x11.opt.tools.i686
+mv ./bin/godot.x11.opt.debug.32 ./bin/godot.x11.opt.debug.i686
+
+	echo
+	echo "          ==============================================="
+	echo "          |       DONE BUILDING LINUX i686 32 bit       |"
+	echo "          ==============================================="
+	echo

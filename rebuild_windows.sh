@@ -20,10 +20,23 @@ ${MINGW64_PREFIX}gcc --version
 #   sudo update-alternatives --config x86_64-w64-mingw32-g++
 #   <choose x86_64-w64-mingw32-g++-posix from the list>
 
+	echo
+	echo "          ==============================================="
+	echo "          |        BUILDING WINDOWS x86-64 64 bit       |"
+	echo "          ==============================================="
+	echo
+
 # Editor (tools)
-scons -j1 tools=yes target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_tools_build.txt;
+scons -j1 tools=yes target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_64_tools_build.txt;
+
 # Template(s)
-scons -j1 tools=no target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_debug_build.txt;
+scons -j1 tools=no target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_64_debug_build.txt;
 
 # Removing debug symbols
 strip ./bin/godot.windows.*
+
+	echo
+	echo "          ==============================================="
+	echo "          |     DONE BUILDING WINDOWS x86-64 64 bit     |"
+	echo "          ==============================================="
+	echo

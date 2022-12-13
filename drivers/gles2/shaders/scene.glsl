@@ -21,6 +21,12 @@ precision highp int;
 #include "stdlib.glsl"
 /* clang-format off */
 
+// LOG DEPTH
+// FC      = 0.03168736796 at 1e19 far.
+// FC_half = 0.01584368398 at 1e19 far.
+//Fcoef = 2.0 / log2(z_far + 1.0)
+#define Fcoef 0.03168736796
+
 #define SHADER_IS_SRGB true
 
 #define M_PI 3.14159265359
@@ -352,6 +358,9 @@ uniform mediump float fog_height_curve;
 
 // LOG DEPTH
 varying float vertex_pos_out;
+
+
+
 
 void main() {
 	highp vec4 vertex = vertex_attrib;
@@ -717,11 +726,18 @@ VERTEX_SHADER_CODE
 #if defined(OVERRIDE_POSITION)
 	gl_Position = position;
 #else
+
+	// Original code. Normal depth calculation, used as preliminary step for logarithmic.
 	gl_Position = projection_matrix * vec4(vertex_interp, 1.0);
 	
 	// LOG DEPTH.
 	// https://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
 	// Position passed to fragment shader.
+
+
+	// https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true
+	gl_Position.z = log2(max(1e-6, 1.0 + gl_Position.w)) * Fcoef - 1.0;
+
 	vertex_pos_out = gl_Position.w + 1.0;
 	
 #endif
@@ -733,6 +749,16 @@ VERTEX_SHADER_CODE
 
 /* clang-format off */
 [fragment]
+
+
+
+// LOG DEPTH
+// FC      = 0.03168736796 at 1e19 far.
+// FC_half = 0.01584368398 at 1e19 far.
+//Fcoef = 2.0 / log2(z_far + 1.0)
+#define Fcoef_half 0.01584368398
+
+
 
 // texture2DLodEXT and textureCubeLodEXT are fragment shader specific.
 // Do not copy these defines in the vertex section.
@@ -1610,28 +1636,20 @@ uniform mediump float fog_height_curve;
 #endif //fog
 
 
+
 // LOG DEPTH
-// Far	Near (const)	C (const)	FC
-// 1.00E+19	0.01	0.01	0.025546734229603
-// 1.00E+20	0.01	0.01	0.0241274712168473
-// 1.00E+21	0.01	0.01	0.0228576043106975
-// 1.00E+22	0.01	0.01	0.0217147240951626
-// 1.00E+23	0.01	0.01	0.0206806896144406
-// 1.00E+24	0.01	0.01	0.0197406582683296
-// 1.00E+25	0.01	0.01	0.0188823687784023
-// 1.00E+26	0.01	0.01	0.0180956034126355
-// 1.00E+27	0.01	0.01	0.0173717792761301
-
-
-
 varying float vertex_pos_out;
-const float FC = 0.025546734229603; //For FAR = 1e19, C = 0.01 
+
 
 
 void main() {
 
+
+
 	// LOG DEPTH
-	gl_FragDepth = log(vertex_pos_out)*FC;
+	gl_FragDepth = log2(vertex_pos_out)*Fcoef_half;
+
+
 
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID
 

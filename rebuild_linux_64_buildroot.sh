@@ -13,7 +13,7 @@ if [ "${BUILDROOT_PATH}/scons" = $WHICHSCONS ]
 then
 	echo
 	echo "          ==============================================="
-	echo "          |            USING BUILDROOT 64 bit           |"
+	echo "          |     USING BUILDROOT LINUX x86-64 64 bit     |"
 	echo "          ==============================================="
 	echo
 else
@@ -34,3 +34,9 @@ scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=64 2>
 
 # Removing debug symbols
 strip ./bin/godot.x11.*
+
+	echo
+	echo "          ==============================================="
+	echo "          |      DONE BUILDING LINUX x86-64 64 bit      |"
+	echo "          ==============================================="
+	echo

@@ -7166,7 +7166,8 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	settings_zfar->set_max(MAX_Z);
 	settings_zfar->set_min(1.0);
 	settings_zfar->set_step(1.0);
-	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", settings_zfar));
+	// Use maximum z-far by defualt in view setting.
+	settings_zfar->set_value(EDITOR_DEF("editors/3d/default_z_far", MAX_Z));
 	settings_vbc->add_margin_child(TTR("View Z-Far:"), settings_zfar);
 
 

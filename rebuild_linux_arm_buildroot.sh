@@ -13,7 +13,7 @@ if [ "${BUILDROOT_PATH}/scons" = $WHICHSCONS ]
 then
 	echo
 	echo "          ==============================================="
-	echo "          |          USING BUILDROOT ARM 32 bit         |"
+	echo "          |       USING BUILDROOT LINUX ARM 32 bit      |"
 	echo "          ==============================================="
 	echo
 else
@@ -33,3 +33,14 @@ scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 CCFLAGS="-
 
 # Removing debug symbols
 strip ./bin/godot.x11.*
+
+# Rename binaries
+mv ./bin/godot.x11.opt.tools.32 ./bin/godot.x11.opt.tools.arm
+mv ./bin/godot.x11.opt.debug.32 ./bin/godot.x11.opt.debug.arm
+
+
+	echo
+	echo "          ==============================================="
+	echo "          |       DONE BUILDING LINUX ARM 32 bit        |"
+	echo "          ==============================================="
+	echo
