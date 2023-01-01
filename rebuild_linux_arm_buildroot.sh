@@ -13,7 +13,7 @@ if [ "${BUILDROOT_PATH}/scons" = $WHICHSCONS ]
 then
 	echo
 	echo "          ==============================================="
-	echo "          |       USING BUILDROOT LINUX ARM 32 bit      |"
+	echo "          |      USING BUILDROOT LINUX ARMv8 64 bit     |"
 	echo "          ==============================================="
 	echo
 else
@@ -41,6 +41,6 @@ strip ./bin/godot.x11.opt.debug.armv8
 
 	echo
 	echo "          ==============================================="
-	echo "          |       DONE BUILDING LINUX ARM 32 bit        |"
+	echo "          |      DONE BUILDING LINUX ARMv8 64 bit       |"
 	echo "          ==============================================="
 	echo

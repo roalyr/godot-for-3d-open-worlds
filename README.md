@@ -10,7 +10,7 @@ floats. In order to achieve this a few tweaks were made.
 
 This fork is regularly synchronized with [3.x branch](https://github.com/godotengine/godot/tree/3.x).
 
-Available for Windows x86-64, Linux x86 and x86-64, Linux armv8 (32 bit), Android armv7 and armv8.
+Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), Android armv7 and armv8.
 
 Implemented tweaks:
 * Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
