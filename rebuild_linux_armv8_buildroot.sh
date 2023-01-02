@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # For incremental
-export SCONS_CACHE="./scons_cache/scons_cache_x11_arm_32";
+export SCONS_CACHE="./scons_cache/scons_cache_x11_armv8";
 mkdir -p $SCONS_CACHE
 
 # Reference buildroot and see if scons is used from there

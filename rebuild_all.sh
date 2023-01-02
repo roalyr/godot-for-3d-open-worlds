@@ -7,7 +7,7 @@ sh ./rebuild_linux_64_buildroot.sh
 sh ./rebuild_linux_32_buildroot.sh
 
 # ARM 32 bit
-sh ./rebuild_linux_arm_buildroot.sh
+sh ./rebuild_linux_armv8_buildroot.sh
 
 # Windows 64 bit
 sh ./rebuild_windows.sh
