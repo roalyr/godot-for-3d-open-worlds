@@ -1,32 +1,32 @@
-/*************************************************************************/
-/*  spatial_editor_plugin.cpp                                            */
-/*************************************************************************/
-/*                       This file is part of:                           */
-/*                           GODOT ENGINE                                */
-/*                      https://godotengine.org                          */
-/*************************************************************************/
-/* Copyright (c) 2007-2022 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2022 Godot Engine contributors (cf. AUTHORS.md).   */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+/**************************************************************************/
+/*  spatial_editor_plugin.cpp                                             */
+/**************************************************************************/
+/*                         This file is part of:                          */
+/*                             GODOT ENGINE                               */
+/*                        https://godotengine.org                         */
+/**************************************************************************/
+/* Copyright (c) 2014-present Godot Engine contributors (see AUTHORS.md). */
+/* Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.                  */
+/*                                                                        */
+/* Permission is hereby granted, free of charge, to any person obtaining  */
+/* a copy of this software and associated documentation files (the        */
+/* "Software"), to deal in the Software without restriction, including    */
+/* without limitation the rights to use, copy, modify, merge, publish,    */
+/* distribute, sublicense, and/or sell copies of the Software, and to     */
+/* permit persons to whom the Software is furnished to do so, subject to  */
+/* the following conditions:                                              */
+/*                                                                        */
+/* The above copyright notice and this permission notice shall be         */
+/* included in all copies or substantial portions of the Software.        */
+/*                                                                        */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. */
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY   */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,   */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE      */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
+/**************************************************************************/
 
 #include "spatial_editor_plugin.h"
 
@@ -456,6 +456,15 @@ void SpatialEditorViewport::_view_settings_confirmed(real_t p_interp_delta) {
 	cursor.fov_scale = 1.0;
 
 	_update_camera(p_interp_delta);
+}
+
+void SpatialEditorViewport::_update_navigation_controls_visibility() {
+	bool show_viewport_rotation_gizmo = EditorSettings::get_singleton()->get("editors/3d/navigation/show_viewport_rotation_gizmo") && (!previewing_cinema && !previewing_camera);
+	rotation_control->set_visible(show_viewport_rotation_gizmo);
+
+	bool show_viewport_navigation_gizmo = EditorSettings::get_singleton()->get("editors/3d/navigation/show_viewport_navigation_gizmo") && (!previewing_cinema && !previewing_camera);
+	position_control->set_visible(show_viewport_navigation_gizmo);
+	look_control->set_visible(show_viewport_navigation_gizmo);
 }
 
 void SpatialEditorViewport::_update_camera(float p_interp_delta) {
@@ -981,7 +990,7 @@ void SpatialEditorViewport::_update_name() {
 	}
 
 	if (RoomManager::static_rooms_get_active_and_loaded()) {
-		// TRANSLATORS: This will be appended to the view name when Portal Occulusion is enabled.
+		// TRANSLATORS: This will be appended to the view name when Portal Occlusion is enabled.
 		name += TTR(" [portals active]");
 	}
 
@@ -2683,12 +2692,15 @@ void SpatialEditorViewport::_project_settings_changed() {
 		viewport->set_shadow_atlas_quadrant_subdiv(2, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q2));
 		viewport->set_shadow_atlas_quadrant_subdiv(3, Viewport::ShadowAtlasQuadrantSubdiv(atlas_q3));
 
-		// Update MSAA, FXAA, debanding and HDR if changed.
+		// Update MSAA, FXAA, transparent background, debanding, sharpening and HDR if changed.
 		int msaa_mode = ProjectSettings::get_singleton()->get("rendering/quality/filters/msaa");
 		viewport->set_msaa(Viewport::MSAA(msaa_mode));
 
 		bool use_fxaa = ProjectSettings::get_singleton()->get("rendering/quality/filters/use_fxaa");
 		viewport->set_use_fxaa(use_fxaa);
+
+		const bool transparent_background = GLOBAL_GET("rendering/viewport/transparent_background");
+		viewport->set_transparent_background(transparent_background);
 
 		bool use_debanding = ProjectSettings::get_singleton()->get("rendering/quality/filters/use_debanding");
 		viewport->set_use_debanding(use_debanding);
@@ -2723,9 +2735,6 @@ void SpatialEditorViewport::_notification(int p_what) {
 			set_freelook_active(false);
 		}
 		call_deferred("update_transform_gizmo_view");
-		rotation_control->set_visible(EditorSettings::get_singleton()->get("editors/3d/navigation/show_viewport_rotation_gizmo"));
-		position_control->set_visible(EditorSettings::get_singleton()->get("editors/3d/navigation/show_viewport_navigation_gizmo"));
-		look_control->set_visible(EditorSettings::get_singleton()->get("editors/3d/navigation/show_viewport_navigation_gizmo"));
 	}
 
 	if (p_what == NOTIFICATION_RESIZED) {
@@ -2743,6 +2752,7 @@ void SpatialEditorViewport::_notification(int p_what) {
 			}
 		}
 
+		_update_navigation_controls_visibility();
 		_update_freelook(delta);
 
 		Node *scene_root = editor->get_scene_tree_dock()->get_editor_data()->get_edited_scene_root();
@@ -3509,9 +3519,8 @@ void SpatialEditorViewport::_toggle_camera_preview(bool p_activate) {
 	ERR_FAIL_COND(p_activate && !preview);
 	ERR_FAIL_COND(!p_activate && !previewing);
 
-	rotation_control->set_visible(!p_activate);
-	position_control->set_visible(!p_activate);
-	look_control->set_visible(!p_activate);
+	previewing_camera = p_activate;
+	_update_navigation_controls_visibility();
 
 	if (!p_activate) {
 		previewing->disconnect("tree_exiting", this, "_preview_exited_scene");
@@ -3532,9 +3541,7 @@ void SpatialEditorViewport::_toggle_camera_preview(bool p_activate) {
 
 void SpatialEditorViewport::_toggle_cinema_preview(bool p_activate) {
 	previewing_cinema = p_activate;
-	rotation_control->set_visible(!p_activate);
-	position_control->set_visible(!p_activate);
-	look_control->set_visible(!p_activate);
+	_update_navigation_controls_visibility();
 
 	if (!previewing_cinema) {
 		if (previewing != nullptr) {
@@ -7254,8 +7261,8 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "editors/3d/manipulator_gizmo_size", PROPERTY_HINT_RANGE, "16,160,1"));
 	EDITOR_DEF("editors/3d/manipulator_gizmo_opacity", 0.9);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::REAL, "editors/3d/manipulator_gizmo_opacity", PROPERTY_HINT_RANGE, "0,1,0.01"));
-	EDITOR_DEF_RST("editors/3d/navigation/show_viewport_rotation_gizmo", true);
-	EDITOR_DEF_RST("editors/3d/navigation/show_viewport_navigation_gizmo", OS::get_singleton()->has_touchscreen_ui_hint());
+	EDITOR_DEF("editors/3d/navigation/show_viewport_rotation_gizmo", true);
+	EDITOR_DEF("editors/3d/navigation/show_viewport_navigation_gizmo", OS::get_singleton()->has_touchscreen_ui_hint());
 
 	over_gizmo_handle = -1;
 
