@@ -4,7 +4,7 @@
     <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
 </p>
 
-This flavor of Godot engine is made to accomodate large open-world 3D games which require
+This flavor of Godot engine is made to accommodate large open-world 3D games which require
 much further view distance than original Godot offers while still relying on single-precision
 floats. In order to achieve this a few tweaks were made.
 
@@ -20,15 +20,12 @@ Implemented tweaks:
 * Increased editor zoom increment for faster zooming.
 
 Suggested:
-* LOD add-on is welcomed since no object will be culled from rendering at distance.
+* LOD add-on is welcomed.
 * Do not make objects larger than 9e18 units (raises error: 
 Cannot represent X as 64-bit integer, provided value is too big).
 
-To-do:
-* Implement logarithmic depth for all shaders, post-processes, shadows and light.
-
 Not working (properly) as of yet:
-* Shadows, post-processes, lights may (and most likely will) misbehave. Trying to fix.
+* Shadows and depth-related environment effects may (and most likely will) misbehave.
 * Editor controls jitter and jump around due to single-precision floats being used.  
 In order to tackle this you may want to avoid ortho view and split your global  
 coordinate system (3D space) into smaller ones and put scene objects into them.
