@@ -167,7 +167,7 @@ public:
 	HANDLE mouse_mode_changed;
 
 	virtual void alert(const String &p_alert, const String &p_title = "ALERT!");
-	String get_stdin_string(bool p_block);
+	String get_stdin_string();
 
 	void set_mouse_mode(MouseMode p_mode);
 	MouseMode get_mouse_mode() const;
@@ -226,6 +226,7 @@ public:
 
 	virtual bool _check_internal_feature_support(const String &p_feature);
 
+	void update_clipboard();
 	void set_window(Windows::UI::Core::CoreWindow ^ p_window);
 	void screen_size_changed();
 

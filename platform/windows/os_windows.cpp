@@ -3105,7 +3105,7 @@ void OS_Windows::set_native_icon(const String &p_filename) {
 	pos += sizeof(WORD);
 	f->seek(pos);
 
-	icon_dir = (ICONDIR *)memrealloc(icon_dir, 3 * sizeof(WORD) + icon_dir->idCount * sizeof(ICONDIRENTRY));
+	icon_dir = (ICONDIR *)memrealloc(icon_dir, sizeof(ICONDIR) + (icon_dir->idCount * sizeof(ICONDIRENTRY)));
 	f->get_buffer((uint8_t *)&icon_dir->idEntries[0], icon_dir->idCount * sizeof(ICONDIRENTRY));
 
 	int small_icon_index = -1; // Select 16x16 with largest color count
@@ -3254,13 +3254,9 @@ bool OS_Windows::set_environment(const String &p_var, const String &p_value) con
 	return (bool)SetEnvironmentVariableW(p_var.c_str(), p_value.c_str());
 }
 
-String OS_Windows::get_stdin_string(bool p_block) {
-	if (p_block) {
-		char buff[1024];
-		return fgets(buff, 1024, stdin);
-	};
-
-	return String();
+String OS_Windows::get_stdin_string() {
+	char buff[1024];
+	return fgets(buff, 1024, stdin);
 }
 
 void OS_Windows::enable_for_stealing_focus(ProcessID pid) {

@@ -284,8 +284,6 @@ Error OS_UWP::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	power_manager = memnew(PowerUWP);
 
-	managed_object->update_clipboard();
-
 	Clipboard::ContentChanged += ref new EventHandler<Platform::Object ^>(managed_object, &ManagedType::on_clipboard_changed);
 
 	accelerometer = Accelerometer::GetDefault();
@@ -385,6 +383,11 @@ void OS_UWP::alert(const String &p_alert, const String &p_title) {
 	managed_object->alert_close_handle = true;
 
 	msg->ShowAsync();
+}
+
+void OS_UWP::update_clipboard() {
+	// See https://stackoverflow.com/questions/58660743/uwp-app-crashes-when-clipboard-getcontent-is-called-from-inside-onnavigatedto
+	managed_object->update_clipboard();
 }
 
 void OS_UWP::ManagedType::alert_close(IUICommand ^ command) {
@@ -716,7 +719,7 @@ bool OS_UWP::set_environment(const String &p_var, const String &p_value) const {
 	return false;
 }
 
-String OS_UWP::get_stdin_string(bool p_block) {
+String OS_UWP::get_stdin_string() {
 	return String();
 }
 
