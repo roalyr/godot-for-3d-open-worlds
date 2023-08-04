@@ -15,7 +15,12 @@ Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), And
 Implemented tweaks:
 * Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
 * Implemented for both GLES2 and GLES3.
-* Far plane maximum is at 9e18. Near and far planes are adjustable.
+* Far plane maximums are:
+
+   - Editor zooming: 9e18 (near and far planes are adjustable).
+   - Scene shader: 1e19. Far plane is fixed. Enables rendering.
+   - Camera matrix: 1e19. Far plane is fixed. Prevents culling glitches.
+
 * Increased editor zoom out distance to match far plane.
 * Increased editor zoom increment for faster zooming.
 
