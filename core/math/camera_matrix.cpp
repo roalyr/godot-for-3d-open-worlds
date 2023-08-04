@@ -212,15 +212,7 @@ void CameraMatrix::set_frustum(real_t p_size, real_t p_aspect, Vector2 p_offset,
 }
 
 real_t CameraMatrix::get_z_far() const {
-	const real_t *matrix = (const real_t *)this->matrix;
-	Plane new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normal = -new_plane.normal;
-	new_plane.normalize();
-
+	Plane new_plane = Plane(0.0, 0.0, -1.0, 1e19);
 	return new_plane.d;
 }
 real_t CameraMatrix::get_z_near() const {
@@ -310,13 +302,7 @@ Vector<Plane> CameraMatrix::get_projection_planes(const Transform &p_transform) 
 	planes.push_back(p_transform.xform(new_plane));
 
 	///////--- Far Plane ---///////
-	new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normal = -new_plane.normal;
-	new_plane.normalize();
+	new_plane = Plane(0.0, 0.0, -1.0, 1e19);
 
 	planes.push_back(p_transform.xform(new_plane));
 
