@@ -193,12 +193,14 @@ void Tabs::_gui_input(const Ref<InputEvent> &p_event) {
 			for (int i = offset; i <= max_drawn_tab; i++) {
 				if (tabs[i].rb_rect.has_point(pos)) {
 					rb_pressing = true;
+					_update_hover();
 					update();
 					return;
 				}
 
 				if (tabs[i].cb_rect.has_point(pos) && (cb_displaypolicy == CLOSE_BUTTON_SHOW_ALWAYS || (cb_displaypolicy == CLOSE_BUTTON_SHOW_ACTIVE_ONLY && i == current))) {
 					cb_pressing = true;
+					_update_hover();
 					update();
 					return;
 				}
@@ -470,6 +472,21 @@ void Tabs::set_tab_disabled(int p_tab, bool p_disabled) {
 bool Tabs::get_tab_disabled(int p_tab) const {
 	ERR_FAIL_INDEX_V(p_tab, tabs.size(), false);
 	return tabs[p_tab].disabled;
+}
+
+void Tabs::set_tab_metadata(int p_tab, const Variant &p_metadata) {
+	ERR_FAIL_INDEX(p_tab, tabs.size());
+
+	if (tabs[p_tab].metadata == p_metadata) {
+		return;
+	}
+
+	tabs.write[p_tab].metadata = p_metadata;
+}
+
+Variant Tabs::get_tab_metadata(int p_tab) const {
+	ERR_FAIL_INDEX_V(p_tab, tabs.size(), Variant());
+	return tabs[p_tab].metadata;
 }
 
 void Tabs::set_tab_right_button(int p_tab, const Ref<Texture> &p_right_button) {
@@ -961,6 +978,8 @@ void Tabs::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_tab_button_icon", "tab_idx"), &Tabs::get_tab_right_button);
 	ClassDB::bind_method(D_METHOD("set_tab_disabled", "tab_idx", "disabled"), &Tabs::set_tab_disabled);
 	ClassDB::bind_method(D_METHOD("get_tab_disabled", "tab_idx"), &Tabs::get_tab_disabled);
+	ClassDB::bind_method(D_METHOD("set_tab_metadata", "tab_idx", "metadata"), &Tabs::set_tab_metadata);
+	ClassDB::bind_method(D_METHOD("get_tab_metadata", "tab_idx"), &Tabs::get_tab_metadata);
 	ClassDB::bind_method(D_METHOD("remove_tab", "tab_idx"), &Tabs::remove_tab);
 	ClassDB::bind_method(D_METHOD("add_tab", "title", "icon"), &Tabs::add_tab, DEFVAL(""), DEFVAL(Ref<Texture>()));
 	ClassDB::bind_method(D_METHOD("set_tab_align", "align"), &Tabs::set_tab_align);

@@ -1028,17 +1028,31 @@ void AtlasTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile
 
 	atlas->draw_rect_region(p_canvas_item, dr, rc, p_modulate, p_transpose, p_normal_map);
 }
+
+Texture::RefineRectResult AtlasTexture::refine_rect_region(Rect2 &r_dst_rect, Rect2 &r_src_rect) const {
+	if (!atlas.is_valid()) {
+		return REFINE_RECT_RESULT_NO_DRAW;
+	}
+	Rect2 temp_rect = r_dst_rect;
+	Rect2 temp_src_rect = r_src_rect;
+
+	if (get_rect_region(temp_rect, temp_src_rect, r_dst_rect, r_src_rect)) {
+		return atlas->refine_rect_region(r_dst_rect, r_src_rect);
+	}
+
+	return REFINE_RECT_RESULT_NO_DRAW;
+}
+
 void AtlasTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
-	//this might not necessarily work well if using a rect, needs to be fixed properly
 	if (!atlas.is_valid()) {
 		return;
 	}
 
-	Rect2 dr;
-	Rect2 src_c;
-	get_rect_region(p_rect, p_src_rect, dr, src_c);
-
-	atlas->draw_rect_region(p_canvas_item, dr, src_c, p_modulate, p_transpose, p_normal_map);
+	Rect2 dst;
+	Rect2 src;
+	if (get_rect_region(p_rect, p_src_rect, dst, src)) {
+		atlas->draw_rect_region(p_canvas_item, dst, src, p_modulate, p_transpose, p_normal_map);
+	}
 }
 
 bool AtlasTexture::get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const {
@@ -1196,11 +1210,6 @@ void MeshTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const
 	}
 	RID normal_rid = p_normal_map.is_valid() ? p_normal_map->get_rid() : RID();
 	VisualServer::get_singleton()->canvas_item_add_mesh(p_canvas_item, mesh->get_rid(), xform, p_modulate, base_texture->get_rid(), normal_rid);
-}
-bool MeshTexture::get_rect_region(const Rect2 &p_rect, const Rect2 &p_src_rect, Rect2 &r_rect, Rect2 &r_src_rect) const {
-	r_rect = p_rect;
-	r_src_rect = p_src_rect;
-	return true;
 }
 
 bool MeshTexture::is_pixel_opaque(int p_x, int p_y) const {

@@ -32,6 +32,8 @@
 
 #include "joypad_linux.h"
 
+#include "core/os/os.h"
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -77,13 +79,41 @@ void JoypadLinux::Joypad::reset() {
 	events.clear();
 }
 
+// This function is derived from SDL:
+// https://github.com/libsdl-org/SDL/blob/main/src/core/linux/SDL_sandbox.c#L28-L45
+static bool detect_sandbox() {
+	if (access("/.flatpak-info", F_OK) == 0) {
+		return true;
+	}
+
+	// For Snap, we check multiple variables because they might be set for
+	// unrelated reasons. This is the same thing WebKitGTK does.
+	if (OS::get_singleton()->has_environment("SNAP") && OS::get_singleton()->has_environment("SNAP_NAME") && OS::get_singleton()->has_environment("SNAP_REVISION")) {
+		return true;
+	}
+
+	if (access("/run/host/container-manager", F_OK) == 0) {
+		return true;
+	}
+
+	return false;
+}
+
 JoypadLinux::JoypadLinux(InputDefault *in) {
 #ifdef UDEV_ENABLED
-	use_udev = initialize_libudev() == 0;
-	if (use_udev) {
-		print_verbose("JoypadLinux: udev enabled and loaded successfully.");
+	if (detect_sandbox()) {
+		// Linux binaries in sandboxes / containers need special handling because
+		// libudev doesn't work there. So we need to fallback to manual parsing
+		// of /dev/input in such case.
+		use_udev = false;
+		print_verbose("JoypadLinux: udev enabled, but detected incompatible sandboxed mode. Falling back to /dev/input to detect joypads.");
 	} else {
-		print_verbose("JoypadLinux: udev enabled, but couldn't be loaded. Falling back to /dev/input to detect joypads.");
+		use_udev = initialize_libudev() == 0;
+		if (use_udev) {
+			print_verbose("JoypadLinux: udev enabled and loaded successfully.");
+		} else {
+			print_verbose("JoypadLinux: udev enabled, but couldn't be loaded. Falling back to /dev/input to detect joypads.");
+		}
 	}
 #else
 	print_verbose("JoypadLinux: udev disabled, parsing /dev/input to detect joypads.");
@@ -357,6 +387,16 @@ void JoypadLinux::open_joypad(const char *p_path) {
 			return;
 		}
 
+		uint16_t vendor = BSWAP16(inpid.vendor);
+		uint16_t product = BSWAP16(inpid.product);
+		uint16_t version = BSWAP16(inpid.version);
+
+		if (input->should_ignore_device(vendor, product)) {
+			// This can be true in cases where Steam is passing information into the game to ignore
+			// original gamepads when using virtual rebindings (See SteamInput).
+			return;
+		}
+
 		MutexLock lock(joypads_mutex[joy_num]);
 		Joypad &joypad = joypads[joy_num];
 		joypad.reset();
@@ -365,10 +405,6 @@ void JoypadLinux::open_joypad(const char *p_path) {
 		setup_joypad_properties(joypad);
 		sprintf(uid, "%04x%04x", BSWAP16(inpid.bustype), 0);
 		if (inpid.vendor && inpid.product && inpid.version) {
-			uint16_t vendor = BSWAP16(inpid.vendor);
-			uint16_t product = BSWAP16(inpid.product);
-			uint16_t version = BSWAP16(inpid.version);
-
 			sprintf(uid + String(uid).length(), "%04x%04x%04x%04x%04x%04x", vendor, 0, product, 0, version, 0);
 			input->joy_connection_changed(joy_num, true, name, uid);
 		} else {

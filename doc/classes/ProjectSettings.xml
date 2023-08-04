@@ -284,6 +284,10 @@
 			If [code]true[/code], microphone input will be allowed. This requires appropriate permissions to be set when exporting to Android or iOS.
 			[b]Note:[/b] If the operating system blocks access to audio input devices (due to the user's privacy settings), audio capture will only return silence. On Windows 10 and later, make sure that apps are allowed to access the microphone in the OS' privacy settings.
 		</member>
+		<member name="audio/general/text_to_speech" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], text-to-speech support is enabled, see [method OS.tts_get_voices] and [method OS.tts_speak].
+			[b]Note:[/b] Enabling TTS can cause addition idle CPU usage and interfere with the sleep mode, so consider disabling it if TTS is not used.
+		</member>
 		<member name="audio/mix_rate" type="int" setter="" getter="" default="44100">
 			The mixing rate used for audio (in Hz). In general, it's better to not touch this and leave it to the host operating system.
 		</member>
@@ -659,6 +663,11 @@
 			If [code]false[/code], such events will be flushed only once per idle frame, between iterations of the engine.
 			Enabling this can greatly improve the responsiveness to input, specially in devices that need to run multiple physics frames per visible (idle) frame, because they can't run at the target frame rate.
 			[b]Note:[/b] Currently implemented only in Android.
+		</member>
+		<member name="input_devices/compatibility/legacy_just_pressed_behavior" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], [method Input.is_action_just_pressed] and [method Input.is_action_just_released] will only return [code]true[/code] if the action is still in the respective state, i.e. an action that is pressed [i]and[/i] released on the same frame will be missed.
+			If [code]false[/code], no input will be lost.
+			[b]Note:[/b] You should in nearly all cases prefer the [code]false[/code] setting. The legacy behavior is to enable supporting old projects that rely on the old logic, without changes to script.
 		</member>
 		<member name="input_devices/pointing/emulate_mouse_from_touch" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], sends mouse input events when tapping or swiping on the touchscreen.
@@ -1437,6 +1446,10 @@
 			[b]Experimental.[/b] If set to on, uses the [code]GL_STREAM_DRAW[/code] flag for legacy buffer uploads. If off, uses the [code]GL_DYNAMIC_DRAW[/code] flag.
 			[b]Note:[/b] Use with care. You are advised to leave this as default for exports. A non-default setting that works better on your machine may adversely affect performance for end users.
 		</member>
+		<member name="rendering/2d/options/culling_mode" type="int" setter="" getter="" default="1">
+			The culling mode determines the method used for rejecting canvas items that are outside a viewport. The visual result should be identical, but some modes may be faster for a particular project.
+			You can either cull items individually ([code]Item mode[/code]), or use hierarchical culling ([code]Node mode[/code]) which has a little more housekeeping but can increase performance by culling large numbers of items at once.
+		</member>
 		<member name="rendering/2d/options/ninepatch_mode" type="int" setter="" getter="" default="1">
 			Choose between fixed mode where corner scalings are preserved matching the artwork, and scaling mode.
 			Not available in GLES3 when [member rendering/batching/options/use_batching] is off.
@@ -1476,6 +1489,10 @@
 		</member>
 		<member name="rendering/batching/options/use_batching_in_editor" type="bool" setter="" getter="" default="true">
 			Switches on 2D batching within the editor.
+		</member>
+		<member name="rendering/batching/options/use_multirect" type="bool" setter="" getter="" default="true">
+			Allows use of the [code]MultiRect[/code] command in the Rasterizer.
+			This can provide some acceleration for large groups of rects, especially text and tilemaps.
 		</member>
 		<member name="rendering/batching/parameters/batch_buffer_size" type="int" setter="" getter="" default="16384">
 			Size of buffer reserved for batched vertices. Larger size enables larger batches, but there are diminishing returns for the memory used. This should only have a minor effect on performance.
@@ -1563,9 +1580,10 @@
 		<member name="rendering/gles3/shaders/shader_compilation_mode" type="int" setter="" getter="" default="0">
 			If set to [code]Asynchronous[/code] and available on the target device, asynchronous compilation of shaders is enabled (in contrast to [code]Asynchronous[/code]).
 			That means that when a shader is first used under some new rendering situation, the game won't stall while such shader is being compiled. Instead, a fallback will be used and the real shader will be compiled in the background. Once the actual shader is compiled, it will be used the next times it's used to draw a frame.
-			Depending on the async mode configured for a given material/shader, the fallback will be an "ubershader" (the default) or just skip rendering any item it is applied to.
+			Depending on the [member SpatialMaterial.async_mode] mode configured for a given material, the fallback will be an "ubershader" (the default) or just skip rendering any item it is applied to. In custom [ShaderMaterial]s, the async mode is set using [code]render_mode async_visible;[/code] (default) or [code]render_mode async_hidden;[/code] at the top of the shader.
 			An ubershader is a very complex shader, slow but suited to any rendering situation, that the engine generates internally so it can be used from the beginning while the traditional conditioned, optimized version of it is being compiled.
 			To reduce loading times after the project has been launched at least once, you can use [code]Asynchronous + Cache[/code]. This also causes the ubershaders to be cached into storage so they can be ready faster next time they are used (provided the platform provides support for it).
+			[b]Note:[/b] Asynchronous compilation requires driver support for the [code]GL_ARB_get_program_binary[/code] OpenGL extension. This extension is supported by all hardware that supports OpenGL 4.1 or higher as well as most hardware that supports OpenGL 3.3 or higher.
 			[b]Note:[/b] Asynchronous compilation is currently only supported for spatial (3D) and particle materials/shaders. CanvasItem (2D) shaders will not use asynchronous compilation even if this setting is set to [code]Asynchronous[/code] or [code]Asynchronous + Cache[/code].
 		</member>
 		<member name="rendering/gles3/shaders/shader_compilation_mode.mobile" type="int" setter="" getter="" default="0">

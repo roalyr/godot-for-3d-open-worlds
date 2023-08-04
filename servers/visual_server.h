@@ -1009,6 +1009,7 @@ public:
 
 	virtual RID canvas_item_create() = 0;
 	virtual void canvas_item_set_parent(RID p_item, RID p_parent) = 0;
+	virtual void canvas_item_set_name(RID p_item, String p_name) = 0;
 
 	virtual void canvas_item_set_visible(RID p_item, bool p_visible) = 0;
 	virtual void canvas_item_set_light_mask(RID p_item, int p_mask) = 0;
@@ -1037,6 +1038,7 @@ public:
 	virtual void canvas_item_add_circle(RID p_item, const Point2 &p_pos, float p_radius, const Color &p_color) = 0;
 	virtual void canvas_item_add_texture_rect(RID p_item, const Rect2 &p_rect, RID p_texture, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID()) = 0;
 	virtual void canvas_item_add_texture_rect_region(RID p_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), bool p_clip_uv = false) = 0;
+	virtual void canvas_item_add_texture_multirect_region(RID p_item, const Vector<Rect2> &p_rects, RID p_texture, const Vector<Rect2> &p_src_rects, const Color &p_modulate = Color(1, 1, 1), uint32_t p_canvas_rect_flags = 0, RID p_normal_map = RID()) = 0;
 	virtual void canvas_item_add_nine_patch(RID p_item, const Rect2 &p_rect, const Rect2 &p_source, RID p_texture, const Vector2 &p_topleft, const Vector2 &p_bottomright, NinePatchAxisMode p_x_axis_mode = NINE_PATCH_STRETCH, NinePatchAxisMode p_y_axis_mode = NINE_PATCH_STRETCH, bool p_draw_center = true, const Color &p_modulate = Color(1, 1, 1), RID p_normal_map = RID()) = 0;
 	virtual void canvas_item_add_primitive(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, RID p_texture, float p_width = 1.0, RID p_normal_map = RID()) = 0;
 	virtual void canvas_item_add_polygon(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), RID p_texture = RID(), RID p_normal_map = RID(), bool p_antialiased = false) = 0;
@@ -1050,15 +1052,27 @@ public:
 	virtual void canvas_item_set_z_index(RID p_item, int p_z) = 0;
 	virtual void canvas_item_set_z_as_relative_to_parent(RID p_item, bool p_enable) = 0;
 	virtual void canvas_item_set_copy_to_backbuffer(RID p_item, bool p_enable, const Rect2 &p_rect) = 0;
-
-	virtual void canvas_item_attach_skeleton(RID p_item, RID p_skeleton) = 0;
-
 	virtual void canvas_item_clear(RID p_item) = 0;
 	virtual void canvas_item_set_draw_index(RID p_item, int p_index) = 0;
-
 	virtual void canvas_item_set_material(RID p_item, RID p_material) = 0;
-
 	virtual void canvas_item_set_use_parent_material(RID p_item, bool p_enable) = 0;
+
+	virtual void canvas_item_attach_skeleton(RID p_item, RID p_skeleton) = 0;
+	virtual void canvas_item_set_skeleton_relative_xform(RID p_item, Transform2D p_relative_xform) = 0;
+
+#ifdef TOOLS_ENABLED
+	Rect2 debug_canvas_item_get_rect(RID p_item) { return _debug_canvas_item_get_rect(p_item); }
+	Rect2 debug_canvas_item_get_local_bound(RID p_item) { return _debug_canvas_item_get_local_bound(p_item); }
+#else
+	Rect2 debug_canvas_item_get_rect(RID p_item) { return Rect2(); }
+	Rect2 debug_canvas_item_get_local_bound(RID p_item) { return Rect2(); }
+#endif
+	virtual Rect2 _debug_canvas_item_get_rect(RID p_item) = 0;
+	virtual Rect2 _debug_canvas_item_get_local_bound(RID p_item) = 0;
+
+	virtual void canvas_item_set_interpolated(RID p_item, bool p_interpolated) = 0;
+	virtual void canvas_item_reset_physics_interpolation(RID p_item) = 0;
+	virtual void canvas_item_transform_physics_interpolation(RID p_item, Transform2D p_transform) = 0;
 
 	virtual RID canvas_light_create() = 0;
 	virtual void canvas_light_attach_to_canvas(RID p_light, RID p_canvas) = 0;
@@ -1074,6 +1088,10 @@ public:
 	virtual void canvas_light_set_layer_range(RID p_light, int p_min_layer, int p_max_layer) = 0;
 	virtual void canvas_light_set_item_cull_mask(RID p_light, int p_mask) = 0;
 	virtual void canvas_light_set_item_shadow_cull_mask(RID p_light, int p_mask) = 0;
+
+	virtual void canvas_light_set_interpolated(RID p_light, bool p_interpolated) = 0;
+	virtual void canvas_light_reset_physics_interpolation(RID p_light) = 0;
+	virtual void canvas_light_transform_physics_interpolation(RID p_light, Transform2D p_transform) = 0;
 
 	enum CanvasLightMode {
 		CANVAS_LIGHT_MODE_ADD,
@@ -1106,6 +1124,10 @@ public:
 	virtual void canvas_light_occluder_set_polygon(RID p_occluder, RID p_polygon) = 0;
 	virtual void canvas_light_occluder_set_transform(RID p_occluder, const Transform2D &p_xform) = 0;
 	virtual void canvas_light_occluder_set_light_mask(RID p_occluder, int p_mask) = 0;
+
+	virtual void canvas_light_occluder_set_interpolated(RID p_occluder, bool p_interpolated) = 0;
+	virtual void canvas_light_occluder_reset_physics_interpolation(RID p_occluder) = 0;
+	virtual void canvas_light_occluder_transform_physics_interpolation(RID p_occluder, Transform2D p_transform) = 0;
 
 	virtual RID canvas_occluder_polygon_create() = 0;
 	virtual void canvas_occluder_polygon_set_shape(RID p_occluder_polygon, const PoolVector<Vector2> &p_shape, bool p_closed) = 0;

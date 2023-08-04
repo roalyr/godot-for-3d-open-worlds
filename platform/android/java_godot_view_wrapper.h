@@ -31,6 +31,7 @@
 #ifndef JAVA_GODOT_VIEW_WRAPPER_H
 #define JAVA_GODOT_VIEW_WRAPPER_H
 
+#include "core/math/vector2.h"
 #include <android/log.h>
 #include <jni.h>
 
@@ -42,8 +43,11 @@ private:
 	jclass _cls;
 	jobject _godot_view;
 
+	jmethodID _can_capture_pointer = 0;
 	jmethodID _request_pointer_capture = 0;
 	jmethodID _release_pointer_capture = 0;
+
+	jmethodID _configure_pointer_icon = 0;
 	jmethodID _set_pointer_icon = 0;
 
 public:
@@ -54,6 +58,8 @@ public:
 
 	void request_pointer_capture();
 	void release_pointer_capture();
+
+	void configure_pointer_icon(int pointer_type, const String &image_path, const Vector2 &p_hotspot);
 	void set_pointer_icon(int pointer_type);
 
 	~GodotJavaViewWrapper();

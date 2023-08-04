@@ -449,6 +449,7 @@ public:
 	virtual Transform2D skeleton_bone_get_transform_2d(RID p_skeleton, int p_bone) const = 0;
 	virtual void skeleton_set_base_transform_2d(RID p_skeleton, const Transform2D &p_base_transform) = 0;
 	virtual uint32_t skeleton_get_revision(RID p_skeleton) const = 0;
+	virtual void skeleton_attach_canvas_item(RID p_skeleton, RID p_canvas_item, bool p_attach) = 0;
 
 	/* Light API */
 
@@ -724,9 +725,12 @@ public:
 	};
 
 	struct Light : public RID_Data {
-		bool enabled;
+		bool enabled : 1;
+		bool on_interpolate_transform_list : 1;
+		bool interpolated : 1;
 		Color color;
-		Transform2D xform;
+		Transform2D xform_curr;
+		Transform2D xform_prev;
 		float height;
 		float energy;
 		float scale;
@@ -765,6 +769,8 @@ public:
 
 		Light() {
 			enabled = true;
+			on_interpolate_transform_list = false;
+			interpolated = true;
 			color = Color(1, 1, 1);
 			shadow_color = Color(0, 0, 0, 0);
 			height = 0;
@@ -808,6 +814,7 @@ public:
 				TYPE_CIRCLE,
 				TYPE_TRANSFORM,
 				TYPE_CLIP_IGNORE,
+				TYPE_MULTIRECT,
 			};
 
 			Type type;
@@ -846,6 +853,20 @@ public:
 			CommandRect() {
 				flags = 0;
 				type = TYPE_RECT;
+			}
+		};
+
+		struct CommandMultiRect : public Command {
+			RID texture;
+			RID normal_map;
+			Color modulate;
+			Vector<Rect2> rects;
+			Vector<Rect2> sources;
+			uint8_t flags;
+
+			CommandMultiRect() {
+				flags = 0;
+				type = TYPE_MULTIRECT;
 			}
 		};
 
@@ -892,9 +913,23 @@ public:
 			bool antialiased;
 			bool antialiasing_use_indices;
 
+			struct SkinningData {
+				bool dirty = true;
+				LocalVector<Rect2> active_bounds;
+				LocalVector<uint16_t> active_bone_ids;
+				Rect2 untransformed_bound;
+			};
+			mutable SkinningData *skinning_data = nullptr;
+
 			CommandPolygon() {
 				type = TYPE_POLYGON;
 				count = 0;
+			}
+			virtual ~CommandPolygon() {
+				if (skinning_data) {
+					memdelete(skinning_data);
+					skinning_data = nullptr;
+				}
 			}
 		};
 
@@ -947,15 +982,22 @@ public:
 			Rect2 rect;
 		};
 
-		Transform2D xform;
+		// For interpolation we store the current local xform,
+		// and the previous xform from the previous tick.
+		Transform2D xform_curr;
+		Transform2D xform_prev;
+
 		bool clip : 1;
 		bool visible : 1;
 		bool behind : 1;
 		bool update_when_visible : 1;
 		bool distance_field : 1;
 		bool light_masked : 1;
+		bool on_interpolate_transform_list : 1;
+		bool interpolated : 1;
 		mutable bool custom_rect : 1;
 		mutable bool rect_dirty : 1;
+		mutable bool bound_dirty : 1;
 
 		Vector<Command *> commands;
 		mutable Rect2 rect;
@@ -967,6 +1009,12 @@ public:
 		mutable uint32_t skeleton_revision;
 
 		Item *next;
+
+		struct SkinningData {
+			Transform2D skeleton_relative_xform;
+			Transform2D skeleton_relative_xform_inv;
+		};
+		SkinningData *skinning_data = nullptr;
 
 		struct CopyBackBuffer {
 			Rect2 rect;
@@ -983,6 +1031,22 @@ public:
 		ViewportRender *vp_render;
 
 		Rect2 global_rect_cache;
+
+	private:
+		Rect2 calculate_polygon_bounds(const Item::CommandPolygon &p_polygon) const;
+		void precalculate_polygon_bone_bounds(const Item::CommandPolygon &p_polygon) const;
+
+	public:
+		// the rect containing this item and all children,
+		// in local space.
+		Rect2 local_bound;
+
+		// When using interpolation, the local bound for culling
+		// should be a combined bound of the previous and current.
+		// To keep this up to date, we need to keep track of the previous
+		// bound separately rather than just the combined bound.
+		Rect2 local_bound_prev;
+		uint32_t local_bound_last_update_tick;
 
 		const Rect2 &get_rect() const {
 			if (custom_rect) {
@@ -1055,6 +1119,16 @@ public:
 						r = crect->rect;
 
 					} break;
+					case Item::Command::TYPE_MULTIRECT: {
+						const Item::CommandMultiRect *mrect = static_cast<const Item::CommandMultiRect *>(c);
+						int num_rects = mrect->rects.size();
+						if (num_rects) {
+							r = mrect->rects[0];
+							for (int n = 1; n < num_rects; n++) {
+								r = mrect->rects[n].merge(r);
+							}
+						}
+					} break;
 					case Item::Command::TYPE_NINEPATCH: {
 						const Item::CommandNinePatch *style = static_cast<const Item::CommandNinePatch *>(c);
 						r = style->rect;
@@ -1068,61 +1142,8 @@ public:
 					} break;
 					case Item::Command::TYPE_POLYGON: {
 						const Item::CommandPolygon *polygon = static_cast<const Item::CommandPolygon *>(c);
-						int l = polygon->points.size();
-						const Point2 *pp = &polygon->points[0];
-						r.position = pp[0];
-						for (int j = 1; j < l; j++) {
-							r.expand_to(pp[j]);
-						}
-
-						if (skeleton != RID()) {
-							// calculate bone AABBs
-							int bone_count = RasterizerStorage::base_singleton->skeleton_get_bone_count(skeleton);
-
-							Vector<Rect2> bone_aabbs;
-							bone_aabbs.resize(bone_count);
-							Rect2 *bptr = bone_aabbs.ptrw();
-
-							for (int j = 0; j < bone_count; j++) {
-								bptr[j].size = Vector2(-1, -1); //negative means unused
-							}
-							if (l && polygon->bones.size() == l * 4 && polygon->weights.size() == polygon->bones.size()) {
-								for (int j = 0; j < l; j++) {
-									Point2 p = pp[j];
-									for (int k = 0; k < 4; k++) {
-										int idx = polygon->bones[j * 4 + k];
-										float w = polygon->weights[j * 4 + k];
-										if (w == 0) {
-											continue;
-										}
-
-										if (bptr[idx].size.x < 0) {
-											//first
-											bptr[idx] = Rect2(p, Vector2(0.00001, 0.00001));
-										} else {
-											bptr[idx].expand_to(p);
-										}
-									}
-								}
-
-								Rect2 aabb;
-								bool first_bone = true;
-								for (int j = 0; j < bone_count; j++) {
-									Transform2D mtx = RasterizerStorage::base_singleton->skeleton_bone_get_transform_2d(skeleton, j);
-									Rect2 baabb = mtx.xform(bone_aabbs[j]);
-
-									if (first_bone) {
-										aabb = baabb;
-										first_bone = false;
-									} else {
-										aabb = aabb.merge(baabb);
-									}
-								}
-
-								r = r.merge(aabb);
-							}
-						}
-
+						DEV_ASSERT(polygon);
+						r = calculate_polygon_bounds(*polygon);
 					} break;
 					case Item::Command::TYPE_MESH: {
 						const Item::CommandMesh *mesh = static_cast<const Item::CommandMesh *>(c);
@@ -1188,6 +1209,12 @@ public:
 			final_clip_owner = nullptr;
 			material_owner = nullptr;
 			light_masked = false;
+
+			if (skinning_data) {
+				memdelete(skinning_data);
+				skinning_data = nullptr;
+			}
+			on_interpolate_transform_list = false;
 		}
 		Item() {
 			light_mask = 1;
@@ -1199,6 +1226,7 @@ public:
 			final_modulate = Color(1, 1, 1, 1);
 			visible = true;
 			rect_dirty = true;
+			bound_dirty = true;
 			custom_rect = false;
 			behind = false;
 			material_owner = nullptr;
@@ -1206,6 +1234,9 @@ public:
 			distance_field = false;
 			light_masked = false;
 			update_when_visible = false;
+			on_interpolate_transform_list = false;
+			interpolated = true;
+			local_bound_last_update_tick = 0;
 		}
 		virtual ~Item() {
 			clear();
@@ -1224,12 +1255,15 @@ public:
 	virtual void canvas_debug_viewport_shadows(Light *p_lights_with_shadow) = 0;
 
 	struct LightOccluderInstance : public RID_Data {
-		bool enabled;
+		bool enabled : 1;
+		bool on_interpolate_transform_list : 1;
+		bool interpolated : 1;
 		RID canvas;
 		RID polygon;
 		RID polygon_buffer;
 		Rect2 aabb_cache;
-		Transform2D xform;
+		Transform2D xform_curr;
+		Transform2D xform_prev;
 		Transform2D xform_cache;
 		int light_mask;
 		VS::CanvasOccluderPolygonCullMode cull_cache;
@@ -1241,6 +1275,8 @@ public:
 			next = nullptr;
 			light_mask = 1;
 			cull_cache = VS::CANVAS_OCCLUDER_POLYGON_CULL_DISABLED;
+			on_interpolate_transform_list = false;
+			interpolated = true;
 		}
 	};
 

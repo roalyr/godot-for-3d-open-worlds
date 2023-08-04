@@ -32,6 +32,7 @@
 #define VISUAL_SERVER_CANVAS_H
 
 #include "rasterizer.h"
+#include "visual_server_constants.h"
 #include "visual_server_viewport.h"
 
 class VisualServerCanvas {
@@ -52,6 +53,9 @@ public:
 		Transform2D ysort_xform;
 		Vector2 ysort_pos;
 		int ysort_index;
+#ifdef VISUAL_SERVER_CANVAS_DEBUG_ITEM_NAMES
+		String name;
+#endif
 
 		Vector<Item *> child_items;
 
@@ -154,12 +158,49 @@ public:
 	bool disable_scale;
 
 private:
+	enum CanvasCullMode {
+		CANVAS_CULL_MODE_ITEM,
+		CANVAS_CULL_MODE_NODE,
+	};
+	CanvasCullMode _canvas_cull_mode = CANVAS_CULL_MODE_NODE;
+
 	void _render_canvas_item_tree(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, RasterizerCanvas::Light *p_lights);
-	void _render_canvas_item(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, Item *p_canvas_clip, Item *p_material_owner);
+
 	void _light_mask_canvas_items(int p_z, RasterizerCanvas::Item *p_canvas_item, RasterizerCanvas::Light *p_masked_lights, int p_canvas_layer_id);
 
 	RasterizerCanvas::Item **z_list;
 	RasterizerCanvas::Item **z_last_list;
+
+	// 3.5 and earlier had no hierarchical culling.
+	void _render_canvas_item_cull_by_item(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, Item *p_canvas_clip, Item *p_material_owner);
+
+	// Hierarchical culling by scene tree node ///////////////////////////////////
+	void _render_canvas_item_cull_by_node(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, Item *p_canvas_clip, Item *p_material_owner, bool p_enclosed);
+
+	void _prepare_tree_bounds(Item *p_root);
+	void _calculate_canvas_item_bound(Item *p_canvas_item, Rect2 *r_branch_bound);
+
+	void _finalize_and_merge_local_bound_to_branch(Item *p_canvas_item, Rect2 *r_branch_bound);
+	void _merge_local_bound_to_branch(Item *p_canvas_item, Rect2 *r_branch_bound);
+
+	// If bounds flags are attempted to be modified multithreaded, the
+	// tree could become corrupt. Multithread access may not be possible,
+	// but just in case we use a mutex until proven otherwise.
+	Mutex _bound_mutex;
+
+	void _make_bound_dirty_reparent(Item *p_item);
+	void _make_bound_dirty(Item *p_item, bool p_changing_visibility = false);
+	void _make_bound_dirty_down(Item *p_item);
+
+#ifdef VISUAL_SERVER_CANVAS_CHECK_BOUNDS
+	bool _check_bound_integrity(const Item *p_item);
+	bool _check_bound_integrity_down(const Item *p_item, bool p_bound_dirty);
+	void _print_tree(const Item *p_item);
+	void _print_tree_down(int p_child_id, int p_depth, const Item *p_item, const Item *p_highlight, bool p_hidden = false);
+#else
+	bool _check_bound_integrity(const Item *p_item) { return true; }
+#endif
+	//////////////////////////////////////////////////////////////////////////////
 
 public:
 	void render_canvas(Canvas *p_canvas, const Transform2D &p_transform, RasterizerCanvas::Light *p_lights, RasterizerCanvas::Light *p_masked_lights, const Rect2 &p_clip_rect, int p_canvas_layer_id);
@@ -172,6 +213,7 @@ public:
 
 	RID canvas_item_create();
 	void canvas_item_set_parent(RID p_item, RID p_parent);
+	void canvas_item_set_name(RID p_item, String p_name);
 
 	void canvas_item_set_visible(RID p_item, bool p_visible);
 	void canvas_item_set_light_mask(RID p_item, int p_mask);
@@ -194,6 +236,7 @@ public:
 	void canvas_item_add_circle(RID p_item, const Point2 &p_pos, float p_radius, const Color &p_color);
 	void canvas_item_add_texture_rect(RID p_item, const Rect2 &p_rect, RID p_texture, bool p_tile = false, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID());
 	void canvas_item_add_texture_rect_region(RID p_item, const Rect2 &p_rect, RID p_texture, const Rect2 &p_src_rect, const Color &p_modulate = Color(1, 1, 1), bool p_transpose = false, RID p_normal_map = RID(), bool p_clip_uv = false);
+	void canvas_item_add_texture_multirect_region(RID p_item, const Vector<Rect2> &p_rects, RID p_texture, const Vector<Rect2> &p_src_rects, const Color &p_modulate = Color(1, 1, 1), uint32_t p_canvas_rect_flags = 0, RID p_normal_map = RID());
 	void canvas_item_add_nine_patch(RID p_item, const Rect2 &p_rect, const Rect2 &p_source, RID p_texture, const Vector2 &p_topleft, const Vector2 &p_bottomright, VS::NinePatchAxisMode p_x_axis_mode = VS::NINE_PATCH_STRETCH, VS::NinePatchAxisMode p_y_axis_mode = VS::NINE_PATCH_STRETCH, bool p_draw_center = true, const Color &p_modulate = Color(1, 1, 1), RID p_normal_map = RID());
 	void canvas_item_add_primitive(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs, RID p_texture, float p_width = 1.0, RID p_normal_map = RID());
 	void canvas_item_add_polygon(RID p_item, const Vector<Point2> &p_points, const Vector<Color> &p_colors, const Vector<Point2> &p_uvs = Vector<Point2>(), RID p_texture = RID(), RID p_normal_map = RID(), bool p_antialiased = false);
@@ -207,14 +250,20 @@ public:
 	void canvas_item_set_z_index(RID p_item, int p_z);
 	void canvas_item_set_z_as_relative_to_parent(RID p_item, bool p_enable);
 	void canvas_item_set_copy_to_backbuffer(RID p_item, bool p_enable, const Rect2 &p_rect);
-	void canvas_item_attach_skeleton(RID p_item, RID p_skeleton);
-
 	void canvas_item_clear(RID p_item);
 	void canvas_item_set_draw_index(RID p_item, int p_index);
-
 	void canvas_item_set_material(RID p_item, RID p_material);
-
 	void canvas_item_set_use_parent_material(RID p_item, bool p_enable);
+
+	void canvas_item_attach_skeleton(RID p_item, RID p_skeleton);
+	void _canvas_item_skeleton_moved(RID p_item);
+	void canvas_item_set_skeleton_relative_xform(RID p_item, Transform2D p_relative_xform);
+	Rect2 _debug_canvas_item_get_rect(RID p_item);
+	Rect2 _debug_canvas_item_get_local_bound(RID p_item);
+
+	void canvas_item_set_interpolated(RID p_item, bool p_interpolated);
+	void canvas_item_reset_physics_interpolation(RID p_item);
+	void canvas_item_transform_physics_interpolation(RID p_item, Transform2D p_transform);
 
 	RID canvas_light_create();
 	void canvas_light_attach_to_canvas(RID p_light, RID p_canvas);
@@ -230,15 +279,17 @@ public:
 	void canvas_light_set_layer_range(RID p_light, int p_min_layer, int p_max_layer);
 	void canvas_light_set_item_cull_mask(RID p_light, int p_mask);
 	void canvas_light_set_item_shadow_cull_mask(RID p_light, int p_mask);
-
 	void canvas_light_set_mode(RID p_light, VS::CanvasLightMode p_mode);
-
 	void canvas_light_set_shadow_enabled(RID p_light, bool p_enabled);
 	void canvas_light_set_shadow_buffer_size(RID p_light, int p_size);
 	void canvas_light_set_shadow_gradient_length(RID p_light, float p_length);
 	void canvas_light_set_shadow_filter(RID p_light, VS::CanvasLightShadowFilter p_filter);
 	void canvas_light_set_shadow_color(RID p_light, const Color &p_color);
 	void canvas_light_set_shadow_smooth(RID p_light, float p_smooth);
+
+	void canvas_light_set_interpolated(RID p_light, bool p_interpolated);
+	void canvas_light_reset_physics_interpolation(RID p_light);
+	void canvas_light_transform_physics_interpolation(RID p_light, Transform2D p_transform);
 
 	RID canvas_light_occluder_create();
 	void canvas_light_occluder_attach_to_canvas(RID p_occluder, RID p_canvas);
@@ -247,6 +298,10 @@ public:
 	void canvas_light_occluder_set_transform(RID p_occluder, const Transform2D &p_xform);
 	void canvas_light_occluder_set_light_mask(RID p_occluder, int p_mask);
 
+	void canvas_light_occluder_set_interpolated(RID p_occluder, bool p_interpolated);
+	void canvas_light_occluder_reset_physics_interpolation(RID p_occluder);
+	void canvas_light_occluder_transform_physics_interpolation(RID p_occluder, Transform2D p_transform);
+
 	RID canvas_occluder_polygon_create();
 	void canvas_occluder_polygon_set_shape(RID p_occluder_polygon, const PoolVector<Vector2> &p_shape, bool p_closed);
 	void canvas_occluder_polygon_set_shape_as_lines(RID p_occluder_polygon, const PoolVector<Vector2> &p_shape);
@@ -254,6 +309,32 @@ public:
 	void canvas_occluder_polygon_set_cull_mode(RID p_occluder_polygon, VS::CanvasOccluderPolygonCullMode p_mode);
 
 	bool free(RID p_rid);
+
+	// Interpolation
+	void tick();
+	void update_interpolation_tick(bool p_process = true);
+	void set_physics_interpolation_enabled(bool p_enabled) { _interpolation_data.interpolation_enabled = p_enabled; }
+
+	struct InterpolationData {
+		void notify_free_canvas_item(RID p_rid, VisualServerCanvas::Item &r_canvas_item);
+		void notify_free_canvas_light(RID p_rid, RasterizerCanvas::Light &r_canvas_light);
+		void notify_free_canvas_light_occluder(RID p_rid, RasterizerCanvas::LightOccluderInstance &r_canvas_light_occluder);
+
+		LocalVector<RID> canvas_item_transform_update_lists[2];
+		LocalVector<RID> *canvas_item_transform_update_list_curr = &canvas_item_transform_update_lists[0];
+		LocalVector<RID> *canvas_item_transform_update_list_prev = &canvas_item_transform_update_lists[1];
+
+		LocalVector<RID> canvas_light_transform_update_lists[2];
+		LocalVector<RID> *canvas_light_transform_update_list_curr = &canvas_light_transform_update_lists[0];
+		LocalVector<RID> *canvas_light_transform_update_list_prev = &canvas_light_transform_update_lists[1];
+
+		LocalVector<RID> canvas_light_occluder_transform_update_lists[2];
+		LocalVector<RID> *canvas_light_occluder_transform_update_list_curr = &canvas_light_occluder_transform_update_lists[0];
+		LocalVector<RID> *canvas_light_occluder_transform_update_list_prev = &canvas_light_occluder_transform_update_lists[1];
+
+		bool interpolation_enabled = false;
+	} _interpolation_data;
+
 	VisualServerCanvas();
 	~VisualServerCanvas();
 };

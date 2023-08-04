@@ -50,14 +50,17 @@ class InputDefault : public Input {
 	Vector3 gyroscope;
 	Vector2 mouse_pos;
 	MainLoop *main_loop;
+	bool legacy_just_pressed_behavior = false;
 
 	struct Action {
-		uint64_t physics_frame;
-		uint64_t idle_frame;
-		bool pressed;
-		bool exact;
-		float strength;
-		float raw_strength;
+		uint64_t pressed_physics_frame = UINT64_MAX;
+		uint64_t pressed_idle_frame = UINT64_MAX;
+		uint64_t released_physics_frame = UINT64_MAX;
+		uint64_t released_idle_frame = UINT64_MAX;
+		bool pressed = false;
+		bool exact = true;
+		float strength = 0.0f;
+		float raw_strength = 0.0f;
 	};
 
 	Map<StringName, Action> action_state;
@@ -190,6 +193,8 @@ private:
 
 	Vector<JoyDeviceMapping> map_db;
 
+	Set<uint32_t> ignored_device_ids;
+
 	JoyEvent _get_mapped_button_event(const JoyDeviceMapping &mapping, int p_button);
 	JoyEvent _get_mapped_axis_event(const JoyDeviceMapping &mapping, int p_axis, float p_value);
 	void _get_mapped_hat_events(const JoyDeviceMapping &mapping, int p_hat, JoyEvent r_events[HAT_MAX]);
@@ -291,6 +296,8 @@ public:
 	virtual void remove_joy_mapping(String p_guid);
 	virtual bool is_joy_known(int p_device);
 	virtual String get_joy_guid(int p_device) const;
+
+	bool should_ignore_device(int p_vendor_id, int p_product_id) const;
 
 	virtual String get_joy_button_string(int p_button);
 	virtual String get_joy_axis_string(int p_axis);
