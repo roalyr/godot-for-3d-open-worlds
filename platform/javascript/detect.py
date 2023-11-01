@@ -88,9 +88,9 @@ def configure(env):
             print('Note: Forcing "initial_memory=64" as it is required for the web editor.')
             env["initial_memory"] = 64
     else:
-        # Disable exceptions and rtti on non-tools (template) builds
-        # These flags help keep the file size down.
-        env.Append(CCFLAGS=["-fno-exceptions", "-fno-rtti"])
+        # Disable rtti on non-tools (template) builds.
+        # This helps keep the file size down.
+        env.Append(CCFLAGS=["-fno-rtti"])
         # Don't use dynamic_cast, necessary with no-rtti.
         env.Append(CPPDEFINES=["NO_SAFE_CAST"])
 
@@ -189,8 +189,15 @@ def configure(env):
     else:
         env.Append(CPPDEFINES=["NO_THREADS"])
 
+    # Get version info for checks below.
+    cc_semver = tuple(get_compiler_version(env))
+
+    if env["lto"] != "none":
+        # Workaround https://github.com/emscripten-core/emscripten/issues/19781.
+        if cc_semver >= (3, 1, 42) and cc_semver < (3, 1, 46):
+            env.Append(LINKFLAGS=["-Wl,-u,scalbnf"])
+
     if env["gdnative_enabled"]:
-        cc_semver = tuple(get_compiler_version(env))
         if cc_semver < (2, 0, 10):
             print("GDNative support requires emscripten >= 2.0.10, detected: %s.%s.%s" % cc_semver)
             sys.exit(255)

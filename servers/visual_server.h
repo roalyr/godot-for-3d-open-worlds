@@ -494,6 +494,7 @@ public:
 	enum LightDirectionalShadowMode {
 		LIGHT_DIRECTIONAL_SHADOW_ORTHOGONAL,
 		LIGHT_DIRECTIONAL_SHADOW_PARALLEL_2_SPLITS,
+		LIGHT_DIRECTIONAL_SHADOW_PARALLEL_3_SPLITS,
 		LIGHT_DIRECTIONAL_SHADOW_PARALLEL_4_SPLITS
 	};
 
@@ -1024,6 +1025,7 @@ public:
 	virtual void canvas_item_set_self_modulate(RID p_item, const Color &p_color) = 0;
 
 	virtual void canvas_item_set_draw_behind_parent(RID p_item, bool p_enable) = 0;
+	virtual void canvas_item_set_use_identity_transform(RID p_item, bool p_enable) = 0;
 
 	enum NinePatchAxisMode {
 		NINE_PATCH_STRETCH,

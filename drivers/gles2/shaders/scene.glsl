@@ -172,18 +172,19 @@ uniform highp float shadow_dual_paraboloid_render_side;
 uniform highp mat4 light_shadow_matrix;
 varying highp vec4 shadow_coord;
 
-#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM4)
+#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 uniform highp mat4 light_shadow_matrix2;
 varying highp vec4 shadow_coord2;
 #endif
 
-#if defined(LIGHT_USE_PSSM4)
-
+#if defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 uniform highp mat4 light_shadow_matrix3;
-uniform highp mat4 light_shadow_matrix4;
 varying highp vec4 shadow_coord3;
-varying highp vec4 shadow_coord4;
+#endif
 
+#if defined(LIGHT_USE_PSSM4)
+uniform highp mat4 light_shadow_matrix4;
+varying highp vec4 shadow_coord4;
 #endif
 
 #endif
@@ -445,17 +446,44 @@ void main() {
 #else
 	// look up transform from the "pose texture"
 	{
-		for (int i = 0; i < 4; i++) {
-			ivec2 tex_ofs = ivec2(int(bone_ids[i]) * 3, 0);
+		ivec4 bone_indicesi = ivec4(bone_ids); // cast to signed int
 
-			highp mat4 b = mat4(
-					texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(0, 0)),
-					texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(1, 0)),
-					texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(2, 0)),
-					vec4(0.0, 0.0, 0.0, 1.0));
+		ivec2 tex_ofs = ivec2(bone_indicesi.x * 3, 0);
+		bone_transform = mat4(
+								 texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs),
+								 texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(1, 0)),
+								 texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(2, 0)),
+								 vec4(0.0, 0.0, 0.0, 1.0)) *
+				bone_weights.x;
 
-			bone_transform += transpose(b) * bone_weights[i];
-		}
+		tex_ofs = ivec2(bone_indicesi.y * 3, 0);
+
+		bone_transform += mat4(
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(1, 0)),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(2, 0)),
+								  vec4(0.0, 0.0, 0.0, 1.0)) *
+				bone_weights.y;
+
+		tex_ofs = ivec2(bone_indicesi.z * 3, 0);
+
+		bone_transform += mat4(
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(1, 0)),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(2, 0)),
+								  vec4(0.0, 0.0, 0.0, 1.0)) *
+				bone_weights.z;
+
+		tex_ofs = ivec2(bone_indicesi.w * 3, 0);
+
+		bone_transform += mat4(
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(1, 0)),
+								  texel2DFetch(bone_transforms, skeleton_texture_size, tex_ofs + ivec2(2, 0)),
+								  vec4(0.0, 0.0, 0.0, 1.0)) *
+				bone_weights.w;
+
+		bone_transform = transpose(bone_transform);
 	}
 
 #endif
@@ -637,14 +665,16 @@ VERTEX_SHADER_CODE
 	vec4 vi4 = vec4(vertex_interp, 1.0);
 	shadow_coord = light_shadow_matrix * vi4;
 
-#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM4)
+#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 	shadow_coord2 = light_shadow_matrix2 * vi4;
 #endif
 
-#if defined(LIGHT_USE_PSSM4)
+#if defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 	shadow_coord3 = light_shadow_matrix3 * vi4;
-	shadow_coord4 = light_shadow_matrix4 * vi4;
+#endif
 
+#if defined(LIGHT_USE_PSSM4)
+	shadow_coord4 = light_shadow_matrix4 * vi4;
 #endif
 
 #endif //use shadow and use lighting
@@ -1113,15 +1143,19 @@ uniform highp vec4 light_split_offsets;
 
 varying highp vec4 shadow_coord;
 
-#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM4)
+#if defined(LIGHT_USE_PSSM2) || defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 varying highp vec4 shadow_coord2;
 #endif
 
-#if defined(LIGHT_USE_PSSM4)
+#if defined(LIGHT_USE_PSSM3) || defined(LIGHT_USE_PSSM4)
 
 varying highp vec4 shadow_coord3;
+
+#if defined(LIGHT_USE_PSSM4)
+
 varying highp vec4 shadow_coord4;
 
+#endif
 #endif
 
 uniform vec4 light_clamp;
@@ -2056,6 +2090,55 @@ FRAGMENT_SHADER_CODE
 
 #endif //LIGHT_USE_PSSM4
 
+#ifdef LIGHT_USE_PSSM3
+	//take advantage of prefetch
+	float shadow1 = sample_shadow(light_directional_shadow, shadow_coord);
+	float shadow2 = sample_shadow(light_directional_shadow, shadow_coord2);
+	float shadow3 = sample_shadow(light_directional_shadow, shadow_coord3);
+
+	if (depth_z < light_split_offsets.z) {
+		float pssm_fade = 0.0;
+		float shadow_att = 1.0;
+#ifdef LIGHT_USE_PSSM_BLEND
+		float shadow_att2 = 1.0;
+		float pssm_blend = 0.0;
+		bool use_blend = true;
+#endif
+		if (depth_z < light_split_offsets.y) {
+			if (depth_z < light_split_offsets.x) {
+				shadow_att = shadow1;
+
+#ifdef LIGHT_USE_PSSM_BLEND
+				shadow_att2 = shadow2;
+
+				pssm_blend = smoothstep(0.0, light_split_offsets.x, depth_z);
+#endif
+			} else {
+				shadow_att = shadow2;
+
+#ifdef LIGHT_USE_PSSM_BLEND
+				shadow_att2 = shadow3;
+
+				pssm_blend = smoothstep(light_split_offsets.x, light_split_offsets.y, depth_z);
+#endif
+			}
+		} else {
+			shadow_att = shadow3;
+
+#if defined(LIGHT_USE_PSSM_BLEND)
+			use_blend = false;
+#endif
+		}
+#if defined(LIGHT_USE_PSSM_BLEND)
+		if (use_blend) {
+			shadow_att = mix(shadow_att, shadow_att2, pssm_blend);
+		}
+#endif
+		light_att *= mix(shadow_color.rgb, vec3(1.0), shadow_att);
+	}
+
+#endif //LIGHT_USE_PSSM3
+
 #ifdef LIGHT_USE_PSSM2
 
 	//take advantage of prefetch
@@ -2096,7 +2179,7 @@ FRAGMENT_SHADER_CODE
 
 #endif //LIGHT_USE_PSSM2
 
-#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM2)
+#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM3) && !defined(LIGHT_USE_PSSM2)
 
 	light_att *= mix(shadow_color.rgb, vec3(1.0), sample_shadow(light_directional_shadow, shadow_coord));
 #endif //orthogonal
@@ -2106,6 +2189,8 @@ FRAGMENT_SHADER_CODE
 	{
 #ifdef LIGHT_USE_PSSM4
 		if (depth_z < light_split_offsets.w) {
+#elif defined(LIGHT_USE_PSSM3)
+		if (depth_z < light_split_offsets.z) {
 #elif defined(LIGHT_USE_PSSM2)
 		if (depth_z < light_split_offsets.y) {
 #else
@@ -2162,6 +2247,35 @@ FRAGMENT_SHADER_CODE
 
 #endif // LIGHT_USE_PSSM4
 
+#ifdef LIGHT_USE_PSSM3
+
+			if (depth_z < light_split_offsets.y) {
+				if (depth_z < light_split_offsets.x) {
+					pssm_coord = shadow_coord;
+
+#ifdef LIGHT_USE_PSSM_BLEND
+					pssm_coord2 = shadow_coord2;
+					pssm_blend = smoothstep(0.0, light_split_offsets.x, depth_z);
+#endif
+				} else {
+					pssm_coord = shadow_coord2;
+
+#ifdef LIGHT_USE_PSSM_BLEND
+					pssm_coord2 = shadow_coord3;
+					pssm_blend = smoothstep(light_split_offsets.x, light_split_offsets.y, depth_z);
+#endif
+				}
+			} else {
+				pssm_coord = shadow_coord3;
+				pssm_fade = smoothstep(light_split_offsets.y, light_split_offsets.z, depth_z);
+
+#if defined(LIGHT_USE_PSSM_BLEND)
+				use_blend = false;
+#endif
+			}
+
+#endif // LIGHT_USE_PSSM3
+
 #ifdef LIGHT_USE_PSSM2
 			if (depth_z < light_split_offsets.x) {
 				pssm_coord = shadow_coord;
@@ -2180,7 +2294,7 @@ FRAGMENT_SHADER_CODE
 
 #endif // LIGHT_USE_PSSM2
 
-#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM2)
+#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM3) && !defined(LIGHT_USE_PSSM2)
 			{
 				pssm_coord = shadow_coord;
 			}

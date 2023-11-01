@@ -72,6 +72,7 @@ def get_opts():
         BoolVariable("use_llvm", "Use the LLVM compiler", False),
         BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", True),
         BoolVariable("use_asan", "Use address sanitizer (ASAN)", False),
+        BoolVariable("incremental_link", "Use MSVC incremental linking. May increase or decrease build times.", False),
     ]
 
 
@@ -213,6 +214,10 @@ def configure_msvc(env, manual_msvc_config):
         env.AppendUnique(CCFLAGS=["/MT"])
     else:
         env.AppendUnique(CCFLAGS=["/MD"])
+
+    # MSVC incremental linking is broken and may _increase_ link time (GH-77968).
+    if not env["incremental_link"]:
+        env.Append(LINKFLAGS=["/INCREMENTAL:NO"])
 
     env.AppendUnique(CCFLAGS=["/Gd", "/GR", "/nologo"])
     env.AppendUnique(CCFLAGS=["/utf-8"])  # Force to use Unicode encoding.

@@ -170,6 +170,7 @@ private:
 
 	RasterizerCanvas::Item **z_list;
 	RasterizerCanvas::Item **z_last_list;
+	Transform2D _current_camera_transform;
 
 	// 3.5 and earlier had no hierarchical culling.
 	void _render_canvas_item_cull_by_item(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, Item *p_canvas_clip, Item *p_material_owner);
@@ -180,6 +181,7 @@ private:
 	void _prepare_tree_bounds(Item *p_root);
 	void _calculate_canvas_item_bound(Item *p_canvas_item, Rect2 *r_branch_bound);
 
+	Transform2D _calculate_item_global_xform(const Item *p_canvas_item);
 	void _finalize_and_merge_local_bound_to_branch(Item *p_canvas_item, Rect2 *r_branch_bound);
 	void _merge_local_bound_to_branch(Item *p_canvas_item, Rect2 *r_branch_bound);
 
@@ -226,6 +228,7 @@ public:
 	void canvas_item_set_self_modulate(RID p_item, const Color &p_color);
 
 	void canvas_item_set_draw_behind_parent(RID p_item, bool p_enable);
+	void canvas_item_set_use_identity_transform(RID p_item, bool p_enable);
 
 	void canvas_item_set_update_when_visible(RID p_item, bool p_update);
 
@@ -256,7 +259,6 @@ public:
 	void canvas_item_set_use_parent_material(RID p_item, bool p_enable);
 
 	void canvas_item_attach_skeleton(RID p_item, RID p_skeleton);
-	void _canvas_item_skeleton_moved(RID p_item);
 	void canvas_item_set_skeleton_relative_xform(RID p_item, Transform2D p_relative_xform);
 	Rect2 _debug_canvas_item_get_rect(RID p_item);
 	Rect2 _debug_canvas_item_get_local_bound(RID p_item);
@@ -264,6 +266,9 @@ public:
 	void canvas_item_set_interpolated(RID p_item, bool p_interpolated);
 	void canvas_item_reset_physics_interpolation(RID p_item);
 	void canvas_item_transform_physics_interpolation(RID p_item, Transform2D p_transform);
+
+	void _canvas_item_invalidate_local_bound(RID p_item);
+	void _canvas_item_remove_references(RID p_item, RID p_rid);
 
 	RID canvas_light_create();
 	void canvas_light_attach_to_canvas(RID p_light, RID p_canvas);

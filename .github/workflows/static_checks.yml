@@ -1,5 +1,6 @@
 name: 📊 Static Checks
-on: [push, pull_request]
+on:
+  workflow_call:
 
 concurrency:
   group: ci-${{github.actor}}-${{github.head_ref || github.run_number}}-${{github.ref}}-static
@@ -11,7 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Azure repositories are not reliable, we need to prevent Azure giving us packages.
       - name: Make apt sources.list use the default Ubuntu repositories
@@ -28,6 +29,11 @@ jobs:
           sudo update-alternatives --remove-all clang-format || true
           sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 100
           sudo pip3 install black==22.3.0 pygments
+
+      # This needs to happen before Python and npm execution; it must happen before any extra files are written.
+      - name: .gitignore checks (gitignore_check.sh)
+        run: |
+          bash ./misc/scripts/gitignore_check.sh
 
       - name: File formatting checks (file_format.sh)
         run: |

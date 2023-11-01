@@ -1,7 +1,7 @@
 /**
  * \file platform_time.h
  *
- * \brief mbed TLS Platform time abstraction
+ * \brief Mbed TLS Platform time abstraction
  */
 /*
  *  Copyright The Mbed TLS Contributors
@@ -47,7 +47,7 @@ typedef time_t mbedtls_time_t;
  * The function pointers for time
  */
 #if defined(MBEDTLS_PLATFORM_TIME_ALT)
-extern mbedtls_time_t (*mbedtls_time)( mbedtls_time_t* time );
+extern mbedtls_time_t (*mbedtls_time)(mbedtls_time_t *time);
 
 /**
  * \brief   Set your own time function pointer
@@ -56,7 +56,7 @@ extern mbedtls_time_t (*mbedtls_time)( mbedtls_time_t* time );
  *
  * \return              0
  */
-int mbedtls_platform_set_time( mbedtls_time_t (*time_func)( mbedtls_time_t* time ) );
+int mbedtls_platform_set_time(mbedtls_time_t (*time_func)(mbedtls_time_t *time));
 #else
 #if defined(MBEDTLS_PLATFORM_TIME_MACRO)
 #define mbedtls_time    MBEDTLS_PLATFORM_TIME_MACRO

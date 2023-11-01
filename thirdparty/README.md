@@ -8,12 +8,13 @@ readability.
 ## brotli
 
 - Upstream: https://github.com/google/brotli
-- Version: git (f4153a09f87cbb9c826d8fc12c74642bb2d879ea, 2022)
+- Version: git (ed1995b6bda19244070ab5d331111f16f67c8054, 2023)
 - License: MIT
 
 Files extracted from upstream source:
 
-- `common/`, `dec/` and `include/` folders
+- `common/`, `dec/` and `include/` folders from `c/`,
+  minus the `dictionary.bin*` files
 - `LICENSE`
 
 
@@ -33,7 +34,7 @@ Files extracted from upstream source:
 ## certs
 
 - Upstream: Mozilla, via https://github.com/bagder/ca-bundle
-- Version: git (b2f7415648411b6fd7c298c6c92d6552f0165f60, 2022)
+- Version: git (3aaca635bad074a0ce5c15fa8aa0dff47f5c639a, 2023)
 - License: MPL 2.0
 
 
@@ -185,7 +186,7 @@ Files extracted from upstream source:
 ## libpng
 
 - Upstream: http://libpng.org/pub/png/libpng.html
-- Version: 1.6.38 (0a158f3506502dfa23edfc42790dfaed82efba17, 2022)
+- Version: 1.6.40 (f135775ad4e5d4408d2e12ffcc71bb36e6b48551, 2023)
 - License: libpng/zlib
 
 Files extracted from upstream source:
@@ -265,7 +266,7 @@ from the Android NDK r18.
 ## libwebp
 
 - Upstream: https://chromium.googlesource.com/webm/libwebp/
-- Version: 1.2.4 (0d1f12546bd803099a60c070517a552483f3790e, 2022)
+- Version: 1.3.2 (ca332209cb5567c9b249c86788cb2dbf8847e760, 2023)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -277,7 +278,7 @@ Files extracted from upstream source:
 ## mbedtls
 
 - Upstream: https://github.com/Mbed-TLS/mbedtls
-- Version: 2.18.2 (89f040a5c938985c5f30728baed21e49d0846a53, 2022)
+- Version: 2.28.5 (47e8cc9db2e469d902b0e3093ae9e482c3d87188, 2023)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:
@@ -285,9 +286,10 @@ File extracted from upstream release tarball:
 - All `*.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/` except `config_psa.h` and `psa_util.h`.
 - All `*.c` and `*.h` from `library/` to `thirdparty/mbedtls/library/` except those starting with `psa_*`.
 - The `LICENSE` file.
-- Applied the patch in `patches/1453.diff` (upstream PR:
+- Applied the patch in `patches/1453.diff` to fix UWP build (upstream PR:
   https://github.com/ARMmbed/mbedtls/pull/1453).
-  Applied the patch in `patches/windows-arm64-hardclock.diff`
+  Applied the patch in `patches/windows-arm64-hardclock.diff`.
+  Applied the patch in `aesni-no-arm-intrinsics.patch` also to fix UWP build.
 - Added 2 files `godot_core_mbedtls_platform.c` and `godot_core_mbedtls_config.h`
   providing configuration for light bundling with core.
 
@@ -308,7 +310,7 @@ Files extracted from upstream repository:
 ## miniupnpc
 
 - Upstream: https://github.com/miniupnp/miniupnp
-- Version: 2.2.4 (7d1d8bc3868b08ad003bad235eee57562b95b76d, 2022)
+- Version: 2.2.5 (58837ef586278d18cbebee50be758835ed4be79a, 2023)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -461,7 +463,7 @@ Files extracted from upstream source:
 ## pcre2
 
 - Upstream: http://www.pcre.org
-- Version: 10.40 (3103b8f20a3b9944b177e812fde29fbfb8b90558, 2022)
+- Version: 10.42 (52c08847921a324c804cabf2814549f50bce1265, 2022)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -493,7 +495,7 @@ Files extracted from upstream source:
 ## recastnavigation
 
 - Upstream: https://github.com/recastnavigation/recastnavigation
-- Version: git (4fef0446609b23d6ac180ed822817571525528a1, 2022)
+- Version: 1.6.0 (6dc1667f580357e8a2154c28b7867bea7e8ad3a7, 2023)
 - License: zlib
 
 Files extracted from upstream source:
@@ -536,7 +538,7 @@ comments and a patch is provided in the squish/ folder.
 ## tinyexr
 
 - Upstream: https://github.com/syoyo/tinyexr
-- Version: 1.0.1 (67010eae802211202d0797f4df2b809f4ba7442c, 2021)
+- Version: 1.0.5 (3627ab3060592468d49547b4cdf5353e9e2b50dc, 2023)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -567,7 +569,7 @@ folder.
 ## wslay
 
 - Upstream: https://github.com/tatsuhiro-t/wslay
-- Version: 1.1.1+git (45d22583b488f79d5a4e598cc7675c191c5ab53f, 2021)
+- Version: 1.1.1+git (0e7d106ff89ad6638090fd811a9b2e4c5dda8d40, 2022)
 - License: MIT
 
 File extracted from upstream release tarball:
@@ -584,7 +586,7 @@ File extracted from upstream release tarball:
 ## xatlas
 
 - Upstream: https://github.com/jpcy/xatlas
-- Version: git (16ace528acd2cf1f16a7c0dde99c42c486488dbe, 2022)
+- Version: git (f700c7790aaa030e794b52ba7791a05c085faf0c, 2022)
 - License: MIT
 
 Files extracted from upstream source:
@@ -608,7 +610,7 @@ Files extracted from upstream source:
 ## zstd
 
 - Upstream: https://github.com/facebook/zstd
-- Version: 1.5.2 (e47e674cd09583ff0503f0f6defd6d23d8b718d3, 2022)
+- Version: 1.5.5 (63779c798237346c2b245c546c40b72a5a5913fe, 2023)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:

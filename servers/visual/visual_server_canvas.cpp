@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "visual_server_canvas.h"
+#include "core/fixed_array.h"
 #include "core/math/transform_interpolator.h"
 #include "visual_server_globals.h"
 #include "visual_server_raster.h"
@@ -39,6 +40,8 @@ static const int z_range = VS::CANVAS_ITEM_Z_MAX - VS::CANVAS_ITEM_Z_MIN + 1;
 void VisualServerCanvas::_render_canvas_item_tree(Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, RasterizerCanvas::Light *p_lights) {
 	memset(z_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
 	memset(z_last_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
+
+	_current_camera_transform = p_transform;
 
 	if (_canvas_cull_mode == CANVAS_CULL_MODE_NODE) {
 		_prepare_tree_bounds(p_canvas_item);
@@ -275,9 +278,56 @@ void VisualServerCanvas::_calculate_canvas_item_bound(Item *p_canvas_item, Rect2
 	}
 }
 
+Transform2D VisualServerCanvas::_calculate_item_global_xform(const Item *p_canvas_item) {
+	// If we use more than the maximum scene tree depth, we are out of luck.
+	// But that would be super inefficient anyway.
+	FixedArray<const Transform2D *, 64> transforms;
+
+	while (p_canvas_item) {
+		// Should only happen if scene tree depth too high.
+		if (transforms.is_full()) {
+			WARN_PRINT_ONCE("SceneTree depth too high for hierarchical culling.");
+			break;
+		}
+
+		// Note this is only using the CURRENT transform.
+		// This may have implications for interpolated bounds - investigate.
+		transforms.push_back(&p_canvas_item->xform_curr);
+
+		if (canvas_item_owner.owns(p_canvas_item->parent)) {
+			p_canvas_item = canvas_item_owner.get(p_canvas_item->parent);
+		} else {
+			p_canvas_item = nullptr;
+		}
+	}
+
+	Transform2D tr;
+	for (int n = (int)transforms.size() - 1; n >= 0; n--) {
+		tr *= *transforms[n];
+	}
+	return tr;
+}
+
 void VisualServerCanvas::_finalize_and_merge_local_bound_to_branch(Item *p_canvas_item, Rect2 *r_branch_bound) {
 	if (r_branch_bound) {
 		Rect2 this_rect = p_canvas_item->get_rect();
+
+		// Special case .. if the canvas_item has use_identity_xform,
+		// we need to transform the rect from global space to local space,
+		// because the hierarchical culling expects local space.
+		if (p_canvas_item->use_identity_xform) {
+			// This is incredibly inefficient, but should only occur for e.g. CPUParticles2D,
+			// and is difficult to avoid because global transform is not usually kept track of
+			// in VisualServer (only final transform which is combinated with camera, and that
+			// is only calculated on render, so is no use for culling purposes).
+			Transform2D global_xform = _calculate_item_global_xform(p_canvas_item);
+			this_rect = global_xform.affine_inverse().xform(this_rect);
+
+			// Note that the efficiency will depend linearly on the scene tree depth of the
+			// identity transform item.
+			// So e.g. interpolated global CPUParticles2D may run faster at lower depths
+			// in extreme circumstances.
+		}
 
 		// If this item has a bound...
 		if (!p_canvas_item->local_bound.has_no_area()) {
@@ -337,9 +387,20 @@ void VisualServerCanvas::_render_canvas_item_cull_by_item(Item *p_canvas_item, c
 		real_t f = Engine::get_singleton()->get_physics_interpolation_fraction();
 		TransformInterpolator::interpolate_transform_2d(ci->xform_prev, ci->xform_curr, final_xform, f);
 	}
+
+	// Always calculate final transform as if not using identity xform.
+	// This is so the expected transform is passed to children.
+	// However, if use_identity_xform is set,
+	// we can override the transform for rendering purposes for this item only.
 	final_xform = p_transform * final_xform;
 
-	Rect2 global_rect = final_xform.xform(rect);
+	Rect2 global_rect;
+	if (!p_canvas_item->use_identity_xform) {
+		global_rect = final_xform.xform(rect);
+	} else {
+		global_rect = _current_camera_transform.xform(rect);
+	}
+
 	global_rect.position += p_clip_rect.position;
 
 	if (ci->use_parent_material && p_material_owner) {
@@ -415,7 +476,7 @@ void VisualServerCanvas::_render_canvas_item_cull_by_item(Item *p_canvas_item, c
 
 	if ((!ci->commands.empty() && p_clip_rect.intersects(global_rect, true)) || ci->vp_render || ci->copy_back_buffer) {
 		//something to draw?
-		ci->final_transform = final_xform;
+		ci->final_transform = !p_canvas_item->use_identity_xform ? final_xform : _current_camera_transform;
 		ci->final_modulate = Color(modulate.r * ci->self_modulate.r, modulate.g * ci->self_modulate.g, modulate.b * ci->self_modulate.b, modulate.a * ci->self_modulate.a);
 		ci->global_rect_cache = global_rect;
 		ci->global_rect_cache.position -= p_clip_rect.position;
@@ -473,11 +534,22 @@ void VisualServerCanvas::_render_canvas_item_cull_by_node(Item *p_canvas_item, c
 		real_t f = Engine::get_singleton()->get_physics_interpolation_fraction();
 		TransformInterpolator::interpolate_transform_2d(ci->xform_prev, ci->xform_curr, final_xform, f);
 	}
+
+	// Always calculate final transform as if not using identity xform.
+	// This is so the expected transform is passed to children.
+	// However, if use_identity_xform is set,
+	// we can override the transform for rendering purposes for this item only.
 	final_xform = p_transform * final_xform;
 
-	Rect2 global_rect = final_xform.xform(rect);
+	Rect2 global_rect;
+	if (!p_canvas_item->use_identity_xform) {
+		global_rect = final_xform.xform(rect);
+	} else {
+		global_rect = _current_camera_transform.xform(rect);
+	}
+
 	ci->global_rect_cache = global_rect;
-	ci->final_transform = final_xform;
+	ci->final_transform = !p_canvas_item->use_identity_xform ? final_xform : _current_camera_transform;
 
 	global_rect.position += p_clip_rect.position;
 
@@ -666,6 +738,8 @@ void VisualServerCanvas::render_canvas(Canvas *p_canvas, const Transform2D &p_tr
 
 		memset(z_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
 		memset(z_last_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
+
+		_current_camera_transform = p_transform;
 
 #ifdef VISUAL_SERVER_CANVAS_TIME_NODE_CULLING
 		bool measure = (Engine::get_singleton()->get_frames_drawn() % 100) == 0;
@@ -939,6 +1013,14 @@ void VisualServerCanvas::canvas_item_set_draw_behind_parent(RID p_item, bool p_e
 
 	canvas_item->behind = p_enable;
 	_check_bound_integrity(canvas_item);
+}
+
+void VisualServerCanvas::canvas_item_set_use_identity_transform(RID p_item, bool p_enable) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+
+	canvas_item->use_identity_xform = p_enable;
+	_make_bound_dirty(canvas_item);
 }
 
 void VisualServerCanvas::canvas_item_set_update_when_visible(RID p_item, bool p_update) {
@@ -1421,10 +1503,17 @@ void VisualServerCanvas::canvas_item_add_multimesh(RID p_item, RID p_mesh, RID p
 	mm->multimesh = p_mesh;
 	mm->texture = p_texture;
 	mm->normal_map = p_normal_map;
+	mm->canvas_item = p_item;
 
 	canvas_item->rect_dirty = true;
 	canvas_item->commands.push_back(mm);
 	_make_bound_dirty(canvas_item);
+
+	// Attach to multimesh a backlink to enable updating
+	// the canvas item local bound when the multimesh changes.
+	if (p_mesh.is_valid()) {
+		VSG::storage->multimesh_attach_canvas_item(p_mesh, p_item, true);
+	}
 }
 
 void VisualServerCanvas::canvas_item_add_clip_ignore(RID p_item, bool p_ignore) {
@@ -1588,7 +1677,16 @@ void VisualServerCanvas::canvas_item_attach_skeleton(RID p_item, RID p_skeleton)
 	}
 }
 
-void VisualServerCanvas::_canvas_item_skeleton_moved(RID p_item) {
+// Canvas items may contain references to other resources (such as MultiMesh).
+// If the resources are deleted first, and the canvas_item retains references, it
+// will crash / error when it tries to access these.
+void VisualServerCanvas::_canvas_item_remove_references(RID p_item, RID p_rid) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+	canvas_item->remove_references(p_rid);
+}
+
+void VisualServerCanvas::_canvas_item_invalidate_local_bound(RID p_item) {
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
 	ERR_FAIL_COND(!canvas_item);
 	_make_bound_dirty(canvas_item);
