@@ -15,14 +15,19 @@ Implemented tweaks:
 * [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
 * Increased editor zoom out distance to match far plane.
 * Increased editor zoom increment for faster zooming.
+* 4.x build DOES NOT implement hard-coded logarithmic depth buffer. It is implemented in 3.x version of GF3DOW.
+The reason to not to implement this solution is to make it possible to incorporate possible future options for 
+either logarithmic or reverse linear depth buffer, which is being discussed by dev team.
 
 Suggested:
 * Use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
-without z-fighting:
+without z-fighting. Keep in mind that this may break some depth-related effects and shadow-casting.
+
 
 ```
 // Add this before your vertex shader.
-const float Fcoef = 0.001;
+// Edit "Fcoef" to adjust for desirable view distance. Lesser number means further distance limit.
+uniform float Fcoef = 0.001;
 varying float gl_Position_z;
 
 // Add this to your vertex shader.
