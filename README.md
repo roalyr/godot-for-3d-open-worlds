@@ -4,8 +4,7 @@
     <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
 </p>
 
-This flavor of Godot 4.x engine is made to accommodate large open-world 3D games which require
-much further view distance than original Godot offers.
+This flavor of Godot 4.x engine is made to accommodate large open-world 3D games.
 
 This fork is regularly synchronized with [4.x branch](https://github.com/godotengine/godot/tree/master).
 
@@ -13,11 +12,11 @@ Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), And
 
 Implemented tweaks:
 * [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
-* Increased editor zoom out distance to match far plane.
+* Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
 * Increased editor zoom increment for faster zooming.
-* 4.x build DOES NOT implement hard-coded logarithmic depth buffer. It is implemented in 3.x version of GF3DOW.
+* This 4.x fork build DOES NOT implement hard-coded logarithmic depth buffer. It is implemented in 3.x version of GF3DOW.
 The reason to not to implement this solution is to make it possible to incorporate possible future options for 
-either logarithmic or reverse linear depth buffer, which is being discussed by dev team.
+either logarithmic or reverse linear depth buffer, which are being discussed by dev team and are on the milestone.
 
 Suggested:
 * Use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
