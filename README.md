@@ -1,4 +1,60 @@
-# Godot Engine
+# Godot 4 for 3D open worlds
+
+<p align="center">
+    <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
+</p>
+
+This flavor of Godot 4.x engine is made to accommodate large open-world 3D games which require
+much further view distance than original Godot offers while still relying on single-precision
+floats. In order to achieve this a few tweaks were made.
+
+This fork is regularly synchronized with [4.x branch](https://github.com/godotengine/godot/tree/master).
+
+Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), Android armv7 and armv8.
+
+Implemented tweaks:
+* [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
+* Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
+* Implemented for all rendering backends.
+* Far plane maximums are:
+
+   - Editor zooming: 9e18 (near and far planes are adjustable).
+   - Scene shader: 1e19. Far plane is fixed. Enables rendering.
+   - Camera matrix: 1e19. Far plane is fixed. Prevents culling glitches.
+
+* Increased editor zoom out distance to match far plane.
+* Increased editor zoom increment for faster zooming.
+
+Suggested:
+* Do not make objects larger than 9e18 units.
+
+Not working (properly) as of yet:
+* Shadows and depth-related environment effects may (and most likely will) misbehave.
+
+
+
+More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
+
+## Installation
+Binaries available for Linux, Windows and Android.
+You can download binaries and templates (debug) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
+You can build it from source. Refer to `rebuild_` scripts in root folder for convenience.
+
+Reminder for cross-compiling for Windows:
+```
+To use posix mode for mingw by default:
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
+<choose x86_64-w64-mingw32-gcc-posix from the list>
+$ sudo update-alternatives --config x86_64-w64-mingw32-g++
+<choose x86_64-w64-mingw32-g++-posix from the list>
+```
+
+<br/><br/>
+<br/><br/>
+<br/><br/>
+
+# Godot Engine original readme
 
 <p align="center">
   <a href="https://godotengine.org">
