@@ -5,8 +5,7 @@
 </p>
 
 This flavor of Godot 4.x engine is made to accommodate large open-world 3D games which require
-much further view distance than original Godot offers while still relying on single-precision
-floats. In order to achieve this a few tweaks were made.
+much further view distance than original Godot offers.
 
 This fork is regularly synchronized with [4.x branch](https://github.com/godotengine/godot/tree/master).
 
@@ -14,26 +13,34 @@ Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), And
 
 Implemented tweaks:
 * [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
-* Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
-* Implemented for all rendering backends.
-* Far plane maximums are:
-
-   - Editor zooming: 9e18 (near and far planes are adjustable).
-   - Scene shader: 1e19. Far plane is fixed. Enables rendering.
-   - Camera matrix: 1e19. Far plane is fixed. Prevents culling glitches.
-
 * Increased editor zoom out distance to match far plane.
 * Increased editor zoom increment for faster zooming.
 
 Suggested:
-* Do not make objects larger than 9e18 units.
+* Use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
+without z-fighting:
 
-Not working (properly) as of yet:
-* Shadows and depth-related environment effects may (and most likely will) misbehave.
+```
+// Add this before your vertex shader.
+const float Fcoef = 0.001;
+varying float gl_Position_z;
+
+// Add this to your vertex shader.
+void vertex()
+{
+	vec4 gl_Position = MODELVIEW_MATRIX*vec4(VERTEX, 1.0);
+	gl_Position_z = gl_Position.z;
+}
+
+//Add this to your fragment shader.
+void fragment()
+{
+	DEPTH = log2(max(1e-6, 1.0 -gl_Position_z)) * Fcoef;
+}
 
 
+```
 
-More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 
 ## Installation
 Binaries available for Linux, Windows and Android.
