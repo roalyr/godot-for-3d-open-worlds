@@ -27,18 +27,17 @@ fi
 
 
 # Editor (tools)
-scons -j4 platform=linuxbsd precision=double 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_64_tools_build.txt;
+scons -j2 platform=linuxbsd precision=double 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_64_tools_build.txt;
 
 # Template(s)
-scons -j4 platform=linuxbsd precision=double target=template_debug arch=x86_64 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_64_template_build.txt;
+scons -j2 platform=linuxbsd precision=double target=template_debug arch=x86_64 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_64_template_build.txt;
+scons -j2 platform=linuxbsd precision=double target=template_release arch=x86_64 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_64_template_release_build.txt;
 
-# Rename binaries
-#mv ./bin/godot.x11.opt.tools.64 ./bin/godot.x11.opt.tools.x86_64
-#mv ./bin/godot.x11.opt.debug.64 ./bin/godot.x11.opt.debug.x86_64
 
 # Removing debug symbols
 strip ./bin/godot.linuxbsd.editor.double.x86_64
-strip ./bin/godot.linuxbsd.template_debug.double.x86_64
+#strip ./bin/godot.linuxbsd.template_debug.double.x86_64
+strip ./bin/godot.linuxbsd.template_release.double.x86_64
 
 	echo
 	echo "          ==============================================="
