@@ -965,38 +965,6 @@ Node *ResourceImporterScene::_pre_fix_animations(Node *p_node, Node *p_root, con
 		List<StringName> anims;
 		ap->get_animation_list(&anims);
 
-		for (const StringName &name : anims) {
-			Ref<Animation> anim = ap->get_animation(name);
-			Array animation_slices;
-
-			if (p_animation_data.has(name)) {
-				Dictionary anim_settings = p_animation_data[name];
-				int slices_count = anim_settings["slices/amount"];
-
-				for (int i = 0; i < slices_count; i++) {
-					String slice_name = anim_settings["slice_" + itos(i + 1) + "/name"];
-					int from_frame = anim_settings["slice_" + itos(i + 1) + "/start_frame"];
-					int end_frame = anim_settings["slice_" + itos(i + 1) + "/end_frame"];
-					Animation::LoopMode loop_mode = static_cast<Animation::LoopMode>((int)anim_settings["slice_" + itos(i + 1) + "/loop_mode"]);
-					bool save_to_file = anim_settings["slice_" + itos(i + 1) + "/save_to_file/enabled"];
-					bool save_to_path = anim_settings["slice_" + itos(i + 1) + "/save_to_file/path"];
-					bool save_to_file_keep_custom = anim_settings["slice_" + itos(i + 1) + "/save_to_file/keep_custom_tracks"];
-
-					animation_slices.push_back(slice_name);
-					animation_slices.push_back(from_frame / p_animation_fps);
-					animation_slices.push_back(end_frame / p_animation_fps);
-					animation_slices.push_back(loop_mode);
-					animation_slices.push_back(save_to_file);
-					animation_slices.push_back(save_to_path);
-					animation_slices.push_back(save_to_file_keep_custom);
-				}
-			}
-
-			if (animation_slices.size() > 0) {
-				_create_slices(ap, anim, animation_slices, true);
-			}
-		}
-
 		AnimationImportTracks import_tracks_mode[TRACK_CHANNEL_MAX] = {
 			AnimationImportTracks(int(node_settings["import_tracks/position"])),
 			AnimationImportTracks(int(node_settings["import_tracks/rotation"])),
@@ -1063,8 +1031,36 @@ Node *ResourceImporterScene::_post_fix_animations(Node *p_node, Node *p_root, co
 		ap->get_animation_list(&anims);
 		for (const StringName &name : anims) {
 			Ref<Animation> anim = ap->get_animation(name);
+			Array animation_slices;
+
 			if (p_animation_data.has(name)) {
 				Dictionary anim_settings = p_animation_data[name];
+
+				{
+					int slices_count = anim_settings["slices/amount"];
+
+					for (int i = 0; i < slices_count; i++) {
+						String slice_name = anim_settings["slice_" + itos(i + 1) + "/name"];
+						int from_frame = anim_settings["slice_" + itos(i + 1) + "/start_frame"];
+						int end_frame = anim_settings["slice_" + itos(i + 1) + "/end_frame"];
+						Animation::LoopMode loop_mode = static_cast<Animation::LoopMode>((int)anim_settings["slice_" + itos(i + 1) + "/loop_mode"]);
+						bool save_to_file = anim_settings["slice_" + itos(i + 1) + "/save_to_file/enabled"];
+						String save_to_path = anim_settings["slice_" + itos(i + 1) + "/save_to_file/path"];
+						bool save_to_file_keep_custom = anim_settings["slice_" + itos(i + 1) + "/save_to_file/keep_custom_tracks"];
+
+						animation_slices.push_back(slice_name);
+						animation_slices.push_back(from_frame / p_animation_fps);
+						animation_slices.push_back(end_frame / p_animation_fps);
+						animation_slices.push_back(loop_mode);
+						animation_slices.push_back(save_to_file);
+						animation_slices.push_back(save_to_path);
+						animation_slices.push_back(save_to_file_keep_custom);
+					}
+
+					if (animation_slices.size() > 0) {
+						_create_slices(ap, anim, animation_slices, true);
+					}
+				}
 				{
 					//fill with default values
 					List<ImportOption> iopts;
@@ -1958,6 +1954,12 @@ void ResourceImporterScene::get_import_options(const String &p_path, List<Import
 	}
 }
 
+void ResourceImporterScene::handle_compatibility_options(HashMap<StringName, Variant> &p_import_params) const {
+	for (Ref<EditorSceneFormatImporter> importer_elem : importers) {
+		importer_elem->handle_compatibility_options(p_import_params);
+	}
+}
+
 void ResourceImporterScene::_replace_owner(Node *p_node, Node *p_scene, Node *p_new_owner) {
 	if (p_node != p_new_owner && p_node->get_owner() == p_scene) {
 		p_node->set_owner(p_new_owner);
@@ -2002,7 +2004,7 @@ Array ResourceImporterScene::_get_skinned_pose_transforms(ImporterMeshInstance3D
 	return skin_pose_transform_array;
 }
 
-void ResourceImporterScene::_generate_meshes(Node *p_node, const Dictionary &p_mesh_data, bool p_generate_lods, bool p_create_shadow_meshes, LightBakeMode p_light_bake_mode, float p_lightmap_texel_size, const Vector<uint8_t> &p_src_lightmap_cache, Vector<Vector<uint8_t>> &r_lightmap_caches) {
+Node *ResourceImporterScene::_generate_meshes(Node *p_node, const Dictionary &p_mesh_data, bool p_generate_lods, bool p_create_shadow_meshes, LightBakeMode p_light_bake_mode, float p_lightmap_texel_size, const Vector<uint8_t> &p_src_lightmap_cache, Vector<Vector<uint8_t>> &r_lightmap_caches) {
 	ImporterMeshInstance3D *src_mesh_node = Object::cast_to<ImporterMeshInstance3D>(p_node);
 	if (src_mesh_node) {
 		//is mesh
@@ -2183,6 +2185,8 @@ void ResourceImporterScene::_generate_meshes(Node *p_node, const Dictionary &p_m
 	for (int i = 0; i < p_node->get_child_count(); i++) {
 		_generate_meshes(p_node->get_child(i), p_mesh_data, p_generate_lods, p_create_shadow_meshes, p_light_bake_mode, p_lightmap_texel_size, p_src_lightmap_cache, r_lightmap_caches);
 	}
+
+	return p_node;
 }
 
 void ResourceImporterScene::_add_shapes(Node *p_node, const Vector<Ref<Shape3D>> &p_shapes) {
@@ -2562,7 +2566,7 @@ Error ResourceImporterScene::import(const String &p_source_file, const String &p
 	if (subresources.has("meshes")) {
 		mesh_data = subresources["meshes"];
 	}
-	_generate_meshes(scene, mesh_data, gen_lods, create_shadow_meshes, LightBakeMode(light_bake_mode), lightmap_texel_size, src_lightmap_cache, mesh_lightmap_caches);
+	scene = _generate_meshes(scene, mesh_data, gen_lods, create_shadow_meshes, LightBakeMode(light_bake_mode), lightmap_texel_size, src_lightmap_cache, mesh_lightmap_caches);
 
 	if (mesh_lightmap_caches.size()) {
 		Ref<FileAccess> f = FileAccess::open(p_source_file + ".unwrap_cache", FileAccess::WRITE);
@@ -2662,10 +2666,10 @@ ResourceImporterScene *ResourceImporterScene::animation_singleton = nullptr;
 Vector<Ref<EditorSceneFormatImporter>> ResourceImporterScene::importers;
 Vector<Ref<EditorScenePostImportPlugin>> ResourceImporterScene::post_importer_plugins;
 
-bool ResourceImporterScene::ResourceImporterScene::has_advanced_options() const {
+bool ResourceImporterScene::has_advanced_options() const {
 	return true;
 }
-void ResourceImporterScene::ResourceImporterScene::show_advanced_options(const String &p_path) {
+void ResourceImporterScene::show_advanced_options(const String &p_path) {
 	SceneImportSettings::get_singleton()->open_settings(p_path, animation_importer);
 }
 

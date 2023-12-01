@@ -1113,14 +1113,14 @@ _FORCE_INLINE_ TextServerAdvanced::FontGlyph TextServerAdvanced::rasterize_bitma
 					case FT_PIXEL_MODE_LCD: {
 						int ofs_color = i * bitmap.pitch + (j * 3);
 						if (p_bgra) {
-							wr[ofs + 0] = bitmap.buffer[ofs_color + 0];
-							wr[ofs + 1] = bitmap.buffer[ofs_color + 1];
-							wr[ofs + 2] = bitmap.buffer[ofs_color + 2];
-							wr[ofs + 3] = 255;
-						} else {
 							wr[ofs + 0] = bitmap.buffer[ofs_color + 2];
 							wr[ofs + 1] = bitmap.buffer[ofs_color + 1];
 							wr[ofs + 2] = bitmap.buffer[ofs_color + 0];
+							wr[ofs + 3] = 255;
+						} else {
+							wr[ofs + 0] = bitmap.buffer[ofs_color + 0];
+							wr[ofs + 1] = bitmap.buffer[ofs_color + 1];
+							wr[ofs + 2] = bitmap.buffer[ofs_color + 2];
 							wr[ofs + 3] = 255;
 						}
 					} break;
@@ -4312,6 +4312,8 @@ bool TextServerAdvanced::_shaped_text_resize_object(const RID &p_shaped, const V
 				sd->width += gl.advance * gl.repeat;
 			}
 		}
+		sd->sort_valid = false;
+		sd->glyphs_logical.clear();
 		_realign(sd);
 	}
 	return true;

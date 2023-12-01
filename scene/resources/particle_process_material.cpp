@@ -86,9 +86,9 @@ void ParticleProcessMaterial::init_shaders() {
 	shader_names->tangent_accel_texture = "tangent_accel_texture";
 	shader_names->damping_texture = "damping_texture";
 	shader_names->scale_texture = "scale_curve";
-	shader_names->hue_variation_texture = "hue_variation_texture";
-	shader_names->anim_speed_texture = "anim_speed_texture";
-	shader_names->anim_offset_texture = "anim_offset_texture";
+	shader_names->hue_variation_texture = "hue_rot_curve";
+	shader_names->anim_speed_texture = "animation_speed_curve";
+	shader_names->anim_offset_texture = "animation_offset_curve";
 	shader_names->directional_velocity_texture = "directional_velocity_curve";
 	shader_names->scale_over_velocity_texture = "scale_over_velocity_curve";
 
@@ -762,8 +762,11 @@ void ParticleProcessMaterial::_update_shader() {
 
 	code += "}\n";
 
-	code += "vec3 process_radial_displacement(DynamicsParameters param, float lifetime, inout uint alt_seed, mat4 transform, mat4 emission_transform){\n";
+	code += "vec3 process_radial_displacement(DynamicsParameters param, float lifetime, inout uint alt_seed, mat4 transform, mat4 emission_transform, float delta){\n";
 	code += "	vec3 radial_displacement = vec3(0.0);\n";
+	code += "	if (delta < 0.001){\n";
+	code += "		return radial_displacement;\n";
+	code += "	}\n";
 	code += "	float radial_displacement_multiplier = 1.0;\n";
 	if (tex_parameters[PARAM_RADIAL_VELOCITY].is_valid()) {
 		code += "   radial_displacement_multiplier = texture(radial_velocity_curve, vec2(lifetime)).r;\n";
@@ -774,7 +777,7 @@ void ParticleProcessMaterial::_update_shader() {
 	code += "	}else{radial_displacement = get_random_direction_from_spread(alt_seed, 360.0)* param.radial_velocity;} \n";
 	code += "	if (radial_displacement_multiplier * param.radial_velocity < 0.0){\n // Prevent inwards velocity to flicker once the point is reached.";
 	code += "		if (length(radial_displacement) > 0.01){\n";
-	code += "		radial_displacement = normalize(radial_displacement) * min(abs((radial_displacement_multiplier * param.radial_velocity)), length(transform[3].xyz - global_pivot));\n";
+	code += "		radial_displacement = normalize(radial_displacement) * min(abs((radial_displacement_multiplier * param.radial_velocity)), length(transform[3].xyz - global_pivot) / delta);\n";
 	code += "		}\n";
 	code += "	\n";
 	code += "	return radial_displacement;\n";
@@ -923,7 +926,7 @@ void ParticleProcessMaterial::_update_shader() {
 	}
 	code += "	// calculate all velocity\n";
 	code += "	\n";
-	code += "	controlled_displacement += process_radial_displacement(dynamic_params, lifetime_percent, alt_seed, TRANSFORM, EMISSION_TRANSFORM);\n";
+	code += "	controlled_displacement += process_radial_displacement(dynamic_params, lifetime_percent, alt_seed, TRANSFORM, EMISSION_TRANSFORM, DELTA);\n";
 	code += "	\n";
 	if (tex_parameters[PARAM_DIRECTIONAL_VELOCITY].is_valid()) {
 		code += "	controlled_displacement += process_directional_displacement(dynamic_params, lifetime_percent, TRANSFORM, EMISSION_TRANSFORM);\n";
@@ -1380,7 +1383,7 @@ void ParticleProcessMaterial::set_param_texture(Parameter p_param, const Ref<Tex
 
 	tex_parameters[p_param] = p_texture;
 
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 
 	switch (p_param) {
 		case PARAM_INITIAL_LINEAR_VELOCITY: {
@@ -1476,7 +1479,7 @@ Color ParticleProcessMaterial::get_color() const {
 
 void ParticleProcessMaterial::set_color_ramp(const Ref<Texture2D> &p_texture) {
 	color_ramp = p_texture;
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->color_ramp, tex_rid);
 	_queue_shader_change();
 	notify_property_list_changed();
@@ -1488,7 +1491,7 @@ Ref<Texture2D> ParticleProcessMaterial::get_color_ramp() const {
 
 void ParticleProcessMaterial::set_color_initial_ramp(const Ref<Texture2D> &p_texture) {
 	color_initial_ramp = p_texture;
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->color_initial_ramp, tex_rid);
 	_queue_shader_change();
 	notify_property_list_changed();
@@ -1509,7 +1512,7 @@ void ParticleProcessMaterial::set_particle_flag(ParticleFlags p_particle_flag, b
 
 void ParticleProcessMaterial::set_alpha_curve(const Ref<Texture2D> &p_texture) {
 	alpha_curve = p_texture;
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->alpha_ramp, tex_rid);
 	_queue_shader_change();
 	notify_property_list_changed();
@@ -1521,7 +1524,7 @@ Ref<Texture2D> ParticleProcessMaterial::get_alpha_curve() const {
 
 void ParticleProcessMaterial::set_emission_curve(const Ref<Texture2D> &p_texture) {
 	emission_curve = p_texture;
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->emission_ramp, tex_rid);
 	_queue_shader_change();
 	notify_property_list_changed();
@@ -1533,7 +1536,7 @@ Ref<Texture2D> ParticleProcessMaterial::get_emission_curve() const {
 
 void ParticleProcessMaterial::set_velocity_limit_curve(const Ref<Texture2D> &p_texture) {
 	velocity_limit_curve = p_texture;
-	RID tex_rid = p_texture.is_valid() ? p_texture->get_rid() : RID();
+	Variant tex_rid = p_texture.is_valid() ? Variant(p_texture->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->velocity_limit_curve, tex_rid);
 	_queue_shader_change();
 	notify_property_list_changed();
@@ -1567,19 +1570,19 @@ void ParticleProcessMaterial::set_emission_box_extents(Vector3 p_extents) {
 
 void ParticleProcessMaterial::set_emission_point_texture(const Ref<Texture2D> &p_points) {
 	emission_point_texture = p_points;
-	RID tex_rid = p_points.is_valid() ? p_points->get_rid() : RID();
+	Variant tex_rid = p_points.is_valid() ? Variant(p_points->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->emission_texture_points, tex_rid);
 }
 
 void ParticleProcessMaterial::set_emission_normal_texture(const Ref<Texture2D> &p_normals) {
 	emission_normal_texture = p_normals;
-	RID tex_rid = p_normals.is_valid() ? p_normals->get_rid() : RID();
+	Variant tex_rid = p_normals.is_valid() ? Variant(p_normals->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->emission_texture_normal, tex_rid);
 }
 
 void ParticleProcessMaterial::set_emission_color_texture(const Ref<Texture2D> &p_colors) {
 	emission_color_texture = p_colors;
-	RID tex_rid = p_colors.is_valid() ? p_colors->get_rid() : RID();
+	Variant tex_rid = p_colors.is_valid() ? Variant(p_colors->get_rid()) : Variant();
 	RenderingServer::get_singleton()->material_set_param(_get_material(), shader_names->emission_texture_color, tex_rid);
 	_queue_shader_change();
 }

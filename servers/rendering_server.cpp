@@ -460,9 +460,7 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 							}
 						}
 
-						bool using_normals_tangents = (p_format & RS::ARRAY_FORMAT_NORMAL) && (p_format & RS::ARRAY_FORMAT_TANGENT);
-
-						if (!using_normals_tangents) {
+						if (!(p_format & RS::ARRAY_FORMAT_NORMAL)) {
 							// Early out if we are only setting vertex positions.
 							for (int i = 0; i < p_vertex_array_len; i++) {
 								Vector3 pos = (src[i] - r_aabb.position) / r_aabb.size;
@@ -480,12 +478,13 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 
 						// Validate normal and tangent arrays.
 						ERR_FAIL_COND_V(p_arrays[RS::ARRAY_NORMAL].get_type() != Variant::PACKED_VECTOR3_ARRAY, ERR_INVALID_PARAMETER);
-						Variant::Type tangent_type = p_arrays[RS::ARRAY_TANGENT].get_type();
-						ERR_FAIL_COND_V(tangent_type != Variant::PACKED_FLOAT32_ARRAY && tangent_type != Variant::PACKED_FLOAT64_ARRAY, ERR_INVALID_PARAMETER);
 
 						Vector<Vector3> normal_array = p_arrays[RS::ARRAY_NORMAL];
 						ERR_FAIL_COND_V(normal_array.size() != p_vertex_array_len, ERR_INVALID_PARAMETER);
 						const Vector3 *normal_src = normal_array.ptr();
+
+						Variant::Type tangent_type = p_arrays[RS::ARRAY_TANGENT].get_type();
+						ERR_FAIL_COND_V(tangent_type != Variant::PACKED_FLOAT32_ARRAY && tangent_type != Variant::PACKED_FLOAT64_ARRAY && tangent_type != Variant::NIL, ERR_INVALID_PARAMETER);
 
 						// We need a different version if using double precision tangents.
 						if (tangent_type == Variant::PACKED_FLOAT32_ARRAY) {
@@ -524,7 +523,7 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 									memcpy(&vw[p_offsets[ai] + i * p_vertex_stride], vector, sizeof(uint16_t) * 4);
 								}
 							}
-						} else { // PACKED_FLOAT64_ARRAY
+						} else if (tangent_type == Variant::PACKED_FLOAT64_ARRAY) {
 							Vector<double> tangent_array = p_arrays[RS::ARRAY_TANGENT];
 							ERR_FAIL_COND_V(tangent_array.size() != p_vertex_array_len * 4, ERR_INVALID_PARAMETER);
 							const double *tangent_src = tangent_array.ptr();
@@ -534,6 +533,40 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 								float angle;
 								Vector3 axis;
 								Vector4 tangent = Vector4(tangent_src[i * 4 + 0], tangent_src[i * 4 + 1], tangent_src[i * 4 + 2], tangent_src[i * 4 + 3]);
+								_get_axis_angle(normal_src[i], tangent, angle, axis);
+
+								// Store axis.
+								{
+									Vector2 res = axis.octahedron_encode();
+									uint16_t vector[2] = {
+										(uint16_t)CLAMP(res.x * 65535, 0, 65535),
+										(uint16_t)CLAMP(res.y * 65535, 0, 65535),
+									};
+
+									memcpy(&vw[p_offsets[RS::ARRAY_NORMAL] + i * p_normal_stride], vector, 4);
+								}
+
+								// Store vertex position + angle.
+								{
+									Vector3 pos = (src[i] - r_aabb.position) / r_aabb.size;
+									uint16_t vector[4] = {
+										(uint16_t)CLAMP(pos.x * 65535, 0, 65535),
+										(uint16_t)CLAMP(pos.y * 65535, 0, 65535),
+										(uint16_t)CLAMP(pos.z * 65535, 0, 65535),
+										(uint16_t)CLAMP(angle * 65535, 0, 65535)
+									};
+
+									memcpy(&vw[p_offsets[ai] + i * p_vertex_stride], vector, sizeof(uint16_t) * 4);
+								}
+							}
+						} else { // No tangent array.
+							// Set data for vertex, normal, and tangent.
+							for (int i = 0; i < p_vertex_array_len; i++) {
+								float angle;
+								Vector3 axis;
+								// Generate an arbitrary vector that is tangential to normal.
+								Vector3 tan = Vector3(0.0, 1.0, 0.0).cross(normal_src[i].normalized());
+								Vector4 tangent = Vector4(tan.x, tan.y, tan.z, 1.0);
 								_get_axis_angle(normal_src[i], tangent, angle, axis);
 
 								// Store axis.
@@ -602,7 +635,8 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 				// If using compression we store tangent while storing vertices.
 				if (!(p_format & RS::ARRAY_FLAG_COMPRESS_ATTRIBUTES)) {
 					Variant::Type type = p_arrays[ai].get_type();
-					ERR_FAIL_COND_V(type != Variant::PACKED_FLOAT32_ARRAY && type != Variant::PACKED_FLOAT64_ARRAY, ERR_INVALID_PARAMETER);
+					ERR_FAIL_COND_V(type != Variant::PACKED_FLOAT32_ARRAY && type != Variant::PACKED_FLOAT64_ARRAY && type != Variant::NIL, ERR_INVALID_PARAMETER);
+
 					if (type == Variant::PACKED_FLOAT32_ARRAY) {
 						Vector<float> array = p_arrays[ai];
 						ERR_FAIL_COND_V(array.size() != p_vertex_array_len * 4, ERR_INVALID_PARAMETER);
@@ -624,7 +658,7 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 
 							memcpy(&vw[p_offsets[ai] + i * p_normal_stride], vector, 4);
 						}
-					} else { // PACKED_FLOAT64_ARRAY
+					} else if (type == Variant::PACKED_FLOAT64_ARRAY) {
 						Vector<double> array = p_arrays[ai];
 						ERR_FAIL_COND_V(array.size() != p_vertex_array_len * 4, ERR_INVALID_PARAMETER);
 						const double *src_ptr = array.ptr();
@@ -632,6 +666,30 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 						for (int i = 0; i < p_vertex_array_len; i++) {
 							const Vector3 src(src_ptr[i * 4 + 0], src_ptr[i * 4 + 1], src_ptr[i * 4 + 2]);
 							Vector2 res = src.octahedron_tangent_encode(src_ptr[i * 4 + 3]);
+							uint16_t vector[2] = {
+								(uint16_t)CLAMP(res.x * 65535, 0, 65535),
+								(uint16_t)CLAMP(res.y * 65535, 0, 65535),
+							};
+
+							if (vector[0] == 0 && vector[1] == 65535) {
+								// (1, 1) and (0, 1) decode to the same value, but (0, 1) messes with our compression detection.
+								// So we sanitize here.
+								vector[0] = 65535;
+							}
+
+							memcpy(&vw[p_offsets[ai] + i * p_normal_stride], vector, 4);
+						}
+					} else { // No tangent array.
+						ERR_FAIL_COND_V(p_arrays[RS::ARRAY_NORMAL].get_type() != Variant::PACKED_VECTOR3_ARRAY, ERR_INVALID_PARAMETER);
+
+						Vector<Vector3> normal_array = p_arrays[RS::ARRAY_NORMAL];
+						ERR_FAIL_COND_V(normal_array.size() != p_vertex_array_len, ERR_INVALID_PARAMETER);
+						const Vector3 *normal_src = normal_array.ptr();
+						// Set data for tangent.
+						for (int i = 0; i < p_vertex_array_len; i++) {
+							// Generate an arbitrary vector that is tangential to normal.
+							Vector3 tan = Vector3(0.0, 1.0, 0.0).cross(normal_src[i].normalized());
+							Vector2 res = tan.octahedron_tangent_encode(1.0);
 							uint16_t vector[2] = {
 								(uint16_t)CLAMP(res.x * 65535, 0, 65535),
 								(uint16_t)CLAMP(res.y * 65535, 0, 65535),
@@ -1139,6 +1197,11 @@ Error RenderingServer::mesh_create_surface_data_from_arrays(SurfaceData *r_surfa
 				} break;
 			}
 			ERR_FAIL_COND_V(array_len == 0, ERR_INVALID_DATA);
+		} else if (i == RS::ARRAY_NORMAL) {
+			if (p_arrays[RS::ARRAY_TANGENT].get_type() == Variant::NIL) {
+				// We must use tangents if using normals.
+				format |= (1ULL << RS::ARRAY_TANGENT);
+			}
 		} else if (i == RS::ARRAY_BONES) {
 			switch (p_arrays[i].get_type()) {
 				case Variant::PACKED_INT32_ARRAY: {
@@ -1207,7 +1270,6 @@ Error RenderingServer::mesh_create_surface_data_from_arrays(SurfaceData *r_surfa
 		// If using normals or tangents, then we need all three.
 		ERR_FAIL_COND_V_MSG(!(format & RS::ARRAY_FORMAT_VERTEX), ERR_INVALID_PARAMETER, "Can't use compression flag 'ARRAY_FLAG_COMPRESS_ATTRIBUTES' while using normals or tangents without vertex array.");
 		ERR_FAIL_COND_V_MSG(!(format & RS::ARRAY_FORMAT_NORMAL), ERR_INVALID_PARAMETER, "Can't use compression flag 'ARRAY_FLAG_COMPRESS_ATTRIBUTES' while using tangents without normal array.");
-		ERR_FAIL_COND_V_MSG(!(format & RS::ARRAY_FORMAT_TANGENT), ERR_INVALID_PARAMETER, "Can't use compression flag 'ARRAY_FLAG_COMPRESS_ATTRIBUTES' while using normals without tangent array.");
 	}
 
 	int vertex_array_size = (vertex_element_size + normal_element_size) * array_len;
@@ -1368,10 +1430,8 @@ Array RenderingServer::_get_array_from_surface(uint64_t p_format, Vector<uint8_t
 						Vector3 *w = arr_3d.ptrw();
 
 						if (p_format & ARRAY_FLAG_COMPRESS_ATTRIBUTES) {
-							bool using_normals_tangents = (p_format & RS::ARRAY_FORMAT_NORMAL) && (p_format & RS::ARRAY_FORMAT_TANGENT);
-
 							// We only have vertices to read, so just read them and skip everything else.
-							if (!using_normals_tangents) {
+							if (!(p_format & RS::ARRAY_FORMAT_NORMAL)) {
 								for (int j = 0; j < p_vertex_len; j++) {
 									const uint16_t *v = reinterpret_cast<const uint16_t *>(&r[j * vertex_elem_size + offsets[i]]);
 									Vector3 vec = Vector3(float(v[0]) / 65535.0, float(v[1]) / 65535.0, float(v[2]) / 65535.0);
@@ -2076,10 +2136,10 @@ void RenderingServer::fix_surface_compatibility(SurfaceData &p_surface, const St
 	}
 
 	if (warn_on_surface_upgrade) {
-		if (p_path.is_empty()) {
-			WARN_PRINT("A surface uses an old surface format and needs to be upgraded. The upgrade happens automatically at load time every time until the mesh is saved again or re-imported. Once saved (or re-imported), this mesh will be incompatible with earlier versions of Godot.");
-		} else {
-			WARN_PRINT("A surface of " + p_path + " uses an old surface format and needs to be upgraded. The upgrade happens automatically at load time every time until the mesh is saved again or re-imported. Once saved (or re-imported), this mesh will be incompatible with earlier versions of Godot.");
+		WARN_PRINT_ONCE_ED("At least one surface uses an old surface format and needs to be upgraded. The upgrade happens automatically at load time every time until the mesh is saved again or re-imported. Once saved (or re-imported), this mesh will be incompatible with earlier versions of Godot.");
+
+		if (!p_path.is_empty()) {
+			WARN_PRINT("A surface of " + p_path + " uses an old surface format and needs to be upgraded.");
 		}
 	}
 #endif
@@ -2088,45 +2148,47 @@ void RenderingServer::fix_surface_compatibility(SurfaceData &p_surface, const St
 		// The only difference for now is that Version 1 uses interleaved vertex positions while version 2 does not.
 		// I.e. PNTPNTPNT -> PPPNTNTNT.
 
-		int vertex_size = 0;
-		int normal_size = 0;
-		int tangent_size = 0;
-		if (p_surface.format & ARRAY_FORMAT_VERTEX) {
-			if (p_surface.format & ARRAY_FLAG_USE_2D_VERTICES) {
-				vertex_size = sizeof(float) * 2;
-			} else {
-				vertex_size = sizeof(float) * 3;
+		if (p_surface.vertex_data.size() > 0 && p_surface.vertex_count > 0) {
+			int vertex_size = 0;
+			int normal_size = 0;
+			int tangent_size = 0;
+			if (p_surface.format & ARRAY_FORMAT_VERTEX) {
+				if (p_surface.format & ARRAY_FLAG_USE_2D_VERTICES) {
+					vertex_size = sizeof(float) * 2;
+				} else {
+					vertex_size = sizeof(float) * 3;
+				}
 			}
-		}
-		if (p_surface.format & ARRAY_FORMAT_NORMAL) {
-			normal_size += sizeof(uint16_t) * 2;
-		}
-		if (p_surface.format & ARRAY_FORMAT_TANGENT) {
-			tangent_size = sizeof(uint16_t) * 2;
-		}
-		int stride = p_surface.vertex_data.size() / p_surface.vertex_count;
-		int position_stride = vertex_size;
-		int normal_tangent_stride = normal_size + tangent_size;
-
-		p_surface.vertex_data = _convert_surface_version_1_to_surface_version_2(p_surface.format, p_surface.vertex_data, p_surface.vertex_count, stride, vertex_size, normal_size, position_stride, normal_tangent_stride);
-
-		if (p_surface.blend_shape_data.size() > 0) {
-			// The size of one blend shape.
-			int divisor = (vertex_size + normal_size + tangent_size) * p_surface.vertex_count;
-			ERR_FAIL_COND((p_surface.blend_shape_data.size() % divisor) != 0);
-
-			uint32_t blend_shape_count = p_surface.blend_shape_data.size() / divisor;
-
-			Vector<uint8_t> new_blend_shape_data;
-			for (uint32_t i = 0; i < blend_shape_count; i++) {
-				Vector<uint8_t> bs_data = p_surface.blend_shape_data.slice(i * divisor, (i + 1) * divisor);
-				Vector<uint8_t> blend_shape = _convert_surface_version_1_to_surface_version_2(p_surface.format, bs_data, p_surface.vertex_count, stride, vertex_size, normal_size, position_stride, normal_tangent_stride);
-				new_blend_shape_data.append_array(blend_shape);
+			if (p_surface.format & ARRAY_FORMAT_NORMAL) {
+				normal_size += sizeof(uint16_t) * 2;
 			}
+			if (p_surface.format & ARRAY_FORMAT_TANGENT) {
+				tangent_size = sizeof(uint16_t) * 2;
+			}
+			int stride = p_surface.vertex_data.size() / p_surface.vertex_count;
+			int position_stride = vertex_size;
+			int normal_tangent_stride = normal_size + tangent_size;
 
-			ERR_FAIL_COND(p_surface.blend_shape_data.size() != new_blend_shape_data.size());
+			p_surface.vertex_data = _convert_surface_version_1_to_surface_version_2(p_surface.format, p_surface.vertex_data, p_surface.vertex_count, stride, vertex_size, normal_size, position_stride, normal_tangent_stride);
 
-			p_surface.blend_shape_data = new_blend_shape_data;
+			if (p_surface.blend_shape_data.size() > 0) {
+				// The size of one blend shape.
+				int divisor = (vertex_size + normal_size + tangent_size) * p_surface.vertex_count;
+				ERR_FAIL_COND((p_surface.blend_shape_data.size() % divisor) != 0);
+
+				uint32_t blend_shape_count = p_surface.blend_shape_data.size() / divisor;
+
+				Vector<uint8_t> new_blend_shape_data;
+				for (uint32_t i = 0; i < blend_shape_count; i++) {
+					Vector<uint8_t> bs_data = p_surface.blend_shape_data.slice(i * divisor, (i + 1) * divisor);
+					Vector<uint8_t> blend_shape = _convert_surface_version_1_to_surface_version_2(p_surface.format, bs_data, p_surface.vertex_count, stride, vertex_size, normal_size, position_stride, normal_tangent_stride);
+					new_blend_shape_data.append_array(blend_shape);
+				}
+
+				ERR_FAIL_COND(p_surface.blend_shape_data.size() != new_blend_shape_data.size());
+
+				p_surface.blend_shape_data = new_blend_shape_data;
+			}
 		}
 	}
 	p_surface.format &= ~(ARRAY_FLAG_FORMAT_VERSION_MASK << ARRAY_FLAG_FORMAT_VERSION_SHIFT);
