@@ -18,8 +18,8 @@ scons -j2 platform=android precision=double production=yes target=editor arch=ar
 scons -j2 platform=android precision=double production=yes target=editor arch=arm64v8 2>&1 | tee ./logs/godot_4_scons_android_arm64v8_tools_build.txt;
 
 # Android templates
-scons -j2 platform=android precision=double target=template_release arch=armv7 2>&1 | tee ./logs/godot_4_scons_android_armv7_template_build.txt;
-scons -j2 platform=android precision=double target=template_release arch=arm64v8 2>&1 | tee ./logs/godot_4_scons_android_arm64v8_template_build.txt;
+scons -j2 platform=android precision=double target=template_debug arch=armv7 2>&1 | tee ./logs/godot_4_scons_android_armv7_template_build.txt;
+scons -j2 platform=android precision=double target=template_debug arch=arm64v8 2>&1 | tee ./logs/godot_4_scons_android_arm64v8_template_build.txt;
 
 cd platform/android/java;
 ./gradlew generateGodotTemplates;
