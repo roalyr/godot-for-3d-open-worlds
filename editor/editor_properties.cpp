@@ -56,6 +56,7 @@
 #include "scene/resources/font.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/packed_scene.h"
+#include "scene/resources/visual_shader_nodes.h"
 
 ///////////////////// Nil /////////////////////////
 
@@ -2929,6 +2930,14 @@ bool EditorPropertyNodePath::is_drop_valid(const Dictionary &p_drag_data) const 
 		if (dropped_node->is_class(E) ||
 				EditorNode::get_singleton()->is_object_of_custom_type(dropped_node, E)) {
 			return true;
+		} else {
+			Ref<Script> dropped_node_script = dropped_node->get_script();
+			while (dropped_node_script.is_valid()) {
+				if (dropped_node_script->get_path() == E) {
+					return true;
+				}
+				dropped_node_script = dropped_node_script->get_base_script();
+			}
 		}
 	}
 
@@ -3196,6 +3205,13 @@ void EditorPropertyResource::_resource_changed(const Ref<Resource> &p_resource) 
 	Ref<ViewportTexture> vpt = p_resource;
 	if (vpt.is_valid()) {
 		r = Object::cast_to<Resource>(get_edited_object());
+		if (Object::cast_to<VisualShaderNodeTexture>(r)) {
+			EditorNode::get_singleton()->show_warning(TTR("Can't create a ViewportTexture in a Texture2D node because the texture will not be bound to a scene.\nUse a Texture2DParameter node instead and set the texture in the \"Shader Parameters\" tab."));
+			emit_changed(get_edited_property(), Ref<Resource>());
+			update_property();
+			return;
+		}
+
 		if (r && r->get_path().is_resource_file()) {
 			EditorNode::get_singleton()->show_warning(TTR("Can't create a ViewportTexture on resources saved as a file.\nResource needs to belong to a scene."));
 			emit_changed(get_edited_property(), Ref<Resource>());
