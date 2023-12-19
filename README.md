@@ -1,42 +1,58 @@
-# Godot for 3D open worlds
+# Godot 3 for 3D open worlds
 
 <p align="center">
     <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
 </p>
 
-This flavor of Godot engine is made to accommodate large open-world 3D games which require
-much further view distance than original Godot offers while still relying on single-precision
-floats. In order to achieve this a few tweaks were made.
+This flavor of Godot 3.x engine is made to accommodate large open-world 3D games.
 
 This fork is regularly synchronized with [3.x branch](https://github.com/godotengine/godot/tree/3.x).
 
 Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), Android armv7 and armv8.
 
 Implemented tweaks:
-* Logarithmic depth is written in fragment shader as only reliable option with some FPS sacrifice.
-* Implemented for both GLES2 and GLES3.
-* Far plane maximums are:
-
-   - Editor zooming: 9e18 (near and far planes are adjustable).
-   - Scene shader: 1e19. Far plane is fixed. Enables rendering.
-   - Camera matrix: 1e19. Far plane is fixed. Prevents culling glitches.
-
-* Increased editor zoom out distance to match far plane.
+* Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
 * Increased editor zoom increment for faster zooming.
+
+**WARNING!**  
+This 3.x fork build DOES NOT implement hard-coded logarithmic depth buffer anymore.
+The reason to not to implement this solution is to give users the ability to implement it in their shader materials if needed.
+Another reason lies in the fact that hard-coded logarithmic depth buffer breaks all depth-related effects and shading.
+
+You can use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
+without z-fighting. Keep in mind that this may break some depth-related effects and shadow-casting.
+
+
+```
+// Add this before your vertex shader.
+// Edit "Fcoef" to adjust for desirable view distance. Lesser number means further distance limit.
+uniform float Fcoef = 0.001;
+varying float gl_Position_z;
+
+// Add this to your vertex shader.
+void vertex()
+{
+	vec4 gl_Position = MODELVIEW_MATRIX*vec4(VERTEX, 1.0);
+	gl_Position_z = gl_Position.z;
+}
+
+//Add this to your fragment shader.
+void fragment()
+{
+	DEPTH = log2(max(1e-6, 1.0 -gl_Position_z)) * Fcoef;
+}
+
+
+```
 
 Suggested:
 * LOD add-on is welcomed.
-* Do not make objects larger than 9e18 units (raises error: 
-Cannot represent X as 64-bit integer, provided value is too big).
 
 Not working (properly) as of yet:
-* Shadows and depth-related environment effects may (and most likely will) misbehave.
 * Editor controls jitter and jump around due to single-precision floats being used.  
 In order to tackle this you may want to avoid ortho view and split your global  
 coordinate system (3D space) into smaller ones and put scene objects into them.
 
-
-More details about logarithmic depth at https://github.com/godotengine/godot-proposals/issues/3539.
 
 ## Installation
 Binaries available for Linux, Windows and Android.

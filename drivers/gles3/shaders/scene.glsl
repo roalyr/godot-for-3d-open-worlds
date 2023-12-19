@@ -5,12 +5,6 @@
 uniform highp int ubershader_flags;
 #endif
 
-// LOG DEPTH
-// FC      = 0.03168736796 at 1e19 far.
-// FC_half = 0.01584368398 at 1e19 far.
-//Fcoef = 2.0 / log2(z_far + 1.0)
-#define Fcoef 0.03168736796
-
 #define M_PI 3.14159265359
 
 #define SHADER_IS_SRGB false
@@ -110,7 +104,6 @@ layout(std140) uniform SceneData { // ubo:0
 
 	highp float time;
 	highp float z_far;
-
 	mediump float reflection_multiplier;
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
@@ -367,14 +360,6 @@ out highp vec4 position_interp;
 // See GH-13450 and https://bugs.freedesktop.org/show_bug.cgi?id=100316
 //invariant gl_Position;
 
-
-
-// LOG DEPTH
-out float vertex_pos_out;
-
-
-
-
 void main() {
 	highp vec4 vertex = vertex_attrib; // vec4(vertex_attrib.xyz * data_attrib.x,1.0);
 
@@ -604,21 +589,7 @@ VERTEX_SHADER_CODE
 #if defined(OVERRIDE_POSITION)
 	gl_Position = position;
 #else
-
-	// Original code. Normal depth calculation, used as preliminary step for logarithmic.
 	gl_Position = projection_matrix * vec4(vertex_interp, 1.0);
-
-	// LOG DEPTH.
-	// https://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
-	// Position passed to fragment shader.
-
-
-	// https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true
-	gl_Position.z = log2(max(1e-6, 1.0 + gl_Position.w)) * Fcoef - 1.0;
-
-	vertex_pos_out = gl_Position.w + 1.0;
-
-
 #endif
 
 	position_interp = gl_Position;
@@ -672,17 +643,6 @@ VERTEX_SHADER_CODE
 
 /* clang-format off */
 [fragment]
-
-
-
-// LOG DEPTH
-// FC      = 0.03168736796 at 1e19 far.
-// FC_half = 0.01584368398 at 1e19 far.
-//Fcoef = 2.0 / log2(z_far + 1.0)
-#define Fcoef_half 0.01584368398
-
-
-
 
 #if defined(IS_UBERSHADER)
 uniform highp int ubershader_flags;
@@ -1855,22 +1815,7 @@ void gi_probes_compute(vec3 pos, vec3 normal, float roughness, inout vec3 out_sp
 
 #endif //ubershader-skip
 
-
-
-// LOG DEPTH
-in float vertex_pos_out;
-
-
-
 void main() {
-
-
-
-	// LOG DEPTH
-	gl_FragDepth = log2(vertex_pos_out)*Fcoef_half;
-
-
-
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID //ubershader-runtime
 
 	if (dp_clip > 0.0)

@@ -27,18 +27,18 @@ fi
 
 
 # Editor (tools)
-scons -j1 tools=yes target=release_debug debug_symbols=no platform=x11 bits=32 2>&1 | tee ./logs/scons_x11_32_tools_build.txt;
+scons -j2 tools=yes target=release_debug debug_symbols=no platform=x11 bits=32 2>&1 | tee ./logs/scons_x11_32_tools_build.txt;
 
 # Template(s)
-scons -j1 tools=no target=release_debug debug_symbols=no platform=x11 bits=32 2>&1 | tee ./logs/scons_x11_32_debug_build.txt;
+scons -j2 tools=no target=release_debug debug_symbols=no platform=x11 bits=32 2>&1 | tee ./logs/scons_x11_32_debug_build.txt;
 
 # Rename binaries
 # mv ./bin/godot.x11.opt.tools.32 ./bin/godot.x11.opt.tools.32
 # mv ./bin/godot.x11.opt.debug.32 ./bin/godot.x11.opt.debug.32
 
 # Removing debug symbols
-strip ./bin/godot.x11.opt.tools.32
-strip ./bin/godot.x11.opt.debug.32
+# strip ./bin/godot.x11.opt.tools.32
+# strip ./bin/godot.x11.opt.debug.32
 
 	echo
 	echo "          ==============================================="
