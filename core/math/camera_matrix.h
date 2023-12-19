@@ -45,6 +45,8 @@ struct CameraMatrix {
 	};
 
 	real_t matrix[4][4];
+	// Store for future use in the methods.
+	real_t p_z_far_stored;
 
 	void set_identity();
 	void set_zero();

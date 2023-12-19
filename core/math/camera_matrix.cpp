@@ -60,6 +60,7 @@ Plane CameraMatrix::xform4(const Plane &p_vec4) const {
 }
 
 void CameraMatrix::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_t p_z_near, real_t p_z_far, bool p_flip_fov) {
+
 	if (p_flip_fov) {
 		p_fovy_degrees = get_fovy(p_fovy_degrees, 1.0 / p_aspect);
 	}
@@ -76,6 +77,9 @@ void CameraMatrix::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_
 	cotangent = Math::cos(radians) / sine;
 
 	set_identity();
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	p_z_far_stored = p_z_far;
 
 	matrix[0][0] = cotangent / p_aspect;
 	matrix[1][1] = cotangent;
@@ -116,6 +120,9 @@ void CameraMatrix::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_
 
 	set_frustum(left, right, -ymax, ymax, p_z_near, p_z_far);
 
+	// Store the value in the struct for it to be used in Plane definition.
+	p_z_far_stored = p_z_far;
+
 	// translate matrix by (modeltranslation, 0.0, 0.0)
 	CameraMatrix cm;
 	cm.set_identity();
@@ -138,6 +145,9 @@ void CameraMatrix::set_for_hmd(int p_eye, real_t p_aspect, real_t p_intraocular_
 
 	// always apply KEEP_WIDTH aspect ratio
 	f3 /= p_aspect;
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	p_z_far_stored = p_z_far;
 
 	switch (p_eye) {
 		case 1: { // left eye
@@ -153,6 +163,9 @@ void CameraMatrix::set_for_hmd(int p_eye, real_t p_aspect, real_t p_intraocular_
 
 void CameraMatrix::set_orthogonal(real_t p_left, real_t p_right, real_t p_bottom, real_t p_top, real_t p_znear, real_t p_zfar) {
 	set_identity();
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	p_z_far_stored = p_zfar;
 
 	matrix[0][0] = 2 / (p_right - p_left);
 	matrix[3][0] = -((p_right + p_left) / (p_right - p_left));
@@ -212,16 +225,7 @@ void CameraMatrix::set_frustum(real_t p_size, real_t p_aspect, Vector2 p_offset,
 }
 
 real_t CameraMatrix::get_z_far() const {
-	const real_t *matrix = (const real_t *)this->matrix;
-	Plane new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normal = -new_plane.normal;
-	new_plane.normalize();
-
-	return new_plane.d;
+	return p_z_far_stored;
 }
 real_t CameraMatrix::get_z_near() const {
 	const real_t *matrix = (const real_t *)this->matrix;
@@ -310,13 +314,7 @@ Vector<Plane> CameraMatrix::get_projection_planes(const Transform &p_transform) 
 	planes.push_back(p_transform.xform(new_plane));
 
 	///////--- Far Plane ---///////
-	new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normal = -new_plane.normal;
-	new_plane.normalize();
+	new_plane = Plane(0.0, 0.0, -1.0, p_z_far_stored);
 
 	planes.push_back(p_transform.xform(new_plane));
 
