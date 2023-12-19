@@ -400,6 +400,8 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	const String display_scale_hint_string = vformat("Auto (%d%%),75%%,100%%,125%%,150%%,175%%,200%%,Custom", Math::round(get_auto_display_scale() * 100));
 	EDITOR_SETTING_USAGE(Variant::INT, PROPERTY_HINT_ENUM, "interface/editor/display_scale", 0, display_scale_hint_string, PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED)
 
+	EDITOR_SETTING_USAGE(Variant::INT, PROPERTY_HINT_ENUM, "interface/editor/ui_layout_direction", 0, "Based on Application Locale,Left-to-Right,Right-to-Left,Based on System Locale", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED)
+
 	String ed_screen_hints = "Screen With Mouse Pointer:-4,Screen With Keyboard Focus:-3,Primary Screen:-2"; // Note: Main Window Screen:-1 is not used for the main window.
 	for (int i = 0; i < DisplayServer::get_singleton()->get_screen_count(); i++) {
 		ed_screen_hints += ",Screen " + itos(i + 1) + ":" + itos(i);
@@ -884,6 +886,10 @@ bool EditorSettings::_is_default_text_editor_theme(String p_theme_name) {
 	return p_theme_name == "default" || p_theme_name == "godot 2" || p_theme_name == "custom";
 }
 
+const String EditorSettings::_get_project_metadata_path() const {
+	return EditorPaths::get_singleton()->get_project_settings_dir().path_join("project_metadata.cfg");
+}
+
 // PUBLIC METHODS
 
 EditorSettings *EditorSettings::get_singleton() {
@@ -1171,24 +1177,31 @@ void EditorSettings::add_property_hint(const PropertyInfo &p_hint) {
 // Metadata
 
 void EditorSettings::set_project_metadata(const String &p_section, const String &p_key, Variant p_data) {
-	Ref<ConfigFile> cf = memnew(ConfigFile);
-	String path = EditorPaths::get_singleton()->get_project_settings_dir().path_join("project_metadata.cfg");
-	Error err;
-	err = cf->load(path);
-	ERR_FAIL_COND_MSG(err != OK && err != ERR_FILE_NOT_FOUND, "Cannot load editor settings from file '" + path + "'.");
-	cf->set_value(p_section, p_key, p_data);
-	err = cf->save(path);
-	ERR_FAIL_COND_MSG(err != OK, "Cannot save editor settings to file '" + path + "'.");
+	const String path = _get_project_metadata_path();
+
+	if (project_metadata.is_null()) {
+		project_metadata.instantiate();
+
+		Error err = project_metadata->load(path);
+		if (err != OK && err != ERR_FILE_NOT_FOUND) {
+			ERR_PRINT("Cannot load project metadata from file '" + path + "'.");
+		}
+	}
+	project_metadata->set_value(p_section, p_key, p_data);
+
+	Error err = project_metadata->save(path);
+	ERR_FAIL_COND_MSG(err != OK, "Cannot save project metadata to file '" + path + "'.");
 }
 
 Variant EditorSettings::get_project_metadata(const String &p_section, const String &p_key, Variant p_default) const {
-	Ref<ConfigFile> cf = memnew(ConfigFile);
-	String path = EditorPaths::get_singleton()->get_project_settings_dir().path_join("project_metadata.cfg");
-	Error err = cf->load(path);
-	if (err != OK) {
-		return p_default;
+	if (project_metadata.is_null()) {
+		project_metadata.instantiate();
+
+		const String path = _get_project_metadata_path();
+		Error err = project_metadata->load(path);
+		ERR_FAIL_COND_V_MSG(err != OK && err != ERR_FILE_NOT_FOUND, p_default, "Cannot load project metadata from file '" + path + "'.");
 	}
-	return cf->get_value(p_section, p_key, p_default);
+	return project_metadata->get_value(p_section, p_key, p_default);
 }
 
 void EditorSettings::set_favorites(const Vector<String> &p_favorites) {
