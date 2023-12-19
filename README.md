@@ -11,6 +11,7 @@ This fork is regularly synchronized with [3.x branch](https://github.com/godoten
 Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), Android armv7 and armv8.
 
 Implemented tweaks:
+* Far plane (z-far) upper limit is set to 9e18 meters.
 * Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
 * Increased editor zoom increment for faster zooming.
 
