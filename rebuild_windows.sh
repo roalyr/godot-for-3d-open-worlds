@@ -31,7 +31,7 @@ scons -j2 platform=windows precision=double 2>&1 | tee ./logs/godot_4_scons_wind
 
 # Template(s)
 scons -j2 platform=windows precision=double target=template_debug arch=x86_64 2>&1 | tee ./logs/godot_4_scons_windows_64_template_build.txt;
-scons -j2 platform=windows precision=double target=template_release arch=x86_64 2>&1 | tee ./logs/godot_4_scons_windows_64_template_release_build.txt;
+# scons -j2 platform=windows precision=double target=template_release arch=x86_64 2>&1 | tee ./logs/godot_4_scons_windows_64_template_release_build.txt;
 
 # Removing debug symbols
 #strip ./bin/godot.windows.opt.tools.64.exe

@@ -43,6 +43,12 @@ struct Rect2;
 struct Transform3D;
 struct Vector2;
 
+// Store for future use in the methods of Projection.
+class PZFarStorage {
+public:
+	static real_t p_z_far_stored;
+};
+
 struct _NO_DISCARD_ Projection {
 	enum Planes {
 		PLANE_NEAR,

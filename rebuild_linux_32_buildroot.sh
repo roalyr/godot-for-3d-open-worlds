@@ -31,12 +31,12 @@ scons -j2 platform=linuxbsd precision=double arch=x86_32 2>&1 | tee ./logs/godot
 
 # Template(s)
 scons -j2 platform=linuxbsd precision=double target=template_debug arch=x86_32 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_32_template_build.txt;
-scons -j2 platform=linuxbsd precision=double target=template_release arch=x86_32 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_32_template_release_build.txt;
+#scons -j2 platform=linuxbsd precision=double target=template_release arch=x86_32 2>&1 | tee ./logs/godot_4_scons_linuxbsd_86_32_template_release_build.txt;
 
 # Removing debug symbols
-strip ./bin/godot.linuxbsd.editor.double.x86_32
+#strip ./bin/godot.linuxbsd.editor.double.x86_32
 #strip ./bin/godot.linuxbsd.template_debug.double.x86_32
-strip ./bin/godot.linuxbsd.template_release.double.x86_32
+#strip ./bin/godot.linuxbsd.template_release.double.x86_32
 
 	echo
 	echo "          ==============================================="
