@@ -34,6 +34,12 @@
 #include "core/math/rect2.h"
 #include "core/math/transform.h"
 
+// Store for future use in the methods of Projection.
+class PZFarStorage {
+public:
+	static real_t p_z_far_stored;
+};
+
 struct CameraMatrix {
 	enum Planes {
 		PLANE_NEAR,
@@ -45,8 +51,6 @@ struct CameraMatrix {
 	};
 
 	real_t matrix[4][4];
-	// Store for future use in the methods.
-	real_t p_z_far_stored;
 
 	void set_identity();
 	void set_zero();

@@ -33,6 +33,10 @@
 #include "core/math/math_funcs.h"
 #include "core/print_string.h"
 
+
+// Store for future use in the methods.
+real_t PZFarStorage::p_z_far_stored = 1.0;
+
 void CameraMatrix::set_identity() {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -79,7 +83,7 @@ void CameraMatrix::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_
 	set_identity();
 	
 	// Store the value in the struct for it to be used in Plane definition.
-	p_z_far_stored = p_z_far;
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	matrix[0][0] = cotangent / p_aspect;
 	matrix[1][1] = cotangent;
@@ -121,7 +125,7 @@ void CameraMatrix::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_
 	set_frustum(left, right, -ymax, ymax, p_z_near, p_z_far);
 
 	// Store the value in the struct for it to be used in Plane definition.
-	p_z_far_stored = p_z_far;
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	// translate matrix by (modeltranslation, 0.0, 0.0)
 	CameraMatrix cm;
@@ -147,7 +151,7 @@ void CameraMatrix::set_for_hmd(int p_eye, real_t p_aspect, real_t p_intraocular_
 	f3 /= p_aspect;
 	
 	// Store the value in the struct for it to be used in Plane definition.
-	p_z_far_stored = p_z_far;
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	switch (p_eye) {
 		case 1: { // left eye
@@ -165,7 +169,7 @@ void CameraMatrix::set_orthogonal(real_t p_left, real_t p_right, real_t p_bottom
 	set_identity();
 	
 	// Store the value in the struct for it to be used in Plane definition.
-	p_z_far_stored = p_zfar;
+	PZFarStorage::p_z_far_stored = p_zfar;
 
 	matrix[0][0] = 2 / (p_right - p_left);
 	matrix[3][0] = -((p_right + p_left) / (p_right - p_left));
@@ -225,7 +229,7 @@ void CameraMatrix::set_frustum(real_t p_size, real_t p_aspect, Vector2 p_offset,
 }
 
 real_t CameraMatrix::get_z_far() const {
-	return p_z_far_stored;
+	return PZFarStorage::p_z_far_stored;
 }
 real_t CameraMatrix::get_z_near() const {
 	const real_t *matrix = (const real_t *)this->matrix;
@@ -314,7 +318,7 @@ Vector<Plane> CameraMatrix::get_projection_planes(const Transform &p_transform) 
 	planes.push_back(p_transform.xform(new_plane));
 
 	///////--- Far Plane ---///////
-	new_plane = Plane(0.0, 0.0, -1.0, p_z_far_stored);
+	new_plane = Plane(0.0, 0.0, -1.0, PZFarStorage::p_z_far_stored);
 
 	planes.push_back(p_transform.xform(new_plane));
 
