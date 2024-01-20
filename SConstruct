@@ -183,6 +183,7 @@ opts.Add(BoolVariable("separate_debug_symbols", "Extract debugging symbols to a 
 opts.Add(EnumVariable("lto", "Link-time optimization (production builds)", "none", ("none", "auto", "thin", "full")))
 opts.Add(BoolVariable("production", "Set defaults to build Godot for use in production", False))
 opts.Add(BoolVariable("generate_apk", "Generate an APK/AAB after building Android library by calling Gradle", False))
+opts.Add(BoolVariable("threads", "Enable threading support", True))
 
 # Components
 opts.Add(BoolVariable("deprecated", "Enable compatibility code for deprecated and removed features", True))
@@ -308,18 +309,14 @@ else:
     if selected_platform != "":
         print("Automatically detected platform: " + selected_platform)
 
-if selected_platform in ["macos", "osx"]:
-    if selected_platform == "osx":
-        # Deprecated alias kept for compatibility.
-        print('Platform "osx" has been renamed to "macos" in Godot 4. Building for platform "macos".')
-    # Alias for convenience.
+if selected_platform == "osx":
+    # Deprecated alias kept for compatibility.
+    print('Platform "osx" has been renamed to "macos" in Godot 4. Building for platform "macos".')
     selected_platform = "macos"
 
-if selected_platform in ["ios", "iphone"]:
-    if selected_platform == "iphone":
-        # Deprecated alias kept for compatibility.
-        print('Platform "iphone" has been renamed to "ios" in Godot 4. Building for platform "ios".')
-    # Alias for convenience.
+if selected_platform == "iphone":
+    # Deprecated alias kept for compatibility.
+    print('Platform "iphone" has been renamed to "ios" in Godot 4. Building for platform "ios".')
     selected_platform = "ios"
 
 if selected_platform in ["linux", "bsd", "x11"]:
@@ -328,6 +325,11 @@ if selected_platform in ["linux", "bsd", "x11"]:
         print('Platform "x11" has been renamed to "linuxbsd" in Godot 4. Building for platform "linuxbsd".')
     # Alias for convenience.
     selected_platform = "linuxbsd"
+
+if selected_platform == "javascript":
+    # Deprecated alias kept for compatibility.
+    print('Platform "javascript" has been renamed to "web" in Godot 4. Building for platform "web".')
+    selected_platform = "web"
 
 # Make sure to update this to the found, valid platform as it's used through the buildsystem as the reference.
 # It should always be re-set after calling `opts.Update()` otherwise it uses the original input value.
@@ -831,6 +833,10 @@ if selected_platform in platform_list:
         suffix += ".double"
 
     suffix += "." + env["arch"]
+
+    if not env["threads"]:
+        suffix += ".nothreads"
+
     suffix += env.extra_suffix
 
     sys.path.remove(tmppath)
@@ -970,6 +976,9 @@ if selected_platform in platform_list:
 
         env.Tool("compilation_db")
         env.Alias("compiledb", env.CompilationDatabase())
+
+    if env["threads"]:
+        env.Append(CPPDEFINES=["THREADS_ENABLED"])
 
     Export("env")
 

@@ -31,10 +31,10 @@
 #include "animation_bezier_editor.h"
 
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
 #include "editor/editor_undo_redo_manager.h"
+#include "editor/themes/editor_scale.h"
 #include "scene/gui/view_panner.h"
 #include "scene/resources/text_line.h"
 
@@ -334,7 +334,7 @@ void AnimationBezierTrackEdit::_notification(int p_what) {
 					}
 				}
 
-				Color dc = get_theme_color(SNAME("disabled_font_color"), EditorStringName(Editor));
+				Color dc = get_theme_color(SNAME("font_disabled_color"), EditorStringName(Editor));
 
 				Ref<Texture2D> remove = get_editor_theme_icon(SNAME("Remove"));
 				float remove_hpos = limit - hsep - remove->get_width();
@@ -908,7 +908,7 @@ void AnimationBezierTrackEdit::gui_input(const Ref<InputEvent> &p_event) {
 
 			if (Math::is_finite(minimum_time) && Math::is_finite(maximum_time) && maximum_time - minimum_time > CMP_EPSILON) {
 				timeline->get_zoom()->set_value(zoom_value);
-				timeline->call_deferred("set_value", minimum_time);
+				callable_mp((Range *)timeline, &Range::set_value).call_deferred(minimum_time);
 			}
 
 			if (Math::is_finite(minimum_value) && Math::is_finite(maximum_value)) {
@@ -1520,7 +1520,7 @@ void AnimationBezierTrackEdit::_zoom_callback(float p_zoom_factor, Vector2 p_ori
 		// Alternate zoom (doesn't affect timeline).
 		timeline_v_zoom = CLAMP(timeline_v_zoom * p_zoom_factor, 0.000001, 100000);
 	} else {
-		timeline->get_zoom()->set_value(timeline->get_zoom()->get_value() / p_zoom_factor);
+		timeline->_zoom_callback(p_zoom_factor, p_origin, p_event);
 	}
 	timeline_v_scroll = timeline_v_scroll + (p_origin.y - get_size().y / 2.0) * (timeline_v_zoom - v_zoom_orig);
 	queue_redraw();
@@ -1688,6 +1688,7 @@ void AnimationBezierTrackEdit::_bind_methods() {
 AnimationBezierTrackEdit::AnimationBezierTrackEdit() {
 	panner.instantiate();
 	panner->set_callbacks(callable_mp(this, &AnimationBezierTrackEdit::_pan_callback), callable_mp(this, &AnimationBezierTrackEdit::_zoom_callback));
+	panner->set_scroll_zoom_factor(AnimationTimelineEdit::SCROLL_ZOOM_FACTOR);
 
 	play_position = memnew(Control);
 	play_position->set_mouse_filter(MOUSE_FILTER_PASS);

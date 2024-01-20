@@ -55,6 +55,7 @@
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_paths.h"
+#include "editor/editor_settings.h"
 #endif
 
 #include <stdint.h>
@@ -1076,6 +1077,36 @@ Ref<GDScript> GDScript::get_base() const {
 	return base;
 }
 
+String GDScript::get_raw_source_code(const String &p_path, bool *r_error) {
+	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ);
+	if (f.is_null()) {
+		if (r_error) {
+			*r_error = true;
+		}
+		return String();
+	}
+	return f->get_as_utf8_string();
+}
+
+Vector2i GDScript::get_uid_lines(const String &p_source) {
+	GDScriptParser parser;
+	parser.parse(p_source, "", false);
+	const GDScriptParser::ClassNode *c = parser.get_tree();
+	if (!c) {
+		return Vector2i(-1, -1);
+	}
+	return c->uid_lines;
+}
+
+String GDScript::create_uid_line(const String &p_uid_str) {
+#ifdef TOOLS_ENABLED
+	if (EDITOR_GET("text_editor/completion/use_single_quotes")) {
+		return vformat(R"(@uid('%s') # %s)", p_uid_str, RTR("Generated automatically, do not modify."));
+	}
+#endif
+	return vformat(R"(@uid("%s") # %s)", p_uid_str, RTR("Generated automatically, do not modify."));
+}
+
 bool GDScript::inherits_script(const Ref<Script> &p_script) const {
 	Ref<GDScript> gd = p_script;
 	if (gd.is_null()) {
@@ -1381,51 +1412,43 @@ String GDScript::debug_get_script_name(const Ref<Script> &p_script) {
 }
 #endif
 
-GDScript::UpdatableFuncPtr GDScript::func_ptrs_to_update_main_thread;
-thread_local GDScript::UpdatableFuncPtr *GDScript::func_ptrs_to_update_thread_local = nullptr;
-
-GDScript::UpdatableFuncPtrElement GDScript::_add_func_ptr_to_update(GDScriptFunction **p_func_ptr_ptr) {
-	UpdatableFuncPtrElement result = {};
-
-	{
-		MutexLock lock(func_ptrs_to_update_thread_local->mutex);
-		result.element = func_ptrs_to_update_thread_local->ptrs.push_back(p_func_ptr_ptr);
-		result.func_ptr = func_ptrs_to_update_thread_local;
-
-		if (likely(func_ptrs_to_update_thread_local->initialized)) {
-			return result;
-		}
-
-		func_ptrs_to_update_thread_local->initialized = true;
+GDScript::UpdatableFuncPtr::UpdatableFuncPtr(GDScriptFunction *p_function) {
+	if (p_function == nullptr) {
+		return;
 	}
 
+	ptr = p_function;
+	script = ptr->get_script();
+	ERR_FAIL_NULL(script);
+
+	MutexLock script_lock(script->func_ptrs_to_update_mutex);
+	list_element = script->func_ptrs_to_update.push_back(this);
+}
+
+GDScript::UpdatableFuncPtr::~UpdatableFuncPtr() {
+	ERR_FAIL_NULL(script);
+
+	if (list_element) {
+		MutexLock script_lock(script->func_ptrs_to_update_mutex);
+		list_element->erase();
+		list_element = nullptr;
+	}
+}
+
+void GDScript::_recurse_replace_function_ptrs(const HashMap<GDScriptFunction *, GDScriptFunction *> &p_replacements) const {
 	MutexLock lock(func_ptrs_to_update_mutex);
-	func_ptrs_to_update.push_back(func_ptrs_to_update_thread_local);
-	func_ptrs_to_update_thread_local->rc++;
+	for (UpdatableFuncPtr *updatable : func_ptrs_to_update) {
+		HashMap<GDScriptFunction *, GDScriptFunction *>::ConstIterator replacement = p_replacements.find(updatable->ptr);
+		if (replacement) {
+			updatable->ptr = replacement->value;
+		} else {
+			// Probably a lambda from another reload, ignore.
+			updatable->ptr = nullptr;
+		}
+	}
 
-	return result;
-}
-
-void GDScript::_remove_func_ptr_to_update(const UpdatableFuncPtrElement &p_func_ptr_element) {
-	ERR_FAIL_NULL(p_func_ptr_element.element);
-	ERR_FAIL_NULL(p_func_ptr_element.func_ptr);
-	MutexLock lock(p_func_ptr_element.func_ptr->mutex);
-	p_func_ptr_element.element->erase();
-}
-
-void GDScript::_fixup_thread_function_bookkeeping() {
-	// Transfer the ownership of these update items to the main thread,
-	// because the current one is dying, leaving theirs orphan, dangling.
-
-	DEV_ASSERT(!Thread::is_main_thread());
-
-	MutexLock lock(func_ptrs_to_update_main_thread.mutex);
-	MutexLock lock2(func_ptrs_to_update_thread_local->mutex);
-
-	while (!func_ptrs_to_update_thread_local->ptrs.is_empty()) {
-		List<GDScriptFunction **>::Element *E = func_ptrs_to_update_thread_local->ptrs.front();
-		E->transfer_to_back(&func_ptrs_to_update_main_thread.ptrs);
-		func_ptrs_to_update_thread_local->transferred = true;
+	for (HashMap<StringName, Ref<GDScript>>::ConstIterator subscript = subclasses.begin(); subscript; ++subscript) {
+		subscript->value->_recurse_replace_function_ptrs(p_replacements);
 	}
 }
 
@@ -1447,30 +1470,9 @@ void GDScript::clear(ClearData *p_clear_data) {
 	}
 
 	{
-		MutexLock outer_lock(func_ptrs_to_update_mutex);
+		MutexLock lock(func_ptrs_to_update_mutex);
 		for (UpdatableFuncPtr *updatable : func_ptrs_to_update) {
-			bool destroy = false;
-			{
-				MutexLock inner_lock(updatable->mutex);
-				if (updatable->transferred) {
-					func_ptrs_to_update_main_thread.mutex.lock();
-				}
-				for (GDScriptFunction **func_ptr_ptr : updatable->ptrs) {
-					*func_ptr_ptr = nullptr;
-				}
-				DEV_ASSERT(updatable->rc != 0);
-				updatable->rc--;
-				if (updatable->rc == 0) {
-					destroy = true;
-				}
-				if (updatable->transferred) {
-					func_ptrs_to_update_main_thread.mutex.unlock();
-				}
-			}
-			if (destroy) {
-				DEV_ASSERT(updatable != &func_ptrs_to_update_main_thread);
-				memdelete(updatable);
-			}
+			updatable->ptr = nullptr;
 		}
 	}
 
@@ -1542,6 +1544,13 @@ GDScript::~GDScript() {
 		return;
 	}
 	destructing = true;
+
+	if (is_print_verbose_enabled()) {
+		MutexLock lock(func_ptrs_to_update_mutex);
+		if (!func_ptrs_to_update.is_empty()) {
+			print_line(vformat("GDScript: %d orphaned lambdas becoming invalid at destruction of script '%s'.", func_ptrs_to_update.size(), fully_qualified_name));
+		}
+	}
 
 	clear();
 
@@ -2091,33 +2100,6 @@ void GDScriptLanguage::remove_named_global_constant(const StringName &p_name) {
 	named_globals.erase(p_name);
 }
 
-void GDScriptLanguage::thread_enter() {
-	GDScript::func_ptrs_to_update_thread_local = memnew(GDScript::UpdatableFuncPtr);
-}
-
-void GDScriptLanguage::thread_exit() {
-	// This thread may have been created before GDScript was up
-	// (which also means it can't have run any GDScript code at all).
-	if (!GDScript::func_ptrs_to_update_thread_local) {
-		return;
-	}
-
-	GDScript::_fixup_thread_function_bookkeeping();
-
-	bool destroy = false;
-	{
-		MutexLock lock(GDScript::func_ptrs_to_update_thread_local->mutex);
-		DEV_ASSERT(GDScript::func_ptrs_to_update_thread_local->rc != 0);
-		GDScript::func_ptrs_to_update_thread_local->rc--;
-		if (GDScript::func_ptrs_to_update_thread_local->rc == 0) {
-			destroy = true;
-		}
-	}
-	if (destroy) {
-		memdelete(GDScript::func_ptrs_to_update_thread_local);
-	}
-}
-
 void GDScriptLanguage::init() {
 	//populate global constants
 	int gcc = CoreConstants::get_global_constant_count();
@@ -2149,8 +2131,6 @@ void GDScriptLanguage::init() {
 	for (const Engine::Singleton &E : singletons) {
 		_add_global(E.name, E.ptr);
 	}
-
-	GDScript::func_ptrs_to_update_thread_local = &GDScript::func_ptrs_to_update_main_thread;
 
 #ifdef TESTS_ENABLED
 	GDScriptTests::GDScriptTestRunner::handle_cmdline();
@@ -2201,8 +2181,6 @@ void GDScriptLanguage::finish() {
 	}
 	script_list.clear();
 	function_list.clear();
-
-	DEV_ASSERT(GDScript::func_ptrs_to_update_main_thread.rc == 1);
 }
 
 void GDScriptLanguage::profiling_start() {
@@ -2220,10 +2198,19 @@ void GDScriptLanguage::profiling_start() {
 		elem->self()->profile.last_frame_call_count = 0;
 		elem->self()->profile.last_frame_self_time = 0;
 		elem->self()->profile.last_frame_total_time = 0;
+		elem->self()->profile.native_calls.clear();
+		elem->self()->profile.last_native_calls.clear();
 		elem = elem->next();
 	}
 
 	profiling = true;
+#endif
+}
+
+void GDScriptLanguage::profiling_set_save_native_calls(bool p_enable) {
+#ifdef DEBUG_ENABLED
+	MutexLock lock(mutex);
+	profile_native_calls = p_enable;
 #endif
 }
 
@@ -2241,17 +2228,32 @@ int GDScriptLanguage::profiling_get_accumulated_data(ProfilingInfo *p_info_arr, 
 
 	MutexLock lock(this->mutex);
 
+	profiling_collate_native_call_data(true);
 	SelfList<GDScriptFunction> *elem = function_list.first();
 	while (elem) {
 		if (current >= p_info_max) {
 			break;
 		}
+		int last_non_internal = current;
 		p_info_arr[current].call_count = elem->self()->profile.call_count.get();
 		p_info_arr[current].self_time = elem->self()->profile.self_time.get();
 		p_info_arr[current].total_time = elem->self()->profile.total_time.get();
 		p_info_arr[current].signature = elem->self()->profile.signature;
-		elem = elem->next();
 		current++;
+
+		int nat_time = 0;
+		HashMap<String, GDScriptFunction::Profile::NativeProfile>::ConstIterator nat_calls = elem->self()->profile.native_calls.begin();
+		while (nat_calls) {
+			p_info_arr[current].call_count = nat_calls->value.call_count;
+			p_info_arr[current].total_time = nat_calls->value.total_time;
+			p_info_arr[current].self_time = nat_calls->value.total_time;
+			p_info_arr[current].signature = nat_calls->value.signature;
+			nat_time += nat_calls->value.total_time;
+			current++;
+			++nat_calls;
+		}
+		p_info_arr[last_non_internal].internal_time = nat_time;
+		elem = elem->next();
 	}
 #endif
 
@@ -2264,23 +2266,66 @@ int GDScriptLanguage::profiling_get_frame_data(ProfilingInfo *p_info_arr, int p_
 #ifdef DEBUG_ENABLED
 	MutexLock lock(this->mutex);
 
+	profiling_collate_native_call_data(false);
 	SelfList<GDScriptFunction> *elem = function_list.first();
 	while (elem) {
 		if (current >= p_info_max) {
 			break;
 		}
 		if (elem->self()->profile.last_frame_call_count > 0) {
+			int last_non_internal = current;
 			p_info_arr[current].call_count = elem->self()->profile.last_frame_call_count;
 			p_info_arr[current].self_time = elem->self()->profile.last_frame_self_time;
 			p_info_arr[current].total_time = elem->self()->profile.last_frame_total_time;
 			p_info_arr[current].signature = elem->self()->profile.signature;
 			current++;
+
+			int nat_time = 0;
+			HashMap<String, GDScriptFunction::Profile::NativeProfile>::ConstIterator nat_calls = elem->self()->profile.last_native_calls.begin();
+			while (nat_calls) {
+				p_info_arr[current].call_count = nat_calls->value.call_count;
+				p_info_arr[current].total_time = nat_calls->value.total_time;
+				p_info_arr[current].self_time = nat_calls->value.total_time;
+				p_info_arr[current].internal_time = nat_calls->value.total_time;
+				p_info_arr[current].signature = nat_calls->value.signature;
+				nat_time += nat_calls->value.total_time;
+				current++;
+				++nat_calls;
+			}
+			p_info_arr[last_non_internal].internal_time = nat_time;
 		}
 		elem = elem->next();
 	}
 #endif
 
 	return current;
+}
+
+void GDScriptLanguage::profiling_collate_native_call_data(bool p_accumulated) {
+#ifdef DEBUG_ENABLED
+	// The same native call can be called from multiple functions, so join them together here.
+	// Only use the name of the function (ie signature.split[2]).
+	HashMap<String, GDScriptFunction::Profile::NativeProfile *> seen_nat_calls;
+	SelfList<GDScriptFunction> *elem = function_list.first();
+	while (elem) {
+		HashMap<String, GDScriptFunction::Profile::NativeProfile> *nat_calls = p_accumulated ? &elem->self()->profile.native_calls : &elem->self()->profile.last_native_calls;
+		HashMap<String, GDScriptFunction::Profile::NativeProfile>::Iterator it = nat_calls->begin();
+
+		while (it != nat_calls->end()) {
+			Vector<String> sig = it->value.signature.split("::");
+			HashMap<String, GDScriptFunction::Profile::NativeProfile *>::ConstIterator already_found = seen_nat_calls.find(sig[2]);
+			if (already_found) {
+				already_found->value->total_time += it->value.total_time;
+				already_found->value->call_count += it->value.call_count;
+				elem->self()->profile.last_native_calls.remove(it);
+			} else {
+				seen_nat_calls.insert(sig[2], &it->value);
+			}
+			++it;
+		}
+		elem = elem->next();
+	}
+#endif
 }
 
 struct GDScriptDepSort {
@@ -2306,14 +2351,13 @@ struct GDScriptDepSort {
 void GDScriptLanguage::reload_all_scripts() {
 #ifdef DEBUG_ENABLED
 	print_verbose("GDScript: Reloading all scripts");
-	List<Ref<GDScript>> scripts;
+	Array scripts;
 	{
 		MutexLock lock(this->mutex);
 
 		SelfList<GDScript> *elem = script_list.first();
 		while (elem) {
-			// Scripts will reload all subclasses, so only reload root scripts.
-			if (elem->self()->is_root_script() && elem->self()->get_path().is_resource_file()) {
+			if (elem->self()->get_path().is_resource_file()) {
 				print_verbose("GDScript: Found: " + elem->self()->get_path());
 				scripts.push_back(Ref<GDScript>(elem->self())); //cast to gdscript to avoid being erased by accident
 			}
@@ -2334,19 +2378,11 @@ void GDScriptLanguage::reload_all_scripts() {
 #endif
 	}
 
-	//as scripts are going to be reloaded, must proceed without locking here
-
-	scripts.sort_custom<GDScriptDepSort>(); //update in inheritance dependency order
-
-	for (Ref<GDScript> &scr : scripts) {
-		print_verbose("GDScript: Reloading: " + scr->get_path());
-		scr->load_source_code(scr->get_path());
-		scr->reload(true);
-	}
+	reload_scripts(scripts, true);
 #endif
 }
 
-void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_soft_reload) {
+void GDScriptLanguage::reload_scripts(const Array &p_scripts, bool p_soft_reload) {
 #ifdef DEBUG_ENABLED
 
 	List<Ref<GDScript>> scripts;
@@ -2372,7 +2408,7 @@ void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_so
 	scripts.sort_custom<GDScriptDepSort>(); //update in inheritance dependency order
 
 	for (Ref<GDScript> &scr : scripts) {
-		bool reload = scr == p_script || to_reload.has(scr->get_base());
+		bool reload = p_scripts.has(scr) || to_reload.has(scr->get_base());
 
 		if (!reload) {
 			continue;
@@ -2395,7 +2431,7 @@ void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_so
 				}
 			}
 
-//same thing for placeholders
+			//same thing for placeholders
 #ifdef TOOLS_ENABLED
 
 			while (scr->placeholders.size()) {
@@ -2423,6 +2459,8 @@ void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_so
 
 	for (KeyValue<Ref<GDScript>, HashMap<ObjectID, List<Pair<StringName, Variant>>>> &E : to_reload) {
 		Ref<GDScript> scr = E.key;
+		print_verbose("GDScript: Reloading: " + scr->get_path());
+		scr->load_source_code(scr->get_path());
 		scr->reload(p_soft_reload);
 
 		//restore state if saved
@@ -2470,6 +2508,12 @@ void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_so
 #endif
 }
 
+void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_soft_reload) {
+	Array scripts;
+	scripts.push_back(p_script);
+	reload_scripts(scripts, p_soft_reload);
+}
+
 void GDScriptLanguage::frame() {
 	calls = 0;
 
@@ -2482,9 +2526,11 @@ void GDScriptLanguage::frame() {
 			elem->self()->profile.last_frame_call_count = elem->self()->profile.frame_call_count.get();
 			elem->self()->profile.last_frame_self_time = elem->self()->profile.frame_self_time.get();
 			elem->self()->profile.last_frame_total_time = elem->self()->profile.frame_total_time.get();
+			elem->self()->profile.last_native_calls = elem->self()->profile.native_calls;
 			elem->self()->profile.frame_call_count.set(0);
 			elem->self()->profile.frame_self_time.set(0);
 			elem->self()->profile.frame_total_time.set(0);
+			elem->self()->profile.native_calls.clear();
 			elem = elem->next();
 		}
 	}
@@ -2578,17 +2624,8 @@ bool GDScriptLanguage::handles_global_class_type(const String &p_type) const {
 }
 
 String GDScriptLanguage::get_global_class_name(const String &p_path, String *r_base_type, String *r_icon_path) const {
-	Error err;
-	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ, &err);
-	if (err) {
-		return String();
-	}
-
-	String source = f->get_as_utf8_string();
-
 	GDScriptParser parser;
-	err = parser.parse(source, p_path, false);
-
+	parser.parse(GDScript::get_raw_source_code(p_path), p_path, false);
 	const GDScriptParser::ClassNode *c = parser.get_tree();
 	if (!c) {
 		return String(); // No class parsed.
@@ -2802,6 +2839,22 @@ String ResourceFormatLoaderGDScript::get_resource_type(const String &p_path) con
 	return "";
 }
 
+ResourceUID::ID ResourceFormatLoaderGDScript::get_resource_uid(const String &p_path) const {
+	String ext = p_path.get_extension().to_lower();
+
+	if (ext != "gd") {
+		return ResourceUID::INVALID_ID;
+	}
+
+	GDScriptParser parser;
+	parser.parse(GDScript::get_raw_source_code(p_path), p_path, false);
+	const GDScriptParser::ClassNode *c = parser.get_tree();
+	if (!c) {
+		return ResourceUID::INVALID_ID;
+	}
+	return ResourceUID::get_singleton()->text_to_id(c->uid_string);
+}
+
 void ResourceFormatLoaderGDScript::get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types) {
 	Ref<FileAccess> file = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_MSG(file.is_null(), "Cannot open file '" + p_path + "'.");
@@ -2826,16 +2879,48 @@ Error ResourceFormatSaverGDScript::save(const Ref<Resource> &p_resource, const S
 	ERR_FAIL_COND_V(sqscr.is_null(), ERR_INVALID_PARAMETER);
 
 	String source = sqscr->get_source_code();
+	ResourceUID::ID uid = ResourceSaver::get_resource_id_for_path(p_path, !p_resource->is_built_in());
 
 	{
+		bool source_changed = false;
 		Error err;
 		Ref<FileAccess> file = FileAccess::open(p_path, FileAccess::WRITE, &err);
 
 		ERR_FAIL_COND_V_MSG(err, err, "Cannot save GDScript file '" + p_path + "'.");
 
-		file->store_string(source);
+		if (uid != ResourceUID::INVALID_ID) {
+			GDScriptParser parser;
+			parser.parse(source, "", false);
+			const GDScriptParser::ClassNode *c = parser.get_tree();
+			if (c && ResourceUID::get_singleton()->text_to_id(c->uid_string) != uid) {
+				const Vector2i &uid_idx = c->uid_lines;
+				PackedStringArray lines = source.split("\n");
+
+				if (uid_idx.x > -1) {
+					for (int i = uid_idx.x + 1; i <= uid_idx.y; i++) {
+						// If UID is written across multiple lines, erase extra lines.
+						lines.remove_at(uid_idx.x + 1);
+					}
+					lines.write[uid_idx.x] = GDScript::create_uid_line(ResourceUID::get_singleton()->id_to_text(uid));
+				} else {
+					lines.insert(0, GDScript::create_uid_line(ResourceUID::get_singleton()->id_to_text(uid)));
+				}
+				source = String("\n").join(lines);
+				source_changed = true;
+				file->store_string(String("\n").join(lines));
+			} else {
+				file->store_string(source);
+			}
+		}
+
 		if (file->get_error() != OK && file->get_error() != ERR_FILE_EOF) {
 			return ERR_CANT_CREATE;
+		}
+
+		if (source_changed) {
+			sqscr->set_source_code(source);
+			sqscr->reload();
+			sqscr->emit_changed();
 		}
 	}
 
@@ -2854,4 +2939,34 @@ void ResourceFormatSaverGDScript::get_recognized_extensions(const Ref<Resource> 
 
 bool ResourceFormatSaverGDScript::recognize(const Ref<Resource> &p_resource) const {
 	return Object::cast_to<GDScript>(*p_resource) != nullptr;
+}
+
+Error ResourceFormatSaverGDScript::set_uid(const String &p_path, ResourceUID::ID p_uid) {
+	ERR_FAIL_COND_V(p_path.get_extension() != "gd", ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V(p_uid == ResourceUID::INVALID_ID, ERR_INVALID_PARAMETER);
+
+	bool error = false;
+	const String &source_code = GDScript::get_raw_source_code(p_path, &error);
+	if (error) {
+		return ERR_CANT_OPEN;
+	}
+
+	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::WRITE);
+	ERR_FAIL_COND_V(f.is_null(), ERR_CANT_OPEN);
+
+	const Vector2i &uid_idx = GDScript::get_uid_lines(source_code);
+	PackedStringArray lines = source_code.split("\n");
+
+	if (uid_idx.x > -1) {
+		for (int i = uid_idx.x + 1; i <= uid_idx.y; i++) {
+			// If UID is written across multiple lines, erase extra lines.
+			lines.remove_at(uid_idx.x + 1);
+		}
+		lines.write[uid_idx.x] = GDScript::create_uid_line(ResourceUID::get_singleton()->id_to_text(p_uid));
+	} else {
+		f->store_line(GDScript::create_uid_line(ResourceUID::get_singleton()->id_to_text(p_uid)));
+	}
+	f->store_string(String("\n").join(lines));
+
+	return OK;
 }

@@ -1736,8 +1736,40 @@ void Node::reparent(Node *p_parent, bool p_keep_global_transform) {
 		return;
 	}
 
+	bool preserve_owner = data.owner && (data.owner == p_parent || data.owner->is_ancestor_of(p_parent));
+	Node *owner_temp = data.owner;
+	LocalVector<Node *> common_parents;
+
+	// If the new parent is related to the owner, find all children of the reparented node who have the same owner so that we can reassign them.
+	if (preserve_owner) {
+		LocalVector<Node *> to_visit;
+
+		to_visit.push_back(this);
+		common_parents.push_back(this);
+
+		while (to_visit.size() > 0) {
+			Node *check = to_visit[to_visit.size() - 1];
+			to_visit.resize(to_visit.size() - 1);
+
+			for (int i = 0; i < check->get_child_count(); i++) {
+				Node *child = check->get_child(i, false);
+				to_visit.push_back(child);
+				if (child->data.owner == owner_temp) {
+					common_parents.push_back(child);
+				}
+			}
+		}
+	}
+
 	data.parent->remove_child(this);
 	p_parent->add_child(this);
+
+	// Reassign the old owner to those found nodes.
+	if (preserve_owner) {
+		for (Node *E : common_parents) {
+			E->set_owner(owner_temp);
+		}
+	}
 }
 
 Node *Node::get_parent() const {
@@ -1925,7 +1957,7 @@ void Node::set_owner(Node *p_owner) {
 		return;
 	}
 
-	Node *check = this->get_parent();
+	Node *check = get_parent();
 	bool owner_valid = false;
 
 	while (check) {
@@ -2311,11 +2343,7 @@ void Node::set_editor_description(const String &p_editor_description) {
 	}
 
 	data.editor_description = p_editor_description;
-
-	if (Engine::get_singleton()->is_editor_hint() && is_inside_tree()) {
-		// Update tree so the tooltip in the Scene tree dock is also updated in the editor.
-		get_tree()->tree_changed();
-	}
+	emit_signal(SNAME("editor_description_changed"), this);
 }
 
 String Node::get_editor_description() const {
@@ -2832,7 +2860,7 @@ void Node::replace_by(Node *p_node, bool p_keep_groups) {
 	}
 
 	Node *parent = data.parent;
-	int index_in_parent = get_index();
+	int index_in_parent = get_index(false);
 
 	if (data.parent) {
 		parent->remove_child(this);
@@ -3060,6 +3088,10 @@ static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<S
 	if (p_node != p_base && !p_node->get_owner()) {
 		return;
 	}
+	if (p_node->is_unique_name_in_owner() && p_node->get_owner() == p_base) {
+		String n = "%" + p_node->get_name();
+		r_options->push_back(n.quote());
+	}
 	String n = p_base->get_path_to(p_node);
 	r_options->push_back(n.quote());
 	for (int i = 0; i < p_node->get_child_count(); i++) {
@@ -3069,8 +3101,13 @@ static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<S
 
 void Node::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
 	String pf = p_function;
-	if ((pf == "has_node" || pf == "get_node") && p_idx == 0) {
+	if (p_idx == 0 && (pf == "has_node" || pf == "get_node" || pf == "get_node_or_null")) {
 		_add_nodes_to_options(this, this, r_options);
+	} else if (p_idx == 0 && (pf == "add_to_group" || pf == "remove_from_group" || pf == "is_in_group")) {
+		HashMap<StringName, String> global_groups = ProjectSettings::get_singleton()->get_global_groups_list();
+		for (const KeyValue<StringName, String> &E : global_groups) {
+			r_options->push_back(E.key.operator String().quote());
+		}
 	}
 	Object::get_argument_options(p_function, p_idx, r_options);
 }
@@ -3531,6 +3568,7 @@ void Node::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("child_order_changed"));
 	ADD_SIGNAL(MethodInfo("replacing_by", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
+	ADD_SIGNAL(MethodInfo("editor_description_changed", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "set_name", "get_name");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "unique_name_in_owner", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NO_EDITOR), "set_unique_name_in_owner", "is_unique_name_in_owner");

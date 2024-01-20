@@ -295,16 +295,12 @@ void CollisionObject3D::_input_event_call(Camera3D *p_camera, const Ref<InputEve
 }
 
 void CollisionObject3D::_mouse_enter() {
-	if (get_script_instance()) {
-		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_enter);
-	}
+	GDVIRTUAL_CALL(_mouse_enter);
 	emit_signal(SceneStringNames::get_singleton()->mouse_entered);
 }
 
 void CollisionObject3D::_mouse_exit() {
-	if (get_script_instance()) {
-		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_exit);
-	}
+	GDVIRTUAL_CALL(_mouse_exit);
 	emit_signal(SceneStringNames::get_singleton()->mouse_exited);
 }
 
@@ -628,6 +624,7 @@ void CollisionObject3D::shape_owner_add_shape(uint32_t p_owner, const Ref<Shape3
 	total_subshapes++;
 
 	_update_shape_data(p_owner);
+	update_gizmos();
 }
 
 int CollisionObject3D::shape_owner_get_shape_count(uint32_t p_owner) const {
@@ -691,6 +688,8 @@ void CollisionObject3D::shape_owner_clear_shapes(uint32_t p_owner) {
 	while (shape_owner_get_shape_count(p_owner) > 0) {
 		shape_owner_remove_shape(p_owner, 0);
 	}
+
+	update_gizmos();
 }
 
 uint32_t CollisionObject3D::shape_find_owner(int p_shape_index) const {

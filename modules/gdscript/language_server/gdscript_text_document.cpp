@@ -114,7 +114,7 @@ void GDScriptTextDocument::didSave(const Variant &p_param) {
 		scr->update_exports();
 		ScriptEditor::get_singleton()->reload_scripts(true);
 		ScriptEditor::get_singleton()->update_docs_from_script(scr);
-		ScriptEditor::get_singleton()->trigger_live_script_reload();
+		ScriptEditor::get_singleton()->trigger_live_script_reload(scr->get_path());
 	}
 }
 
@@ -456,7 +456,7 @@ Variant GDScriptTextDocument::declaration(const Dictionary &p_params) {
 					id = "class_global:" + symbol->native_class + ":" + symbol->name;
 					break;
 			}
-			call_deferred(SNAME("show_native_symbol_in_editor"), id);
+			callable_mp(this, &GDScriptTextDocument::show_native_symbol_in_editor).call_deferred(id);
 		} else {
 			notify_client_show_symbol(symbol);
 		}

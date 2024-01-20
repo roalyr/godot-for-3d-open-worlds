@@ -2805,7 +2805,7 @@ void RichTextLabel::_thread_function(void *p_userdata) {
 	set_current_thread_safe_for_nodes(true);
 	_process_line_caches();
 	updating.store(false);
-	call_deferred(SNAME("thread_end"));
+	callable_mp(this, &RichTextLabel::_thread_end).call_deferred();
 }
 
 void RichTextLabel::_thread_end() {
@@ -3151,7 +3151,7 @@ void RichTextLabel::_add_item(Item *p_item, bool p_enter, bool p_ensure_newline)
 	queue_redraw();
 }
 
-void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_subitem_line) {
+void RichTextLabel::_remove_item(Item *p_item, const int p_line) {
 	int size = p_item->subitems.size();
 	if (size == 0) {
 		p_item->parent->subitems.erase(p_item);
@@ -3160,7 +3160,7 @@ void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_sub
 			current_frame->lines.remove_at(p_line);
 			if (p_line < (int)current_frame->lines.size() && current_frame->lines[p_line].from) {
 				for (List<Item *>::Element *E = current_frame->lines[p_line].from->E; E; E = E->next()) {
-					if (E->get()->line > p_subitem_line) {
+					if (E->get()->line > p_line) {
 						E->get()->line--;
 					}
 				}
@@ -3169,7 +3169,7 @@ void RichTextLabel::_remove_item(Item *p_item, const int p_line, const int p_sub
 	} else {
 		// First, remove all child items for the provided item.
 		while (p_item->subitems.size()) {
-			_remove_item(p_item->subitems.front()->get(), p_line, p_subitem_line);
+			_remove_item(p_item->subitems.front()->get(), p_line);
 		}
 		// Then remove the provided item itself.
 		p_item->parent->subitems.erase(p_item);
@@ -3377,7 +3377,10 @@ bool RichTextLabel::remove_paragraph(const int p_paragraph) {
 	for (int i = subitem_to_remove.size() - 1; i >= 0; i--) {
 		List<Item *>::Element *subitem = subitem_to_remove[i];
 		had_newline = had_newline || subitem->get()->type == ITEM_NEWLINE;
-		_remove_item(subitem->get(), subitem->get()->line, p_paragraph);
+		if (subitem->get() == current) {
+			pop();
+		}
+		_remove_item(subitem->get(), p_paragraph);
 	}
 
 	if (!had_newline) {
@@ -4532,7 +4535,7 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 
 				if (subtag_a.size() == 2) {
 					if (subtag_a[0] == "font" || subtag_a[0] == "f") {
-						String fnt = subtag_a[1];
+						const String &fnt = subtag_a[1];
 						Ref<Font> font = ResourceLoader::load(fnt, "Font");
 						if (font.is_valid()) {
 							f = font;
@@ -4776,7 +4779,7 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 
 				if (subtag_a.size() == 2) {
 					if (subtag_a[0] == "name" || subtag_a[0] == "n") {
-						String fnt = subtag_a[1];
+						const String &fnt = subtag_a[1];
 						Ref<Font> font_data = ResourceLoader::load(fnt, "Font");
 						if (font_data.is_valid()) {
 							font = font_data;
@@ -5944,8 +5947,6 @@ void RichTextLabel::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_menu"), &RichTextLabel::get_menu);
 	ClassDB::bind_method(D_METHOD("is_menu_visible"), &RichTextLabel::is_menu_visible);
 	ClassDB::bind_method(D_METHOD("menu_option", "option"), &RichTextLabel::menu_option);
-
-	ClassDB::bind_method(D_METHOD("_thread_end"), &RichTextLabel::_thread_end);
 
 #ifndef DISABLE_DEPRECATED
 	ClassDB::bind_compatibility_method(D_METHOD("push_font", "font", "font_size"), &RichTextLabel::push_font);

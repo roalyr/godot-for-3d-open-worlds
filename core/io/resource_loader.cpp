@@ -340,7 +340,7 @@ void ResourceLoader::_thread_load_function(void *p_userdata) {
 
 	if (load_task.resource.is_valid()) {
 		if (load_task.cache_mode != ResourceFormatLoader::CACHE_MODE_IGNORE) {
-			load_task.resource->set_path(load_task.local_path, load_task.cache_mode == ResourceFormatLoader::CACHE_MODE_REPLACE);
+			load_task.resource->set_path(load_task.local_path);
 		} else if (!load_task.local_path.is_resource_file()) {
 			load_task.resource->set_path_cache(load_task.local_path);
 		}
@@ -360,17 +360,6 @@ void ResourceLoader::_thread_load_function(void *p_userdata) {
 
 		if (_loaded_callback) {
 			_loaded_callback(load_task.resource, load_task.local_path);
-		}
-	} else if (load_task.cache_mode != ResourceFormatLoader::CACHE_MODE_IGNORE) {
-		Ref<Resource> existing = ResourceCache::get_ref(load_task.local_path);
-		if (existing.is_valid()) {
-			load_task.resource = existing;
-			load_task.status = THREAD_LOAD_LOADED;
-			load_task.progress = 1.0;
-
-			if (_loaded_callback) {
-				_loaded_callback(load_task.resource, load_task.local_path);
-			}
 		}
 	}
 
@@ -474,7 +463,7 @@ Ref<ResourceLoader::LoadToken> ResourceLoader::_load_start(const String &p_path,
 			load_task.type_hint = p_type_hint;
 			load_task.cache_mode = p_cache_mode;
 			load_task.use_sub_threads = p_thread_mode == LOAD_THREAD_DISTRIBUTE;
-			if (p_cache_mode == ResourceFormatLoader::CACHE_MODE_REUSE) {
+			if (p_cache_mode != ResourceFormatLoader::CACHE_MODE_IGNORE) {
 				Ref<Resource> existing = ResourceCache::get_ref(local_path);
 				if (existing.is_valid()) {
 					//referencing is fine
@@ -641,15 +630,16 @@ Ref<Resource> ResourceLoader::_load_complete_inner(LoadToken &p_load_token, Erro
 
 			if (load_task.task_id != 0) {
 				// Loading thread is in the worker pool.
-				load_task.awaited = true;
 				thread_load_mutex.unlock();
 				Error err = WorkerThreadPool::get_singleton()->wait_for_task_completion(load_task.task_id);
 				if (err == ERR_BUSY) {
-					// The WorkerThreadPool has scheduled tasks in a way that the current load depends on
-					// another one in a lower stack frame. Restart such load here. When the stack is eventually
-					// unrolled, the original load will have been notified to go on.
+					// The WorkerThreadPool has reported that the current task wants to await on an older one.
+					// That't not allowed for safety, to avoid deadlocks. Fortunately, though, in the context of
+					// resource loading that means that the task to wait for can be restarted here to break the
+					// cycle, with as much recursion into this process as needed.
+					// When the stack is eventually unrolled, the original load will have been notified to go on.
 #ifdef DEV_ENABLED
-					print_verbose("ResourceLoader: Load task happened to wait on another one deep in the call stack. Attempting to avoid deadlock by re-issuing the load now.");
+					print_verbose("ResourceLoader: Potential for deadlock detected in task dependency. Attempting to avoid it by re-issuing the load now.");
 #endif
 					// CACHE_MODE_IGNORE is needed because, otherwise, the new request would just see there's
 					// an ongoing load for that resource and wait for it again. This value forces a new load.
@@ -663,6 +653,7 @@ Ref<Resource> ResourceLoader::_load_complete_inner(LoadToken &p_load_token, Erro
 				} else {
 					DEV_ASSERT(err == OK);
 					thread_load_mutex.lock();
+					load_task.awaited = true;
 				}
 			} else {
 				// Loading thread is main or user thread.

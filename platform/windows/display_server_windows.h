@@ -52,14 +52,15 @@
 #include "drivers/xaudio2/audio_driver_xaudio2.h"
 #endif
 
+#if defined(RD_ENABLED)
+#include "servers/rendering/rendering_device.h"
+
 #if defined(VULKAN_ENABLED)
 #include "vulkan_context_win.h"
-
-#include "drivers/vulkan/rendering_device_vulkan.h"
 #endif
-
 #if defined(D3D12_ENABLED)
-#include "drivers/d3d12/rendering_device_d3d12.h"
+#include "drivers/d3d12/d3d12_context.h"
+#endif
 #endif
 
 #if defined(GLES3_ENABLED)
@@ -346,14 +347,9 @@ class DisplayServerWindows : public DisplayServer {
 	GLManagerNative_Windows *gl_manager_native = nullptr;
 #endif
 
-#if defined(VULKAN_ENABLED)
-	VulkanContextWindows *context_vulkan = nullptr;
-	RenderingDeviceVulkan *rendering_device_vulkan = nullptr;
-#endif
-
-#if defined(D3D12_ENABLED)
-	D3D12Context *context_d3d12 = nullptr;
-	RenderingDeviceD3D12 *rendering_device_d3d12 = nullptr;
+#if defined(RD_ENABLED)
+	ApiContextRD *context_rd = nullptr;
+	RenderingDevice *rendering_device = nullptr;
 #endif
 
 	RBMap<int, Vector2> touch_state;
@@ -614,6 +610,8 @@ public:
 	virtual void window_request_attention(WindowID p_window = MAIN_WINDOW_ID) override;
 	virtual void window_move_to_foreground(WindowID p_window = MAIN_WINDOW_ID) override;
 	virtual bool window_is_focused(WindowID p_window = MAIN_WINDOW_ID) const override;
+
+	virtual WindowID get_focused_window() const override;
 
 	virtual bool window_can_draw(WindowID p_window = MAIN_WINDOW_ID) const override;
 

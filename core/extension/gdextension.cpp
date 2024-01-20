@@ -666,12 +666,12 @@ void GDExtension::_get_library_path(GDExtensionClassLibraryPtr p_library, GDExte
 
 HashMap<StringName, GDExtensionInterfaceFunctionPtr> GDExtension::gdextension_interface_functions;
 
-void GDExtension::register_interface_function(StringName p_function_name, GDExtensionInterfaceFunctionPtr p_function_pointer) {
+void GDExtension::register_interface_function(const StringName &p_function_name, GDExtensionInterfaceFunctionPtr p_function_pointer) {
 	ERR_FAIL_COND_MSG(gdextension_interface_functions.has(p_function_name), "Attempt to register interface function '" + p_function_name + "', which appears to be already registered.");
 	gdextension_interface_functions.insert(p_function_name, p_function_pointer);
 }
 
-GDExtensionInterfaceFunctionPtr GDExtension::get_interface_function(StringName p_function_name) {
+GDExtensionInterfaceFunctionPtr GDExtension::get_interface_function(const StringName &p_function_name) {
 	GDExtensionInterfaceFunctionPtr *function = gdextension_interface_functions.getptr(p_function_name);
 	ERR_FAIL_NULL_V_MSG(function, nullptr, "Attempt to get non-existent interface function: " + String(p_function_name) + ".");
 	return *function;
@@ -715,10 +715,8 @@ Error GDExtension::open_library(const String &p_path, const String &p_entry_symb
 #endif
 
 	Error err = OS::get_singleton()->open_dynamic_library(abs_path, library, true, &library_path);
-	if (err != OK) {
-		ERR_PRINT("GDExtension dynamic library not found: " + abs_path);
-		return err;
-	}
+	ERR_FAIL_COND_V_MSG(err == ERR_FILE_NOT_FOUND, err, "GDExtension dynamic library not found: " + abs_path);
+	ERR_FAIL_COND_V_MSG(err != OK, err, "Can't open GDExtension dynamic library: " + abs_path);
 
 #if defined(WINDOWS_ENABLED) && defined(TOOLS_ENABLED)
 	// If we copied the file, let's change the library path to point at the original,

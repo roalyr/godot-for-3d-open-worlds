@@ -36,10 +36,10 @@
 #include "editor/editor_file_system.h"
 #include "editor/editor_inspector.h"
 #include "editor/editor_node.h"
-#include "editor/editor_scale.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_undo_redo_manager.h"
 #include "editor/gui/editor_file_dialog.h"
+#include "editor/themes/editor_scale.h"
 
 #include "scene/gui/box_container.h"
 #include "scene/gui/control.h"
@@ -117,11 +117,11 @@ void TileSetEditor::_load_texture_files(const Vector<String> &p_paths) {
 		// Actually create the new source.
 		Ref<TileSetAtlasSource> atlas_source = memnew(TileSetAtlasSource);
 		atlas_source->set_texture(texture);
+		atlas_source->set_texture_region_size(tile_set->get_tile_size());
 
 		EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 		undo_redo->create_action(TTR("Add a new atlas source"));
 		undo_redo->add_do_method(*tile_set, "add_source", atlas_source, source_id);
-		undo_redo->add_do_method(*atlas_source, "set_texture_region_size", tile_set->get_tile_size());
 		undo_redo->add_undo_method(*tile_set, "remove_source", source_id);
 		undo_redo->commit_action();
 
@@ -854,6 +854,7 @@ TileSetEditor::TileSetEditor() {
 	p->set_item_checked(TilesEditorUtils::SOURCE_SORT_ID, true);
 
 	sources_list = memnew(ItemList);
+	sources_list->set_auto_translate(false);
 	sources_list->set_fixed_icon_size(Size2(60, 60) * EDSCALE);
 	sources_list->set_h_size_flags(SIZE_EXPAND_FILL);
 	sources_list->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -933,6 +934,7 @@ TileSetEditor::TileSetEditor() {
 	//// Patterns ////
 	int thumbnail_size = 64;
 	patterns_item_list = memnew(ItemList);
+	patterns_item_list->set_auto_translate(false);
 	patterns_item_list->set_max_columns(0);
 	patterns_item_list->set_icon_mode(ItemList::ICON_MODE_TOP);
 	patterns_item_list->set_fixed_column_width(thumbnail_size * 3 / 2);

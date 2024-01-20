@@ -8,6 +8,7 @@ from emscripten_helpers import (
     add_js_pre,
     add_js_externs,
     create_template_zip,
+    get_template_zip_path,
 )
 from methods import get_compiler_version
 from SCons.Util import WhereIs
@@ -30,6 +31,9 @@ def get_opts():
 
     return [
         ("initial_memory", "Initial WASM memory (in MiB)", 32),
+        # Matches default values from before Emscripten 3.1.27. New defaults are too low for Godot.
+        ("stack_size", "WASM stack size (in KiB)", 5120),
+        ("default_pthread_stack_size", "WASM pthread default stack size (in KiB)", 2048),
         BoolVariable("use_assertions", "Use Emscripten runtime assertions", False),
         BoolVariable("use_ubsan", "Use Emscripten undefined behavior sanitizer (UBSAN)", False),
         BoolVariable("use_asan", "Use Emscripten address sanitizer (ASAN)", False),
@@ -158,6 +162,9 @@ def configure(env: "Environment"):
     # Add method that joins/compiles our Engine files.
     env.AddMethod(create_engine_file, "CreateEngineFile")
 
+    # Add method for getting the final zip path
+    env.AddMethod(get_template_zip_path, "GetTemplateZipPath")
+
     # Add method for creating the final zip file
     env.AddMethod(create_template_zip, "CreateTemplateZip")
 
@@ -193,11 +200,6 @@ def configure(env: "Environment"):
     env.Prepend(CPPPATH=["#platform/web"])
     env.Append(CPPDEFINES=["WEB_ENABLED", "UNIX_ENABLED"])
 
-    if cc_semver >= (3, 1, 25):
-        env.Append(LINKFLAGS=["-s", "STACK_SIZE=5MB"])
-    else:
-        env.Append(LINKFLAGS=["-s", "TOTAL_STACK=5MB"])
-
     if env["opengl3"]:
         env.AppendUnique(CPPDEFINES=["GLES3_ENABLED"])
         # This setting just makes WebGL 2 APIs available, it does NOT disable WebGL 1.
@@ -208,13 +210,20 @@ def configure(env: "Environment"):
     if env["javascript_eval"]:
         env.Append(CPPDEFINES=["JAVASCRIPT_EVAL_ENABLED"])
 
-    # Thread support (via SharedArrayBuffer).
-    env.Append(CPPDEFINES=["PTHREAD_NO_RENAME"])
-    env.Append(CCFLAGS=["-s", "USE_PTHREADS=1"])
-    env.Append(LINKFLAGS=["-s", "USE_PTHREADS=1"])
-    env.Append(LINKFLAGS=["-s", "DEFAULT_PTHREAD_STACK_SIZE=2MB"])
-    env.Append(LINKFLAGS=["-s", "PTHREAD_POOL_SIZE=8"])
-    env.Append(LINKFLAGS=["-s", "WASM_MEM_MAX=2048MB"])
+    stack_size_opt = "STACK_SIZE" if cc_semver >= (3, 1, 25) else "TOTAL_STACK"
+    env.Append(LINKFLAGS=["-s", "%s=%sKB" % (stack_size_opt, env["stack_size"])])
+
+    if env["threads"]:
+        # Thread support (via SharedArrayBuffer).
+        env.Append(CPPDEFINES=["PTHREAD_NO_RENAME"])
+        env.Append(CCFLAGS=["-s", "USE_PTHREADS=1"])
+        env.Append(LINKFLAGS=["-s", "USE_PTHREADS=1"])
+        env.Append(LINKFLAGS=["-s", "DEFAULT_PTHREAD_STACK_SIZE=%sKB" % env["default_pthread_stack_size"]])
+        env.Append(LINKFLAGS=["-s", "PTHREAD_POOL_SIZE=8"])
+        env.Append(LINKFLAGS=["-s", "WASM_MEM_MAX=2048MB"])
+    elif env["proxy_to_pthread"]:
+        print('"threads=no" support requires "proxy_to_pthread=no", disabling proxy to pthread.')
+        env["proxy_to_pthread"] = False
 
     if env["lto"] != "none":
         # Workaround https://github.com/emscripten-core/emscripten/issues/19781.
@@ -223,7 +232,7 @@ def configure(env: "Environment"):
 
     if env["dlink_enabled"]:
         if env["proxy_to_pthread"]:
-            print("GDExtension support requires proxy_to_pthread=no, disabling")
+            print("GDExtension support requires proxy_to_pthread=no, disabling proxy to pthread.")
             env["proxy_to_pthread"] = False
 
         if cc_semver < (3, 1, 14):

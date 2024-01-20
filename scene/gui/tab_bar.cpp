@@ -30,7 +30,6 @@
 
 #include "tab_bar.h"
 
-#include "core/object/message_queue.h"
 #include "core/string/translation.h"
 #include "scene/gui/box_container.h"
 #include "scene/gui/label.h"
@@ -516,7 +515,13 @@ void TabBar::_draw_tab(Ref<StyleBox> &p_tab_style, Color &p_font_color, int p_in
 	bool rtl = is_layout_rtl();
 
 	Rect2 sb_rect = Rect2(p_x, 0, tabs[p_index].size_cache, get_size().height);
+	if (tab_style_v_flip) {
+		draw_set_transform(Point2(0.0, p_tab_style->get_draw_rect(sb_rect).size.y), 0.0, Size2(1.0, -1.0));
+	}
 	p_tab_style->draw(ci, sb_rect);
+	if (tab_style_v_flip) {
+		draw_set_transform(Point2(), 0.0, Size2(1.0, 1.0));
+	}
 	if (p_focus) {
 		Ref<StyleBox> focus_style = theme_cache.tab_focus_style;
 		focus_style->draw(ci, sb_rect);
@@ -1367,6 +1372,10 @@ bool TabBar::get_clip_tabs() const {
 	return clip_tabs;
 }
 
+void TabBar::set_tab_style_v_flip(bool p_tab_style_v_flip) {
+	tab_style_v_flip = p_tab_style_v_flip;
+}
+
 void TabBar::move_tab(int p_from, int p_to) {
 	if (p_from == p_to) {
 		return;
@@ -1657,7 +1666,7 @@ bool TabBar::_set(const StringName &p_name, const Variant &p_value) {
 	Vector<String> components = String(p_name).split("/", true, 2);
 	if (components.size() >= 2 && components[0].begins_with("tab_") && components[0].trim_prefix("tab_").is_valid_int()) {
 		int tab_index = components[0].trim_prefix("tab_").to_int();
-		String property = components[1];
+		const String &property = components[1];
 		if (property == "title") {
 			set_tab_title(tab_index, p_value);
 			return true;
@@ -1676,7 +1685,7 @@ bool TabBar::_get(const StringName &p_name, Variant &r_ret) const {
 	Vector<String> components = String(p_name).split("/", true, 2);
 	if (components.size() >= 2 && components[0].begins_with("tab_") && components[0].trim_prefix("tab_").is_valid_int()) {
 		int tab_index = components[0].trim_prefix("tab_").to_int();
-		String property = components[1];
+		const String &property = components[1];
 		if (property == "title") {
 			r_ret = get_tab_title(tab_index);
 			return true;
