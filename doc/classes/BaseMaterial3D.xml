@@ -395,6 +395,12 @@
 		<member name="transparency" type="int" setter="set_transparency" getter="get_transparency" enum="BaseMaterial3D.Transparency" default="0">
 			The material's transparency mode. Some transparency modes will disable shadow casting. Any transparency mode other than [constant TRANSPARENCY_DISABLED] has a greater performance impact compared to opaque rendering. See also [member blend_mode].
 		</member>
+		<member name="use_debanding" type="bool" setter="set_flag" getter="get_flag" default="false">
+			If [code]true[/code], uses a fast filter to make color banding significantly less visible on the material.
+			Debanding introduces a slightly noticeable dithering pattern. It's recommended to enable debanding only when actually needed since the dithering pattern will make lossless-compressed screenshots larger.
+			When compared to post-processing-based debanding ([member ProjectSettings.rendering/anti_aliasing/quality/use_debanding] or [member Viewport.use_debanding]), material-based debanding works with any rendering method instead of effectively being limited to Forward+. When using Forward+, material-based debanding also avoids visible "rings" in light falloff that can be visible with post-processing-based debanding. This comes at the cost of a slightly more visible dithering pattern.
+			[b]Note:[/b] It's recommended to only use one type of debanding at a time. If you want to enable [member use_debanding] on a material, consider disabling [member ProjectSettings.rendering/anti_aliasing/quality/use_debanding].
+		</member>
 		<member name="use_particle_trails" type="bool" setter="set_flag" getter="get_flag" default="false">
 			If [code]true[/code], enables parts of the shader required for [GPUParticles3D] trails to function. This also requires using a mesh with appropriate skinning, such as [RibbonTrailMesh] or [TubeTrailMesh]. Enabling this feature outside of materials used in [GPUParticles3D] meshes will break material rendering.
 		</member>
@@ -703,7 +709,10 @@
 		<constant name="FLAG_DISABLE_FOG" value="21" enum="Flags">
 			Disables receiving depth-based or volumetric fog.
 		</constant>
-		<constant name="FLAG_MAX" value="22" enum="Flags">
+		<constant name="FLAG_USE_DEBANDING" value="22" enum="Flags">
+			Use material-based debanding to reduce color banding (see [member use_debanding]).
+		</constant>
+		<constant name="FLAG_MAX" value="23" enum="Flags">
 			Represents the size of the [enum Flags] enum.
 		</constant>
 		<constant name="DIFFUSE_BURLEY" value="0" enum="DiffuseMode">

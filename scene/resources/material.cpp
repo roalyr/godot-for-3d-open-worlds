@@ -780,7 +780,9 @@ void BaseMaterial3D::_update_shader() {
 	if (flags[FLAG_DISABLE_FOG]) {
 		code += ",fog_disabled";
 	}
-
+	if (flags[FLAG_USE_DEBANDING]) {
+		code += ",use_debanding";
+	}
 	if (transparency == TRANSPARENCY_ALPHA_DEPTH_PRE_PASS) {
 		code += ",depth_prepass_alpha";
 	}
@@ -2742,7 +2744,8 @@ void BaseMaterial3D::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "specular_mode", PROPERTY_HINT_ENUM, "SchlickGGX,Toon,Disabled"), "set_specular_mode", "get_specular_mode");
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "disable_ambient_light"), "set_flag", "get_flag", FLAG_DISABLE_AMBIENT_LIGHT);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "disable_fog"), "set_flag", "get_flag", FLAG_DISABLE_FOG);
-
+	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "use_debanding"), "set_flag", "get_flag", FLAG_USE_DEBANDING);
+	
 	ADD_GROUP("Vertex Color", "vertex_color");
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "vertex_color_use_as_albedo"), "set_flag", "get_flag", FLAG_ALBEDO_FROM_VERTEX_COLOR);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "vertex_color_is_srgb"), "set_flag", "get_flag", FLAG_SRGB_VERTEX_COLOR);
@@ -2995,6 +2998,7 @@ void BaseMaterial3D::_bind_methods() {
 	BIND_ENUM_CONSTANT(FLAG_PARTICLE_TRAILS_MODE);
 	BIND_ENUM_CONSTANT(FLAG_ALBEDO_TEXTURE_MSDF);
 	BIND_ENUM_CONSTANT(FLAG_DISABLE_FOG);
+	BIND_ENUM_CONSTANT(FLAG_USE_DEBANDING);
 	BIND_ENUM_CONSTANT(FLAG_MAX);
 
 	BIND_ENUM_CONSTANT(DIFFUSE_BURLEY);

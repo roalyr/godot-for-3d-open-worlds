@@ -1361,6 +1361,8 @@ MaterialStorage::MaterialStorage() {
 		actions.render_mode_defines["unshaded"] = "#define MODE_UNSHADED\n";
 		actions.render_mode_defines["fog_disabled"] = "#define FOG_DISABLED\n";
 
+		actions.render_mode_defines["use_debanding"] = "#define USE_DEBANDING\n";
+
 		actions.default_filter = ShaderLanguage::FILTER_LINEAR_MIPMAP;
 		actions.default_repeat = ShaderLanguage::REPEAT_ENABLE;
 
