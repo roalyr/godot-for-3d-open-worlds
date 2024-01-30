@@ -876,7 +876,7 @@ vec3 interleaved_gradient_noise(vec2 frag_coord) {
 	dither.rgb = fract(dither.rgb / vec3(103.0, 71.0, 97.0));
 
 	// Subtract 0.5 to avoid slightly brightening the whole viewport.
-	return (dither.rgb - 0.5) / 255.0;
+	return (dither.rgb - 0.8) / 255.0;
 }
 #endif // USE_DEBANDING
 
