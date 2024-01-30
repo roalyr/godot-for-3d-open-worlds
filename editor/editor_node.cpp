@@ -870,7 +870,11 @@ void EditorNode::_resources_changed(const Vector<String> &p_resources) {
 		}
 
 		if (!res->editor_can_reload_from_file()) {
-			continue;
+			Ref<Script> scr = res;
+			// Scripts are reloaded via the script editor.
+			if (scr.is_null() || ScriptEditor::get_singleton()->get_open_scripts().has(scr)) {
+				continue;
+			}
 		}
 		if (!res->get_path().is_resource_file() && !res->get_path().is_absolute_path()) {
 			continue;
@@ -1805,6 +1809,7 @@ void EditorNode::_save_scene(String p_file, int idx) {
 
 	// This needs to be emitted before saving external resources.
 	emit_signal(SNAME("scene_saved"), p_file);
+	editor_data.notify_scene_saved(p_file);
 
 	_save_external_resources();
 	saving_scene = p_file; // Some editors may save scenes of built-in resources as external data, so avoid saving this scene again.
@@ -2330,7 +2335,7 @@ void EditorNode::_edit_current(bool p_skip_foreign) {
 	}
 
 	bool inspector_only = editor_history.is_current_inspector_only();
-	this->current = current_obj;
+	current = current_obj;
 
 	if (!current_obj) {
 		SceneTreeDock::get_singleton()->set_selected(nullptr);
@@ -3710,6 +3715,10 @@ bool EditorNode::is_scene_open(const String &p_path) {
 	return false;
 }
 
+bool EditorNode::is_multi_window_enabled() const {
+	return !SceneTree::get_singleton()->get_root()->is_embedding_subwindows() && !EDITOR_GET("interface/editor/single_window_mode") && EDITOR_GET("interface/multi_window/enable");
+}
+
 void EditorNode::fix_dependencies(const String &p_for_file) {
 	dependency_fixer->edit(p_for_file);
 }
@@ -4119,6 +4128,20 @@ void EditorNode::request_instantiate_scene(const String &p_path) {
 
 void EditorNode::request_instantiate_scenes(const Vector<String> &p_files) {
 	SceneTreeDock::get_singleton()->instantiate_scenes(p_files);
+}
+
+String EditorNode::get_multiwindow_support_tooltip_text() const {
+	if (SceneTree::get_singleton()->get_root()->is_embedding_subwindows()) {
+		if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_SUBWINDOWS)) {
+			return TTR("Multi-window support is not available because the `--single-window` command line argument was used to start the editor.");
+		} else {
+			return TTR("Multi-window support is not available because the current platform doesn't support multiple windows.");
+		}
+	} else if (EDITOR_GET("interface/editor/single_window_mode")) {
+		return TTR("Multi-window support is not available because Interface > Editor > Single Window Mode is enabled in the editor settings.");
+	}
+
+	return TTR("Multi-window support is not available because Interface > Multi Window > Enable is disabled in the editor settings.");
 }
 
 void EditorNode::_inherit_request(String p_file) {
@@ -5137,16 +5160,36 @@ void EditorNode::_scene_tab_closed(int p_tab) {
 	scene_tabs->update_scene_tabs();
 }
 
-Button *EditorNode::add_bottom_panel_item(String p_text, Control *p_item) {
-	Button *tb = memnew(Button);
+class EditorBottomDockButton : public Button {
+	GDCLASS(EditorBottomDockButton, Button)
+
+	static void _bind_methods() {
+		ADD_SIGNAL(MethodInfo("dropping"));
+	}
+
+public:
+	virtual bool can_drop_data(const Point2 &p_point, const Variant &p_data) const override {
+		if (!is_pressed()) {
+			const_cast<EditorBottomDockButton *>(this)->emit_signal("dropping");
+		}
+		return false;
+	}
+};
+
+Button *EditorNode::add_bottom_panel_item(String p_text, Control *p_item, bool p_at_front) {
+	Button *tb = memnew(EditorBottomDockButton);
 	tb->set_flat(true);
-	tb->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch).bind(bottom_panel_items.size()));
+	tb->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch_by_control).bind(p_item));
+	tb->connect("dropping", callable_mp(this, &EditorNode::_bottom_panel_switch_by_control).bind(true, p_item));
 	tb->set_text(p_text);
 	tb->set_toggle_mode(true);
 	tb->set_focus_mode(Control::FOCUS_NONE);
 	bottom_panel_vb->add_child(p_item);
 	bottom_panel_hb->move_to_front();
 	bottom_panel_hb_editors->add_child(tb);
+	if (p_at_front) {
+		bottom_panel_hb_editors->move_child(tb, 0);
+	}
 	p_item->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	p_item->hide();
 	BottomPanelItem bpi;
@@ -5184,11 +5227,6 @@ void EditorNode::raise_bottom_panel_item(Control *p_item) {
 			break;
 		}
 	}
-
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		bottom_panel_items[i].button->disconnect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch));
-		bottom_panel_items[i].button->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch).bind(i));
-	}
 }
 
 void EditorNode::remove_bottom_panel_item(Control *p_item) {
@@ -5204,10 +5242,14 @@ void EditorNode::remove_bottom_panel_item(Control *p_item) {
 			break;
 		}
 	}
+}
 
+void EditorNode::_bottom_panel_switch_by_control(bool p_enable, Control *p_control) {
 	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		bottom_panel_items[i].button->disconnect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch));
-		bottom_panel_items[i].button->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch).bind(i));
+		if (bottom_panel_items[i].control == p_control) {
+			_bottom_panel_switch(p_enable, i);
+			return;
+		}
 	}
 }
 

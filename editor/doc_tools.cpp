@@ -634,7 +634,7 @@ void DocTools::generate(BitField<GenerateFlags> p_flags) {
 			// Theme items.
 			{
 				List<ThemeDB::ThemeItemBind> theme_items;
-				ThemeDB::get_singleton()->get_class_own_items(cname, &theme_items);
+				ThemeDB::get_singleton()->get_class_items(cname, &theme_items);
 				Ref<Theme> default_theme = ThemeDB::get_singleton()->get_default_theme();
 
 				for (const ThemeDB::ThemeItemBind &theme_item : theme_items) {
@@ -1644,6 +1644,18 @@ Error DocTools::load_compressed(const uint8_t *p_data, int p_compressed_size, in
 
 	Ref<XMLParser> parser = memnew(XMLParser);
 	Error err = parser->open_buffer(data);
+	if (err) {
+		return err;
+	}
+
+	_load(parser);
+
+	return OK;
+}
+
+Error DocTools::load_xml(const uint8_t *p_data, int p_size) {
+	Ref<XMLParser> parser = memnew(XMLParser);
+	Error err = parser->_open_buffer(p_data, p_size);
 	if (err) {
 		return err;
 	}

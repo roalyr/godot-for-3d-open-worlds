@@ -372,7 +372,18 @@ Error DisplayServerX11::file_dialog_show(const String &p_title, const String &p_
 	}
 
 	String xid = vformat("x11:%x", (uint64_t)windows[window_id].x11_window);
-	return portal_desktop->file_dialog_show(last_focused_window, xid, p_title, p_current_directory, p_filename, p_mode, p_filters, p_callback);
+	return portal_desktop->file_dialog_show(last_focused_window, xid, p_title, p_current_directory, String(), p_filename, p_mode, p_filters, TypedArray<Dictionary>(), p_callback, false);
+}
+
+Error DisplayServerX11::file_dialog_with_options_show(const String &p_title, const String &p_current_directory, const String &p_root, const String &p_filename, bool p_show_hidden, FileDialogMode p_mode, const Vector<String> &p_filters, const TypedArray<Dictionary> &p_options, const Callable &p_callback) {
+	WindowID window_id = last_focused_window;
+
+	if (!windows.has(window_id)) {
+		window_id = MAIN_WINDOW_ID;
+	}
+
+	String xid = vformat("x11:%x", (uint64_t)windows[window_id].x11_window);
+	return portal_desktop->file_dialog_show(last_focused_window, xid, p_title, p_current_directory, p_root, p_filename, p_mode, p_filters, p_options, p_callback, true);
 }
 
 #endif
@@ -3501,6 +3512,7 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 				bool keypress = xkeyevent->type == KeyPress;
 				Key keycode = KeyMappingX11::get_keycode(keysym_keycode);
 				Key physical_keycode = KeyMappingX11::get_scancode(xkeyevent->keycode);
+				KeyLocation key_location = KeyMappingX11::get_location(xkeyevent->keycode);
 
 				if (keycode >= Key::A + 32 && keycode <= Key::Z + 32) {
 					keycode -= 'a' - 'A';
@@ -3538,6 +3550,8 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 						k->set_unicode(fix_unicode(tmp[i]));
 					}
 
+					k->set_location(key_location);
+
 					k->set_echo(false);
 
 					if (k->get_keycode() == Key::BACKTAB) {
@@ -3562,6 +3576,8 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 
 	Key keycode = KeyMappingX11::get_keycode(keysym_keycode);
 	Key physical_keycode = KeyMappingX11::get_scancode(xkeyevent->keycode);
+
+	KeyLocation key_location = KeyMappingX11::get_location(xkeyevent->keycode);
 
 	/* Phase 3, obtain a unicode character from the keysym */
 
@@ -3662,6 +3678,9 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 	if (keypress) {
 		k->set_unicode(fix_unicode(unicode));
 	}
+
+	k->set_location(key_location);
+
 	k->set_echo(p_echo);
 
 	if (k->get_keycode() == Key::BACKTAB) {

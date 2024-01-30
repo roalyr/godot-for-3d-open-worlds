@@ -146,7 +146,6 @@ void ScriptTextEditor::set_edited_resource(const Ref<Resource> &p_res) {
 	ERR_FAIL_COND(p_res.is_null());
 
 	script = p_res;
-	script->connect_changed(callable_mp((ScriptEditorBase *)this, &ScriptEditorBase::reload_text));
 
 	code_editor->get_text_editor()->set_text(script->get_source_code());
 	code_editor->get_text_editor()->clear_undo_history();
@@ -2508,5 +2507,5 @@ void ScriptTextEditor::register_editor() {
 }
 
 void ScriptTextEditor::validate() {
-	this->code_editor->validate_script();
+	code_editor->validate_script();
 }
