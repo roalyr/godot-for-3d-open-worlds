@@ -697,18 +697,24 @@ struct CSharpScriptDepSort {
 			// Shouldn't happen but just in case...
 			return false;
 		}
-		const Script *I = B->get_base_script().ptr();
+		const CSharpScript *I = get_base_script(B.ptr()).ptr();
 		while (I) {
 			if (I == A.ptr()) {
 				// A is a base of B
 				return true;
 			}
 
-			I = I->get_base_script().ptr();
+			I = get_base_script(I).ptr();
 		}
 
 		// A isn't a base of B
 		return false;
+	}
+
+	// Special fix for constructed generic types.
+	Ref<CSharpScript> get_base_script(const CSharpScript *p_script) const {
+		Ref<CSharpScript> base_script = p_script->base_script;
+		return base_script.is_valid() && !base_script->class_name.is_empty() ? base_script : nullptr;
 	}
 };
 
@@ -2849,15 +2855,17 @@ CSharpScript::CSharpScript() {
 #ifdef DEBUG_ENABLED
 	{
 		MutexLock lock(CSharpLanguage::get_singleton()->script_instances_mutex);
-		CSharpLanguage::get_singleton()->script_list.add(&this->script_list);
+		CSharpLanguage::get_singleton()->script_list.add(&script_list);
 	}
 #endif
 }
 
 CSharpScript::~CSharpScript() {
 #ifdef DEBUG_ENABLED
-	MutexLock lock(CSharpLanguage::get_singleton()->script_instances_mutex);
-	CSharpLanguage::get_singleton()->script_list.remove(&this->script_list);
+	{
+		MutexLock lock(CSharpLanguage::get_singleton()->script_instances_mutex);
+		CSharpLanguage::get_singleton()->script_list.remove(&script_list);
+	}
 #endif
 
 	if (GDMonoCache::godot_api_cache_updated) {
@@ -2897,8 +2905,11 @@ Ref<Resource> ResourceFormatLoaderCSharpScript::load(const String &p_path, const
 	ERR_FAIL_COND_V_MSG(err != OK, Ref<Resource>(), "Cannot load C# script file '" + p_path + "'.");
 #endif
 
-	scr->set_path(p_original_path);
+	// Only one instance of a C# script is allowed to exist.
+	ERR_FAIL_COND_V_MSG(!scr->get_path().is_empty() && scr->get_path() != p_original_path, Ref<Resource>(),
+			"The C# script path is different from the path it was registered in the C# dictionary.");
 
+	scr->set_path(p_original_path, true);
 	scr->reload();
 
 	if (r_error) {
