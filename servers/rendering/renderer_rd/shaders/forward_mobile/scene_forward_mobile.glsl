@@ -538,7 +538,7 @@ layout(constant_id = 15) const float sc_luminance_multiplier = 2.0;
 layout(location = 0) highp in vec3 vertex_interp;
 
 #ifdef NORMAL_USED
-layout(location = 1) mediump in vec3 normal_interp;
+layout(location = 1) highp in vec3 normal_interp;
 #endif
 
 #if defined(COLOR_USED)
