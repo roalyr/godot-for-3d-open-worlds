@@ -1837,15 +1837,27 @@ void RenderForwardMobile::_fill_render_list(RenderListType p_render_list, const 
 				float distance_min = (float)p_render_data->scene_data->cam_transform.origin.distance_to(lod_support_min);
 				float distance_max = (float)p_render_data->scene_data->cam_transform.origin.distance_to(lod_support_max);
 
+				// Determine camera position relative to the mesh AABB nearest support.
+				Vector3 camera_to_min = lod_support_min - p_render_data->scene_data->cam_transform.origin;
+
+				// Determine if the nearest support is behind camera.
+				bool lod_support_min_behind_camera = p_render_data->scene_data->cam_transform.basis.get_column(Vector3::AXIS_Z).dot(camera_to_min) > 0.0;
+				if (lod_support_min_behind_camera) {
+					distance_min = -distance_min;
+				} 
+
 				float distance = 0.0;
 
 				if (distance_min * distance_max < 0.0) {
 					//crossing plane
+					//printf("Camera INSIDE AABB\n");
 					distance = 0.0;
 				} else if (distance_min >= 0.0) {
 					distance = distance_min;
+					//printf("Camera outside AABB\n");
 				} else if (distance_max <= 0.0) {
 					distance = -distance_max;
+					//printf("Camera outside AABB\n");
 				}
 
 				if (p_render_data->scene_data->cam_orthogonal) {
