@@ -253,7 +253,7 @@ void GeometryInstance::set_generate_lightmap(bool p_enabled) {
 	generate_lightmap = p_enabled;
 }
 
-bool GeometryInstance::get_generate_lightmap() {
+bool GeometryInstance::get_generate_lightmap() const {
 	return generate_lightmap;
 }
 
@@ -322,9 +322,10 @@ bool GeometryInstance::get_flag(Flags p_flag) const {
 }
 
 void GeometryInstance::set_cast_shadows_setting(ShadowCastingSetting p_shadow_casting_setting) {
-	shadow_casting_setting = p_shadow_casting_setting;
-
-	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(get_instance(), (VS::ShadowCastingSetting)p_shadow_casting_setting);
+	if (p_shadow_casting_setting != shadow_casting_setting) {
+		shadow_casting_setting = p_shadow_casting_setting;
+		VS::get_singleton()->instance_geometry_set_cast_shadows_setting(get_instance(), (VS::ShadowCastingSetting)p_shadow_casting_setting);
+	}
 }
 
 GeometryInstance::ShadowCastingSetting GeometryInstance::get_cast_shadows_setting() const {
@@ -333,8 +334,10 @@ GeometryInstance::ShadowCastingSetting GeometryInstance::get_cast_shadows_settin
 
 void GeometryInstance::set_extra_cull_margin(float p_margin) {
 	ERR_FAIL_COND(p_margin < 0);
-	extra_cull_margin = p_margin;
-	VS::get_singleton()->instance_set_extra_visibility_margin(get_instance(), extra_cull_margin);
+	if (p_margin != extra_cull_margin) {
+		extra_cull_margin = p_margin;
+		VS::get_singleton()->instance_set_extra_visibility_margin(get_instance(), extra_cull_margin);
+	}
 }
 
 float GeometryInstance::get_extra_cull_margin() const {
@@ -384,8 +387,8 @@ void GeometryInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_aabb"), &GeometryInstance::get_aabb);
 
 	ADD_GROUP("Geometry", "");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_override", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial"), "set_material_override", "get_material_override");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_overlay", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial"), "set_material_overlay", "get_material_overlay");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_override", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial,ORMSpatialMaterial"), "set_material_override", "get_material_override");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_overlay", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,SpatialMaterial,ORMSpatialMaterial"), "set_material_overlay", "get_material_overlay");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "cast_shadow", PROPERTY_HINT_ENUM, "Off,On,Double-Sided,Shadows Only"), "set_cast_shadows_setting", "get_cast_shadows_setting");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "extra_cull_margin", PROPERTY_HINT_RANGE, "0,16384,0.01"), "set_extra_cull_margin", "get_extra_cull_margin");
 

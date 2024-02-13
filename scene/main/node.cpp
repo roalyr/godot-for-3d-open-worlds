@@ -2193,6 +2193,14 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 
 	bool instanced = false;
 
+	// No need to load a packed scene more than once if features
+	// several times in the branch being duplicated.
+	struct LoadedPackedScene {
+		Ref<PackedScene> scene;
+		String filename;
+	};
+	LocalVector<LoadedPackedScene> loaded_scenes;
+
 	if (Object::cast_to<InstancePlaceholder>(this)) {
 		const InstancePlaceholder *ip = Object::cast_to<const InstancePlaceholder>(this);
 		InstancePlaceholder *nip = memnew(InstancePlaceholder);
@@ -2200,7 +2208,25 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 		node = nip;
 
 	} else if ((p_flags & DUPLICATE_USE_INSTANCING) && get_filename() != String()) {
-		Ref<PackedScene> res = ResourceLoader::load(get_filename());
+		// already loaded?
+		int found = -1;
+		for (unsigned int n = 0; n < loaded_scenes.size(); n++) {
+			if (loaded_scenes[n].filename == get_filename()) {
+				found = n;
+				break;
+			}
+		}
+		Ref<PackedScene> res = Ref<PackedScene>();
+		if (found != -1) {
+			res = loaded_scenes[found].scene;
+		} else {
+			LoadedPackedScene ps;
+			ps.filename = get_filename();
+			ps.scene = ResourceLoader::load(get_filename());
+			res = ps.scene;
+			loaded_scenes.push_back(ps);
+		}
+
 		ERR_FAIL_COND_V(res.is_null(), nullptr);
 		PackedScene::GenEditState ges = PackedScene::GEN_EDIT_STATE_DISABLED;
 #ifdef TOOLS_ENABLED
@@ -3110,6 +3136,7 @@ void Node::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_set_editor_description", "editor_description"), &Node::set_editor_description);
 	ClassDB::bind_method(D_METHOD("_get_editor_description"), &Node::get_editor_description);
+	ADD_GROUP("Editor Description", "editor_");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "editor_description", PROPERTY_HINT_MULTILINE_TEXT, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_INTERNAL), "_set_editor_description", "_get_editor_description");
 
 	ClassDB::bind_method(D_METHOD("_set_import_path", "import_path"), &Node::set_import_path);

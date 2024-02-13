@@ -330,11 +330,11 @@ void RoomManager::_refresh_from_project_settings() {
 	_show_debug = GLOBAL_GET("rendering/portals/debug/logging");
 	Portal::_portal_plane_convention = GLOBAL_GET("rendering/portals/advanced/flip_imported_portals");
 
-	// force not to show logs when not in editor
-	if (!Engine::get_singleton()->is_editor_hint()) {
-		_show_debug = false;
-		_settings_log_pvs_generation = false;
-	}
+	// Disallow logs on final exports.
+#ifndef TOOLS_ENABLED
+	_show_debug = false;
+	_settings_log_pvs_generation = false;
+#endif
 }
 
 void RoomManager::set_roomlist_path(const NodePath &p_path) {
@@ -617,6 +617,7 @@ void RoomManager::rooms_convert() {
 	// now we run autoplace to place any statics that have not been explicitly placed in rooms.
 	// These will by definition not affect the room bounds, but is convenient for users to edit
 	// levels in a more freeform manner
+	convert_log("");
 	_autoplace_recursive(_roomlist);
 
 	bool generate_pvs = false;
@@ -1234,7 +1235,7 @@ bool RoomManager::_autoplace_object(VisualInstance *p_vi) {
 		Vector<Vector3> room_pts;
 
 		// we can reuse this function
-		_process_static(best_room, p_vi, room_pts, true);
+		_process_static(best_room, p_vi, room_pts, true, true);
 		return true;
 	}
 
@@ -1275,7 +1276,7 @@ void RoomManager::_autoplace_recursive(Spatial *p_node) {
 	}
 }
 
-void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3> &r_room_pts, bool p_add_to_portal_renderer) {
+void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3> &r_room_pts, bool p_add_to_portal_renderer, bool p_autoplaced) {
 	bool ignore = false;
 	VisualInstance *vi = Object::cast_to<VisualInstance>(p_node);
 
@@ -1296,6 +1297,11 @@ void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3>
 	}
 
 	if (!ignore) {
+		String prefix = "\t\t\t";
+		if (p_autoplaced) {
+			prefix = "AUTOPLACED in " + p_room->get_name() + "\t";
+		}
+
 		// We'll have a done flag. This isn't strictly speaking necessary
 		// because the types should be mutually exclusive, but this would
 		// break if something changes the inheritance hierarchy of the nodes
@@ -1311,7 +1317,7 @@ void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3>
 			if (p_add_to_portal_renderer) {
 				Vector<Vector3> dummy_pts;
 				VisualServer::get_singleton()->room_add_instance(p_room->_room_rid, light->get_instance(), light->get_transformed_aabb(), dummy_pts);
-				convert_log("\t\t\tLIGT\t" + light->get_name());
+				convert_log(prefix + "LIGHT\t" + light->get_name());
 			}
 		}
 
@@ -1348,7 +1354,7 @@ void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3>
 				} // if bound found points
 
 				if (p_add_to_portal_renderer) {
-					String msg = "\t\t\tMESH\t" + mi->get_name();
+					String msg = prefix + "MESH\t" + mi->get_name();
 					if (!added) {
 						msg += "\t(unrecognized)";
 					}
@@ -1385,7 +1391,7 @@ void RoomManager::_process_static(Room *p_room, Spatial *p_node, Vector<Vector3>
 				} // if bound found points
 
 				if (p_add_to_portal_renderer) {
-					String msg = "\t\t\tGEOM\t" + gi->get_name();
+					String msg = prefix + "GEOM\t" + gi->get_name();
 					if (!added) {
 						msg += "\t(unrecognized)";
 					}
@@ -1415,7 +1421,7 @@ void RoomManager::_find_statics_recursive(Room *p_room, Spatial *p_node, Vector<
 		return;
 	}
 
-	_process_static(p_room, p_node, r_room_pts, p_add_to_portal_renderer);
+	_process_static(p_room, p_node, r_room_pts, p_add_to_portal_renderer, false);
 
 	for (int n = 0; n < p_node->get_child_count(); n++) {
 		Spatial *child = Object::cast_to<Spatial>(p_node->get_child(n));
@@ -1531,6 +1537,11 @@ bool RoomManager::_convert_room_hull_final(Room *p_room, const LocalVector<Porta
 	for (int n = 0; n < p_room->_portals.size(); n++) {
 		int portal_id = p_room->_portals[n];
 		Portal *portal = p_portals[portal_id];
+
+		// User can select whether to include in bound.
+		if (!portal->get_include_in_bound()) {
+			continue;
+		}
 
 		// don't add portals to the world bound that are internal to this room!
 		if (portal->is_portal_internal(p_room->_room_ID)) {
@@ -2170,7 +2181,7 @@ void RoomManager::_merge_meshes_in_room(Room *p_room) {
 			if (!bf.get_bit(c)) {
 				MeshInstance *b = source_meshes[c];
 
-				if (a->is_mergeable_with(b)) {
+				if (a->is_mergeable_with(b, false)) {
 					merge_list.push_back(b);
 					bf.set_bit(c, true);
 				}
@@ -2194,7 +2205,7 @@ void RoomManager::_merge_meshes_in_room(Room *p_room) {
 				variant_merge_list.set(i, merge_list[i]);
 			}
 
-			if (merged->merge_meshes(variant_merge_list, true, false)) {
+			if (merged->merge_meshes(variant_merge_list, true, false, false)) {
 				// set all the source meshes to portal mode ignore so not shown
 				for (int i = 0; i < merge_list.size(); i++) {
 					merge_list[i]->set_portal_mode(CullInstance::PORTAL_MODE_IGNORE);
@@ -2299,8 +2310,10 @@ void RoomManager::_list_mergeable_mesh_instances(Spatial *p_node, LocalVector<Me
 			// disallow for portals or bounds
 			// mesh instance portals should be queued for deletion by this point, we don't want to merge portals!
 			if (!_node_is_type<Portal>(mi) && !_name_ends_with(mi, "-bound") && !mi->is_queued_for_deletion()) {
-				// only merge if visible
-				if (mi->is_inside_tree() && mi->is_visible()) {
+				// Only merge if visible.
+				// N.B. get_allow_merging() is the old flag on CullInstance, and is maintained for backward compatibility only.
+				// It is overruled by the Spatial "merging_mode" if this is set.
+				if (mi->is_inside_tree() && mi->is_visible() && mi->get_allow_merging()) {
 					r_list.push_back(mi);
 				}
 			}

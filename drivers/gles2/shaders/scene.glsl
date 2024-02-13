@@ -1104,6 +1104,8 @@ uniform highp sampler2D light_shadow_atlas; //texunit:-3
 #ifdef LIGHT_MODE_DIRECTIONAL
 uniform highp sampler2D light_directional_shadow; // texunit:-3
 uniform highp vec4 light_split_offsets;
+uniform mediump float fade_from;
+uniform mediump float fade_to;
 #endif
 
 varying highp vec4 shadow_coord;
@@ -1987,7 +1989,6 @@ FRAGMENT_SHADER_CODE
 	float shadow4 = sample_shadow(light_directional_shadow, shadow_coord4);
 
 	if (depth_z < light_split_offsets.w) {
-		float pssm_fade = 0.0;
 		float shadow_att = 1.0;
 #ifdef LIGHT_USE_PSSM_BLEND
 		float shadow_att2 = 1.0;
@@ -2023,7 +2024,6 @@ FRAGMENT_SHADER_CODE
 
 			} else {
 				shadow_att = shadow4;
-				pssm_fade = smoothstep(light_split_offsets.z, light_split_offsets.w, depth_z);
 
 #if defined(LIGHT_USE_PSSM_BLEND)
 				use_blend = false;
@@ -2047,7 +2047,6 @@ FRAGMENT_SHADER_CODE
 	float shadow3 = sample_shadow(light_directional_shadow, shadow_coord3);
 
 	if (depth_z < light_split_offsets.z) {
-		float pssm_fade = 0.0;
 		float shadow_att = 1.0;
 #ifdef LIGHT_USE_PSSM_BLEND
 		float shadow_att2 = 1.0;
@@ -2097,7 +2096,6 @@ FRAGMENT_SHADER_CODE
 
 	if (depth_z < light_split_offsets.y) {
 		float shadow_att = 1.0;
-		float pssm_fade = 0.0;
 
 #ifdef LIGHT_USE_PSSM_BLEND
 		float shadow_att2 = 1.0;
@@ -2105,7 +2103,6 @@ FRAGMENT_SHADER_CODE
 		bool use_blend = true;
 #endif
 		if (depth_z < light_split_offsets.x) {
-			float pssm_fade = 0.0;
 			shadow_att = shadow1;
 
 #ifdef LIGHT_USE_PSSM_BLEND
@@ -2114,7 +2111,6 @@ FRAGMENT_SHADER_CODE
 #endif
 		} else {
 			shadow_att = shadow2;
-			pssm_fade = smoothstep(light_split_offsets.x, light_split_offsets.y, depth_z);
 #ifdef LIGHT_USE_PSSM_BLEND
 			use_blend = false;
 #endif
@@ -2148,7 +2144,6 @@ FRAGMENT_SHADER_CODE
 #endif //pssm2
 
 			highp vec4 pssm_coord;
-			float pssm_fade = 0.0;
 
 #ifdef LIGHT_USE_PSSM_BLEND
 			float pssm_blend;
@@ -2187,7 +2182,6 @@ FRAGMENT_SHADER_CODE
 
 				} else {
 					pssm_coord = shadow_coord4;
-					pssm_fade = smoothstep(light_split_offsets.z, light_split_offsets.w, depth_z);
 
 #if defined(LIGHT_USE_PSSM_BLEND)
 					use_blend = false;
@@ -2217,7 +2211,6 @@ FRAGMENT_SHADER_CODE
 				}
 			} else {
 				pssm_coord = shadow_coord3;
-				pssm_fade = smoothstep(light_split_offsets.y, light_split_offsets.z, depth_z);
 
 #if defined(LIGHT_USE_PSSM_BLEND)
 				use_blend = false;
@@ -2236,7 +2229,6 @@ FRAGMENT_SHADER_CODE
 #endif
 			} else {
 				pssm_coord = shadow_coord2;
-				pssm_fade = smoothstep(light_split_offsets.x, light_split_offsets.y, depth_z);
 #ifdef LIGHT_USE_PSSM_BLEND
 				use_blend = false;
 #endif
@@ -2258,7 +2250,8 @@ FRAGMENT_SHADER_CODE
 			}
 #endif
 
-			light_att *= mix(shadow_color.rgb, vec3(1.0), shadow);
+			float pssm_fade = smoothstep(fade_from, fade_to, vertex.z);
+			light_att *= mix(mix(shadow_color.rgb, vec3(1.0), shadow), vec3(1.0), pssm_fade);
 		}
 	}
 #endif //use vertex lighting
@@ -2380,11 +2373,18 @@ FRAGMENT_SHADER_CODE
 
 #endif // !USE_SHADOW_TO_OPACITY
 
+	// Instead of writing directly to gl_FragColor,
+	// we use an intermediate, and only write
+	// to gl_FragColor ONCE at the end of the shader.
+	// This is because some hardware can have huge
+	// slowdown if you modify gl_FragColor multiple times.
+	vec4 frag_color;
+
 #ifndef RENDER_DEPTH
 
 #ifdef SHADELESS
 
-	gl_FragColor = vec4(albedo, alpha);
+	frag_color = vec4(albedo, alpha);
 #else
 
 	ambient_light *= albedo;
@@ -2399,13 +2399,13 @@ FRAGMENT_SHADER_CODE
 	diffuse_light *= 1.0 - metallic;
 	ambient_light *= 1.0 - metallic;
 
-	gl_FragColor = vec4(ambient_light + diffuse_light + specular_light, alpha);
+	frag_color = vec4(ambient_light + diffuse_light + specular_light, alpha);
 
 	//add emission if in base pass
 #ifdef BASE_PASS
-	gl_FragColor.rgb += emission;
+	frag_color.rgb += emission;
 #endif
-	// gl_FragColor = vec4(normal, 1.0);
+	// frag_color = vec4(normal, 1.0);
 
 //apply fog
 #if defined(FOG_DEPTH_ENABLED) || defined(FOG_HEIGHT_ENABLED)
@@ -2413,9 +2413,9 @@ FRAGMENT_SHADER_CODE
 #if defined(USE_VERTEX_LIGHTING)
 
 #if defined(BASE_PASS)
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, fog_interp.rgb, fog_interp.a);
+	frag_color.rgb = mix(frag_color.rgb, fog_interp.rgb, fog_interp.a);
 #else
-	gl_FragColor.rgb *= (1.0 - fog_interp.a);
+	frag_color.rgb *= (1.0 - fog_interp.a);
 #endif // BASE_PASS
 
 #else //pixel based fog
@@ -2436,7 +2436,7 @@ FRAGMENT_SHADER_CODE
 		fog_amount = pow(fog_z, fog_depth_curve) * fog_color_base.a;
 
 		if (fog_transmit_enabled) {
-			vec3 total_light = gl_FragColor.rgb;
+			vec3 total_light = frag_color.rgb;
 			float transmit = pow(fog_z, fog_transmit_curve);
 			fog_color = mix(max(total_light, fog_color), fog_color, transmit);
 		}
@@ -2451,9 +2451,9 @@ FRAGMENT_SHADER_CODE
 #endif
 
 #if defined(BASE_PASS)
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, fog_color, fog_amount);
+	frag_color.rgb = mix(frag_color.rgb, fog_color, fog_amount);
 #else
-	gl_FragColor.rgb *= (1.0 - fog_amount);
+	frag_color.rgb *= (1.0 - fog_amount);
 #endif // BASE_PASS
 
 #endif //use vertex lit
@@ -2464,7 +2464,7 @@ FRAGMENT_SHADER_CODE
 
 #ifdef OUTPUT_LINEAR
 	// sRGB -> linear
-	gl_FragColor.rgb = mix(pow((gl_FragColor.rgb + vec3(0.055)) * (1.0 / (1.0 + 0.055)), vec3(2.4)), gl_FragColor.rgb * (1.0 / 12.92), vec3(lessThan(gl_FragColor.rgb, vec3(0.04045))));
+	frag_color.rgb = mix(pow((frag_color.rgb + vec3(0.055)) * (1.0 / (1.0 + 0.055)), vec3(2.4)), frag_color.rgb * (1.0 / 12.92), vec3(lessThan(frag_color.rgb, vec3(0.04045))));
 #endif
 
 #else // not RENDER_DEPTH
@@ -2474,8 +2474,10 @@ FRAGMENT_SHADER_CODE
 	highp float depth = ((position_interp.z / position_interp.w) + 1.0) * 0.5 + 0.0; // bias
 	highp vec4 comp = fract(depth * vec4(255.0 * 255.0 * 255.0, 255.0 * 255.0, 255.0, 1.0));
 	comp -= comp.xxyz * vec4(0.0, 1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
-	gl_FragColor = comp;
+	frag_color = comp;
 
 #endif
 #endif
+
+	gl_FragColor = frag_color;
 }

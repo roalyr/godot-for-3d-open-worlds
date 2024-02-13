@@ -194,6 +194,7 @@
 #include "scene/3d/label_3d.h"
 #include "scene/3d/light.h"
 #include "scene/3d/listener.h"
+#include "scene/3d/merge_group.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/multimesh_instance.h"
 #include "scene/3d/navigation.h"
@@ -465,6 +466,7 @@ void register_scene_types() {
 	ClassDB::register_class<RoomManager>();
 	ClassDB::register_class<Occluder>();
 	ClassDB::register_class<Portal>();
+	ClassDB::register_class<MergeGroup>();
 
 	ClassDB::register_class<RootMotionView>();
 	ClassDB::set_class_enabled("RootMotionView", false); //disabled by default, enabled by editor
@@ -668,9 +670,11 @@ void register_scene_types() {
 	ClassDB::register_class<TorusMesh>();
 	ClassDB::register_class<PointMesh>();
 	ClassDB::register_virtual_class<Material>();
+	ClassDB::register_virtual_class<Material3D>();
 	ClassDB::register_class<SpatialMaterial>();
-	SceneTree::add_idle_callback(SpatialMaterial::flush_changes);
-	SpatialMaterial::init_shaders();
+	ClassDB::register_class<ORMSpatialMaterial>();
+	SceneTree::add_idle_callback(Material3D::flush_changes);
+	Material3D::init_shaders();
 
 	ClassDB::register_class<MeshLibrary>();
 
@@ -873,7 +877,7 @@ void unregister_scene_types() {
 
 	//SpatialMaterial is not initialised when 3D is disabled, so it shouldn't be cleaned up either
 #ifndef _3D_DISABLED
-	SpatialMaterial::finish_shaders();
+	Material3D::finish_shaders();
 #endif // _3D_DISABLED
 
 	ParticlesMaterial::finish_shaders();
