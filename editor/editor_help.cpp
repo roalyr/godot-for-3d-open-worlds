@@ -146,6 +146,7 @@ void EditorHelp::_update_theme_item_cache() {
 	theme_cache.value_color = get_theme_color(SNAME("value_color"), SNAME("EditorHelp"));
 	theme_cache.qualifier_color = get_theme_color(SNAME("qualifier_color"), SNAME("EditorHelp"));
 	theme_cache.type_color = get_theme_color(SNAME("type_color"), SNAME("EditorHelp"));
+	theme_cache.override_color = get_theme_color(SNAME("override_color"), SNAME("EditorHelp"));
 
 	theme_cache.doc_font = get_theme_font(SNAME("doc"), EditorStringName(EditorFonts));
 	theme_cache.doc_bold_font = get_theme_font(SNAME("doc_bold"), EditorStringName(EditorFonts));
@@ -995,10 +996,29 @@ void EditorHelp::_update_doc() {
 		class_desc->push_table(4);
 		class_desc->set_table_column_expand(1, true);
 
+		cd.properties.sort_custom<PropertyCompare>();
+
+		bool is_generating_overridden_properties = true; // Set to false as soon as we encounter a non-overridden property.
+		bool overridden_property_exists = false;
+
 		for (int i = 0; i < cd.properties.size(); i++) {
 			// Ignore undocumented private.
 			if (cd.properties[i].name.begins_with("_") && cd.properties[i].description.strip_edges().is_empty()) {
 				continue;
+			}
+			if (is_generating_overridden_properties && !cd.properties[i].overridden) {
+				is_generating_overridden_properties = false;
+				// No need for the extra spacing when there's no overridden property.
+				if (overridden_property_exists) {
+					class_desc->push_cell();
+					class_desc->pop();
+					class_desc->push_cell();
+					class_desc->pop();
+					class_desc->push_cell();
+					class_desc->pop();
+					class_desc->push_cell();
+					class_desc->pop();
+				}
 			}
 			property_line[cd.properties[i].name] = class_desc->get_paragraph_count() - 2; //gets overridden if description
 
@@ -1054,25 +1074,27 @@ void EditorHelp::_update_doc() {
 			_push_code_font();
 
 			if (!cd.properties[i].default_value.is_empty()) {
-				class_desc->push_color(theme_cache.symbol_color);
 				if (cd.properties[i].overridden) {
+					class_desc->push_color(theme_cache.override_color);
 					class_desc->add_text(" [");
 					class_desc->push_meta("@member " + cd.properties[i].overrides + "." + cd.properties[i].name);
 					_add_text(vformat(TTR("overrides %s:"), cd.properties[i].overrides));
 					class_desc->pop();
-					class_desc->add_text(" ");
+					class_desc->add_text(" " + _fix_constant(cd.properties[i].default_value) + "]");
+					overridden_property_exists = true;
 				} else {
+					class_desc->push_color(theme_cache.symbol_color);
 					class_desc->add_text(" [" + TTR("default:") + " ");
+
+					class_desc->push_color(theme_cache.value_color);
+					class_desc->add_text(_fix_constant(cd.properties[i].default_value));
+					class_desc->pop();
+
+					class_desc->push_color(theme_cache.symbol_color);
+					class_desc->add_text("]");
+					class_desc->pop();
 				}
-				class_desc->pop();
-
-				class_desc->push_color(theme_cache.value_color);
-				class_desc->add_text(_fix_constant(cd.properties[i].default_value));
-				class_desc->pop();
-
-				class_desc->push_color(theme_cache.symbol_color);
-				class_desc->add_text("]");
-				class_desc->pop();
+				class_desc->pop(); // color
 			}
 
 			if (cd.properties[i].is_deprecated) {
@@ -1371,7 +1393,17 @@ void EditorHelp::_update_doc() {
 		}
 
 		// Enums
-		if (enums.size()) {
+		bool has_enums = enums.size() && !cd.is_script_doc;
+		if (enums.size() && !has_enums) {
+			for (KeyValue<String, DocData::EnumDoc> &E : cd.enums) {
+				if (E.key.begins_with("_") && E.value.description.strip_edges().is_empty()) {
+					continue;
+				}
+				has_enums = true;
+				break;
+			}
+		}
+		if (has_enums) {
 			section_line.push_back(Pair<String, int>(TTR("Enumerations"), class_desc->get_paragraph_count() - 2));
 			_push_title_font();
 			class_desc->add_text(TTR("Enumerations"));
@@ -1381,8 +1413,17 @@ void EditorHelp::_update_doc() {
 			class_desc->add_newline();
 
 			for (KeyValue<String, Vector<DocData::ConstantDoc>> &E : enums) {
-				enum_line[E.key] = class_desc->get_paragraph_count() - 2;
+				String key = E.key;
+				if ((key.get_slice_count(".") > 1) && (key.get_slice(".", 0) == edited_class)) {
+					key = key.get_slice(".", 1);
+				}
+				if (cd.enums.has(key)) {
+					if (cd.is_script_doc && cd.enums[key].description.strip_edges().is_empty() && E.key.begins_with("_")) {
+						continue;
+					}
+				}
 
+				enum_line[E.key] = class_desc->get_paragraph_count() - 2;
 				_push_code_font();
 
 				class_desc->push_color(theme_cache.title_color);
@@ -1393,27 +1434,19 @@ void EditorHelp::_update_doc() {
 				}
 				class_desc->pop();
 
-				String e = E.key;
-				if ((e.get_slice_count(".") > 1) && (e.get_slice(".", 0) == edited_class)) {
-					e = e.get_slice(".", 1);
-				}
-
 				class_desc->push_color(theme_cache.headline_color);
-				class_desc->add_text(e);
+				class_desc->add_text(key);
 				class_desc->pop();
 
 				class_desc->push_color(theme_cache.symbol_color);
 				class_desc->add_text(":");
 				class_desc->pop();
 
-				if (cd.enums.has(e)) {
-					if (cd.enums[e].is_deprecated) {
-						DEPRECATED_DOC_TAG;
-					}
-
-					if (cd.enums[e].is_experimental) {
-						EXPERIMENTAL_DOC_TAG;
-					}
+				if (cd.enums[key].is_deprecated) {
+					DEPRECATED_DOC_TAG;
+				}
+				if (cd.enums[key].is_experimental) {
+					EXPERIMENTAL_DOC_TAG;
 				}
 
 				_pop_code_font();
@@ -1422,11 +1455,11 @@ void EditorHelp::_update_doc() {
 				class_desc->add_newline();
 
 				// Enum description.
-				if (e != "@unnamed_enums" && cd.enums.has(e) && !cd.enums[e].description.strip_edges().is_empty()) {
+				if (key != "@unnamed_enums" && cd.enums.has(key) && !cd.enums[key].description.strip_edges().is_empty()) {
 					class_desc->push_color(theme_cache.text_color);
 					_push_normal_font();
 					class_desc->push_indent(1);
-					_add_text(cd.enums[e].description);
+					_add_text(cd.enums[key].description);
 					class_desc->pop();
 					_pop_normal_font();
 					class_desc->pop();

@@ -104,8 +104,10 @@ private:
 
 	// blend mode
 	XrEnvironmentBlendMode environment_blend_mode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+	XrEnvironmentBlendMode requested_environment_blend_mode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 	uint32_t num_supported_environment_blend_modes = 0;
 	XrEnvironmentBlendMode *supported_environment_blend_modes = nullptr;
+	bool emulate_environment_blend_mode_alpha_blend = false;
 
 	// state
 	XrInstance instance = XR_NULL_HANDLE;
@@ -232,7 +234,8 @@ private:
 	bool create_session();
 	bool load_supported_reference_spaces();
 	bool is_reference_space_supported(XrReferenceSpaceType p_reference_space);
-	bool setup_spaces();
+	bool setup_play_space();
+	bool setup_view_space();
 	bool load_supported_swapchain_formats();
 	bool is_swapchain_format_supported(int64_t p_swapchain_format);
 	bool create_swapchains();
@@ -329,6 +332,7 @@ public:
 	void set_xr_interface(OpenXRInterface *p_xr_interface);
 	static void register_extension_wrapper(OpenXRExtensionWrapper *p_extension_wrapper);
 	static void unregister_extension_wrapper(OpenXRExtensionWrapper *p_extension_wrapper);
+	static const Vector<OpenXRExtensionWrapper *> &get_registered_extension_wrappers();
 	static void register_extension_metadata();
 	static void cleanup_extension_wrappers();
 
@@ -338,7 +342,7 @@ public:
 	void set_view_configuration(XrViewConfigurationType p_view_configuration);
 	XrViewConfigurationType get_view_configuration() const { return view_configuration; }
 
-	void set_requested_reference_space(XrReferenceSpaceType p_requested_reference_space);
+	bool set_requested_reference_space(XrReferenceSpaceType p_requested_reference_space);
 	XrReferenceSpaceType get_requested_reference_space() const { return requested_reference_space; }
 	XrReferenceSpaceType get_reference_space() const { return reference_space; }
 
@@ -427,7 +431,16 @@ public:
 	const XrEnvironmentBlendMode *get_supported_environment_blend_modes(uint32_t &count);
 	bool is_environment_blend_mode_supported(XrEnvironmentBlendMode p_blend_mode) const;
 	bool set_environment_blend_mode(XrEnvironmentBlendMode p_blend_mode);
-	XrEnvironmentBlendMode get_environment_blend_mode() const { return environment_blend_mode; }
+	XrEnvironmentBlendMode get_environment_blend_mode() const { return requested_environment_blend_mode; }
+
+	enum OpenXRAlphaBlendModeSupport {
+		OPENXR_ALPHA_BLEND_MODE_SUPPORT_NONE = 0,
+		OPENXR_ALPHA_BLEND_MODE_SUPPORT_REAL = 1,
+		OPENXR_ALPHA_BLEND_MODE_SUPPORT_EMULATING = 2,
+	};
+
+	void set_emulate_environment_blend_mode_alpha_blend(bool p_enabled);
+	OpenXRAlphaBlendModeSupport is_environment_blend_mode_alpha_blend_supported();
 
 	OpenXRAPI();
 	~OpenXRAPI();

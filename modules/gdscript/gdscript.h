@@ -176,6 +176,7 @@ private:
 	bool clearing = false;
 	//exported members
 	String source;
+	Vector<uint8_t> binary_tokens;
 	String path;
 	bool path_valid = false; // False if using default path.
 	StringName local_name; // Inner class identifier or `class_name`.
@@ -212,7 +213,8 @@ private:
 	void _get_script_signal_list(List<MethodInfo> *r_list, bool p_include_base) const;
 
 	GDScript *_get_gdscript_from_variant(const Variant &p_variant);
-	void _get_dependencies(RBSet<GDScript *> &p_dependencies, const GDScript *p_except);
+	void _collect_function_dependencies(GDScriptFunction *p_func, RBSet<GDScript *> &p_dependencies, const GDScript *p_except);
+	void _collect_dependencies(RBSet<GDScript *> &p_dependencies, const GDScript *p_except);
 
 protected:
 	bool _get(const StringName &p_name, Variant &r_ret) const;
@@ -295,6 +297,10 @@ public:
 	virtual void set_path(const String &p_path, bool p_take_over = false) override;
 	String get_script_path() const;
 	Error load_source_code(const String &p_path);
+
+	void set_binary_tokens_source(const Vector<uint8_t> &p_binary_tokens);
+	const Vector<uint8_t> &get_binary_tokens_source() const;
+	Vector<uint8_t> get_as_binary_tokens() const;
 
 	bool get_property_default_value(const StringName &p_property, Variant &r_value) const override;
 

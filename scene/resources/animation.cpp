@@ -4016,7 +4016,7 @@ bool Animation::_quaternion_track_optimize_key(const TKey<Quaternion> t0, const 
 	if (q0.get_axis().dot(q1.get_axis()) >= 1.0 - p_allowed_angular_error * 2.0) {
 		double a0 = Math::acos(t0.value.dot(t1.value));
 		double a1 = Math::acos(t1.value.dot(t2.value));
-		if (a0 + a1 >= Math_PI) {
+		if (a0 + a1 >= Math_PI / 2) {
 			return false; // Rotation is more than 180 deg, keep key.
 		}
 		// Calc velocities.
@@ -4866,7 +4866,7 @@ void Animation::compress(uint32_t p_page_size, uint32_t p_fps, float p_split_tol
 							p.offset = data_tracks[i].data.size();
 							time_tracks[i].packets.push_back(p);
 						} else {
-							ERR_FAIL_COND(time_tracks[i].packets.size() == 0);
+							ERR_FAIL_COND(time_tracks[i].packets.is_empty());
 							time_tracks[i].packets[time_tracks[i].packets.size() - 1].count++;
 						}
 					}
@@ -4953,7 +4953,7 @@ void Animation::compress(uint32_t p_page_size, uint32_t p_fps, float p_split_tol
 			p.offset = data_tracks[comp_track].data.size();
 			time_tracks[comp_track].packets.push_back(p);
 		} else {
-			ERR_CONTINUE(time_tracks[comp_track].packets.size() == 0);
+			ERR_CONTINUE(time_tracks[comp_track].packets.is_empty());
 			time_tracks[comp_track].packets[time_tracks[comp_track].packets.size() - 1].count++;
 		}
 	}
@@ -6065,7 +6065,7 @@ Variant Animation::cubic_interpolate_in_time_variant(const Variant &pre_a, const
 			return Variant();
 		} break;
 		case Variant::FLOAT: {
-			return Math::cubic_interpolate_in_time(a.operator double(), b.operator double(), pre_a.operator double(), post_b.operator double(), (double)c, (double)p_pre_a_t, (double)p_b_t, (double)p_post_b_t);
+			return Math::cubic_interpolate_in_time(a.operator double(), b.operator double(), pre_a.operator double(), post_b.operator double(), (double)c, (double)p_b_t, (double)p_pre_a_t, (double)p_post_b_t);
 		} break;
 		case Variant::VECTOR2: {
 			return (a.operator Vector2()).cubic_interpolate_in_time(b.operator Vector2(), pre_a.operator Vector2(), post_b.operator Vector2(), c, p_b_t, p_pre_a_t, p_post_b_t);
@@ -6100,10 +6100,10 @@ Variant Animation::cubic_interpolate_in_time_variant(const Variant &pre_a, const
 			const Color cb = b.operator Color();
 			const Color cpb = post_b.operator Color();
 			return Color(
-					Math::cubic_interpolate_in_time((double)ca.r, (double)cb.r, (double)cpa.r, (double)cpb.r, (double)c, (double)p_pre_a_t, (double)p_b_t, (double)p_post_b_t),
-					Math::cubic_interpolate_in_time((double)ca.g, (double)cb.g, (double)cpa.g, (double)cpb.g, (double)c, (double)p_pre_a_t, (double)p_b_t, (double)p_post_b_t),
-					Math::cubic_interpolate_in_time((double)ca.b, (double)cb.b, (double)cpa.b, (double)cpb.b, (double)c, (double)p_pre_a_t, (double)p_b_t, (double)p_post_b_t),
-					Math::cubic_interpolate_in_time((double)ca.a, (double)cb.a, (double)cpa.a, (double)cpb.a, (double)c, (double)p_pre_a_t, (double)p_b_t, (double)p_post_b_t));
+					Math::cubic_interpolate_in_time((double)ca.r, (double)cb.r, (double)cpa.r, (double)cpb.r, (double)c, (double)p_b_t, (double)p_pre_a_t, (double)p_post_b_t),
+					Math::cubic_interpolate_in_time((double)ca.g, (double)cb.g, (double)cpa.g, (double)cpb.g, (double)c, (double)p_b_t, (double)p_pre_a_t, (double)p_post_b_t),
+					Math::cubic_interpolate_in_time((double)ca.b, (double)cb.b, (double)cpa.b, (double)cpb.b, (double)c, (double)p_b_t, (double)p_pre_a_t, (double)p_post_b_t),
+					Math::cubic_interpolate_in_time((double)ca.a, (double)cb.a, (double)cpa.a, (double)cpb.a, (double)c, (double)p_b_t, (double)p_pre_a_t, (double)p_post_b_t));
 		} break;
 		case Variant::AABB: {
 			const ::AABB apa = pre_a.operator ::AABB();
@@ -6120,9 +6120,9 @@ Variant Animation::cubic_interpolate_in_time_variant(const Variant &pre_a, const
 			const Basis bb = b.operator Basis();
 			const Basis bpb = post_b.operator Basis();
 			return Basis(
-					ba.rows[0].cubic_interpolate_in_time(bb.rows[0], bpa.rows[0], bpb.rows[0], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ba.rows[1].cubic_interpolate_in_time(bb.rows[1], bpa.rows[1], bpb.rows[1], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ba.rows[2].cubic_interpolate_in_time(bb.rows[2], bpa.rows[2], bpb.rows[2], c, p_pre_a_t, p_b_t, p_post_b_t));
+					ba.rows[0].cubic_interpolate_in_time(bb.rows[0], bpa.rows[0], bpb.rows[0], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ba.rows[1].cubic_interpolate_in_time(bb.rows[1], bpa.rows[1], bpb.rows[1], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ba.rows[2].cubic_interpolate_in_time(bb.rows[2], bpa.rows[2], bpb.rows[2], c, p_b_t, p_pre_a_t, p_post_b_t));
 		} break;
 		case Variant::QUATERNION: {
 			return (a.operator Quaternion()).spherical_cubic_interpolate_in_time(b.operator Quaternion(), pre_a.operator Quaternion(), post_b.operator Quaternion(), c, p_b_t, p_pre_a_t, p_post_b_t);
@@ -6134,9 +6134,9 @@ Variant Animation::cubic_interpolate_in_time_variant(const Variant &pre_a, const
 			const Transform2D tpb = post_b.operator Transform2D();
 			// TODO: May cause unintended skew, we needs spherical_cubic_interpolate_in_time() for angle and Transform2D::cubic_interpolate_with().
 			return Transform2D(
-					ta[0].cubic_interpolate_in_time(tb[0], tpa[0], tpb[0], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ta[1].cubic_interpolate_in_time(tb[1], tpa[1], tpb[1], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ta[2].cubic_interpolate_in_time(tb[2], tpa[2], tpb[2], c, p_pre_a_t, p_b_t, p_post_b_t));
+					ta[0].cubic_interpolate_in_time(tb[0], tpa[0], tpb[0], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ta[1].cubic_interpolate_in_time(tb[1], tpa[1], tpb[1], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ta[2].cubic_interpolate_in_time(tb[2], tpa[2], tpb[2], c, p_b_t, p_pre_a_t, p_post_b_t));
 		} break;
 		case Variant::TRANSFORM3D: {
 			const Transform3D tpa = pre_a.operator Transform3D();
@@ -6145,10 +6145,10 @@ Variant Animation::cubic_interpolate_in_time_variant(const Variant &pre_a, const
 			const Transform3D tpb = post_b.operator Transform3D();
 			// TODO: May cause unintended skew, we needs Transform3D::cubic_interpolate_with().
 			return Transform3D(
-					ta.basis.rows[0].cubic_interpolate_in_time(tb.basis.rows[0], tpa.basis.rows[0], tpb.basis.rows[0], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ta.basis.rows[1].cubic_interpolate_in_time(tb.basis.rows[1], tpa.basis.rows[1], tpb.basis.rows[1], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ta.basis.rows[2].cubic_interpolate_in_time(tb.basis.rows[2], tpa.basis.rows[2], tpb.basis.rows[2], c, p_pre_a_t, p_b_t, p_post_b_t),
-					ta.origin.cubic_interpolate_in_time(tb.origin, tpa.origin, tpb.origin, c, p_pre_a_t, p_b_t, p_post_b_t));
+					ta.basis.rows[0].cubic_interpolate_in_time(tb.basis.rows[0], tpa.basis.rows[0], tpb.basis.rows[0], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ta.basis.rows[1].cubic_interpolate_in_time(tb.basis.rows[1], tpa.basis.rows[1], tpb.basis.rows[1], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ta.basis.rows[2].cubic_interpolate_in_time(tb.basis.rows[2], tpa.basis.rows[2], tpb.basis.rows[2], c, p_b_t, p_pre_a_t, p_post_b_t),
+					ta.origin.cubic_interpolate_in_time(tb.origin, tpa.origin, tpb.origin, c, p_b_t, p_pre_a_t, p_post_b_t));
 		} break;
 		case Variant::BOOL:
 		case Variant::INT:

@@ -262,13 +262,14 @@
 			The color of the viewport border in the 2D editor. This border represents the viewport's size at the base resolution defined in the Project Settings. Objects placed outside this border will not be visible unless a [Camera2D] node is used, or unless the window is resized and the stretch mode is set to [code]disabled[/code].
 		</member>
 		<member name="editors/3d/default_fov" type="float" setter="" getter="">
-			The default camera field of view to use in the 3D editor (in degrees). The camera field of view can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera field of view adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a Camera3D node is being previewed in the editor.
+			The default camera vertical field of view to use in the 3D editor (in degrees). The camera field of view can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera field of view adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a [Camera3D] node is being previewed in the editor.
+			[b]Note:[/b] The editor camera always uses the [b]Keep Height[/b] aspect mode.
 		</member>
 		<member name="editors/3d/default_z_far" type="float" setter="" getter="">
-			The default camera far clip distance to use in the 3D editor (in degrees). Higher values make it possible to view objects placed further away from the camera, at the cost of lower precision in the depth buffer (which can result in visible Z-fighting in the distance). The camera far clip distance can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera far clip distance adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a Camera3D node is being previewed in the editor.
+			The default camera far clip distance to use in the 3D editor (in degrees). Higher values make it possible to view objects placed further away from the camera, at the cost of lower precision in the depth buffer (which can result in visible Z-fighting in the distance). The camera far clip distance can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera far clip distance adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a [Camera3D] node is being previewed in the editor.
 		</member>
 		<member name="editors/3d/default_z_near" type="float" setter="" getter="">
-			The default camera near clip distance to use in the 3D editor (in degrees). Lower values make it possible to view objects placed closer to the camera, at the cost of lower precision in the depth buffer (which can result in visible Z-fighting in the distance). The camera near clip distance can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera near clip distance adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a Camera3D node is being previewed in the editor.
+			The default camera near clip distance to use in the 3D editor (in degrees). Lower values make it possible to view objects placed closer to the camera, at the cost of lower precision in the depth buffer (which can result in visible Z-fighting in the distance). The camera near clip distance can be adjusted on a per-scene basis using the [b]View[/b] menu at the top of the 3D editor. If a scene had its camera near clip distance adjusted using the [b]View[/b] menu, this setting is ignored in the scene in question. This setting is also ignored while a [Camera3D] node is being previewed in the editor.
 		</member>
 		<member name="editors/3d/freelook/freelook_activation_modifier" type="int" setter="" getter="">
 			The modifier key to use to enable freelook in the 3D editor (on top of pressing the right mouse button).
@@ -612,7 +613,12 @@
 		</member>
 		<member name="interface/editor/show_internal_errors_in_toast_notifications" type="int" setter="" getter="">
 			If enabled, displays internal engine errors in toast notifications (toggleable by clicking the "bell" icon at the bottom of the editor). No matter the value of this setting, non-internal engine errors will always be visible in toast notifications.
-			The default [b]Auto[/b] value will only enable this if the editor was compiled with the [code]dev=yes[/code] option (the default is [code]dev=no[/code]).
+			The default [b]Auto[/b] value will only enable this if the editor was compiled with the [code]dev_build=yes[/code] SCons option (the default is [code]dev_build=no[/code]).
+		</member>
+		<member name="interface/editor/show_update_spinner" type="int" setter="" getter="">
+			If enabled, displays an icon in the top-right corner of the editor that spins when the editor redraws a frame. This can be used to diagnose situations where the engine is constantly redrawing, which should be avoided as this increases CPU and GPU utilization for no good reason. To further troubleshoot these situations, start the editor with the [code]--debug-canvas-item-redraw[/code] [url=$DOCS_URL/tutorials/editor/command_line_tutorial.html]command line argument[/url].
+			Consider enabling this if you are developing editor plugins to ensure they only make the editor redraw when required.
+			The default [b]Auto[/b] value will only enable this if the editor was compiled with the [code]dev_build=yes[/code] SCons option (the default is [code]dev_build=no[/code]).
 		</member>
 		<member name="interface/editor/single_window_mode" type="bool" setter="" getter="">
 			If [code]true[/code], embed modal windows such as docks inside the main editor window. When single-window mode is enabled, tooltips will also be embedded inside the main editor window, which means they can't be displayed outside of the editor window.
@@ -627,6 +633,11 @@
 		<member name="interface/editor/use_embedded_menu" type="bool" setter="" getter="">
 			If [code]true[/code], editor main menu is using embedded [MenuBar] instead of system global menu.
 			Specific to the macOS platform.
+		</member>
+		<member name="interface/editor/vsync_mode" type="int" setter="" getter="">
+			Sets the V-Sync mode for the editor. Does not affect the project when run from the editor (this is controlled by [member ProjectSettings.display/window/vsync/vsync_mode]).
+			Depending on the platform and used renderer, the engine will fall back to [b]Enabled[/b] if the desired mode is not supported.
+			[b]Note:[/b] V-Sync modes other than [b]Enabled[/b] are only supported in the Forward+ and Mobile rendering methods, not Compatibility.
 		</member>
 		<member name="interface/inspector/float_drag_speed" type="float" setter="" getter="">
 			Base speed for increasing/decreasing float values by dragging them in the inspector.
@@ -666,7 +677,7 @@
 		</member>
 		<member name="interface/theme/additional_spacing" type="int" setter="" getter="">
 			The extra spacing to add to various GUI elements in the editor (in pixels). Increasing this value is useful to improve usability on touch screens, at the cost of reducing the amount of usable screen real estate.
-			 See also [member interface/theme/spacing_preset].
+			See also [member interface/theme/spacing_preset].
 		</member>
 		<member name="interface/theme/base_color" type="Color" setter="" getter="">
 			The base color to use for user interface elements in the editor. Secondary colors (such as darker/lighter variants) are derived from this color.
@@ -724,6 +735,9 @@
 			Specify the multiplier to apply to the scale for the editor gizmo handles to improve usability on touchscreen devices.
 			[b]Note:[/b] Defaults to [code]1[/code] on non-touchscreen devices.
 		</member>
+		<member name="network/connection/network_mode" type="int" setter="" getter="">
+			Determines whether online features are enabled in the editor, such as the Asset Library. Setting this property to "Offline" is recommended to limit editor's internet activity, especially if privacy is a concern.
+		</member>
 		<member name="network/debug/remote_host" type="String" setter="" getter="">
 			The address to listen to when starting the remote debugger. This can be set to [code]0.0.0.0[/code] to allow external clients to connect to the remote debugger (instead of restricting the remote debugger to connections from [code]localhost[/code]).
 		</member>
@@ -761,6 +775,9 @@
 		</member>
 		<member name="run/output/font_size" type="int" setter="" getter="">
 			The size of the font in the [b]Output[/b] panel at the bottom of the editor. This setting does not impact the font size of the script editor (see [member interface/editor/code_font_size]).
+		</member>
+		<member name="run/platforms/linuxbsd/prefer_wayland" type="bool" setter="" getter="">
+			If [code]true[/code], on Linux/BSD, the editor will check for Wayland first instead of X11 (if available).
 		</member>
 		<member name="run/window_placement/android_window" type="int" setter="" getter="">
 			The Android window to display the project on when starting the project from the editor.
@@ -881,7 +898,7 @@
 			[b]Note:[/b] You can hold down [kbd]Alt[/kbd] while using the mouse wheel to temporarily scroll 5 times faster.
 		</member>
 		<member name="text_editor/completion/add_type_hints" type="bool" setter="" getter="">
-			If [code]true[/code], adds static typing hints such as [code]-&gt; void[/code] and [code]: int[/code] when using code autocompletion or when creating onready variables by drag and dropping nodes into the script editor while pressing the [kbd]Ctrl[/kbd] key.
+			If [code]true[/code], adds [url=$DOCS_URL/tutorials/scripting/gdscript/static_typing.html]GDScript static typing[/url] hints such as [code]-&gt; void[/code] and [code]: int[/code] when using code autocompletion or when creating onready variables by drag and dropping nodes into the script editor while pressing the [kbd]Ctrl[/kbd] key. If [code]true[/code], newly created scripts will also automatically have type hints added to their method parameters and return types.
 		</member>
 		<member name="text_editor/completion/auto_brace_complete" type="bool" setter="" getter="">
 			If [code]true[/code], automatically completes braces when making use of code completion.

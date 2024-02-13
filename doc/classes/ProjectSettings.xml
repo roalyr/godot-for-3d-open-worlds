@@ -742,6 +742,24 @@
 		<member name="debug/shapes/paths/geometry_width" type="float" setter="" getter="" default="2.0">
 			Line width of the curve path geometry, visible when "Visible Paths" is enabled in the Debug menu.
 		</member>
+		<member name="display/display_server/driver" type="String" setter="" getter="">
+			Sets the driver to be used by the display server. This property can not be edited directly, instead, set the driver using the platform-specific overrides.
+		</member>
+		<member name="display/display_server/driver.android" type="String" setter="" getter="">
+			Android override for [member display/display_server/driver].
+		</member>
+		<member name="display/display_server/driver.ios" type="String" setter="" getter="">
+			iOS override for [member display/display_server/driver].
+		</member>
+		<member name="display/display_server/driver.linuxbsd" type="String" setter="" getter="">
+			LinuxBSD override for [member display/display_server/driver].
+		</member>
+		<member name="display/display_server/driver.macos" type="String" setter="" getter="">
+			MacOS override for [member display/display_server/driver].
+		</member>
+		<member name="display/display_server/driver.windows" type="String" setter="" getter="">
+			Windows override for [member display/display_server/driver].
+		</member>
 		<member name="display/mouse_cursor/custom_image" type="String" setter="" getter="" default="&quot;&quot;">
 			Custom image for the mouse cursor (limited to 256×256).
 		</member>
@@ -795,15 +813,18 @@
 		</member>
 		<member name="display/window/size/initial_position" type="Vector2i" setter="" getter="" default="Vector2i(0, 0)">
 			Main window initial position (in virtual desktop coordinates), this setting is used only if [member display/window/size/initial_position_type] is set to "Absolute" ([code]0[/code]).
+			[b]Note:[/b] This setting only affects the exported project, or when the project is run from the command line. In the editor, the value of [member EditorSettings.run/window_placement/rect_custom_position] is used instead.
 		</member>
 		<member name="display/window/size/initial_position_type" type="int" setter="" getter="" default="1">
 			Main window initial position.
 			[code]0[/code] - "Absolute", [member display/window/size/initial_position] is used to set window position.
 			[code]1[/code] - "Primary Screen Center".
 			[code]2[/code] - "Other Screen Center", [member display/window/size/initial_screen] is used to set the screen.
+			[b]Note:[/b] This setting only affects the exported project, or when the project is run from the command line. In the editor, the value of [member EditorSettings.run/window_placement/rect] is used instead.
 		</member>
 		<member name="display/window/size/initial_screen" type="int" setter="" getter="" default="0">
 			Main window initial screen, this setting is used only if [member display/window/size/initial_position_type] is set to "Other Screen Center" ([code]2[/code]).
+			[b]Note:[/b] This setting only affects the exported project, or when the project is run from the command line. In the editor, the value of [member EditorSettings.run/window_placement/screen] is used instead.
 		</member>
 		<member name="display/window/size/mode" type="int" setter="" getter="" default="0">
 			Main window mode. See [enum DisplayServer.WindowMode] for possible values and how each mode behaves.
@@ -857,7 +878,7 @@
 			If [code]true[/code] subwindows are embedded in the main window.
 		</member>
 		<member name="display/window/vsync/vsync_mode" type="int" setter="" getter="" default="1">
-			Sets the V-Sync mode for the main game window.
+			Sets the V-Sync mode for the main game window. The editor's own V-Sync mode can be set using [member EditorSettings.interface/editor/vsync_mode].
 			See [enum DisplayServer.VSyncMode] for possible values and how they affect the behavior of your application.
 			Depending on the platform and used renderer, the engine will fall back to [b]Enabled[/b] if the desired mode is not supported.
 			[b]Note:[/b] V-Sync modes other than [b]Enabled[/b] are only supported in the Forward+ and Mobile rendering methods, not Compatibility.
@@ -2024,6 +2045,9 @@
 		<member name="navigation/3d/default_up" type="Vector3" setter="" getter="" default="Vector3(0, 1, 0)">
 			Default up orientation for 3D navigation maps. See [method NavigationServer3D.map_set_up].
 		</member>
+		<member name="navigation/3d/merge_rasterizer_cell_scale" type="float" setter="" getter="" default="1.0">
+			Default merge rasterizer cell scale for 3D navigation maps. See [method NavigationServer3D.map_set_merge_rasterizer_cell_scale].
+		</member>
 		<member name="navigation/3d/use_edge_connections" type="bool" setter="" getter="" default="true">
 			If enabled 3D navigation regions will use edge connections to connect with other navigation regions within proximity of the navigation map edge connection margin. This setting only affects World3D default navigation maps.
 		</member>
@@ -2065,8 +2089,11 @@
 			If in doubt, leave this setting empty.
 		</member>
 		<member name="physics/2d/default_angular_damp" type="float" setter="" getter="" default="1.0">
-			The default angular damp in 2D.
-			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_ticks_per_second], [code]60[/code] by default) will bring the object to a stop in one iteration.
+			The default rotational motion damping in 2D. Damping is used to gradually slow down physical objects over time. RigidBodies will fall back to this value when combining their own damping values and no area damping value is present.
+			Suggested values are in the range [code]0[/code] to [code]30[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Greater values will stop the object faster. A value equal to or greater than the physics tick rate ([member physics/common/physics_ticks_per_second]) will bring the object to a stop in one iteration.
+			[b]Note:[/b] Godot damping calculations are velocity-dependent, meaning bodies moving faster will take a longer time to come to rest. They do not simulate inertia, friction, or air resistance. Therefore heavier or larger bodies will lose speed at the same proportional rate as lighter or smaller bodies.
+			During each physics tick, Godot will multiply the linear velocity of RigidBodies by [code]1.0 - combined_damp / physics_ticks_per_second[/code]. By default, bodies combine damp factors: [code]combined_damp[/code] is the sum of the damp value of the body and this value or the area's value the body is in. See [enum RigidBody2D.DampMode].
+			[b]Warning:[/b] Godot's damping calculations are simulation tick rate dependent. Changing [member physics/common/physics_ticks_per_second] may significantly change the outcomes and feel of your simulation. This is true for the entire range of damping values greater than 0. To get back to a similar feel, you also need to change your damp values. This needed change is not proportional and differs from case to case.
 		</member>
 		<member name="physics/2d/default_gravity" type="float" setter="" getter="" default="980.0">
 			The default gravity strength in 2D (in pixels per second squared).
@@ -2097,8 +2124,11 @@
 			[/codeblocks]
 		</member>
 		<member name="physics/2d/default_linear_damp" type="float" setter="" getter="" default="0.1">
-			The default linear damp in 2D.
-			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_ticks_per_second], [code]60[/code] by default) will bring the object to a stop in one iteration.
+			The default linear motion damping in 2D. Damping is used to gradually slow down physical objects over time. RigidBodies will fall back to this value when combining their own damping values and no area damping value is present.
+			Suggested values are in the range [code]0[/code] to [code]30[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Greater values will stop the object faster. A value equal to or greater than the physics tick rate ([member physics/common/physics_ticks_per_second]) will bring the object to a stop in one iteration.
+			[b]Note:[/b] Godot damping calculations are velocity-dependent, meaning bodies moving faster will take a longer time to come to rest. They do not simulate inertia, friction, or air resistance. Therefore heavier or larger bodies will lose speed at the same proportional rate as lighter or smaller bodies.
+			During each physics tick, Godot will multiply the linear velocity of RigidBodies by [code]1.0 - combined_damp / physics_ticks_per_second[/code], where [code]combined_damp[/code] is the sum of the linear damp of the body and this value, or the area's value the body is in, assuming the body defaults to combine damp values. See [enum RigidBody2D.DampMode].
+			[b]Warning:[/b] Godot's damping calculations are simulation tick rate dependent. Changing [member physics/common/physics_ticks_per_second] may significantly change the outcomes and feel of your simulation. This is true for the entire range of damping values greater than 0. To get back to a similar feel, you also need to change your damp values. This needed change is not proportional and differs from case to case.
 		</member>
 		<member name="physics/2d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 2D physics.
@@ -2137,8 +2167,11 @@
 			Time (in seconds) of inactivity before which a 2D physics body will put to sleep. See [constant PhysicsServer2D.SPACE_PARAM_BODY_TIME_TO_SLEEP].
 		</member>
 		<member name="physics/3d/default_angular_damp" type="float" setter="" getter="" default="0.1">
-			The default angular damp in 3D.
-			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_ticks_per_second], [code]60[/code] by default) will bring the object to a stop in one iteration.
+			The default rotational motion damping in 3D. Damping is used to gradually slow down physical objects over time. RigidBodies will fall back to this value when combining their own damping values and no area damping value is present.
+			Suggested values are in the range [code]0[/code] to [code]30[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Greater values will stop the object faster. A value equal to or greater than the physics tick rate ([member physics/common/physics_ticks_per_second]) will bring the object to a stop in one iteration.
+			[b]Note:[/b] Godot damping calculations are velocity-dependent, meaning bodies moving faster will take a longer time to come to rest. They do not simulate inertia, friction, or air resistance. Therefore heavier or larger bodies will lose speed at the same proportional rate as lighter or smaller bodies.
+			During each physics tick, Godot will multiply the angular velocity of RigidBodies by [code]1.0 - combined_damp / physics_ticks_per_second[/code]. By default, bodies combine damp factors: [code]combined_damp[/code] is the sum of the damp value of the body and this value or the area's value the body is in. See [enum RigidBody3D.DampMode].
+			[b]Warning:[/b] Godot's damping calculations are simulation tick rate dependent. Changing [member physics/common/physics_ticks_per_second] may significantly change the outcomes and feel of your simulation. This is true for the entire range of damping values greater than 0. To get back to a similar feel, you also need to change your damp values. This needed change is not proportional and differs from case to case.
 		</member>
 		<member name="physics/3d/default_gravity" type="float" setter="" getter="" default="9.8">
 			The default gravity strength in 3D (in meters per second squared).
@@ -2169,8 +2202,11 @@
 			[/codeblocks]
 		</member>
 		<member name="physics/3d/default_linear_damp" type="float" setter="" getter="" default="0.1">
-			The default linear damp in 3D.
-			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_ticks_per_second], [code]60[/code] by default) will bring the object to a stop in one iteration.
+			The default linear motion damping in 3D. Damping is used to gradually slow down physical objects over time. RigidBodies will fall back to this value when combining their own damping values and no area damping value is present.
+			Suggested values are in the range [code]0[/code] to [code]30[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Greater values will stop the object faster. A value equal to or greater than the physics tick rate ([member physics/common/physics_ticks_per_second]) will bring the object to a stop in one iteration.
+			[b]Note:[/b] Godot damping calculations are velocity-dependent, meaning bodies moving faster will take a longer time to come to rest. They do not simulate inertia, friction, or air resistance. Therefore heavier or larger bodies will lose speed at the same proportional rate as lighter or smaller bodies.
+			During each physics tick, Godot will multiply the linear velocity of RigidBodies by [code]1.0 - combined_damp / physics_ticks_per_second[/code]. By default, bodies combine damp factors: [code]combined_damp[/code] is the sum of the damp value of the body and this value or the area's value the body is in. See [enum RigidBody3D.DampMode].
+			[b]Warning:[/b] Godot's damping calculations are simulation tick rate dependent. Changing [member physics/common/physics_ticks_per_second] may significantly change the outcomes and feel of your simulation. This is true for the entire range of damping values greater than 0. To get back to a similar feel, you also need to change your damp values. This needed change is not proportional and differs from case to case.
 		</member>
 		<member name="physics/3d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 3D physics.
@@ -2530,6 +2566,10 @@
 		<member name="rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality.mobile" type="int" setter="" getter="" default="0">
 			Lower-end override for [member rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality] on mobile devices, due to performance concerns or driver support.
 		</member>
+		<member name="rendering/lights_and_shadows/tighter_shadow_caster_culling" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], items that cannot cast shadows into the view frustum will not be rendered into shadow maps.
+			This can increase performance.
+		</member>
 		<member name="rendering/lights_and_shadows/use_physical_light_units" type="bool" setter="" getter="" default="false">
 			Enables the use of physically based units for light sources. Physically based units tend to be much larger than the arbitrary units used by Godot, but they can be used to match lighting within Godot to real-world lighting. Due to the large dynamic range of lighting conditions present in nature, Godot bakes exposure into the various lighting quantities before rendering. Most light sources bake exposure automatically at run time based on the active [CameraAttributes] resource, but [LightmapGI] and [VoxelGI] require a [CameraAttributes] resource to be set at bake time to reduce the dynamic range. At run time, Godot will automatically reconcile the baked exposure with the active exposure to ensure lighting remains consistent.
 		</member>
@@ -2658,6 +2698,20 @@
 		</member>
 		<member name="rendering/rendering_device/staging_buffer/texture_upload_region_size_px" type="int" setter="" getter="" default="64">
 		</member>
+		<member name="rendering/rendering_device/vsync/frame_queue_size" type="int" setter="" getter="" default="2">
+			The number of frames to track on the CPU side before stalling to wait for the GPU.
+			Try the [url=https://darksylinc.github.io/vsync_simulator/]V-Sync Simulator[/url], an interactive interface that simulates presentation to better understand how it is affected by different variables under various conditions.
+			[b]Note:[/b] This property is only read when the project starts. There is currently no way to change this value at run-time.
+		</member>
+		<member name="rendering/rendering_device/vsync/swapchain_image_count" type="int" setter="" getter="" default="3">
+			The number of images the swapchain will consist of (back buffers + front buffer).
+			[code]2[/code] corresponds to double-buffering and [code]3[/code] to triple-buffering.
+			Double-buffering may give you the lowest lag/latency but if V-Sync is on and the system can't render at 60 fps, the framerate will go down in multiples of it (e.g. 30 fps, 15, 7.5, etc.). Triple buffering gives you higher framerate (specially if the system can't reach a constant 60 fps) at the cost of up to 1 frame of latency, with [constant DisplayServer.VSYNC_ENABLED] (FIFO).
+			Use double-buffering with [constant DisplayServer.VSYNC_ENABLED]. Triple-buffering is a must if you plan on using [constant DisplayServer.VSYNC_MAILBOX] mode.
+			Try the [url=https://darksylinc.github.io/vsync_simulator/]V-Sync Simulator[/url], an interactive interface that simulates presentation to better understand how it is affected by different variables under various conditions.
+			[b]Note:[/b] This property is only read when the project starts. There is currently no way to change this value at run-time.
+			[b]Note:[/b] Some platforms may restrict the actual value.
+		</member>
 		<member name="rendering/rendering_device/vulkan/max_descriptors_per_pool" type="int" setter="" getter="" default="64">
 		</member>
 		<member name="rendering/scaling_3d/fsr_sharpness" type="float" setter="" getter="" default="0.2">
@@ -2767,6 +2821,7 @@
 			[/codeblock]
 		</member>
 		<member name="threading/worker_pool/low_priority_thread_ratio" type="float" setter="" getter="" default="0.3">
+			The ratio of [WorkerThreadPool]'s threads that will be reserved for low-priority tasks. For example, if 10 threads are available and this value is set to [code]0.3[/code], 3 of the worker threads will be reserved for low-priority tasks. The actual value won't exceed the number of CPU cores minus one, and if possible, at least one worker thread will be dedicated to low-priority tasks.
 		</member>
 		<member name="threading/worker_pool/max_threads" type="int" setter="" getter="" default="-1">
 			Maximum number of threads to be used by [WorkerThreadPool]. Value of [code]-1[/code] means no limit.
@@ -2775,7 +2830,7 @@
 			Action map configuration to load by default.
 		</member>
 		<member name="xr/openxr/enabled" type="bool" setter="" getter="" default="false">
-			If [code]true[/code] Godot will setup and initialize OpenXR on startup.
+			If [code]true[/code], Godot will setup and initialize OpenXR on startup.
 		</member>
 		<member name="xr/openxr/environment_blend_mode" type="int" setter="" getter="" default="&quot;0&quot;">
 			Specify how OpenXR should blend in the environment. This is specific to certain AR and passthrough devices where camera images are blended in by the XR compositor.

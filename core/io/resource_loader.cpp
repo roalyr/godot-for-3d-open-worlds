@@ -36,6 +36,7 @@
 #include "core/object/script_language.h"
 #include "core/os/condition_variable.h"
 #include "core/os/os.h"
+#include "core/os/safe_binary_mutex.h"
 #include "core/string/print_string.h"
 #include "core/string/translation.h"
 #include "core/variant/variant_parser.h"
@@ -244,11 +245,11 @@ Ref<Resource> ResourceLoader::_load(const String &p_path, const String &p_origin
 		thread_load_mutex.lock();
 		HashMap<String, ThreadLoadTask>::Iterator E = thread_load_tasks.find(load_paths_stack->get(load_paths_stack->size() - 1));
 		if (E) {
-			E->value.sub_tasks.insert(p_path);
+			E->value.sub_tasks.insert(p_original_path);
 		}
 		thread_load_mutex.unlock();
 	}
-	load_paths_stack->push_back(p_path);
+	load_paths_stack->push_back(p_original_path);
 
 	// Try all loaders and pick the first match for the type hint
 	bool found = false;

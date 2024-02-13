@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "audio_stream_player_3d.h"
+#include "audio_stream_player_3d.compat.inc"
 
 #include "core/config/project_settings.h"
 #include "scene/3d/area_3d.h"
@@ -240,6 +241,7 @@ float AudioStreamPlayer3D::_get_attenuation_db(float p_distance) const {
 }
 
 void AudioStreamPlayer3D::_notification(int p_what) {
+	internal->notification(p_what);
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			velocity_tracker->reset(get_global_transform().origin);
@@ -570,7 +572,7 @@ void AudioStreamPlayer3D::set_autoplay(bool p_enable) {
 	internal->autoplay = p_enable;
 }
 
-bool AudioStreamPlayer3D::is_autoplay_enabled() {
+bool AudioStreamPlayer3D::is_autoplay_enabled() const {
 	return internal->autoplay;
 }
 

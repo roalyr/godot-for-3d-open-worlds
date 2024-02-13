@@ -488,6 +488,8 @@ private:
 
 	String _get_system_info() const;
 
+	bool _should_display_update_spinner() const;
+
 	static void _dependency_error_report(const String &p_path, const String &p_dep, const String &p_type) {
 		DEV_ASSERT(Thread::get_caller_id() == Thread::get_main_id());
 		if (!singleton->dependency_errors.has(p_path)) {
@@ -584,6 +586,7 @@ private:
 	void _dropped_files(const Vector<String> &p_files);
 	void _add_dropped_files_recursive(const Vector<String> &p_files, String to_path);
 
+	void _update_vsync_mode();
 	void _update_from_settings();
 	void _gdextensions_reloaded();
 
@@ -657,6 +660,7 @@ private:
 	void _bottom_panel_switch_by_control(bool p_enable, Control *p_control);
 	void _bottom_panel_switch(bool p_enable, int p_idx);
 	void _bottom_panel_raise_toggled(bool);
+	bool _bottom_panel_drag_hover(const Vector2 &, const Variant &, Button *p_button, Control *p_control);
 
 	void _begin_first_scan();
 
