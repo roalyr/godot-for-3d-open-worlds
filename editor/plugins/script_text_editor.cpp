@@ -500,11 +500,14 @@ void ScriptTextEditor::_validate_script() {
 	safe_lines.clear();
 
 	if (!script->get_language()->validate(text, script->get_path(), &fnc, &errors, &warnings, &safe_lines)) {
-		for (List<ScriptLanguage::ScriptError>::Element *E = errors.front(); E; E = E->next()) {
+		List<ScriptLanguage::ScriptError>::Element *E = errors.front();
+		while (E) {
+			List<ScriptLanguage::ScriptError>::Element *next_E = E->next();
 			if ((E->get().path.is_empty() && !script->get_path().is_empty()) || E->get().path != script->get_path()) {
 				depended_errors[E->get().path].push_back(E->get());
 				E->erase();
 			}
+			E = next_E;
 		}
 
 		if (errors.size() > 0) {
@@ -1269,6 +1272,7 @@ void ScriptTextEditor::_gutter_clicked(int p_line, int p_gutter) {
 
 void ScriptTextEditor::_edit_option(int p_op) {
 	CodeEdit *tx = code_editor->get_text_editor();
+	tx->apply_ime();
 
 	switch (p_op) {
 		case EDIT_UNDO: {
@@ -1959,6 +1963,8 @@ void ScriptTextEditor::_text_edit_gui_input(const Ref<InputEvent> &ev) {
 	}
 
 	if (create_menu) {
+		tx->apply_ime();
+
 		Point2i pos = tx->get_line_column_at_pos(local_pos);
 		int row = pos.y;
 		int col = pos.x;

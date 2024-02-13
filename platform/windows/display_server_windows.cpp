@@ -53,6 +53,7 @@
 #include <dwmapi.h>
 #include <shlwapi.h>
 #include <shobjidl.h>
+#include <wbemcli.h>
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
@@ -61,6 +62,8 @@
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1
 #define DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 19
 #endif
+
+#define WM_INDICATOR_CALLBACK_MESSAGE (WM_USER + 1)
 
 #if defined(__GNUC__)
 // Workaround GCC warning from -Wcast-function-type.
@@ -107,6 +110,7 @@ bool DisplayServerWindows::has_feature(Feature p_feature) const {
 		case FEATURE_KEEP_SCREEN_ON:
 		case FEATURE_TEXT_TO_SPEECH:
 		case FEATURE_SCREEN_CAPTURE:
+		case FEATURE_STATUS_INDICATOR:
 			return true;
 		default:
 			return false;
@@ -2842,6 +2846,172 @@ void DisplayServerWindows::set_icon(const Ref<Image> &p_icon) {
 	}
 }
 
+DisplayServer::IndicatorID DisplayServerWindows::create_status_indicator(const Ref<Image> &p_icon, const String &p_tooltip, const Callable &p_callback) {
+	HICON hicon = nullptr;
+	if (p_icon.is_valid() && p_icon->get_width() > 0 && p_icon->get_height() > 0) {
+		Ref<Image> img = p_icon;
+		if (img != icon) {
+			img = img->duplicate();
+			img->convert(Image::FORMAT_RGBA8);
+		}
+
+		int w = img->get_width();
+		int h = img->get_height();
+
+		// Create temporary bitmap buffer.
+		int icon_len = 40 + h * w * 4;
+		Vector<BYTE> v;
+		v.resize(icon_len);
+		BYTE *icon_bmp = v.ptrw();
+
+		encode_uint32(40, &icon_bmp[0]);
+		encode_uint32(w, &icon_bmp[4]);
+		encode_uint32(h * 2, &icon_bmp[8]);
+		encode_uint16(1, &icon_bmp[12]);
+		encode_uint16(32, &icon_bmp[14]);
+		encode_uint32(BI_RGB, &icon_bmp[16]);
+		encode_uint32(w * h * 4, &icon_bmp[20]);
+		encode_uint32(0, &icon_bmp[24]);
+		encode_uint32(0, &icon_bmp[28]);
+		encode_uint32(0, &icon_bmp[32]);
+		encode_uint32(0, &icon_bmp[36]);
+
+		uint8_t *wr = &icon_bmp[40];
+		const uint8_t *r = img->get_data().ptr();
+
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				const uint8_t *rpx = &r[((h - i - 1) * w + j) * 4];
+				uint8_t *wpx = &wr[(i * w + j) * 4];
+				wpx[0] = rpx[2];
+				wpx[1] = rpx[1];
+				wpx[2] = rpx[0];
+				wpx[3] = rpx[3];
+			}
+		}
+
+		hicon = CreateIconFromResource(icon_bmp, icon_len, TRUE, 0x00030000);
+	}
+
+	IndicatorData idat;
+	idat.callback = p_callback;
+
+	NOTIFYICONDATAW ndat;
+	ZeroMemory(&ndat, sizeof(NOTIFYICONDATAW));
+	ndat.cbSize = sizeof(NOTIFYICONDATAW);
+	ndat.hWnd = windows[MAIN_WINDOW_ID].hWnd;
+	ndat.uID = indicator_id_counter;
+	ndat.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	ndat.uCallbackMessage = WM_INDICATOR_CALLBACK_MESSAGE;
+	ndat.hIcon = hicon;
+	memcpy(ndat.szTip, p_tooltip.utf16().ptr(), MIN(p_tooltip.utf16().length(), 127) * sizeof(WCHAR));
+	ndat.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIconW(NIM_ADD, &ndat);
+	Shell_NotifyIconW(NIM_SETVERSION, &ndat);
+
+	IndicatorID iid = indicator_id_counter++;
+	indicators[iid] = idat;
+
+	return iid;
+}
+
+void DisplayServerWindows::status_indicator_set_icon(IndicatorID p_id, const Ref<Image> &p_icon) {
+	ERR_FAIL_COND(!indicators.has(p_id));
+
+	HICON hicon = nullptr;
+	if (p_icon.is_valid() && p_icon->get_width() > 0 && p_icon->get_height() > 0) {
+		Ref<Image> img = p_icon;
+		if (img != icon) {
+			img = img->duplicate();
+			img->convert(Image::FORMAT_RGBA8);
+		}
+
+		int w = img->get_width();
+		int h = img->get_height();
+
+		// Create temporary bitmap buffer.
+		int icon_len = 40 + h * w * 4;
+		Vector<BYTE> v;
+		v.resize(icon_len);
+		BYTE *icon_bmp = v.ptrw();
+
+		encode_uint32(40, &icon_bmp[0]);
+		encode_uint32(w, &icon_bmp[4]);
+		encode_uint32(h * 2, &icon_bmp[8]);
+		encode_uint16(1, &icon_bmp[12]);
+		encode_uint16(32, &icon_bmp[14]);
+		encode_uint32(BI_RGB, &icon_bmp[16]);
+		encode_uint32(w * h * 4, &icon_bmp[20]);
+		encode_uint32(0, &icon_bmp[24]);
+		encode_uint32(0, &icon_bmp[28]);
+		encode_uint32(0, &icon_bmp[32]);
+		encode_uint32(0, &icon_bmp[36]);
+
+		uint8_t *wr = &icon_bmp[40];
+		const uint8_t *r = img->get_data().ptr();
+
+		for (int i = 0; i < h; i++) {
+			for (int j = 0; j < w; j++) {
+				const uint8_t *rpx = &r[((h - i - 1) * w + j) * 4];
+				uint8_t *wpx = &wr[(i * w + j) * 4];
+				wpx[0] = rpx[2];
+				wpx[1] = rpx[1];
+				wpx[2] = rpx[0];
+				wpx[3] = rpx[3];
+			}
+		}
+
+		hicon = CreateIconFromResource(icon_bmp, icon_len, TRUE, 0x00030000);
+	}
+
+	NOTIFYICONDATAW ndat;
+	ZeroMemory(&ndat, sizeof(NOTIFYICONDATAW));
+	ndat.cbSize = sizeof(NOTIFYICONDATAW);
+	ndat.hWnd = windows[MAIN_WINDOW_ID].hWnd;
+	ndat.uID = p_id;
+	ndat.uFlags = NIF_ICON;
+	ndat.hIcon = hicon;
+	ndat.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIconW(NIM_MODIFY, &ndat);
+}
+
+void DisplayServerWindows::status_indicator_set_tooltip(IndicatorID p_id, const String &p_tooltip) {
+	ERR_FAIL_COND(!indicators.has(p_id));
+
+	NOTIFYICONDATAW ndat;
+	ZeroMemory(&ndat, sizeof(NOTIFYICONDATAW));
+	ndat.cbSize = sizeof(NOTIFYICONDATAW);
+	ndat.hWnd = windows[MAIN_WINDOW_ID].hWnd;
+	ndat.uID = p_id;
+	ndat.uFlags = NIF_TIP;
+	memcpy(ndat.szTip, p_tooltip.utf16().ptr(), MIN(p_tooltip.utf16().length(), 127) * sizeof(WCHAR));
+	ndat.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIconW(NIM_MODIFY, &ndat);
+}
+
+void DisplayServerWindows::status_indicator_set_callback(IndicatorID p_id, const Callable &p_callback) {
+	ERR_FAIL_COND(!indicators.has(p_id));
+
+	indicators[p_id].callback = p_callback;
+}
+
+void DisplayServerWindows::delete_status_indicator(IndicatorID p_id) {
+	ERR_FAIL_COND(!indicators.has(p_id));
+
+	NOTIFYICONDATAW ndat;
+	ZeroMemory(&ndat, sizeof(NOTIFYICONDATAW));
+	ndat.cbSize = sizeof(NOTIFYICONDATAW);
+	ndat.hWnd = windows[MAIN_WINDOW_ID].hWnd;
+	ndat.uID = p_id;
+	ndat.uVersion = NOTIFYICON_VERSION;
+
+	Shell_NotifyIconW(NIM_DELETE, &ndat);
+	indicators.erase(p_id);
+}
+
 void DisplayServerWindows::window_set_vsync_mode(DisplayServer::VSyncMode p_vsync_mode, WindowID p_window) {
 	_THREAD_SAFE_METHOD_
 #if defined(RD_ENABLED)
@@ -3349,6 +3519,30 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 					if ((lParam >> 16) <= 0) {
 						return 0;
 					}
+			}
+		} break;
+		case WM_INDICATOR_CALLBACK_MESSAGE: {
+			if (lParam == WM_LBUTTONDOWN || lParam == WM_RBUTTONDOWN || lParam == WM_MBUTTONDOWN || lParam == WM_XBUTTONDOWN) {
+				IndicatorID iid = (IndicatorID)wParam;
+				MouseButton mb = MouseButton::LEFT;
+				if (lParam == WM_RBUTTONDOWN) {
+					mb = MouseButton::RIGHT;
+				} else if (lParam == WM_MBUTTONDOWN) {
+					mb = MouseButton::MIDDLE;
+				} else if (lParam == WM_XBUTTONDOWN) {
+					mb = MouseButton::MB_XBUTTON1;
+				}
+				if (indicators.has(iid)) {
+					if (indicators[iid].callback.is_valid()) {
+						Variant v_button = mb;
+						Variant v_pos = mouse_get_position();
+						Variant *v_args[2] = { &v_button, &v_pos };
+						Variant ret;
+						Callable::CallError ce;
+						indicators[iid].callback.callp((const Variant **)&v_args, 2, ret, ce);
+					}
+				}
+				return 0;
 			}
 		} break;
 		case WM_CLOSE: // Did we receive a close message?
@@ -4779,6 +4973,68 @@ GetPointerPenInfoPtr DisplayServerWindows::win8p_GetPointerPenInfo = nullptr;
 LogicalToPhysicalPointForPerMonitorDPIPtr DisplayServerWindows::win81p_LogicalToPhysicalPointForPerMonitorDPI = nullptr;
 PhysicalToLogicalPointForPerMonitorDPIPtr DisplayServerWindows::win81p_PhysicalToLogicalPointForPerMonitorDPI = nullptr;
 
+Vector2i _get_device_ids(const String &p_device_name) {
+	if (p_device_name.is_empty()) {
+		return Vector2i();
+	}
+
+	REFCLSID clsid = CLSID_WbemLocator; // Unmarshaler CLSID
+	REFIID uuid = IID_IWbemLocator; // Interface UUID
+	IWbemLocator *wbemLocator = NULL; // to get the services
+	IWbemServices *wbemServices = NULL; // to get the class
+	IEnumWbemClassObject *iter = NULL;
+	IWbemClassObject *pnpSDriverObject[1]; // contains driver name, version, etc.
+
+	HRESULT hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, uuid, (LPVOID *)&wbemLocator);
+	if (hr != S_OK) {
+		return Vector2i();
+	}
+	BSTR resource_name = SysAllocString(L"root\\CIMV2");
+	hr = wbemLocator->ConnectServer(resource_name, NULL, NULL, NULL, 0, NULL, NULL, &wbemServices);
+	SysFreeString(resource_name);
+
+	SAFE_RELEASE(wbemLocator) // from now on, use `wbemServices`
+	if (hr != S_OK) {
+		SAFE_RELEASE(wbemServices)
+		return Vector2i();
+	}
+
+	Vector2i ids;
+
+	const String gpu_device_class_query = vformat("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceName = \"%s\"", p_device_name);
+	BSTR query = SysAllocString((const WCHAR *)gpu_device_class_query.utf16().get_data());
+	BSTR query_lang = SysAllocString(L"WQL");
+	hr = wbemServices->ExecQuery(query_lang, query, WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY, NULL, &iter);
+	SysFreeString(query_lang);
+	SysFreeString(query);
+	if (hr == S_OK) {
+		ULONG resultCount;
+		hr = iter->Next(5000, 1, pnpSDriverObject, &resultCount); // Get exactly 1. Wait max 5 seconds.
+
+		if (hr == S_OK && resultCount > 0) {
+			VARIANT did;
+			VariantInit(&did);
+			BSTR object_name = SysAllocString(L"DeviceID");
+			hr = pnpSDriverObject[0]->Get(object_name, 0, &did, NULL, NULL);
+			SysFreeString(object_name);
+			if (hr == S_OK) {
+				String device_id = String(V_BSTR(&did));
+				ids.x = device_id.get_slice("&", 0).lstrip("PCI\\VEN_").hex_to_int();
+				ids.y = device_id.get_slice("&", 1).lstrip("DEV_").hex_to_int();
+			}
+
+			for (ULONG i = 0; i < resultCount; i++) {
+				SAFE_RELEASE(pnpSDriverObject[i])
+			}
+		}
+	}
+
+	SAFE_RELEASE(wbemServices)
+	SAFE_RELEASE(iter)
+
+	return ids;
+}
+
 typedef enum _SHC_PROCESS_DPI_AWARENESS {
 	SHC_PROCESS_DPI_UNAWARE = 0,
 	SHC_PROCESS_SYSTEM_DPI_AWARE = 1,
@@ -5000,12 +5256,22 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 
 		bool force_angle = false;
 
+		Vector2i device_id = _get_device_ids(gl_info["name"]);
 		Array device_list = GLOBAL_GET("rendering/gl_compatibility/force_angle_on_devices");
 		for (int i = 0; i < device_list.size(); i++) {
 			const Dictionary &device = device_list[i];
-			if (device.has("vendor") && device.has("name") && gl_info["vendor"].operator String().to_upper().contains(device["vendor"].operator String().to_upper()) && (device["name"] == "*" || gl_info["name"].operator String().to_upper().contains(device["name"].operator String().to_upper()))) {
-				force_angle = true;
-				break;
+			if (device.has("vendor") && device.has("name")) {
+				const String &vendor = device["vendor"];
+				const String &name = device["name"];
+				if (device_id != Vector2i() && vendor.begins_with("0x") && name.begins_with("0x") && device_id.x == vendor.lstrip("0x").hex_to_int() && device_id.y == name.lstrip("0x").hex_to_int()) {
+					// Check vendor/device IDs.
+					force_angle = true;
+					break;
+				} else if (gl_info["vendor"].operator String().to_upper().contains(vendor.to_upper()) && (name == "*" || gl_info["name"].operator String().to_upper().contains(name.to_upper()))) {
+					// Check vendor/device names.
+					force_angle = true;
+					break;
+				}
 			}
 		}
 
@@ -5165,6 +5431,18 @@ DisplayServerWindows::~DisplayServerWindows() {
 	touch_state.clear();
 
 	cursors_cache.clear();
+
+	// Destroy all status indicators.
+	for (HashMap<IndicatorID, IndicatorData>::Iterator E = indicators.begin(); E;) {
+		NOTIFYICONDATAW ndat;
+		ZeroMemory(&ndat, sizeof(NOTIFYICONDATAW));
+		ndat.cbSize = sizeof(NOTIFYICONDATAW);
+		ndat.hWnd = windows[MAIN_WINDOW_ID].hWnd;
+		ndat.uID = E->key;
+		ndat.uVersion = NOTIFYICON_VERSION;
+
+		Shell_NotifyIconW(NIM_DELETE, &ndat);
+	}
 
 	if (mouse_monitor) {
 		UnhookWindowsHookEx(mouse_monitor);
