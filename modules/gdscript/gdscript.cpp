@@ -95,7 +95,7 @@ Variant GDScriptNativeClass::_new() {
 }
 
 Object *GDScriptNativeClass::instantiate() {
-	return ClassDB::instantiate(name);
+	return ClassDB::instantiate_no_placeholders(name);
 }
 
 Variant GDScriptNativeClass::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
@@ -1405,6 +1405,18 @@ String GDScript::debug_get_script_name(const Ref<Script> &p_script) {
 }
 #endif
 
+bool GDScript::is_equal_gdscript_paths(const String &p_path_a, const String &p_path_b) {
+	String path_a = p_path_a;
+	if (path_a.get_extension() == "gdc") {
+		path_a = path_a.get_basename() + ".gd";
+	}
+	String path_b = p_path_b;
+	if (path_b.get_extension() == "gdc") {
+		path_b = path_b.get_basename() + ".gd";
+	}
+	return path_a == path_b;
+}
+
 GDScript::UpdatableFuncPtr::UpdatableFuncPtr(GDScriptFunction *p_function) {
 	if (p_function == nullptr) {
 		return;
@@ -2597,7 +2609,7 @@ void GDScriptLanguage::get_reserved_words(List<String> *p_words) const {
 	}
 }
 
-bool GDScriptLanguage::is_control_flow_keyword(String p_keyword) const {
+bool GDScriptLanguage::is_control_flow_keyword(const String &p_keyword) const {
 	// Please keep alphabetical order.
 	return p_keyword == "break" ||
 			p_keyword == "continue" ||

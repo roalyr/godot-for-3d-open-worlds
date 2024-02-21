@@ -1285,25 +1285,25 @@ bool CanvasItemEditor::_gui_input_zoom_or_pan(const Ref<InputEvent> &p_event, bo
 	Ref<InputEventKey> k = p_event;
 	if (k.is_valid()) {
 		if (k->is_pressed()) {
-			if (ED_GET_SHORTCUT("canvas_item_editor/zoom_3.125_percent")->matches_event(p_event)) {
+			if (ED_IS_SHORTCUT("canvas_item_editor/zoom_3.125_percent", p_event)) {
 				_shortcut_zoom_set(1.0 / 32.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_6.25_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_6.25_percent", p_event)) {
 				_shortcut_zoom_set(1.0 / 16.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_12.5_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_12.5_percent", p_event)) {
 				_shortcut_zoom_set(1.0 / 8.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_25_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_25_percent", p_event)) {
 				_shortcut_zoom_set(1.0 / 4.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_50_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_50_percent", p_event)) {
 				_shortcut_zoom_set(1.0 / 2.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_100_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_100_percent", p_event)) {
 				_shortcut_zoom_set(1.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_200_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_200_percent", p_event)) {
 				_shortcut_zoom_set(2.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_400_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_400_percent", p_event)) {
 				_shortcut_zoom_set(4.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_800_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_800_percent", p_event)) {
 				_shortcut_zoom_set(8.0);
-			} else if (ED_GET_SHORTCUT("canvas_item_editor/zoom_1600_percent")->matches_event(p_event)) {
+			} else if (ED_IS_SHORTCUT("canvas_item_editor/zoom_1600_percent", p_event)) {
 				_shortcut_zoom_set(16.0);
 			}
 		}
@@ -4010,6 +4010,10 @@ void CanvasItemEditor::_notification(int p_what) {
 		} break;
 
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
+			if (!EditorThemeManager::is_generated_theme_outdated() &&
+					!EditorSettings::get_singleton()->check_changed_settings_in_group("editors/panning")) {
+				break;
+			}
 			_update_editor_settings();
 		} break;
 
@@ -5544,7 +5548,7 @@ CanvasItemEditor::CanvasItemEditor() {
 	selection_menu = memnew(PopupMenu);
 	add_child(selection_menu);
 	selection_menu->set_min_size(Vector2(100, 0));
-	selection_menu->set_auto_translate(false);
+	selection_menu->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	selection_menu->connect("id_pressed", callable_mp(this, &CanvasItemEditor::_selection_result_pressed));
 	selection_menu->connect("popup_hide", callable_mp(this, &CanvasItemEditor::_selection_menu_hide), CONNECT_DEFERRED);
 
@@ -5811,10 +5815,12 @@ bool CanvasItemEditorViewport::_create_instance(Node *parent, String &path, cons
 	instantiated_scene->set_scene_file_path(ProjectSettings::get_singleton()->localize_path(path));
 
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
+	EditorSelection *editor_selection = EditorNode::get_singleton()->get_editor_selection();
 	undo_redo->add_do_method(parent, "add_child", instantiated_scene, true);
 	undo_redo->add_do_method(instantiated_scene, "set_owner", edited_scene);
 	undo_redo->add_do_reference(instantiated_scene);
 	undo_redo->add_undo_method(parent, "remove_child", instantiated_scene);
+	undo_redo->add_do_method(editor_selection, "add_node", instantiated_scene);
 
 	String new_name = parent->validate_child_name(instantiated_scene);
 	EditorDebuggerNode *ed = EditorDebuggerNode::get_singleton();
@@ -5853,6 +5859,8 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 	undo_redo->create_action_for_history(TTR("Create Node"), EditorNode::get_editor_data().get_current_edited_scene_history_id());
+	EditorSelection *editor_selection = EditorNode::get_singleton()->get_editor_selection();
+	undo_redo->add_do_method(editor_selection, "clear");
 
 	for (int i = 0; i < selected_files.size(); i++) {
 		String path = selected_files[i];
@@ -5879,6 +5887,7 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 			if (texture != nullptr && texture.is_valid()) {
 				Node *child = Object::cast_to<Node>(ClassDB::instantiate(default_texture_node_type));
 				_create_nodes(target_node, child, path, drop_pos);
+				undo_redo->add_do_method(editor_selection, "add_node", child);
 			}
 		}
 	}

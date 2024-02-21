@@ -30,8 +30,11 @@
 
 #include "test_main.h"
 
+#ifdef TOOLS_ENABLED
 #include "editor/editor_paths.h"
 #include "editor/editor_settings.h"
+#endif // TOOLS_ENABLED
+
 #include "tests/core/config/test_project_settings.h"
 #include "tests/core/input/test_input_event.h"
 #include "tests/core/input/test_input_event_key.h"
@@ -103,6 +106,7 @@
 #include "tests/scene/test_curve_2d.h"
 #include "tests/scene/test_curve_3d.h"
 #include "tests/scene/test_gradient.h"
+#include "tests/scene/test_image_texture.h"
 #include "tests/scene/test_navigation_agent_2d.h"
 #include "tests/scene/test_navigation_obstacle_2d.h"
 #include "tests/scene/test_navigation_region_2d.h"
@@ -270,11 +274,13 @@ struct GodotTestCaseListener : public doctest::IReporter {
 				SceneTree::get_singleton()->get_root()->set_embedding_subwindows(true);
 			}
 
+#ifdef TOOLS_ENABLED
 			if (name.find("[Editor]") != -1) {
 				Engine::get_singleton()->set_editor_hint(true);
 				EditorPaths::create();
 				EditorSettings::create();
 			}
+#endif // TOOLS_ENABLED
 
 			return;
 		}
@@ -298,9 +304,11 @@ struct GodotTestCaseListener : public doctest::IReporter {
 	}
 
 	void test_case_end(const doctest::CurrentTestCaseStats &) override {
+#ifdef TOOLS_ENABLED
 		if (EditorSettings::get_singleton()) {
 			EditorSettings::destroy();
 		}
+#endif // TOOLS_ENABLED
 
 		Engine::get_singleton()->set_editor_hint(false);
 

@@ -193,7 +193,7 @@ typedef void(GLAPIENTRY *DEBUGPROCARB)(GLenum source,
 typedef void(GLAPIENTRY *DebugMessageCallbackARB)(DEBUGPROCARB callback, const void *userParam);
 
 void RasterizerGLES3::initialize() {
-	print_line(vformat("OpenGL API %s - Compatibility - Using Device: %s - %s", RS::get_singleton()->get_video_adapter_api_version(), RS::get_singleton()->get_video_adapter_vendor(), RS::get_singleton()->get_video_adapter_name()));
+	Engine::get_singleton()->print_header(vformat("OpenGL API %s - Compatibility - Using Device: %s - %s", RS::get_singleton()->get_video_adapter_api_version(), RS::get_singleton()->get_video_adapter_vendor(), RS::get_singleton()->get_video_adapter_name()));
 }
 
 void RasterizerGLES3::finalize() {
@@ -201,6 +201,8 @@ void RasterizerGLES3::finalize() {
 	memdelete(canvas);
 	memdelete(gi);
 	memdelete(fog);
+	memdelete(post_effects);
+	memdelete(glow);
 	memdelete(copy_effects);
 	memdelete(light_storage);
 	memdelete(particles_storage);
@@ -347,6 +349,8 @@ RasterizerGLES3::RasterizerGLES3() {
 	particles_storage = memnew(GLES3::ParticlesStorage);
 	light_storage = memnew(GLES3::LightStorage);
 	copy_effects = memnew(GLES3::CopyEffects);
+	glow = memnew(GLES3::Glow);
+	post_effects = memnew(GLES3::PostEffects);
 	gi = memnew(GLES3::GI);
 	fog = memnew(GLES3::Fog);
 	canvas = memnew(RasterizerCanvasGLES3());

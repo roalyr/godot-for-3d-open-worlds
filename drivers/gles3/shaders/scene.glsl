@@ -13,6 +13,7 @@ DISABLE_LIGHT_DIRECTIONAL = false
 DISABLE_LIGHT_OMNI = false
 DISABLE_LIGHT_SPOT = false
 DISABLE_FOG = false
+USE_DEPTH_FOG = false
 USE_RADIANCE_MAP = true
 USE_LIGHTMAP = false
 USE_SH_LIGHTMAP = false
@@ -27,6 +28,7 @@ LIGHT_USE_PSSM4 = false
 LIGHT_USE_PSSM_BLEND = false
 BASE_PASS = true
 USE_ADDITIVE_LIGHTING = false
+APPLY_TONEMAPPING = true
 // We can only use one type of light per additive pass. This means that if USE_ADDITIVE_LIGHTING is defined, and
 // these are false, we are doing a directional light pass.
 ADDITIVE_OMNI = false
@@ -181,15 +183,20 @@ layout(std140) uniform SceneData { // ubo:2
 	float IBL_exposure_normalization;
 
 	bool fog_enabled;
+	uint fog_mode;
 	float fog_density;
 	float fog_height;
+
 	float fog_height_density;
+	float fog_depth_curve;
+	float fog_sun_scatter;
+	float fog_depth_begin;
 
 	vec3 fog_light_color;
-	float fog_sun_scatter;
+	float fog_depth_end;
 
 	float shadow_bias;
-	float pad;
+	float luminance_multiplier;
 	uint camera_visible_layers;
 	bool pancake_shadows;
 }
@@ -666,15 +673,20 @@ layout(std140) uniform SceneData { // ubo:2
 	float IBL_exposure_normalization;
 
 	bool fog_enabled;
+	uint fog_mode;
 	float fog_density;
 	float fog_height;
+
 	float fog_height_density;
+	float fog_depth_curve;
+	float fog_sun_scatter;
+	float fog_depth_begin;
 
 	vec3 fog_light_color;
-	float fog_sun_scatter;
+	float fog_depth_end;
 
 	float shadow_bias;
-	float pad;
+	float luminance_multiplier;
 	uint camera_visible_layers;
 	bool pancake_shadows;
 }
@@ -1250,7 +1262,14 @@ vec4 fog_process(vec3 vertex) {
 	}
 #endif // !DISABLE_LIGHT_DIRECTIONAL
 
-	float fog_amount = 1.0 - exp(min(0.0, -length(vertex) * scene_data.fog_density));
+	float fog_amount = 0.0;
+
+#ifdef USE_DEPTH_FOG
+	float fog_z = smoothstep(scene_data.fog_depth_begin, scene_data.fog_depth_end, length(vertex));
+	fog_amount = pow(fog_z, scene_data.fog_depth_curve) * scene_data.fog_density;
+#else
+	fog_amount = 1 - exp(min(0.0, -length(vertex) * scene_data.fog_density));
+#endif // USE_DEPTH_FOG
 
 	if (abs(scene_data.fog_height_density) >= 0.0001) {
 		float y = (scene_data.inv_view_matrix * vec4(vertex, 1.0)).y;
@@ -1738,7 +1757,9 @@ void main() {
 
 	// Tonemap before writing as we are writing to an sRGB framebuffer
 	frag_color.rgb *= exposure;
+#ifdef APPLY_TONEMAPPING
 	frag_color.rgb = apply_tonemapping(frag_color.rgb, white);
+#endif
 	frag_color.rgb = linear_to_srgb(frag_color.rgb);
 
 #ifdef USE_BCS
@@ -1953,7 +1974,9 @@ void main() {
 
 	// Tonemap before writing as we are writing to an sRGB framebuffer
 	additive_light_color *= exposure;
+#ifdef APPLY_TONEMAPPING
 	additive_light_color = apply_tonemapping(additive_light_color, white);
+#endif
 	additive_light_color = linear_to_srgb(additive_light_color);
 
 #ifdef USE_BCS
@@ -1966,6 +1989,9 @@ void main() {
 
 	frag_color.rgb += additive_light_color;
 #endif // USE_ADDITIVE_LIGHTING
+
+	frag_color.rgb *= scene_data.luminance_multiplier;
+
 #endif // !RENDER_MATERIAL
-#endif //!MODE_RENDER_DEPTH
+#endif // !MODE_RENDER_DEPTH
 }

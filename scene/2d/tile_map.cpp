@@ -213,7 +213,7 @@ void TileMap::add_layer(int p_to_pos) {
 	// Must clear before adding the layer.
 	TileMapLayer *new_layer = memnew(TileMapLayer);
 	layers.insert(p_to_pos, new_layer);
-	add_child(new_layer);
+	add_child(new_layer, false, INTERNAL_MODE_FRONT);
 	new_layer->force_parent_owned();
 	new_layer->set_name(vformat("Layer%d", p_to_pos));
 	move_child(new_layer, p_to_pos);
@@ -538,7 +538,7 @@ bool TileMap::_set(const StringName &p_name, const Variant &p_value) {
 		if (p_value.is_array()) {
 			if (layers.size() == 0) {
 				TileMapLayer *new_layer = memnew(TileMapLayer);
-				add_child(new_layer);
+				add_child(new_layer, false, INTERNAL_MODE_FRONT);
 				new_layer->force_parent_owned();
 				new_layer->set_name("Layer0");
 				new_layer->set_layer_index_in_tile_map_node(0);
@@ -564,7 +564,7 @@ bool TileMap::_set(const StringName &p_name, const Variant &p_value) {
 		if (index >= (int)layers.size()) {
 			while (index >= (int)layers.size()) {
 				TileMapLayer *new_layer = memnew(TileMapLayer);
-				add_child(new_layer);
+				add_child(new_layer, false, INTERNAL_MODE_FRONT);
 				new_layer->force_parent_owned();
 				new_layer->set_name(vformat("Layer%d", index));
 				new_layer->set_layer_index_in_tile_map_node(index);
@@ -846,8 +846,8 @@ TypedArray<Vector2i> TileMap::get_surrounding_cells(const Vector2i &p_coords) {
 	return tile_set->get_surrounding_cells(p_coords);
 }
 
-Array TileMap::get_configuration_warnings() const {
-	Array warnings = Node::get_configuration_warnings();
+PackedStringArray TileMap::get_configuration_warnings() const {
+	PackedStringArray warnings = Node::get_configuration_warnings();
 
 	// Retrieve the set of Z index values with a Y-sorted layer.
 	RBSet<int> y_sorted_z_index;
@@ -1002,7 +1002,7 @@ void TileMap::_bind_methods() {
 
 TileMap::TileMap() {
 	TileMapLayer *new_layer = memnew(TileMapLayer);
-	add_child(new_layer);
+	add_child(new_layer, false, INTERNAL_MODE_FRONT);
 	new_layer->set_name("Layer0");
 	new_layer->set_layer_index_in_tile_map_node(0);
 	new_layer->connect(CoreStringNames::get_singleton()->changed, callable_mp(this, &TileMap::_emit_changed));

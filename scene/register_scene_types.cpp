@@ -153,6 +153,7 @@
 #include "scene/resources/capsule_shape_2d.h"
 #include "scene/resources/capsule_shape_3d.h"
 #include "scene/resources/circle_shape_2d.h"
+#include "scene/resources/compositor.h"
 #include "scene/resources/compressed_texture.h"
 #include "scene/resources/concave_polygon_shape_2d.h"
 #include "scene/resources/concave_polygon_shape_3d.h"
@@ -272,6 +273,7 @@
 #include "scene/3d/visible_on_screen_notifier_3d.h"
 #include "scene/3d/voxel_gi.h"
 #include "scene/3d/world_environment.h"
+#include "scene/3d/xr_face_modifier_3d.h"
 #include "scene/3d/xr_nodes.h"
 #include "scene/animation/root_motion_view.h"
 #include "scene/resources/environment.h"
@@ -340,6 +342,8 @@ void register_scene_types() {
 	GDREGISTER_ABSTRACT_CLASS(Viewport);
 	GDREGISTER_CLASS(SubViewport);
 	GDREGISTER_CLASS(ViewportTexture);
+
+	GDREGISTER_VIRTUAL_CLASS(CompositorEffect);
 
 	GDREGISTER_ABSTRACT_CLASS(MultiplayerPeer);
 	GDREGISTER_CLASS(MultiplayerPeerExtension);
@@ -519,6 +523,7 @@ void register_scene_types() {
 	GDREGISTER_CLASS(XRController3D);
 	GDREGISTER_CLASS(XRAnchor3D);
 	GDREGISTER_CLASS(XROrigin3D);
+	GDREGISTER_CLASS(XRFaceModifier3D);
 	GDREGISTER_CLASS(MeshInstance3D);
 	GDREGISTER_CLASS(OccluderInstance3D);
 	GDREGISTER_ABSTRACT_CLASS(Occluder3D);
@@ -865,6 +870,7 @@ void register_scene_types() {
 
 	GDREGISTER_CLASS(PhysicsMaterial);
 	GDREGISTER_CLASS(World3D);
+	GDREGISTER_CLASS(Compositor);
 	GDREGISTER_CLASS(Environment);
 	GDREGISTER_VIRTUAL_CLASS(CameraAttributes);
 	GDREGISTER_CLASS(CameraAttributesPhysical);

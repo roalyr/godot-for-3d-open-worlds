@@ -230,6 +230,8 @@ public:
 	static String debug_get_script_name(const Ref<Script> &p_script);
 #endif
 
+	static bool is_equal_gdscript_paths(const String &p_path_a, const String &p_path_b);
+
 	_FORCE_INLINE_ StringName get_local_name() const { return local_name; }
 
 	void clear(GDScript::ClearData *p_clear_data = nullptr);
@@ -540,7 +542,7 @@ public:
 
 	/* EDITOR FUNCTIONS */
 	virtual void get_reserved_words(List<String> *p_words) const override;
-	virtual bool is_control_flow_keyword(String p_keywords) const override;
+	virtual bool is_control_flow_keyword(const String &p_keywords) const override;
 	virtual void get_comment_delimiters(List<String> *p_delimiters) const override;
 	virtual void get_doc_comment_delimiters(List<String> *p_delimiters) const override;
 	virtual void get_string_delimiters(List<String> *p_delimiters) const override;

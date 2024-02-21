@@ -1488,6 +1488,10 @@ Transform3D Node3DEditorViewport::_compute_transform(TransformMode p_mode, const
 }
 
 void Node3DEditorViewport::_surface_mouse_enter() {
+	if (Input::get_singleton()->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED) {
+		return;
+	}
+
 	if (!surface->has_focus() && (!get_viewport()->gui_get_focus_owner() || !get_viewport()->gui_get_focus_owner()->is_text_field())) {
 		surface->grab_focus();
 	}
@@ -2662,7 +2666,11 @@ void Node3DEditorPlugin::edited_scene_changed() {
 }
 
 void Node3DEditorViewport::_project_settings_changed() {
-	//update shadow atlas if changed
+	if (!EditorSettings::get_singleton()->check_changed_settings_in_group("rendering")) {
+		return;
+	}
+
+	// Update shadow atlas if changed.
 	int shadowmap_size = GLOBAL_GET("rendering/lights_and_shadows/positional_shadow/atlas_size");
 	bool shadowmap_16_bits = GLOBAL_GET("rendering/lights_and_shadows/positional_shadow/atlas_16_bits");
 	int atlas_q0 = GLOBAL_GET("rendering/lights_and_shadows/positional_shadow/atlas_quadrant_0_subdiv");
@@ -4356,6 +4364,7 @@ bool Node3DEditorViewport::_create_instance(Node *parent, String &path, const Po
 	undo_redo->add_do_method(instantiated_scene, "set_owner", EditorNode::get_singleton()->get_edited_scene());
 	undo_redo->add_do_reference(instantiated_scene);
 	undo_redo->add_undo_method(parent, "remove_child", instantiated_scene);
+	undo_redo->add_do_method(editor_selection, "add_node", instantiated_scene);
 
 	String new_name = parent->validate_child_name(instantiated_scene);
 	EditorDebuggerNode *ed = EditorDebuggerNode::get_singleton();
@@ -4371,7 +4380,8 @@ bool Node3DEditorViewport::_create_instance(Node *parent, String &path, const Po
 		}
 
 		Transform3D new_tf = node3d->get_transform();
-		new_tf.origin = parent_tf.affine_inverse().xform(preview_node_pos);
+		new_tf.origin = parent_tf.affine_inverse().xform(preview_node_pos + node3d->get_position());
+		new_tf.basis = parent_tf.affine_inverse().basis * new_tf.basis;
 
 		undo_redo->add_do_method(instantiated_scene, "set_transform", new_tf);
 	}
@@ -4404,7 +4414,8 @@ void Node3DEditorViewport::_perform_drop_data() {
 
 	Vector<String> error_files;
 
-	undo_redo->create_action(TTR("Create Node"));
+	undo_redo->create_action(TTR("Create Node"), UndoRedo::MERGE_DISABLE, target_node);
+	undo_redo->add_do_method(editor_selection, "clear");
 
 	for (int i = 0; i < selected_files.size(); i++) {
 		String path = selected_files[i];
@@ -7690,8 +7701,10 @@ void Node3DEditor::_notification(int p_what) {
 
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
 			// Update grid color by rebuilding grid.
-			_finish_grid();
-			_init_grid();
+			if (EditorSettings::get_singleton()->check_changed_settings_in_group("editors/3d")) {
+				_finish_grid();
+				_init_grid();
+			}
 		} break;
 
 		case NOTIFICATION_VISIBILITY_CHANGED: {

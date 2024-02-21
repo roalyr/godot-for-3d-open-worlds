@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "rendering_server.h"
+#include "rendering_server.compat.inc"
 
 #include "core/config/project_settings.h"
 #include "core/object/worker_thread_pool.h"
@@ -2427,6 +2428,8 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("multimesh_instance_set_custom_data", "multimesh", "index", "custom_data"), &RenderingServer::multimesh_instance_set_custom_data);
 	ClassDB::bind_method(D_METHOD("multimesh_get_mesh", "multimesh"), &RenderingServer::multimesh_get_mesh);
 	ClassDB::bind_method(D_METHOD("multimesh_get_aabb", "multimesh"), &RenderingServer::multimesh_get_aabb);
+	ClassDB::bind_method(D_METHOD("multimesh_set_custom_aabb", "multimesh", "aabb"), &RenderingServer::multimesh_set_custom_aabb);
+	ClassDB::bind_method(D_METHOD("multimesh_get_custom_aabb", "multimesh"), &RenderingServer::multimesh_get_custom_aabb);
 	ClassDB::bind_method(D_METHOD("multimesh_instance_get_transform", "multimesh", "index"), &RenderingServer::multimesh_instance_get_transform);
 	ClassDB::bind_method(D_METHOD("multimesh_instance_get_transform_2d", "multimesh", "index"), &RenderingServer::multimesh_instance_get_transform_2d);
 	ClassDB::bind_method(D_METHOD("multimesh_instance_get_color", "multimesh", "index"), &RenderingServer::multimesh_instance_get_color);
@@ -2759,6 +2762,7 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("camera_set_cull_mask", "camera", "layers"), &RenderingServer::camera_set_cull_mask);
 	ClassDB::bind_method(D_METHOD("camera_set_environment", "camera", "env"), &RenderingServer::camera_set_environment);
 	ClassDB::bind_method(D_METHOD("camera_set_camera_attributes", "camera", "effects"), &RenderingServer::camera_set_camera_attributes);
+	ClassDB::bind_method(D_METHOD("camera_set_compositor", "camera", "compositor"), &RenderingServer::camera_set_compositor);
 	ClassDB::bind_method(D_METHOD("camera_set_use_vertical_aspect", "camera", "enable"), &RenderingServer::camera_set_use_vertical_aspect);
 
 	/* VIEWPORT */
@@ -2925,6 +2929,32 @@ void RenderingServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(SKY_MODE_INCREMENTAL);
 	BIND_ENUM_CONSTANT(SKY_MODE_REALTIME);
 
+	/* COMPOSITOR EFFECT API */
+
+	ClassDB::bind_method(D_METHOD("compositor_effect_create"), &RenderingServer::compositor_effect_create);
+	ClassDB::bind_method(D_METHOD("compositor_effect_set_enabled", "effect", "enabled"), &RenderingServer::compositor_effect_set_enabled);
+	ClassDB::bind_method(D_METHOD("compositor_effect_set_callback", "effect", "callback_type", "callback"), &RenderingServer::compositor_effect_set_callback);
+	ClassDB::bind_method(D_METHOD("compositor_effect_set_flag", "effect", "flag", "set"), &RenderingServer::compositor_effect_set_flag);
+
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_FLAG_ACCESS_RESOLVED_COLOR);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_FLAG_ACCESS_RESOLVED_DEPTH);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_FLAG_NEEDS_MOTION_VECTORS);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_FLAG_NEEDS_ROUGHNESS);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_FLAG_NEEDS_SEPARATE_SPECULAR);
+
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_PRE_OPAQUE);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_POST_OPAQUE);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_POST_SKY);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_PRE_TRANSPARENT);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_POST_TRANSPARENT);
+	BIND_ENUM_CONSTANT(COMPOSITOR_EFFECT_CALLBACK_TYPE_ANY);
+
+	/* COMPOSITOR */
+
+	ClassDB::bind_method(D_METHOD("compositor_create"), &RenderingServer::compositor_create);
+
+	ClassDB::bind_method(D_METHOD("compositor_set_compositor_effects", "compositor", "effects"), &RenderingServer::compositor_set_compositor_effects);
+
 	/* ENVIRONMENT */
 
 	ClassDB::bind_method(D_METHOD("environment_create"), &RenderingServer::environment_create);
@@ -2941,7 +2971,7 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("environment_set_adjustment", "env", "enable", "brightness", "contrast", "saturation", "use_1d_color_correction", "color_correction"), &RenderingServer::environment_set_adjustment);
 	ClassDB::bind_method(D_METHOD("environment_set_ssr", "env", "enable", "max_steps", "fade_in", "fade_out", "depth_tolerance"), &RenderingServer::environment_set_ssr);
 	ClassDB::bind_method(D_METHOD("environment_set_ssao", "env", "enable", "radius", "intensity", "power", "detail", "horizon", "sharpness", "light_affect", "ao_channel_affect"), &RenderingServer::environment_set_ssao);
-	ClassDB::bind_method(D_METHOD("environment_set_fog", "env", "enable", "light_color", "light_energy", "sun_scatter", "density", "height", "height_density", "aerial_perspective", "sky_affect"), &RenderingServer::environment_set_fog);
+	ClassDB::bind_method(D_METHOD("environment_set_fog", "env", "enable", "light_color", "light_energy", "sun_scatter", "density", "height", "height_density", "aerial_perspective", "sky_affect", "fog_mode"), &RenderingServer::environment_set_fog, DEFVAL(RS::ENV_FOG_MODE_EXPONENTIAL));
 	ClassDB::bind_method(D_METHOD("environment_set_sdfgi", "env", "enable", "cascades", "min_cell_size", "y_scale", "use_occlusion", "bounce_feedback", "read_sky", "energy", "normal_bias", "probe_bias"), &RenderingServer::environment_set_sdfgi);
 	ClassDB::bind_method(D_METHOD("environment_set_volumetric_fog", "env", "enable", "density", "albedo", "emission", "emission_energy", "anisotropy", "length", "p_detail_spread", "gi_inject", "temporal_reprojection", "temporal_reprojection_amount", "ambient_inject", "sky_affect"), &RenderingServer::environment_set_volumetric_fog);
 
@@ -2983,6 +3013,9 @@ void RenderingServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(ENV_GLOW_BLEND_MODE_SOFTLIGHT);
 	BIND_ENUM_CONSTANT(ENV_GLOW_BLEND_MODE_REPLACE);
 	BIND_ENUM_CONSTANT(ENV_GLOW_BLEND_MODE_MIX);
+
+	BIND_ENUM_CONSTANT(ENV_FOG_MODE_EXPONENTIAL);
+	BIND_ENUM_CONSTANT(ENV_FOG_MODE_DEPTH);
 
 	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_LINEAR);
 	BIND_ENUM_CONSTANT(ENV_TONE_MAPPER_REINHARD);
@@ -3065,6 +3098,7 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("scenario_set_environment", "scenario", "environment"), &RenderingServer::scenario_set_environment);
 	ClassDB::bind_method(D_METHOD("scenario_set_fallback_environment", "scenario", "environment"), &RenderingServer::scenario_set_fallback_environment);
 	ClassDB::bind_method(D_METHOD("scenario_set_camera_attributes", "scenario", "effects"), &RenderingServer::scenario_set_camera_attributes);
+	ClassDB::bind_method(D_METHOD("scenario_set_compositor", "scenario", "compositor"), &RenderingServer::scenario_set_compositor);
 
 	/* INSTANCE */
 

@@ -211,11 +211,16 @@ private:
 
 	IOPMAssertionID screen_keep_on_assertion = kIOPMNullAssertionID;
 
+	Callable help_search_callback;
+	Callable help_action_callback;
+
 	struct MenuCall {
 		Variant tag;
 		Callable callback;
 	};
 	List<MenuCall> deferred_menu_calls;
+
+	Callable system_theme_changed;
 
 	const NSMenu *_get_menu_root(const String &p_menu_root) const;
 	NSMenu *_get_menu_root(const String &p_menu_root);
@@ -251,6 +256,8 @@ public:
 	void menu_open(NSMenu *p_menu);
 	void menu_close(NSMenu *p_menu);
 
+	void emit_system_theme_changed();
+
 	bool has_window(WindowID p_window) const;
 	WindowData &get_window(WindowID p_window);
 
@@ -281,6 +288,10 @@ public:
 
 	virtual bool has_feature(Feature p_feature) const override;
 	virtual String get_name() const override;
+
+	virtual void help_set_search_callbacks(const Callable &p_search_callback = Callable(), const Callable &p_action_callback = Callable()) override;
+	Callable _help_get_search_callback() const;
+	Callable _help_get_action_callback() const;
 
 	virtual void global_menu_set_popup_callbacks(const String &p_menu_root, const Callable &p_open_callback = Callable(), const Callable &p_close_callback = Callable()) override;
 
@@ -351,6 +362,8 @@ public:
 	virtual bool is_dark_mode_supported() const override;
 	virtual bool is_dark_mode() const override;
 	virtual Color get_accent_color() const override;
+	virtual Color get_base_color() const override;
+	virtual void set_system_theme_change_callback(const Callable &p_callable) override;
 
 	virtual Error dialog_show(String p_title, String p_description, Vector<String> p_buttons, const Callable &p_callback) override;
 	virtual Error dialog_input_text(String p_title, String p_description, String p_partial, const Callable &p_callback) override;

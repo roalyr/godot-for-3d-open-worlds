@@ -1755,6 +1755,7 @@ SceneTree::SceneTree() {
 	root = memnew(Window);
 	root->set_min_size(Size2i(64, 64)); // Define a very small minimum window size to prevent bugs such as GH-37242.
 	root->set_process_mode(Node::PROCESS_MODE_PAUSABLE);
+	root->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_ALWAYS);
 	root->set_name("root");
 	root->set_title(GLOBAL_GET("application/config/name"));
 
@@ -1802,10 +1803,10 @@ SceneTree::SceneTree() {
 	float mesh_lod_threshold = GLOBAL_DEF(PropertyInfo(Variant::FLOAT, "rendering/mesh_lod/lod_change/threshold_pixels", PROPERTY_HINT_RANGE, "0,1024,0.1"), 1.0);
 	root->set_mesh_lod_threshold(mesh_lod_threshold);
 
-	bool snap_2d_transforms = GLOBAL_DEF("rendering/2d/snap/snap_2d_transforms_to_pixel", false);
+	bool snap_2d_transforms = GLOBAL_DEF_BASIC("rendering/2d/snap/snap_2d_transforms_to_pixel", false);
 	root->set_snap_2d_transforms_to_pixel(snap_2d_transforms);
 
-	bool snap_2d_vertices = GLOBAL_DEF("rendering/2d/snap/snap_2d_vertices_to_pixel", false);
+	bool snap_2d_vertices = GLOBAL_DEF_BASIC("rendering/2d/snap/snap_2d_vertices_to_pixel", false);
 	root->set_snap_2d_vertices_to_pixel(snap_2d_vertices);
 
 	// We setup VRS for the main viewport here, in the editor this will have little effect.

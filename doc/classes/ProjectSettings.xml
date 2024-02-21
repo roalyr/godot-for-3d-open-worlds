@@ -238,6 +238,12 @@
 		</method>
 	</methods>
 	<members>
+		<member name="animation/warnings/check_angle_interpolation_type_conflicting" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], [AnimationMixer] prints the warning of interpolation being forced to choose the shortest rotation path due to multiple angle interpolation types being mixed in the [AnimationMixer] cache.
+		</member>
+		<member name="animation/warnings/check_invalid_track_paths" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], [AnimationMixer] prints the warning of no matching object of the track path in the scene.
+		</member>
 		<member name="application/boot_splash/bg_color" type="Color" setter="" getter="" default="Color(0.14, 0.14, 0.14, 1)">
 			Background color for the boot splash.
 		</member>
@@ -352,6 +358,9 @@
 			See also [member physics/common/physics_ticks_per_second].
 			This setting can be overridden using the [code]--max-fps &lt;fps&gt;[/code] command line argument (including with a value of [code]0[/code] for unlimited framerate).
 			[b]Note:[/b] This property is only read when the project starts. To change the rendering FPS cap at runtime, set [member Engine.max_fps] instead.
+		</member>
+		<member name="application/run/print_header" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], the engine header is printed in the console on startup. This header describes the current version of the engine, as well as the renderer being used. This behavior can also be disabled on the command line with the [code]--no-header[/code] option.
 		</member>
 		<member name="audio/buses/channel_disable_threshold_db" type="float" setter="" getter="" default="-60.0">
 			Audio buses will disable automatically when sound goes below a given dB threshold for a given time. This saves CPU as effects assigned to that bus will no longer do any processing.
@@ -1361,6 +1370,9 @@
 		<member name="input_devices/pointing/android/enable_pan_and_scale_gestures" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], multi-touch pan and scale gestures are enabled on Android devices.
 		</member>
+		<member name="input_devices/pointing/android/rotary_input_scroll_axis" type="int" setter="" getter="" default="1">
+			On Wear OS devices, defines which axis of the mouse wheel rotary input is mapped to. This rotary input is usually performed by rotating the physical or virtual (touch-based) bezel on a smartwatch.
+		</member>
 		<member name="input_devices/pointing/emulate_mouse_from_touch" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], sends mouse input events when tapping or swiping on the touchscreen.
 		</member>
@@ -2274,12 +2286,12 @@
 			[b]Note:[/b] This property is only read when the project starts. To change the 2D shadow atlas size at runtime, use [method RenderingServer.canvas_set_shadow_texture_size] instead.
 		</member>
 		<member name="rendering/2d/snap/snap_2d_transforms_to_pixel" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], [CanvasItem] nodes will internally snap to full pixels. Their position can still be sub-pixel, but the decimals will not have effect. This can lead to a crisper appearance at the cost of less smooth movement, especially when [Camera2D] smoothing is enabled.
+			If [code]true[/code], [CanvasItem] nodes will internally snap to full pixels. Useful for low-resolution pixel art games. Their position can still be sub-pixel, but the decimals will not have effect. This can lead to a crisper appearance at the cost of less smooth movement, especially when [Camera2D] smoothing is enabled.
 			[b]Note:[/b] This property is only read when the project starts. To toggle 2D transform snapping at runtime, use [method RenderingServer.viewport_set_snap_2d_transforms_to_pixel] on the root [Viewport] instead.
 			[b]Note:[/b] [Control] nodes are snapped to the nearest pixel by default. This is controlled by [member gui/common/snap_controls_to_pixels].
 		</member>
 		<member name="rendering/2d/snap/snap_2d_vertices_to_pixel" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], vertices of [CanvasItem] nodes will snap to full pixels. Only affects the final vertex positions, not the transforms. This can lead to a crisper appearance at the cost of less smooth movement, especially when [Camera2D] smoothing is enabled.
+			If [code]true[/code], vertices of [CanvasItem] nodes will snap to full pixels. Useful for low-resolution pixel art games. Only affects the final vertex positions, not the transforms. This can lead to a crisper appearance at the cost of less smooth movement, especially when [Camera2D] smoothing is enabled.
 			[b]Note:[/b] This property is only read when the project starts. To toggle 2D vertex snapping at runtime, use [method RenderingServer.viewport_set_snap_2d_vertices_to_pixel] on the root [Viewport] instead.
 			[b]Note:[/b] [Control] nodes are snapped to the nearest pixel by default. This is controlled by [member gui/common/snap_controls_to_pixels].
 		</member>
@@ -2754,6 +2766,7 @@
 		</member>
 		<member name="rendering/textures/canvas_textures/default_texture_filter" type="int" setter="" getter="" default="1">
 			The default texture filtering mode to use on [CanvasItem]s.
+			[b]Note:[/b] For pixel art aesthetics, see also [member rendering/2d/snap/snap_2d_vertices_to_pixel] and [member rendering/2d/snap/snap_2d_transforms_to_pixel].
 		</member>
 		<member name="rendering/textures/canvas_textures/default_texture_repeat" type="int" setter="" getter="" default="0">
 			The default texture repeating mode to use on [CanvasItem]s.

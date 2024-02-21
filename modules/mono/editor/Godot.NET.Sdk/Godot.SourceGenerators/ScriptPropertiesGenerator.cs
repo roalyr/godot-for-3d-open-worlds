@@ -30,16 +30,13 @@ namespace Godot.SourceGenerators
                         {
                             if (x.cds.IsPartial())
                             {
-                                if (x.cds.IsNested() && !x.cds.AreAllOuterTypesPartial(out var typeMissingPartial))
+                                if (x.cds.IsNested() && !x.cds.AreAllOuterTypesPartial(out _))
                                 {
-                                    Common.ReportNonPartialGodotScriptOuterClass(context, typeMissingPartial!);
                                     return false;
                                 }
 
                                 return true;
                             }
-
-                            Common.ReportNonPartialGodotScriptClass(context, x.cds, x.symbol);
                             return false;
                         })
                         .Select(x => x.symbol)
@@ -443,14 +440,22 @@ namespace Godot.SourceGenerators
                 if (propertySymbol.GetMethod == null)
                 {
                     // This should never happen, as we filtered WriteOnly properties, but just in case.
-                    Common.ReportExportedMemberIsWriteOnly(context, propertySymbol);
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        Common.ExportedPropertyIsWriteOnlyRule,
+                        propertySymbol.Locations.FirstLocationWithSourceTreeOrDefault(),
+                        propertySymbol.ToDisplayString()
+                    ));
                     return null;
                 }
 
                 if (propertySymbol.SetMethod == null || propertySymbol.SetMethod.IsInitOnly)
                 {
                     // This should never happen, as we filtered ReadOnly properties, but just in case.
-                    Common.ReportExportedMemberIsReadOnly(context, propertySymbol);
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        Common.ExportedMemberIsReadOnlyRule,
+                        propertySymbol.Locations.FirstLocationWithSourceTreeOrDefault(),
+                        propertySymbol.ToDisplayString()
+                    ));
                     return null;
                 }
             }

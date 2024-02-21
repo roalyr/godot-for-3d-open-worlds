@@ -681,6 +681,7 @@ void EditorThemeManager::_populate_standard_styles(const Ref<EditorTheme> &p_the
 		p_theme->set_color("icon_normal_color", "Button", p_config.icon_normal_color);
 		p_theme->set_color("icon_hover_color", "Button", p_config.icon_hover_color);
 		p_theme->set_color("icon_focus_color", "Button", p_config.icon_focus_color);
+		p_theme->set_color("icon_hover_pressed_color", "Button", p_config.icon_pressed_color);
 		p_theme->set_color("icon_pressed_color", "Button", p_config.icon_pressed_color);
 		p_theme->set_color("icon_disabled_color", "Button", p_config.icon_disabled_color);
 
@@ -1679,7 +1680,19 @@ void EditorThemeManager::_populate_editor_styles(const Ref<EditorTheme> &p_theme
 		p_theme->set_stylebox("BottomPanel", EditorStringName(EditorStyles), style_bottom_panel);
 
 		// Main menu.
+		Ref<StyleBoxFlat> menu_transparent_style = p_config.button_style->duplicate();
+		menu_transparent_style->set_bg_color(Color(1, 1, 1, 0));
+		menu_transparent_style->set_border_width_all(0);
+		p_theme->set_stylebox("MenuTransparent", EditorStringName(EditorStyles), menu_transparent_style);
 		p_theme->set_stylebox("MenuHover", EditorStringName(EditorStyles), p_config.button_style_hover);
+		p_theme->set_stylebox("normal", "MainScreenButton", menu_transparent_style);
+		p_theme->set_stylebox("pressed", "MainScreenButton", menu_transparent_style);
+		p_theme->set_stylebox("hover_pressed", "MainScreenButton", p_config.button_style_hover);
+
+		// Run bar.
+		p_theme->set_type_variation("RunBarButton", "FlatMenuButton");
+		p_theme->set_stylebox("disabled", "RunBarButton", menu_transparent_style);
+		p_theme->set_stylebox("pressed", "RunBarButton", menu_transparent_style);
 	}
 
 	// Editor GUI widgets.
@@ -1744,12 +1757,12 @@ void EditorThemeManager::_populate_editor_styles(const Ref<EditorTheme> &p_theme
 			style_flat_button_pressed->set_bg_color(flat_pressed_color);
 
 			p_theme->set_stylebox("normal", "FlatButton", style_flat_button);
-			p_theme->set_stylebox("hover", "FlatButton", style_flat_button);
+			p_theme->set_stylebox("hover", "FlatButton", p_config.button_style_hover);
 			p_theme->set_stylebox("pressed", "FlatButton", style_flat_button_pressed);
 			p_theme->set_stylebox("disabled", "FlatButton", style_flat_button);
 
 			p_theme->set_stylebox("normal", "FlatMenuButton", style_flat_button);
-			p_theme->set_stylebox("hover", "FlatMenuButton", style_flat_button);
+			p_theme->set_stylebox("hover", "FlatMenuButton", p_config.button_style_hover);
 			p_theme->set_stylebox("pressed", "FlatMenuButton", style_flat_button_pressed);
 			p_theme->set_stylebox("disabled", "FlatMenuButton", style_flat_button);
 
@@ -2293,6 +2306,10 @@ void EditorThemeManager::_populate_text_editor_styles(const Ref<EditorTheme> &p_
 	/* clang-format on */
 }
 
+void EditorThemeManager::_reset_dirty_flag() {
+	outdated_cache_dirty = true;
+}
+
 // Public interface for theme generation.
 
 Ref<EditorTheme> EditorThemeManager::generate_theme(const Ref<EditorTheme> &p_old_theme) {
@@ -2323,18 +2340,26 @@ bool EditorThemeManager::is_generated_theme_outdated() {
 	// Note that the editor scale is purposefully omitted because it cannot be changed
 	// without a restart, so there is no point regenerating the theme.
 
-	// TODO: We can use this information more intelligently to do partial theme updates and speed things up.
-	return EditorSettings::get_singleton()->check_changed_settings_in_group("interface/theme") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/font") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/main_font") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/code_font") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("interface/touchscreen/increase_scrollbar_touch_area") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("interface/touchscreen/scale_gizmo_handles") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/theme") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/help/help") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("docks/property_editor/subresource_hue_tint") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("filesystem/file_dialog/thumbnail_size") ||
-			EditorSettings::get_singleton()->check_changed_settings_in_group("run/output/font_size");
+	if (outdated_cache_dirty) {
+		// TODO: We can use this information more intelligently to do partial theme updates and speed things up.
+		outdated_cache = EditorSettings::get_singleton()->check_changed_settings_in_group("interface/theme") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/font") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/main_font") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor/code_font") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("interface/touchscreen/increase_scrollbar_touch_area") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("interface/touchscreen/scale_gizmo_handles") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/theme") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/help/help") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("docks/property_editor/subresource_hue_tint") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("filesystem/file_dialog/thumbnail_size") ||
+				EditorSettings::get_singleton()->check_changed_settings_in_group("run/output/font_size");
+
+		// The outdated flag is relevant at the moment of changing editor settings.
+		callable_mp_static(&EditorThemeManager::_reset_dirty_flag).call_deferred();
+		outdated_cache_dirty = false;
+	}
+
+	return outdated_cache;
 }
 
 bool EditorThemeManager::is_dark_theme() {

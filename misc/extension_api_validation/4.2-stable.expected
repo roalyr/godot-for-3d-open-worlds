@@ -84,13 +84,6 @@ Validate extension JSON: Error: Field 'classes/Sky/properties/sky_material': typ
 Property hints reordered to improve editor usability. The types allowed are still the same as before. No adjustments should be necessary.
 
 
-GH-68420
---------
-Validate extension JSON: Error: Field 'classes/Node/methods/_get_configuration_warnings/return_value': type changed value in new API, from "PackedStringArray" to "Array".
-
-Allow configuration warnings to refer to a property. Compatibility method registered.
-
-
 GH-86907
 --------
 
@@ -120,3 +113,50 @@ GH-87340
 Validate extension JSON: JSON file: Field was added in a way that breaks compatibility 'classes/RenderingDevice/methods/screen_get_framebuffer_format': arguments
 
 screen_get_framebuffer_format can now specify the screen it should get the format from. The argument defaults to the main window to emulate the behavior of the old function.
+
+
+GH-88418
+--------
+Validate extension JSON: API was removed: classes/GDExtension/methods/close_library
+Validate extension JSON: API was removed: classes/GDExtension/methods/initialize_library
+Validate extension JSON: API was removed: classes/GDExtension/methods/open_library
+
+Since it was basically impossible to use these methods in any useful way, the GDExtension team agreed that breaking compatibility by removing them was OK.
+
+
+GH-86629
+--------
+Validate extension JSON: Error: Field 'classes/Animation/methods/position_track_interpolate/arguments': size changed value in new API, from 2 to 3.
+Validate extension JSON: Error: Field 'classes/Animation/methods/rotation_track_interpolate/arguments': size changed value in new API, from 2 to 3.
+Validate extension JSON: Error: Field 'classes/Animation/methods/scale_track_interpolate/arguments': size changed value in new API, from 2 to 3.
+Validate extension JSON: Error: Field 'classes/Animation/methods/blend_shape_track_interpolate/arguments': size changed value in new API, from 2 to 3.
+Validate extension JSON: Error: Field 'classes/Animation/methods/value_track_interpolate/arguments': size changed value in new API, from 2 to 3.
+
+Added optional argument to track_interpolate to treat playing backward correctly. Compatibility method registered.
+
+
+GH-86661
+--------
+Validate extension JSON: Error: Field 'classes/Animation/methods/track_find_key/arguments': size changed value in new API, from 3 to 4.
+
+Added optional argument to track_find_key to avoid finding keys out of the animation range. Compatibility method registered.
+
+
+GH-84792
+--------
+Validate extension JSON: Error: Field 'classes/RenderingServer/methods/environment_set_fog/arguments': size changed value in new API, from 10 to 11.
+
+Added fog mode argument. Compatibility method registered.
+
+
+GH-80214
+--------
+
+Validate extension JSON: Error: Field 'classes/RenderSceneBuffersRD/methods/get_color_layer/arguments': size changed value in new API, from 1 to 2.
+Validate extension JSON: Error: Field 'classes/RenderSceneBuffersRD/methods/get_depth_layer/arguments': size changed value in new API, from 1 to 2.
+Validate extension JSON: Error: Field 'classes/RenderSceneBuffersRD/methods/get_velocity_layer/arguments': size changed value in new API, from 1 to 2.
+Validate extension JSON: JSON file: Field was added in a way that breaks compatibility 'classes/RenderSceneBuffersRD/methods/get_color_texture': arguments
+Validate extension JSON: JSON file: Field was added in a way that breaks compatibility 'classes/RenderSceneBuffersRD/methods/get_depth_texture': arguments
+Validate extension JSON: JSON file: Field was added in a way that breaks compatibility 'classes/RenderSceneBuffersRD/methods/get_velocity_texture': arguments
+
+MSAA flag was added, compatibility functions exist for these.

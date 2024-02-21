@@ -1383,6 +1383,13 @@ Ref<InputEvent> Viewport::_make_input_local(const Ref<InputEvent> &ev) {
 	}
 
 	Transform2D ai = get_final_transform().affine_inverse();
+	Ref<InputEventMouse> me = ev;
+	if (me.is_valid()) {
+		me = me->xformed_by(ai);
+		// For InputEventMouse, the global position is not adjusted by ev->xformed_by() and needs to be set separately.
+		me->set_global_position(me->get_position());
+		return me;
+	}
 	return ev->xformed_by(ai);
 }
 
@@ -1517,7 +1524,6 @@ void Viewport::_gui_show_tooltip() {
 	if (!base_tooltip) {
 		gui.tooltip_label = memnew(Label);
 		gui.tooltip_label->set_theme_type_variation(SNAME("TooltipLabel"));
-		gui.tooltip_label->set_auto_translate(gui.tooltip_control->is_auto_translating());
 		gui.tooltip_label->set_text(gui.tooltip_text);
 		base_tooltip = gui.tooltip_label;
 		panel->connect("mouse_entered", callable_mp(this, &Viewport::_gui_cancel_tooltip));
@@ -3511,9 +3517,9 @@ Variant Viewport::gui_get_drag_data() const {
 	return gui.drag_data;
 }
 
-Array Viewport::get_configuration_warnings() const {
-	ERR_MAIN_THREAD_GUARD_V(Array());
-	Array warnings = Node::get_configuration_warnings();
+PackedStringArray Viewport::get_configuration_warnings() const {
+	ERR_MAIN_THREAD_GUARD_V(PackedStringArray());
+	PackedStringArray warnings = Node::get_configuration_warnings();
 
 	if (size.x <= 1 || size.y <= 1) {
 		warnings.push_back(RTR("The Viewport size must be greater than or equal to 2 pixels on both dimensions to render anything."));

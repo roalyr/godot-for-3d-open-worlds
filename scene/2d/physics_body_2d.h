@@ -164,6 +164,7 @@ private:
 	bool sleeping = false;
 
 	int max_contacts_reported = 0;
+	int contact_count = 0;
 
 	bool custom_integrator = false;
 
@@ -312,7 +313,7 @@ public:
 
 	TypedArray<Node2D> get_colliding_bodies() const; //function for script
 
-	virtual Array get_configuration_warnings() const override;
+	virtual PackedStringArray get_configuration_warnings() const override;
 
 	RigidBody2D();
 	~RigidBody2D();

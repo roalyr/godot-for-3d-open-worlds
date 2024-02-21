@@ -446,6 +446,8 @@ void RigidBody2D::_sync_body_state(PhysicsDirectBodyState2D *p_state) {
 	linear_velocity = p_state->get_linear_velocity();
 	angular_velocity = p_state->get_angular_velocity();
 
+	contact_count = p_state->get_contact_count();
+
 	if (sleeping != p_state->is_sleeping()) {
 		sleeping = p_state->is_sleeping();
 		emit_signal(SceneStringNames::get_singleton()->sleeping_state_changed);
@@ -797,9 +799,7 @@ int RigidBody2D::get_max_contacts_reported() const {
 }
 
 int RigidBody2D::get_contact_count() const {
-	PhysicsDirectBodyState2D *bs = PhysicsServer2D::get_singleton()->body_get_direct_state(get_rid());
-	ERR_FAIL_NULL_V(bs, 0);
-	return bs->get_contact_count();
+	return contact_count;
 }
 
 void RigidBody2D::apply_central_impulse(const Vector2 &p_impulse) {
@@ -928,10 +928,10 @@ void RigidBody2D::_notification(int p_what) {
 #endif
 }
 
-Array RigidBody2D::get_configuration_warnings() const {
+PackedStringArray RigidBody2D::get_configuration_warnings() const {
 	Transform2D t = get_transform();
 
-	Array warnings = CollisionObject2D::get_configuration_warnings();
+	PackedStringArray warnings = CollisionObject2D::get_configuration_warnings();
 
 	if (ABS(t.columns[0].length() - 1.0) > 0.05 || ABS(t.columns[1].length() - 1.0) > 0.05) {
 		warnings.push_back(RTR("Size changes to RigidBody2D will be overridden by the physics engine when running.\nChange the size in children collision shapes instead."));

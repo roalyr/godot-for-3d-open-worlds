@@ -126,10 +126,13 @@ public:
 		FEATURE_EXTEND_TO_TITLE,
 		FEATURE_SCREEN_CAPTURE,
 		FEATURE_STATUS_INDICATOR,
+		FEATURE_NATIVE_HELP,
 	};
 
 	virtual bool has_feature(Feature p_feature) const = 0;
 	virtual String get_name() const = 0;
+
+	virtual void help_set_search_callbacks(const Callable &p_search_callback = Callable(), const Callable &p_action_callback = Callable());
 
 	virtual void global_menu_set_popup_callbacks(const String &p_menu_root, const Callable &p_open_callback = Callable(), const Callable &p_close_callback = Callable());
 
@@ -224,7 +227,9 @@ public:
 
 	virtual bool is_dark_mode_supported() const { return false; };
 	virtual bool is_dark_mode() const { return false; };
-	virtual Color get_accent_color() const { return Color(0, 0, 0, 0); };
+	virtual Color get_accent_color() const { return Color(0, 0, 0, 0); }
+	virtual Color get_base_color() const { return Color(0, 0, 0, 0); }
+	virtual void set_system_theme_change_callback(const Callable &p_callable) {}
 
 private:
 	static bool window_early_clear_override_enabled;

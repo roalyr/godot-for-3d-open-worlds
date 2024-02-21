@@ -699,10 +699,12 @@ DisplayServerMacOS::WindowData &DisplayServerMacOS::get_window(WindowID p_window
 }
 
 void DisplayServerMacOS::send_event(NSEvent *p_event) {
-	// Special case handling of command-period, which is traditionally a special
-	// shortcut in macOS and doesn't arrive at our regular keyDown handler.
+	// Special case handling of shortcuts that don't arrive at the regular keyDown handler
 	if ([p_event type] == NSEventTypeKeyDown) {
-		if ((([p_event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask) == NSEventModifierFlagCommand) && [p_event keyCode] == 0x2f) {
+		NSEventModifierFlags flags = [p_event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
+
+		// Command-period
+		if ((flags == NSEventModifierFlagCommand) && [p_event keyCode] == 0x2f) {
 			Ref<InputEventKey> k;
 			k.instantiate();
 
@@ -715,6 +717,24 @@ void DisplayServerMacOS::send_event(NSEvent *p_event) {
 			k->set_echo([p_event isARepeat]);
 
 			Input::get_singleton()->parse_input_event(k);
+			return;
+		}
+
+		// Ctrl+Tab and Ctrl+Shift+Tab
+		if (((flags == NSEventModifierFlagControl) || (flags == (NSEventModifierFlagControl | NSEventModifierFlagShift))) && [p_event keyCode] == 0x30) {
+			Ref<InputEventKey> k;
+			k.instantiate();
+
+			get_key_modifier_state([p_event modifierFlags], k);
+			k->set_window_id(DisplayServerMacOS::INVALID_WINDOW_ID);
+			k->set_pressed(true);
+			k->set_keycode(Key::TAB);
+			k->set_physical_keycode(Key::TAB);
+			k->set_key_label(Key::TAB);
+			k->set_echo([p_event isARepeat]);
+
+			Input::get_singleton()->parse_input_event(k);
+			return;
 		}
 	}
 }
@@ -840,6 +860,7 @@ bool DisplayServerMacOS::has_feature(Feature p_feature) const {
 		case FEATURE_EXTEND_TO_TITLE:
 		case FEATURE_SCREEN_CAPTURE:
 		case FEATURE_STATUS_INDICATOR:
+		case FEATURE_NATIVE_HELP:
 			return true;
 		default: {
 		}
@@ -849,6 +870,19 @@ bool DisplayServerMacOS::has_feature(Feature p_feature) const {
 
 String DisplayServerMacOS::get_name() const {
 	return "macOS";
+}
+
+void DisplayServerMacOS::help_set_search_callbacks(const Callable &p_search_callback, const Callable &p_action_callback) {
+	help_search_callback = p_search_callback;
+	help_action_callback = p_action_callback;
+}
+
+Callable DisplayServerMacOS::_help_get_search_callback() const {
+	return help_search_callback;
+}
+
+Callable DisplayServerMacOS::_help_get_action_callback() const {
+	return help_action_callback;
 }
 
 bool DisplayServerMacOS::_is_menu_opened(NSMenu *p_menu) const {
@@ -2037,7 +2071,17 @@ bool DisplayServerMacOS::is_dark_mode() const {
 
 Color DisplayServerMacOS::get_accent_color() const {
 	if (@available(macOS 10.14, *)) {
-		NSColor *color = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+		__block NSColor *color = nullptr;
+		if (@available(macOS 11.0, *)) {
+			[NSApp.effectiveAppearance performAsCurrentDrawingAppearance:^{
+				color = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+			}];
+		} else {
+			NSAppearance *saved_appearance = [NSAppearance currentAppearance];
+			[NSAppearance setCurrentAppearance:[NSApp effectiveAppearance]];
+			color = [[NSColor controlAccentColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+			[NSAppearance setCurrentAppearance:saved_appearance];
+		}
 		if (color) {
 			CGFloat components[4];
 			[color getRed:&components[0] green:&components[1] blue:&components[2] alpha:&components[3]];
@@ -2047,6 +2091,41 @@ Color DisplayServerMacOS::get_accent_color() const {
 		}
 	} else {
 		return Color(0, 0, 0, 0);
+	}
+}
+
+Color DisplayServerMacOS::get_base_color() const {
+	if (@available(macOS 10.14, *)) {
+		__block NSColor *color = nullptr;
+		if (@available(macOS 11.0, *)) {
+			[NSApp.effectiveAppearance performAsCurrentDrawingAppearance:^{
+				color = [[NSColor controlColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+			}];
+		} else {
+			NSAppearance *saved_appearance = [NSAppearance currentAppearance];
+			[NSAppearance setCurrentAppearance:[NSApp effectiveAppearance]];
+			color = [[NSColor controlColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+			[NSAppearance setCurrentAppearance:saved_appearance];
+		}
+		if (color) {
+			CGFloat components[4];
+			[color getRed:&components[0] green:&components[1] blue:&components[2] alpha:&components[3]];
+			return Color(components[0], components[1], components[2], components[3]);
+		} else {
+			return Color(0, 0, 0, 0);
+		}
+	} else {
+		return Color(0, 0, 0, 0);
+	}
+}
+
+void DisplayServerMacOS::set_system_theme_change_callback(const Callable &p_callable) {
+	system_theme_changed = p_callable;
+}
+
+void DisplayServerMacOS::emit_system_theme_changed() {
+	if (system_theme_changed.is_valid()) {
+		system_theme_changed.call();
 	}
 }
 
@@ -2480,7 +2559,7 @@ bool DisplayServerMacOS::update_mouse_wrap(WindowData &p_wd, NSPoint &r_delta, N
 		}
 
 		// Confine mouse position to the window, and update delta.
-		NSRect frame = [p_wd.window_object frame];
+		NSRect frame = [p_wd.window_view frame];
 		NSPoint conf_pos = r_mpos;
 		conf_pos.x = CLAMP(conf_pos.x + r_delta.x, 0.f, frame.size.width);
 		conf_pos.y = CLAMP(conf_pos.y - r_delta.y, 0.f, frame.size.height);
@@ -2738,6 +2817,7 @@ Color DisplayServerMacOS::screen_get_pixel(const Point2i &p_position) const {
 	position += _get_screens_origin();
 	position /= screen_get_max_scale();
 
+	Color color;
 	for (NSScreen *screen in [NSScreen screens]) {
 		NSRect frame = [screen frame];
 		if (NSMouseInRect(NSMakePoint(position.x, position.y), frame, NO)) {
@@ -2745,18 +2825,22 @@ Color DisplayServerMacOS::screen_get_pixel(const Point2i &p_position) const {
 			CGDirectDisplayID display_id = [[screenDescription objectForKey:@"NSScreenNumber"] unsignedIntValue];
 			CGImageRef image = CGDisplayCreateImageForRect(display_id, CGRectMake(position.x - frame.origin.x, frame.size.height - (position.y - frame.origin.y), 1, 1));
 			if (image) {
-				NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:image];
-				CGImageRelease(image);
-				NSColor *color = [bitmap colorAtX:0 y:0];
-				if (color) {
-					CGFloat components[4];
-					[color getRed:&components[0] green:&components[1] blue:&components[2] alpha:&components[3]];
-					return Color(components[0], components[1], components[2], components[3]);
+				CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+				if (color_space) {
+					uint8_t img_data[4];
+					CGContextRef context = CGBitmapContextCreate(img_data, 1, 1, 8, 4, color_space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+					if (context) {
+						CGContextDrawImage(context, CGRectMake(0, 0, 1, 1), image);
+						color = Color(img_data[0] / 255.0f, img_data[1] / 255.0f, img_data[2] / 255.0f, img_data[3] / 255.0f);
+						CGContextRelease(context);
+					}
+					CGColorSpaceRelease(color_space);
 				}
+				CGImageRelease(image);
 			}
 		}
 	}
-	return Color();
+	return color;
 }
 
 Ref<Image> DisplayServerMacOS::screen_get_image(int p_screen) const {

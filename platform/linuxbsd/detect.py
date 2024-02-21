@@ -7,7 +7,7 @@ from platform_methods import detect_arch
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from SCons import Environment
+    from SCons.Script.SConscript import SConsEnvironment
 
 
 def get_name():
@@ -67,10 +67,11 @@ def get_doc_path():
 def get_flags():
     return [
         ("arch", detect_arch()),
+        ("supported", ["mono"]),
     ]
 
 
-def configure(env: "Environment"):
+def configure(env: "SConsEnvironment"):
     # Validate arch.
     supported_arches = ["x86_32", "x86_64", "arm32", "arm64", "rv64", "ppc32", "ppc64"]
     if env["arch"] not in supported_arches:

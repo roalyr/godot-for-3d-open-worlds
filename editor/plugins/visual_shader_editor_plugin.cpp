@@ -573,7 +573,7 @@ void VisualShaderGraphPlugin::add_node(VisualShader::Type p_type, int p_id, bool
 			String prop_name = dp.name.strip_edges();
 			if (!prop_name.is_empty()) {
 				Label *label = memnew(Label);
-				label->set_auto_translate(false); // TODO: Implement proper translation switch.
+				label->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED); // TODO: Implement proper translation switch.
 				label->set_text(prop_name + ":");
 				hbox->add_child(label);
 			}
@@ -845,7 +845,7 @@ void VisualShaderGraphPlugin::add_node(VisualShader::Type p_type, int p_id, bool
 					hb->add_child(remove_btn);
 				} else {
 					Label *label = memnew(Label);
-					label->set_auto_translate(false); // TODO: Implement proper translation switch.
+					label->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED); // TODO: Implement proper translation switch.
 					label->set_text(name_left);
 					label->add_theme_style_override("normal", editor->get_theme_stylebox(SNAME("label_style"), SNAME("VShaderEditor"))); //more compact
 					hb->add_child(label);
@@ -895,7 +895,7 @@ void VisualShaderGraphPlugin::add_node(VisualShader::Type p_type, int p_id, bool
 					type_box->connect("item_selected", callable_mp(editor, &VisualShaderEditor::_change_output_port_type).bind(p_id, i), CONNECT_DEFERRED);
 				} else {
 					Label *label = memnew(Label);
-					label->set_auto_translate(false); // TODO: Implement proper translation switch.
+					label->set_auto_translate_mode(Node::AUTO_TRANSLATE_MODE_DISABLED); // TODO: Implement proper translation switch.
 					label->set_text(name_right);
 					label->add_theme_style_override("normal", editor->get_theme_stylebox(SNAME("label_style"), SNAME("VShaderEditor"))); //more compact
 					hb->add_child(label);
@@ -4307,11 +4307,15 @@ void VisualShaderEditor::_notification(int p_what) {
 		} break;
 
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
-			graph->get_panner()->setup((ViewPanner::ControlScheme)EDITOR_GET("editors/panning/sub_editors_panning_scheme").operator int(), ED_GET_SHORTCUT("canvas_item_editor/pan_view"), bool(EDITOR_GET("editors/panning/simple_panning")));
-			graph->set_warped_panning(bool(EDITOR_GET("editors/panning/warped_mouse_panning")));
-			graph->set_minimap_opacity(EDITOR_GET("editors/visual_editors/minimap_opacity"));
-			graph->set_connection_lines_curvature(EDITOR_GET("editors/visual_editors/lines_curvature"));
-			_update_graph();
+			if (EditorSettings::get_singleton()->check_changed_settings_in_group("editors/panning")) {
+				graph->get_panner()->setup((ViewPanner::ControlScheme)EDITOR_GET("editors/panning/sub_editors_panning_scheme").operator int(), ED_GET_SHORTCUT("canvas_item_editor/pan_view"), bool(EDITOR_GET("editors/panning/simple_panning")));
+				graph->set_warped_panning(bool(EDITOR_GET("editors/panning/warped_mouse_panning")));
+			}
+			if (EditorSettings::get_singleton()->check_changed_settings_in_group("editors/visual_editors")) {
+				graph->set_minimap_opacity(EDITOR_GET("editors/visual_editors/minimap_opacity"));
+				graph->set_connection_lines_curvature(EDITOR_GET("editors/visual_editors/lines_curvature"));
+				_update_graph();
+			}
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -6771,7 +6775,7 @@ public:
 			} else {
 				prop_name_str = prop_name_str.capitalize() + ":";
 			}
-			prop_name->set_auto_translate(false); // TODO: Implement proper translation switch.
+			prop_name->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED); // TODO: Implement proper translation switch.
 			prop_name->set_text(prop_name_str);
 			prop_name->set_visible(false);
 			hbox->add_child(prop_name);

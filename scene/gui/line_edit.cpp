@@ -138,17 +138,20 @@ void LineEdit::_backspace(bool p_word, bool p_all_to_left) {
 		return;
 	}
 
+	if (selection.enabled) {
+		selection_delete();
+		return;
+	}
+
+	if (caret_column == 0) {
+		return; // Nothing to do.
+	}
+
 	if (p_all_to_left) {
-		deselect();
 		text = text.substr(caret_column);
 		_shape();
 		set_caret_column(0);
 		_text_changed();
-		return;
-	}
-
-	if (selection.enabled) {
-		selection_delete();
 		return;
 	}
 
@@ -176,23 +179,20 @@ void LineEdit::_delete(bool p_word, bool p_all_to_right) {
 		return;
 	}
 
-	if (p_all_to_right) {
-		deselect();
-		text = text.substr(0, caret_column);
-		_shape();
-		_text_changed();
-		return;
-	}
-
 	if (selection.enabled) {
 		selection_delete();
 		return;
 	}
 
-	int text_len = text.length();
-
-	if (caret_column == text_len) {
+	if (caret_column == text.length()) {
 		return; // Nothing to do.
+	}
+
+	if (p_all_to_right) {
+		text = text.substr(0, caret_column);
+		_shape();
+		_text_changed();
+		return;
 	}
 
 	if (p_word) {
@@ -2133,6 +2133,9 @@ PopupMenu *LineEdit::get_menu() const {
 
 void LineEdit::_editor_settings_changed() {
 #ifdef TOOLS_ENABLED
+	if (!EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/appearance/caret")) {
+		return;
+	}
 	set_caret_blink_enabled(EDITOR_GET("text_editor/appearance/caret/caret_blink"));
 	set_caret_blink_interval(EDITOR_GET("text_editor/appearance/caret/caret_blink_interval"));
 #endif
@@ -2279,8 +2282,8 @@ void LineEdit::_emit_text_change() {
 	emit_signal(SNAME("text_changed"), text);
 	text_changed_dirty = false;
 }
-Array LineEdit::get_configuration_warnings() const {
-	Array warnings = Control::get_configuration_warnings();
+PackedStringArray LineEdit::get_configuration_warnings() const {
+	PackedStringArray warnings = Control::get_configuration_warnings();
 	if (secret_character.length() > 1) {
 		warnings.push_back("Secret Character property supports only one character. Extra characters will be ignored.");
 	}
