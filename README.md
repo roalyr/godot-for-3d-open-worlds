@@ -16,8 +16,7 @@ Implemented tweaks:
 * Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
 * Increased editor zoom increment for faster zooming.
 * This 4.x fork build DOES NOT implement hard-coded logarithmic depth buffer.
-The reason to not to implement this solution is to make it possible to incorporate possible future options for 
-either logarithmic or reverse linear depth buffer, which are being discussed by dev team and are on the milestone.
+Waiting for reverse-z depth buffer to be implemented and pulled: https://github.com/godotengine/godot/pull/88328
 
 Suggested:
 * Use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
@@ -45,6 +44,36 @@ void fragment()
 
 
 ```
+
+* Use spatial shader material dithering for better de-banding on per-material basis.
+
+```
+// Add this before your vertex shader.
+// Edit "dither_darken" to adjust the brightness of dither pattern (optional).
+uniform float dither_darken :  hint_range(0.5, 1.0, 5e-4) = 0.75;
+
+const float dither_x = 172.7;
+const float dither_y = 232.6;
+const float dither_r = 105.5;
+const float dither_g = 99.0;
+const float dither_b = 110.0;
+
+vec3 interleaved_gradient_noise(vec2 frag_coord) {
+	vec3 dither = vec3(dot(vec2(dither_x, dither_y), frag_coord));
+	dither.rgb = fract(dither.rgb / vec3(dither_r, dither_g, dither_b));
+	return (dither.rgb - vec3(dither_darken)) / 255.0;
+}
+
+//Add this to your fragment shader.
+void fragment()
+{
+	vec2 frag_coord = FRAGCOORD.xy;
+	ALBEDO += interleaved_gradient_noise(frag_coord);
+}
+
+
+```
+
 
 
 ## Installation
