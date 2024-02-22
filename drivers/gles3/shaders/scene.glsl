@@ -1200,7 +1200,10 @@ void light_process_spot(uint idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 f
 	vec3 spot_dir = spot_lights[idx].direction;
 	float scos = max(dot(-normalize(light_rel_vec), spot_dir), spot_lights[idx].cone_angle);
 	float spot_rim = max(0.0001, (1.0 - scos) / (1.0 - spot_lights[idx].cone_angle));
-	spot_attenuation *= 1.0 - pow(spot_rim, spot_lights[idx].cone_attenuation);
+
+	mediump float cone_attenuation = spot_lights[idx].cone_attenuation;
+	spot_attenuation *= 1.0 - pow(spot_rim, cone_attenuation);
+
 	vec3 color = spot_lights[idx].color;
 
 	float size_A = 0.0;
@@ -1268,7 +1271,7 @@ vec4 fog_process(vec3 vertex) {
 	float fog_z = smoothstep(scene_data.fog_depth_begin, scene_data.fog_depth_end, length(vertex));
 	fog_amount = pow(fog_z, scene_data.fog_depth_curve) * scene_data.fog_density;
 #else
-	fog_amount = 1 - exp(min(0.0, -length(vertex) * scene_data.fog_density));
+	fog_amount = 1.0 - exp(min(0.0, -length(vertex) * scene_data.fog_density));
 #endif // USE_DEPTH_FOG
 
 	if (abs(scene_data.fog_height_density) >= 0.0001) {
