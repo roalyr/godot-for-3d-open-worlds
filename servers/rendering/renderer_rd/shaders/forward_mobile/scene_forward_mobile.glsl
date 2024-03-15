@@ -81,24 +81,24 @@ void axis_angle_to_tbn(vec3 axis, float angle, out vec3 tangent, out vec3 binorm
 layout(location = 0) highp out vec3 vertex_interp;
 
 #ifdef NORMAL_USED
-layout(location = 1) mediump out vec3 normal_interp;
+layout(location = 1) highp out vec3 normal_interp;
 #endif
 
 #if defined(COLOR_USED)
-layout(location = 2) mediump out vec4 color_interp;
+layout(location = 2) highp out vec4 color_interp;
 #endif
 
 #ifdef UV_USED
-layout(location = 3) mediump out vec2 uv_interp;
+layout(location = 3) highp out vec2 uv_interp;
 #endif
 
 #if defined(UV2_USED) || defined(USE_LIGHTMAP)
-layout(location = 4) mediump out vec2 uv2_interp;
+layout(location = 4) highp out vec2 uv2_interp;
 #endif
 
 #if defined(TANGENT_USED) || defined(NORMAL_MAP_USED) || defined(LIGHT_ANISOTROPY_USED)
-layout(location = 5) mediump out vec3 tangent_interp;
-layout(location = 6) mediump out vec3 binormal_interp;
+layout(location = 5) highp out vec3 tangent_interp;
+layout(location = 6) highp out vec3 binormal_interp;
 #endif
 
 #ifdef MATERIAL_UNIFORMS_USED
@@ -543,20 +543,20 @@ layout(location = 1) highp in vec3 normal_interp;
 #endif
 
 #if defined(COLOR_USED)
-layout(location = 2) mediump in vec4 color_interp;
+layout(location = 2) highp in vec4 color_interp;
 #endif
 
 #ifdef UV_USED
-layout(location = 3) mediump in vec2 uv_interp;
+layout(location = 3) highp in vec2 uv_interp;
 #endif
 
 #if defined(UV2_USED) || defined(USE_LIGHTMAP)
-layout(location = 4) mediump in vec2 uv2_interp;
+layout(location = 4) highp in vec2 uv2_interp;
 #endif
 
 #if defined(TANGENT_USED) || defined(NORMAL_MAP_USED) || defined(LIGHT_ANISOTROPY_USED)
-layout(location = 5) mediump in vec3 tangent_interp;
-layout(location = 6) mediump in vec3 binormal_interp;
+layout(location = 5) highp in vec3 tangent_interp;
+layout(location = 6) highp in vec3 binormal_interp;
 #endif
 
 #ifdef MODE_DUAL_PARABOLOID
@@ -636,7 +636,7 @@ layout(location = 0) out vec4 diffuse_buffer; //diffuse (rgb) and roughness
 layout(location = 1) out vec4 specular_buffer; //specular and SSS (subsurface scatter)
 #else
 
-layout(location = 0) out mediump vec4 frag_color;
+layout(location = 0) out highp vec4 frag_color;
 #endif // MODE_MULTIPLE_RENDER_TARGETS
 
 #endif // RENDER DEPTH

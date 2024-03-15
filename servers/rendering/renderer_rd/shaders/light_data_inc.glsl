@@ -9,7 +9,7 @@ struct LightData { //this structure needs to be as packed as possible
 	mediump vec3 direction;
 	highp float size;
 
-	mediump vec3 color;
+	highp vec3 color;
 	mediump float attenuation;
 
 	mediump float cone_attenuation;
