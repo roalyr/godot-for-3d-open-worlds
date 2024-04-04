@@ -37,6 +37,10 @@
 #include "core/math/transform_3d.h"
 #include "core/string/ustring.h"
 
+
+// Store for future use in the methods.
+real_t PZFarStorage::p_z_far_stored = 1.0;
+
 real_t Projection::determinant() const {
 	return columns[0][3] * columns[1][2] * columns[2][1] * columns[3][0] - columns[0][2] * columns[1][3] * columns[2][1] * columns[3][0] -
 			columns[0][3] * columns[1][1] * columns[2][2] * columns[3][0] + columns[0][1] * columns[1][3] * columns[2][2] * columns[3][0] +
@@ -183,13 +187,7 @@ Plane Projection::get_projection_plane(Planes p_plane) const {
 			return new_plane;
 		}
 		case PLANE_FAR: {
-			Plane new_plane = Plane(matrix[3] - matrix[2],
-					matrix[7] - matrix[6],
-					matrix[11] - matrix[10],
-					matrix[15] - matrix[14]);
-
-			new_plane.normal = -new_plane.normal;
-			new_plane.normalize();
+			Plane new_plane = Plane(0.0, 0.0, -1.0, PZFarStorage::p_z_far_stored);
 			return new_plane;
 		}
 		case PLANE_LEFT: {
@@ -266,6 +264,9 @@ void Projection::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_t 
 	cotangent = Math::cos(radians) / sine;
 
 	set_identity();
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	columns[0][0] = cotangent / p_aspect;
 	columns[1][1] = cotangent;
@@ -305,6 +306,9 @@ void Projection::set_perspective(real_t p_fovy_degrees, real_t p_aspect, real_t 
 	}
 
 	set_frustum(left, right, -ymax, ymax, p_z_near, p_z_far);
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	// translate matrix by (modeltranslation, 0.0, 0.0)
 	Projection cm;
@@ -328,6 +332,9 @@ void Projection::set_for_hmd(int p_eye, real_t p_aspect, real_t p_intraocular_di
 
 	// always apply KEEP_WIDTH aspect ratio
 	f3 /= p_aspect;
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	PZFarStorage::p_z_far_stored = p_z_far;
 
 	switch (p_eye) {
 		case 1: { // left eye
@@ -343,6 +350,9 @@ void Projection::set_for_hmd(int p_eye, real_t p_aspect, real_t p_intraocular_di
 
 void Projection::set_orthogonal(real_t p_left, real_t p_right, real_t p_bottom, real_t p_top, real_t p_znear, real_t p_zfar) {
 	set_identity();
+	
+	// Store the value in the struct for it to be used in Plane definition.
+	PZFarStorage::p_z_far_stored = p_zfar;
 
 	columns[0][0] = 2.0 / (p_right - p_left);
 	columns[3][0] = -((p_right + p_left) / (p_right - p_left));
@@ -402,15 +412,7 @@ void Projection::set_frustum(real_t p_size, real_t p_aspect, Vector2 p_offset, r
 }
 
 real_t Projection::get_z_far() const {
-	const real_t *matrix = (const real_t *)columns;
-	Plane new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normalize();
-
-	return new_plane.d;
+	return PZFarStorage::p_z_far_stored;
 }
 
 real_t Projection::get_z_near() const {
@@ -455,11 +457,7 @@ Vector2 Projection::get_viewport_half_extents() const {
 Vector2 Projection::get_far_plane_half_extents() const {
 	const real_t *matrix = (const real_t *)columns;
 	///////--- Far Plane ---///////
-	Plane far_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			-matrix[15] + matrix[14]);
-	far_plane.normalize();
+	Plane far_plane = Plane(0.0, 0.0, -1.0, PZFarStorage::p_z_far_stored);
 
 	///////--- Right Plane ---///////
 	Plane right_plane = Plane(matrix[3] - matrix[0],
@@ -532,13 +530,7 @@ Vector<Plane> Projection::get_projection_planes(const Transform3D &p_transform) 
 	planes.write[0] = p_transform.xform(new_plane);
 
 	///////--- Far Plane ---///////
-	new_plane = Plane(matrix[3] - matrix[2],
-			matrix[7] - matrix[6],
-			matrix[11] - matrix[10],
-			matrix[15] - matrix[14]);
-
-	new_plane.normal = -new_plane.normal;
-	new_plane.normalize();
+	new_plane = Plane(0.0, 0.0, -1.0, PZFarStorage::p_z_far_stored);
 
 	planes.write[1] = p_transform.xform(new_plane);
 

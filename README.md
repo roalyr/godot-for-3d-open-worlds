@@ -1,4 +1,101 @@
-# Godot Engine
+# Godot 4 for 3D open worlds
+
+<p align="center">
+    <img src="logo_gow.png" width="400" alt="Godot for 3D open worlds logo">
+</p>
+
+This flavor of Godot 4.x engine is made to accommodate large open-world 3D games.
+
+This fork is regularly synchronized with [4.x branch](https://github.com/godotengine/godot/tree/master).
+
+Available for Windows x86-64, Linux 32-bit and x86-64, Linux armv8 (64 bit), Android armv7 and armv8.
+
+Implemented tweaks:
+* Far plane (z-far) upper limit is set to 9e18 meters.
+* [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
+* Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
+* Increased editor zoom increment for faster zooming.
+* This 4.x fork build DOES NOT implement hard-coded logarithmic depth buffer.
+Waiting for reverse-z depth buffer to be implemented and pulled: https://github.com/godotengine/godot/pull/88328
+
+Suggested:
+* Use [logarithmic depth](https://outerra.blogspot.com/search?q=logarithmic&max-results=20&by-date=true) in your spatial shaders to achieve rendering at extreme distances
+without z-fighting. Keep in mind that this may break some depth-related effects and shadow-casting.
+
+
+```
+// Add this before your vertex shader.
+// Edit "Fcoef" to adjust for desirable view distance. Lesser number means further distance limit.
+uniform float Fcoef = 0.001;
+varying float gl_Position_z;
+
+// Add this to your vertex shader.
+void vertex()
+{
+	vec4 gl_Position = MODELVIEW_MATRIX*vec4(VERTEX, 1.0);
+	gl_Position_z = gl_Position.z;
+}
+
+//Add this to your fragment shader.
+void fragment()
+{
+	DEPTH = log2(max(1e-6, 1.0 -gl_Position_z)) * Fcoef;
+}
+
+
+```
+
+* Use spatial shader material dithering for better de-banding on per-material basis.
+
+```
+// Add this before your vertex shader.
+// Edit "dither_darken" to adjust the brightness of dither pattern (optional).
+uniform float dither_darken :  hint_range(0.5, 1.0, 5e-4) = 0.75;
+
+const float dither_x = 172.7;
+const float dither_y = 232.6;
+const float dither_r = 105.5;
+const float dither_g = 99.0;
+const float dither_b = 110.0;
+
+vec3 interleaved_gradient_noise(vec2 frag_coord) {
+	vec3 dither = vec3(dot(vec2(dither_x, dither_y), frag_coord));
+	dither.rgb = fract(dither.rgb / vec3(dither_r, dither_g, dither_b));
+	return (dither.rgb - vec3(dither_darken)) / 255.0;
+}
+
+//Add this to your fragment shader.
+void fragment()
+{
+	vec2 frag_coord = FRAGCOORD.xy;
+	ALBEDO += interleaved_gradient_noise(frag_coord);
+}
+
+
+```
+
+
+
+## Installation
+Binaries available for Linux, Windows and Android.
+You can download binaries and templates (debug) at [releases](https://github.com/roalyr/godot-for-3d-open-worlds/releases/).
+You can build it from source. Refer to `rebuild_` scripts in root folder for convenience.
+
+Reminder for cross-compiling for Windows:
+```
+To use posix mode for mingw by default:
+
+$ sudo update-alternatives --config x86_64-w64-mingw32-gcc
+<choose x86_64-w64-mingw32-gcc-posix from the list>
+$ sudo update-alternatives --config x86_64-w64-mingw32-g++
+<choose x86_64-w64-mingw32-g++-posix from the list>
+```
+
+<br/><br/>
+<br/><br/>
+<br/><br/>
+
+# Godot Engine original readme
 
 <p align="center">
   <a href="https://godotengine.org">
