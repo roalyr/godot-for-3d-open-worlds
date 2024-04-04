@@ -125,6 +125,8 @@ protected:
 	Dictionary _get_script_constant_map();
 
 public:
+	virtual void reload_from_file() override;
+
 	virtual bool can_instantiate() const = 0;
 
 	virtual Ref<Script> get_base_script() const = 0; //for script inheritance
@@ -150,6 +152,8 @@ public:
 	// TODO: In the next compat breakage rename to `*_script_*` to disambiguate from `Object::has_method()`.
 	virtual bool has_method(const StringName &p_method) const = 0;
 	virtual bool has_static_method(const StringName &p_method) const { return false; }
+
+	virtual int get_script_method_argument_count(const StringName &p_method, bool *r_is_valid = nullptr) const;
 
 	virtual MethodInfo get_method_info(const StringName &p_method) const = 0;
 
@@ -193,6 +197,10 @@ public:
 
 class ScriptLanguage : public Object {
 	GDCLASS(ScriptLanguage, Object)
+
+protected:
+	static void _bind_methods();
+
 public:
 	virtual String get_name() const = 0;
 
@@ -222,6 +230,13 @@ public:
 		TEMPLATE_BUILT_IN,
 		TEMPLATE_EDITOR,
 		TEMPLATE_PROJECT
+	};
+
+	enum ScriptNameCasing {
+		SCRIPT_NAME_CASING_AUTO,
+		SCRIPT_NAME_CASING_PASCAL_CASE,
+		SCRIPT_NAME_CASING_SNAKE_CASE,
+		SCRIPT_NAME_CASING_KEBAB_CASE,
 	};
 
 	struct ScriptTemplate {
@@ -260,6 +275,7 @@ public:
 	virtual bool can_make_function() const { return true; }
 	virtual Error open_in_external_editor(const Ref<Script> &p_script, int p_line, int p_col) { return ERR_UNAVAILABLE; }
 	virtual bool overrides_external_editor() { return false; }
+	virtual ScriptNameCasing preferred_file_name_casing() const { return SCRIPT_NAME_CASING_SNAKE_CASE; }
 
 	// Keep enums in sync with:
 	// scene/gui/code_edit.h - CodeEdit::CodeCompletionKind
@@ -405,6 +421,8 @@ public:
 	virtual ~ScriptLanguage() {}
 };
 
+VARIANT_ENUM_CAST(ScriptLanguage::ScriptNameCasing);
+
 extern uint8_t script_encryption_key[32];
 
 class PlaceHolderScriptInstance : public ScriptInstance {
@@ -427,6 +445,13 @@ public:
 
 	virtual void get_method_list(List<MethodInfo> *p_list) const override;
 	virtual bool has_method(const StringName &p_method) const override;
+
+	virtual int get_method_argument_count(const StringName &p_method, bool *r_is_valid = nullptr) const override {
+		if (r_is_valid) {
+			*r_is_valid = false;
+		}
+		return 0;
+	}
 
 	virtual Variant callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) override {
 		r_error.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;

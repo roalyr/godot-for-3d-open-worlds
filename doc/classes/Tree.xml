@@ -414,7 +414,7 @@
 			</description>
 		</signal>
 		<signal name="empty_clicked">
-			<param index="0" name="position" type="Vector2" />
+			<param index="0" name="click_position" type="Vector2" />
 			<param index="1" name="mouse_button_index" type="int" />
 			<description>
 				Emitted when a mouse button is clicked in the empty space of the tree.
@@ -442,7 +442,7 @@
 			</description>
 		</signal>
 		<signal name="item_mouse_selected">
-			<param index="0" name="position" type="Vector2" />
+			<param index="0" name="mouse_position" type="Vector2" />
 			<param index="1" name="mouse_button_index" type="int" />
 			<description>
 				Emitted when an item is selected with a mouse button.
@@ -509,7 +509,7 @@
 		<theme_item name="font_disabled_color" data_type="color" type="Color" default="Color(0.875, 0.875, 0.875, 0.5)">
 			Text [Color] for a [constant TreeItem.CELL_MODE_CHECK] mode cell when it's non-editable (see [method TreeItem.set_editable]).
 		</theme_item>
-		<theme_item name="font_outline_color" data_type="color" type="Color" default="Color(1, 1, 1, 1)">
+		<theme_item name="font_outline_color" data_type="color" type="Color" default="Color(0, 0, 0, 1)">
 			The tint of text outline of the item.
 		</theme_item>
 		<theme_item name="font_selected_color" data_type="color" type="Color" default="Color(1, 1, 1, 1)">

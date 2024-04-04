@@ -828,17 +828,21 @@ static String _make_arguments_hint(const GDScriptParser::FunctionNode *p_functio
 	return arghint;
 }
 
-static void _get_directory_contents(EditorFileSystemDirectory *p_dir, HashMap<String, ScriptLanguage::CodeCompletionOption> &r_list) {
+static void _get_directory_contents(EditorFileSystemDirectory *p_dir, HashMap<String, ScriptLanguage::CodeCompletionOption> &r_list, const StringName &p_required_type = StringName()) {
 	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
+	const bool requires_type = p_required_type;
 
 	for (int i = 0; i < p_dir->get_file_count(); i++) {
+		if (requires_type && !ClassDB::is_parent_class(p_dir->get_file_type(i), p_required_type)) {
+			continue;
+		}
 		ScriptLanguage::CodeCompletionOption option(p_dir->get_file_path(i), ScriptLanguage::CODE_COMPLETION_KIND_FILE_PATH);
 		option.insert_text = option.display.quote(quote_style);
 		r_list.insert(option.display, option);
 	}
 
 	for (int i = 0; i < p_dir->get_subdir_count(); i++) {
-		_get_directory_contents(p_dir->get_subdir(i), r_list);
+		_get_directory_contents(p_dir->get_subdir(i), r_list, p_required_type);
 	}
 }
 
@@ -2661,6 +2665,8 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 	GDScriptParser::DataType base_type = p_base.type;
 
 	const String quote_style = EDITOR_GET("text_editor/completion/use_single_quotes") ? "'" : "\"";
+	const bool use_string_names = EDITOR_GET("text_editor/completion/add_string_name_literals");
+	const bool use_node_paths = EDITOR_GET("text_editor/completion/add_node_path_literals");
 
 	while (base_type.is_set() && !base_type.is_variant()) {
 		switch (base_type.kind) {
@@ -2694,8 +2700,14 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 							List<String> options;
 							obj->get_argument_options(p_method, p_argidx, &options);
 							for (String &opt : options) {
+								// Handle user preference.
 								if (opt.is_quoted()) {
-									opt = opt.unquote().quote(quote_style); // Handle user preference.
+									opt = opt.unquote().quote(quote_style);
+									if (use_string_names && info.arguments[p_argidx].type == Variant::STRING_NAME) {
+										opt = opt.indent("&");
+									} else if (use_node_paths && info.arguments[p_argidx].type == Variant::NODE_PATH) {
+										opt = opt.indent("^");
+									}
 								}
 								ScriptLanguage::CodeCompletionOption option(opt, ScriptLanguage::CODE_COMPLETION_KIND_FUNCTION);
 								r_result.insert(option.display, option);
@@ -2801,6 +2813,16 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 						ScriptLanguage::CodeCompletionOption option(name, ScriptLanguage::CODE_COMPLETION_KIND_CONSTANT);
 						option.insert_text = option.display.quote(quote_style);
 						r_result.insert(option.display, option);
+					}
+				}
+				if (EDITOR_GET("text_editor/completion/complete_file_paths")) {
+					if (p_argidx == 0 && p_method == SNAME("change_scene_to_file") && ClassDB::is_parent_class(class_name, SNAME("SceneTree"))) {
+						HashMap<String, ScriptLanguage::CodeCompletionOption> list;
+						_get_directory_contents(EditorFileSystem::get_singleton()->get_filesystem(), list, SNAME("PackedScene"));
+						for (const KeyValue<String, ScriptLanguage::CodeCompletionOption> &key_value_pair : list) {
+							ScriptLanguage::CodeCompletionOption option = key_value_pair.value;
+							r_result.insert(option.display, option);
+						}
 					}
 				}
 

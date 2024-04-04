@@ -405,6 +405,10 @@ bool CSharpLanguage::supports_builtin_mode() const {
 	return false;
 }
 
+ScriptLanguage::ScriptNameCasing CSharpLanguage::preferred_file_name_casing() const {
+	return SCRIPT_NAME_CASING_PASCAL_CASE;
+}
+
 #ifdef TOOLS_ENABLED
 struct VariantCsName {
 	Variant::Type variant_type;
@@ -1404,7 +1408,11 @@ GDExtensionBool CSharpLanguage::_instance_binding_reference_callback(void *p_tok
 }
 
 void *CSharpLanguage::get_instance_binding(Object *p_object) {
-	void *binding = p_object->get_instance_binding(get_singleton(), &_instance_binding_callbacks);
+	return p_object->get_instance_binding(get_singleton(), &_instance_binding_callbacks);
+}
+
+void *CSharpLanguage::get_instance_binding_with_setup(Object *p_object) {
+	void *binding = get_instance_binding(p_object);
 
 	// Initially this was in `_instance_binding_create_callback`. However, after the new instance
 	// binding re-write it was resulting in a deadlock in `_instance_binding_reference`, as
@@ -1429,11 +1437,7 @@ void *CSharpLanguage::get_existing_instance_binding(Object *p_object) {
 #ifdef DEBUG_ENABLED
 	CRASH_COND(p_object->has_instance_binding(p_object));
 #endif
-	return p_object->get_instance_binding(get_singleton(), &_instance_binding_callbacks);
-}
-
-void CSharpLanguage::set_instance_binding(Object *p_object, void *p_binding) {
-	p_object->set_instance_binding(get_singleton(), p_binding, &_instance_binding_callbacks);
+	return get_instance_binding(p_object);
 }
 
 bool CSharpLanguage::has_instance_binding(Object *p_object) {
@@ -1460,13 +1464,6 @@ void CSharpLanguage::tie_native_managed_to_unmanaged(GCHandleIntPtr p_gchandle_i
 	// Another reason for doing this is that this instance could outlive CSharpLanguage, which would
 	// be problematic when using a script. See: https://github.com/godotengine/godot/issues/25621
 
-	CSharpScriptBinding script_binding;
-
-	script_binding.inited = true;
-	script_binding.type_name = *p_native_name;
-	script_binding.gchandle = gchandle;
-	script_binding.owner = p_unmanaged;
-
 	if (p_ref_counted) {
 		// Unsafe refcount increment. The managed instance also counts as a reference.
 		// This way if the unmanaged world has no references to our owner
@@ -1482,14 +1479,13 @@ void CSharpLanguage::tie_native_managed_to_unmanaged(GCHandleIntPtr p_gchandle_i
 	// The object was just created, no script instance binding should have been attached
 	CRASH_COND(CSharpLanguage::has_instance_binding(p_unmanaged));
 
-	void *data;
-	{
-		MutexLock lock(CSharpLanguage::get_singleton()->get_language_bind_mutex());
-		data = (void *)CSharpLanguage::get_singleton()->insert_script_binding(p_unmanaged, script_binding);
-	}
+	void *binding = CSharpLanguage::get_singleton()->get_instance_binding(p_unmanaged);
 
-	// Should be thread safe because the object was just created and nothing else should be referencing it
-	CSharpLanguage::set_instance_binding(p_unmanaged, data);
+	CSharpScriptBinding &script_binding = ((RBMap<Object *, CSharpScriptBinding>::Element *)binding)->value();
+	script_binding.inited = true;
+	script_binding.type_name = *p_native_name;
+	script_binding.gchandle = gchandle;
+	script_binding.owner = p_unmanaged;
 }
 
 void CSharpLanguage::tie_user_managed_to_unmanaged(GCHandleIntPtr p_gchandle_intptr, Object *p_unmanaged, Ref<CSharpScript> *p_script, bool p_ref_counted) {
@@ -1729,6 +1725,34 @@ bool CSharpInstance::has_method(const StringName &p_method) const {
 
 	return GDMonoCache::managed_callbacks.CSharpInstanceBridge_HasMethodUnknownParams(
 			gchandle.get_intptr(), &p_method);
+}
+
+int CSharpInstance::get_method_argument_count(const StringName &p_method, bool *r_is_valid) const {
+	if (!script->is_valid() || !script->valid) {
+		if (r_is_valid) {
+			*r_is_valid = false;
+		}
+		return 0;
+	}
+
+	const CSharpScript *top = script.ptr();
+	while (top != nullptr) {
+		for (const CSharpScript::CSharpMethodInfo &E : top->methods) {
+			if (E.name == p_method) {
+				if (r_is_valid) {
+					*r_is_valid = true;
+				}
+				return E.method_info.arguments.size();
+			}
+		}
+
+		top = top->base_script.ptr();
+	}
+
+	if (r_is_valid) {
+		*r_is_valid = false;
+	}
+	return 0;
 }
 
 Variant CSharpInstance::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
@@ -2060,7 +2084,7 @@ CSharpInstance::~CSharpInstance() {
 		bool die = _unreference_owner_unsafe();
 		CRASH_COND(die); // `owner_keep_alive` holds a reference, so it can't die
 
-		void *data = CSharpLanguage::get_instance_binding(owner);
+		void *data = CSharpLanguage::get_instance_binding_with_setup(owner);
 		CRASH_COND(data == nullptr);
 		CSharpScriptBinding &script_binding = ((RBMap<Object *, CSharpScriptBinding>::Element *)data)->get();
 		CRASH_COND(!script_binding.inited);
@@ -2575,6 +2599,29 @@ bool CSharpScript::has_method(const StringName &p_method) const {
 	return false;
 }
 
+int CSharpScript::get_script_method_argument_count(const StringName &p_method, bool *r_is_valid) const {
+	if (!valid) {
+		if (r_is_valid) {
+			*r_is_valid = false;
+		}
+		return 0;
+	}
+
+	for (const CSharpMethodInfo &E : methods) {
+		if (E.name == p_method) {
+			if (r_is_valid) {
+				*r_is_valid = true;
+			}
+			return E.method_info.arguments.size();
+		}
+	}
+
+	if (r_is_valid) {
+		*r_is_valid = false;
+	}
+	return 0;
+}
+
 MethodInfo CSharpScript::get_method_info(const StringName &p_method) const {
 	if (!valid) {
 		return MethodInfo();
@@ -2851,7 +2898,24 @@ Ref<Resource> ResourceFormatLoaderCSharpScript::load(const String &p_path, const
 	ERR_FAIL_COND_V_MSG(!scr->get_path().is_empty() && scr->get_path() != p_original_path, Ref<Resource>(),
 			"The C# script path is different from the path it was registered in the C# dictionary.");
 
-	scr->set_path(p_original_path, true);
+	Ref<Resource> existing = ResourceCache::get_ref(p_path);
+	switch (p_cache_mode) {
+		case ResourceFormatLoader::CACHE_MODE_IGNORE:
+		case ResourceFormatLoader::CACHE_MODE_IGNORE_DEEP:
+			break;
+		case ResourceFormatLoader::CACHE_MODE_REUSE:
+			if (existing.is_null()) {
+				scr->set_path(p_original_path);
+			} else {
+				scr = existing;
+			}
+			break;
+		case ResourceFormatLoader::CACHE_MODE_REPLACE:
+		case ResourceFormatLoader::CACHE_MODE_REPLACE_DEEP:
+			scr->set_path(p_original_path, true);
+			break;
+	}
+
 	scr->reload();
 
 	if (r_error) {

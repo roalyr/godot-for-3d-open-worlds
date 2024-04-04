@@ -38,7 +38,7 @@
 
 EditorPerformanceProfiler::Monitor::Monitor() {}
 
-EditorPerformanceProfiler::Monitor::Monitor(String p_name, String p_base, int p_frame_index, Performance::MonitorType p_type, TreeItem *p_item) {
+EditorPerformanceProfiler::Monitor::Monitor(const String &p_name, const String &p_base, int p_frame_index, Performance::MonitorType p_type, TreeItem *p_item) {
 	type = p_type;
 	item = p_item;
 	frame_index = p_frame_index;
@@ -84,7 +84,7 @@ String EditorPerformanceProfiler::_create_label(float p_value, Performance::Moni
 			return String::humanize_size(p_value);
 		}
 		case Performance::MONITOR_TYPE_TIME: {
-			return TS->format_number(rtos(p_value * 1000).pad_decimals(2)) + " " + RTR("ms");
+			return TS->format_number(rtos(p_value * 1000).pad_decimals(2)) + " " + TTR("ms");
 		}
 		default: {
 			return TS->format_number(rtos(p_value));

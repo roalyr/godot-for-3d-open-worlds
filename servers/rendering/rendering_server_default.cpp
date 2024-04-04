@@ -80,6 +80,7 @@ void RenderingServerDefault::_draw(bool p_swap_buffers, double frame_step) {
 
 	uint64_t time_usec = OS::get_singleton()->get_ticks_usec();
 
+	RENDER_TIMESTAMP("Prepare Render Frame");
 	RSG::scene->update(); //update scenes stuff before updating instances
 
 	frame_setup_time = double(OS::get_singleton()->get_ticks_usec() - time_usec) / 1000.0;
@@ -93,11 +94,13 @@ void RenderingServerDefault::_draw(bool p_swap_buffers, double frame_step) {
 
 	RSG::rasterizer->end_frame(p_swap_buffers);
 
+#ifndef _3D_DISABLED
 	XRServer *xr_server = XRServer::get_singleton();
 	if (xr_server != nullptr) {
 		// let our XR server know we're done so we can get our frame timing
 		xr_server->end_frame();
 	}
+#endif // _3D_DISABLED
 
 	RSG::canvas->update_visibility_notifiers();
 	RSG::scene->update_visibility_notifiers();
@@ -366,6 +369,16 @@ void RenderingServerDefault::_thread_loop() {
 	command_queue.flush_all(); // flush all
 
 	_finish();
+}
+
+/* INTERPOLATION */
+
+void RenderingServerDefault::tick() {
+	RSG::canvas->tick();
+}
+
+void RenderingServerDefault::set_physics_interpolation_enabled(bool p_enabled) {
+	RSG::canvas->set_physics_interpolation_enabled(p_enabled);
 }
 
 /* EVENT QUEUING */

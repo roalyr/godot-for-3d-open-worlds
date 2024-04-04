@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "node.h"
+#include "node.compat.inc"
 
 #include "core/config/project_settings.h"
 #include "core/core_string_names.h"
@@ -97,6 +98,14 @@ void Node::_notification(int p_notification) {
 				if (_is_any_processing()) {
 					_add_to_process_thread_group();
 				}
+			}
+
+			if (data.physics_interpolation_mode == PHYSICS_INTERPOLATION_MODE_INHERIT) {
+				bool interpolate = true; // Root node default is for interpolation to be on.
+				if (data.parent) {
+					interpolate = data.parent->is_physics_interpolated();
+				}
+				_propagate_physics_interpolated(interpolate);
 			}
 
 			// Update auto translate mode.
@@ -395,6 +404,36 @@ void Node::_propagate_exit_tree() {
 	data.depth = -1;
 }
 
+void Node::_propagate_physics_interpolated(bool p_interpolated) {
+	switch (data.physics_interpolation_mode) {
+		case PHYSICS_INTERPOLATION_MODE_INHERIT:
+			// Keep the parent p_interpolated.
+			break;
+		case PHYSICS_INTERPOLATION_MODE_OFF: {
+			p_interpolated = false;
+		} break;
+		case PHYSICS_INTERPOLATION_MODE_ON: {
+			p_interpolated = true;
+		} break;
+	}
+
+	// No change? No need to propagate further.
+	if (data.physics_interpolated == p_interpolated) {
+		return;
+	}
+
+	data.physics_interpolated = p_interpolated;
+
+	// Allow a call to the RenderingServer etc. in derived classes.
+	_physics_interpolated_changed();
+
+	data.blocked++;
+	for (KeyValue<StringName, Node *> &K : data.children) {
+		K.value->_propagate_physics_interpolated(p_interpolated);
+	}
+	data.blocked--;
+}
+
 void Node::move_child(Node *p_child, int p_index) {
 	ERR_FAIL_COND_MSG(data.inside_tree && !Thread::is_main_thread(), "Moving child node positions inside the SceneTree is only allowed from the main thread. Use call_deferred(\"move_child\",child,index).");
 	ERR_FAIL_NULL(p_child);
@@ -506,6 +545,8 @@ void Node::move_child_notify(Node *p_child) {
 
 void Node::owner_changed_notify() {
 }
+
+void Node::_physics_interpolated_changed() {}
 
 void Node::set_physics_process(bool p_process) {
 	ERR_THREAD_GUARD
@@ -819,6 +860,42 @@ bool Node::_can_process(bool p_paused) const {
 	} else {
 		return process_mode == PROCESS_MODE_PAUSABLE;
 	}
+}
+
+void Node::set_physics_interpolation_mode(PhysicsInterpolationMode p_mode) {
+	ERR_THREAD_GUARD
+	if (data.physics_interpolation_mode == p_mode) {
+		return;
+	}
+
+	data.physics_interpolation_mode = p_mode;
+
+	bool interpolate = true; // Default for root node.
+
+	switch (p_mode) {
+		case PHYSICS_INTERPOLATION_MODE_INHERIT: {
+			if (is_inside_tree() && data.parent) {
+				interpolate = data.parent->is_physics_interpolated();
+			}
+		} break;
+		case PHYSICS_INTERPOLATION_MODE_OFF: {
+			interpolate = false;
+		} break;
+		case PHYSICS_INTERPOLATION_MODE_ON: {
+			interpolate = true;
+		} break;
+	}
+
+	// If swapping from interpolated to non-interpolated, use this as an extra means to cause a reset.
+	if (is_physics_interpolated() && !interpolate) {
+		reset_physics_interpolation();
+	}
+
+	_propagate_physics_interpolated(interpolate);
+}
+
+void Node::reset_physics_interpolation() {
+	propagate_notification(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 }
 
 bool Node::_is_enabled() const {
@@ -1679,23 +1756,14 @@ Node *Node::get_node_or_null(const NodePath &p_path) const {
 			}
 
 		} else if (name.is_node_unique_name()) {
-			if (current->data.owned_unique_nodes.size()) {
-				// Has unique nodes in ownership
-				Node **unique = current->data.owned_unique_nodes.getptr(name);
-				if (!unique) {
-					return nullptr;
-				}
-				next = *unique;
-			} else if (current->data.owner) {
-				Node **unique = current->data.owner->data.owned_unique_nodes.getptr(name);
-				if (!unique) {
-					return nullptr;
-				}
-				next = *unique;
-			} else {
+			Node **unique = current->data.owned_unique_nodes.getptr(name);
+			if (!unique && current->data.owner) {
+				unique = current->data.owner->data.owned_unique_nodes.getptr(name);
+			}
+			if (!unique) {
 				return nullptr;
 			}
-
+			next = *unique;
 		} else {
 			next = nullptr;
 			const Node *const *node = current->data.children.getptr(name);
@@ -1823,7 +1891,7 @@ void Node::reparent(Node *p_parent, bool p_keep_global_transform) {
 			Node *check = to_visit[to_visit.size() - 1];
 			to_visit.resize(to_visit.size() - 1);
 
-			for (int i = 0; i < check->get_child_count(); i++) {
+			for (int i = 0; i < check->get_child_count(false); i++) {
 				Node *child = check->get_child(i, false);
 				to_visit.push_back(child);
 				if (child->data.owner == owner_temp) {
@@ -2737,24 +2805,6 @@ Node *Node::_duplicate(int p_flags, HashMap<const Node *, Node *> *r_duplimap) c
 				}
 
 			} else {
-				// If property points to a node which is owned by a node we are duplicating, update its path.
-				if (value.get_type() == Variant::OBJECT) {
-					Node *property_node = Object::cast_to<Node>(value);
-					if (property_node && is_ancestor_of(property_node)) {
-						value = current_node->get_node_or_null(get_path_to(property_node));
-					}
-				} else if (value.get_type() == Variant::ARRAY) {
-					Array arr = value;
-					if (arr.get_typed_builtin() == Variant::OBJECT) {
-						for (int i = 0; i < arr.size(); i++) {
-							Node *property_node = Object::cast_to<Node>(arr[i]);
-							if (property_node && is_ancestor_of(property_node)) {
-								arr[i] = current_node->get_node_or_null(get_path_to(property_node));
-							}
-						}
-						value = arr;
-					}
-				}
 				current_node->set(name, value);
 			}
 		}
@@ -2770,6 +2820,8 @@ Node *Node::duplicate(int p_flags) const {
 	if (dupe && (p_flags & DUPLICATE_SIGNALS)) {
 		_duplicate_signals(this, dupe);
 	}
+
+	_duplicate_properties_node(this, this, dupe);
 
 	return dupe;
 }
@@ -2791,6 +2843,8 @@ Node *Node::duplicate_from_editor(HashMap<const Node *, Node *> &r_duplimap, con
 	// because re-targeting of connections from some descendant to another is not possible
 	// if the emitter node comes later in tree order than the receiver
 	_duplicate_signals(this, dupe);
+
+	_duplicate_properties_node(this, this, dupe);
 
 	return dupe;
 }
@@ -2843,6 +2897,44 @@ void Node::remap_nested_resources(Ref<Resource> p_resource, const HashMap<Ref<Re
 	}
 }
 #endif
+
+// Duplicates properties that store a Node.
+// This has to be called after nodes have been duplicated since
+// only then do we get a full picture of how the duplicated node tree looks like.
+void Node::_duplicate_properties_node(const Node *p_root, const Node *p_original, Node *p_copy) const {
+	List<PropertyInfo> props;
+	p_copy->get_property_list(&props);
+	for (const PropertyInfo &E : props) {
+		if (!(E.usage & PROPERTY_USAGE_STORAGE)) {
+			continue;
+		}
+		String name = E.name;
+		Variant value = p_original->get(name).duplicate(true);
+		if (value.get_type() == Variant::OBJECT) {
+			Node *property_node = Object::cast_to<Node>(value);
+			if (property_node && (p_root == property_node || p_root->is_ancestor_of(property_node))) {
+				value = p_copy->get_node_or_null(p_original->get_path_to(property_node));
+				p_copy->set(name, value);
+			}
+		} else if (value.get_type() == Variant::ARRAY) {
+			Array arr = value;
+			if (arr.get_typed_builtin() == Variant::OBJECT) {
+				for (int i = 0; i < arr.size(); i++) {
+					Node *property_node = Object::cast_to<Node>(arr[i]);
+					if (property_node && (p_root == property_node || p_root->is_ancestor_of(property_node))) {
+						arr[i] = p_copy->get_node_or_null(p_original->get_path_to(property_node));
+					}
+				}
+				value = arr;
+				p_copy->set(name, value);
+			}
+		}
+	}
+
+	for (int i = 0; i < p_copy->get_child_count(); i++) {
+		_duplicate_properties_node(p_root, p_original->get_child(i), p_copy->get_child(i));
+	}
+}
 
 // Duplication of signals must happen after all the node descendants have been copied,
 // because re-targeting of connections from some descendant to another is not possible
@@ -2914,7 +3006,7 @@ static void find_owned_by(Node *p_by, Node *p_node, List<Node *> *p_owned) {
 	}
 }
 
-void Node::replace_by(Node *p_node, bool p_keep_groups) {
+void Node::replace_by(Node *p_node, bool p_keep_groups, bool p_keep_children) {
 	ERR_THREAD_GUARD
 	ERR_FAIL_NULL(p_node);
 	ERR_FAIL_COND(p_node->data.parent);
@@ -2935,13 +3027,13 @@ void Node::replace_by(Node *p_node, bool p_keep_groups) {
 	_replace_connections_target(p_node);
 
 	if (data.owner) {
-		for (int i = 0; i < get_child_count(); i++) {
-			find_owned_by(data.owner, get_child(i), &owned_by_owner);
+		if (p_keep_children) {
+			for (int i = 0; i < get_child_count(); i++) {
+				find_owned_by(data.owner, get_child(i), &owned_by_owner);
+			}
 		}
-
 		_clean_up_owner();
 	}
-
 	Node *parent = data.parent;
 	int index_in_parent = get_index(false);
 
@@ -2953,24 +3045,33 @@ void Node::replace_by(Node *p_node, bool p_keep_groups) {
 
 	emit_signal(SNAME("replacing_by"), p_node);
 
-	while (get_child_count()) {
-		Node *child = get_child(0);
-		remove_child(child);
-		if (!child->is_owned_by_parent()) {
-			// add the custom children to the p_node
-			p_node->add_child(child);
+	if (p_keep_children) {
+		while (get_child_count()) {
+			Node *child = get_child(0);
+			remove_child(child);
+			if (!child->is_owned_by_parent()) {
+				// add the custom children to the p_node
+				Node *child_owner = child->get_owner() == this ? p_node : child->get_owner();
+				child->set_owner(nullptr);
+				p_node->add_child(child);
+				child->set_owner(child_owner);
+			}
+		}
+
+		for (Node *E : owned) {
+			if (E->data.owner != p_node) {
+				E->set_owner(p_node);
+			}
+		}
+
+		for (Node *E : owned_by_owner) {
+			if (E->data.owner != owner) {
+				E->set_owner(owner);
+			}
 		}
 	}
 
 	p_node->set_owner(owner);
-	for (int i = 0; i < owned.size(); i++) {
-		owned[i]->set_owner(p_node);
-	}
-
-	for (int i = 0; i < owned_by_owner.size(); i++) {
-		owned_by_owner[i]->set_owner(owner);
-	}
-
 	p_node->set_scene_file_path(get_scene_file_path());
 }
 
@@ -3167,6 +3268,7 @@ NodePath Node::get_import_path() const {
 #endif
 }
 
+#ifdef TOOLS_ENABLED
 static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<String> *r_options) {
 	if (p_node != p_base && !p_node->get_owner()) {
 		return;
@@ -3183,7 +3285,7 @@ static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<S
 }
 
 void Node::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
-	String pf = p_function;
+	const String pf = p_function;
 	if (p_idx == 0 && (pf == "has_node" || pf == "get_node" || pf == "get_node_or_null")) {
 		_add_nodes_to_options(this, this, r_options);
 	} else if (p_idx == 0 && (pf == "add_to_group" || pf == "remove_from_group" || pf == "is_in_group")) {
@@ -3194,6 +3296,7 @@ void Node::get_argument_options(const StringName &p_function, int p_idx, List<St
 	}
 	Object::get_argument_options(p_function, p_idx, r_options);
 }
+#endif
 
 void Node::clear_internal_tree_resource_paths() {
 	clear_internal_resource_paths();
@@ -3480,6 +3583,12 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_physics_process_internal", "enable"), &Node::set_physics_process_internal);
 	ClassDB::bind_method(D_METHOD("is_physics_processing_internal"), &Node::is_physics_processing_internal);
 
+	ClassDB::bind_method(D_METHOD("set_physics_interpolation_mode", "mode"), &Node::set_physics_interpolation_mode);
+	ClassDB::bind_method(D_METHOD("get_physics_interpolation_mode"), &Node::get_physics_interpolation_mode);
+	ClassDB::bind_method(D_METHOD("is_physics_interpolated"), &Node::is_physics_interpolated);
+	ClassDB::bind_method(D_METHOD("is_physics_interpolated_and_enabled"), &Node::is_physics_interpolated_and_enabled);
+	ClassDB::bind_method(D_METHOD("reset_physics_interpolation"), &Node::reset_physics_interpolation);
+
 	ClassDB::bind_method(D_METHOD("set_auto_translate_mode", "mode"), &Node::set_auto_translate_mode);
 	ClassDB::bind_method(D_METHOD("get_auto_translate_mode"), &Node::get_auto_translate_mode);
 
@@ -3489,7 +3598,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("create_tween"), &Node::create_tween);
 
 	ClassDB::bind_method(D_METHOD("duplicate", "flags"), &Node::duplicate, DEFVAL(DUPLICATE_USE_INSTANTIATION | DUPLICATE_SIGNALS | DUPLICATE_GROUPS | DUPLICATE_SCRIPTS));
-	ClassDB::bind_method(D_METHOD("replace_by", "node", "keep_groups"), &Node::replace_by, DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("replace_by", "node", "keep_groups", "keep_children"), &Node::replace_by, DEFVAL(false), DEFVAL(true));
 
 	ClassDB::bind_method(D_METHOD("set_scene_instance_load_placeholder", "load_placeholder"), &Node::set_scene_instance_load_placeholder);
 	ClassDB::bind_method(D_METHOD("get_scene_instance_load_placeholder"), &Node::get_scene_instance_load_placeholder);
@@ -3585,6 +3694,7 @@ void Node::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_POST_ENTER_TREE);
 	BIND_CONSTANT(NOTIFICATION_DISABLED);
 	BIND_CONSTANT(NOTIFICATION_ENABLED);
+	BIND_CONSTANT(NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 
 	BIND_CONSTANT(NOTIFICATION_EDITOR_PRE_SAVE);
 	BIND_CONSTANT(NOTIFICATION_EDITOR_POST_SAVE);
@@ -3623,6 +3733,10 @@ void Node::_bind_methods() {
 	BIND_BITFIELD_FLAG(FLAG_PROCESS_THREAD_MESSAGES);
 	BIND_BITFIELD_FLAG(FLAG_PROCESS_THREAD_MESSAGES_PHYSICS);
 	BIND_BITFIELD_FLAG(FLAG_PROCESS_THREAD_MESSAGES_ALL);
+
+	BIND_ENUM_CONSTANT(PHYSICS_INTERPOLATION_MODE_INHERIT);
+	BIND_ENUM_CONSTANT(PHYSICS_INTERPOLATION_MODE_ON);
+	BIND_ENUM_CONSTANT(PHYSICS_INTERPOLATION_MODE_OFF);
 
 	BIND_ENUM_CONSTANT(DUPLICATE_SIGNALS);
 	BIND_ENUM_CONSTANT(DUPLICATE_GROUPS);
@@ -3665,6 +3779,9 @@ void Node::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "process_thread_group_order"), "set_process_thread_group_order", "get_process_thread_group_order");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "process_thread_messages", PROPERTY_HINT_FLAGS, "Process,Physics Process"), "set_process_thread_messages", "get_process_thread_messages");
 
+	ADD_GROUP("Physics Interpolation", "physics_interpolation_");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "physics_interpolation_mode", PROPERTY_HINT_ENUM, "Inherit,Off,On"), "set_physics_interpolation_mode", "get_physics_interpolation_mode");
+
 	ADD_GROUP("Auto Translate", "auto_translate_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "auto_translate_mode", PROPERTY_HINT_ENUM, "Inherit,Always,Disabled"), "set_auto_translate_mode", "get_auto_translate_mode");
 
@@ -3699,6 +3816,35 @@ String Node::_get_name_num_separator() {
 
 Node::Node() {
 	orphan_node_count++;
+
+	// Default member initializer for bitfield is a C++20 extension, so:
+
+	data.process_mode = PROCESS_MODE_INHERIT;
+	data.physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_INHERIT;
+
+	data.physics_process = false;
+	data.process = false;
+
+	data.physics_process_internal = false;
+	data.process_internal = false;
+
+	data.input = false;
+	data.shortcut_input = false;
+	data.unhandled_input = false;
+	data.unhandled_key_input = false;
+
+	data.physics_interpolated = false;
+
+	data.parent_owned = false;
+	data.in_constructor = true;
+	data.use_placeholder = false;
+
+	data.display_folded = false;
+	data.editable_instance = false;
+
+	data.inside_tree = false;
+	data.ready_notified = false; // This is a small hack, so if a node is added during _ready() to the tree, it correctly gets the _ready() notification.
+	data.ready_first = true;
 }
 
 Node::~Node() {

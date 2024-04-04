@@ -57,6 +57,15 @@
 class OpenXRInterface;
 
 class OpenXRAPI {
+public:
+	struct OpenXRSwapChainInfo {
+		XrSwapchain swapchain = XR_NULL_HANDLE;
+		void *swapchain_graphics_data = nullptr;
+		uint32_t image_index = 0;
+		bool image_acquired = false;
+		bool skip_acquire_swapchain = false;
+	};
+
 private:
 	// our singleton
 	static OpenXRAPI *singleton;
@@ -118,7 +127,7 @@ private:
 	XrSession session = XR_NULL_HANDLE;
 	XrSessionState session_state = XR_SESSION_STATE_UNKNOWN;
 	bool running = false;
-	XrFrameState frame_state = { XR_TYPE_FRAME_STATE, NULL, 0, 0, false };
+	XrFrameState frame_state = { XR_TYPE_FRAME_STATE, nullptr, 0, 0, false };
 	double render_target_size_multiplier = 1.0;
 
 	OpenXRGraphicsExtensionWrapper *graphics_extension = nullptr;
@@ -137,14 +146,8 @@ private:
 		OPENXR_SWAPCHAIN_MAX
 	};
 
-	struct OpenXRSwapChainInfo {
-		XrSwapchain swapchain = XR_NULL_HANDLE;
-		void *swapchain_graphics_data = nullptr;
-		uint32_t image_index = 0;
-		bool image_acquired = false;
-		bool skip_acquire_swapchain = false;
-	};
-
+	int64_t color_swapchain_format = 0;
+	int64_t depth_swapchain_format = 0;
 	OpenXRSwapChainInfo swapchains[OPENXR_SWAPCHAIN_MAX];
 
 	XrSpace play_space = XR_NULL_HANDLE;
@@ -241,11 +244,6 @@ private:
 	bool create_swapchains();
 	void destroy_session();
 
-	// swapchains
-	bool create_swapchain(XrSwapchainUsageFlags p_usage_flags, int64_t p_swapchain_format, uint32_t p_width, uint32_t p_height, uint32_t p_sample_count, uint32_t p_array_size, XrSwapchain &r_swapchain, void **r_swapchain_graphics_data);
-	bool acquire_image(OpenXRSwapChainInfo &p_swapchain);
-	bool release_image(OpenXRSwapChainInfo &p_swapchain);
-
 	// action map
 	struct Tracker { // Trackers represent tracked physical objects such as controllers, pucks, etc.
 		String name; // Name for this tracker (i.e. "/user/hand/left")
@@ -286,6 +284,15 @@ private:
 	RID_Owner<InteractionProfile, true> interaction_profile_owner;
 	RID get_interaction_profile_rid(XrPath p_path);
 	XrPath get_interaction_profile_path(RID p_interaction_profile);
+
+	struct OrderedCompositionLayer {
+		const XrCompositionLayerBaseHeader *composition_layer;
+		int sort_order;
+
+		_FORCE_INLINE_ bool operator()(const OrderedCompositionLayer &a, const OrderedCompositionLayer &b) const {
+			return a.sort_order < b.sort_order || (a.sort_order == b.sort_order && uint64_t(a.composition_layer) < uint64_t(b.composition_layer));
+		}
+	};
 
 	// state changes
 	bool poll_events();
@@ -395,6 +402,14 @@ public:
 
 	// Play space.
 	Size2 get_play_space_bounds() const;
+
+	// swapchains
+	int64_t get_color_swapchain_format() const { return color_swapchain_format; }
+	bool create_swapchain(XrSwapchainCreateFlags p_create_flags, XrSwapchainUsageFlags p_usage_flags, int64_t p_swapchain_format, uint32_t p_width, uint32_t p_height, uint32_t p_sample_count, uint32_t p_array_size, XrSwapchain &r_swapchain, void **r_swapchain_graphics_data);
+	void free_swapchain(OpenXRSwapChainInfo &p_swapchain);
+	bool acquire_image(OpenXRSwapChainInfo &p_swapchain);
+	RID get_image(OpenXRSwapChainInfo &p_swapchain);
+	bool release_image(OpenXRSwapChainInfo &p_swapchain);
 
 	// action map
 	String get_default_action_map_resource_name();

@@ -68,14 +68,6 @@ class EditorFileSystemDirectory : public Object {
 		String script_class_icon_path;
 	};
 
-	struct FileInfoSort {
-		bool operator()(const FileInfo *p_a, const FileInfo *p_b) const {
-			return p_a->file < p_b->file;
-		}
-	};
-
-	void sort_files();
-
 	Vector<FileInfo *> files;
 
 	static void _bind_methods();
@@ -221,7 +213,7 @@ class EditorFileSystem : public Node {
 
 	void _scan_fs_changes(EditorFileSystemDirectory *p_dir, const ScanProgress &p_progress);
 
-	void _delete_internal_files(String p_file);
+	void _delete_internal_files(const String &p_file);
 
 	HashSet<String> textfile_extensions;
 	HashSet<String> valid_extensions;
@@ -298,7 +290,7 @@ class EditorFileSystem : public Node {
 	static ResourceUID::ID _resource_saver_get_resource_id_for_path(const String &p_path, bool p_generate);
 
 	bool _scan_extensions();
-	bool _scan_import_support(Vector<String> reimports);
+	bool _scan_import_support(const Vector<String> &reimports);
 
 	Vector<Ref<EditorFileSystemImportFormatSupportQuery>> import_support_queries;
 

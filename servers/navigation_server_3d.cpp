@@ -29,7 +29,9 @@
 /**************************************************************************/
 
 #include "navigation_server_3d.h"
+
 #include "core/config/project_settings.h"
+#include "scene/main/node.h"
 
 NavigationServer3D *NavigationServer3D::singleton = nullptr;
 
@@ -233,6 +235,7 @@ NavigationServer3D::NavigationServer3D() {
 	GLOBAL_DEF("navigation/avoidance/thread_model/avoidance_use_multiple_threads", true);
 	GLOBAL_DEF("navigation/avoidance/thread_model/avoidance_use_high_priority_threads", true);
 
+	GLOBAL_DEF("navigation/baking/use_crash_prevention_checks", true);
 	GLOBAL_DEF("navigation/baking/thread_model/baking_use_multiple_threads", true);
 	GLOBAL_DEF("navigation/baking/thread_model/baking_use_high_priority_threads", true);
 
@@ -291,7 +294,11 @@ void NavigationServer3D::set_debug_enabled(bool p_enabled) {
 	debug_enabled = p_enabled;
 
 	if (debug_dirty) {
+		navigation_debug_dirty = true;
 		callable_mp(this, &NavigationServer3D::_emit_navigation_debug_changed_signal).call_deferred();
+
+		avoidance_debug_dirty = true;
+		callable_mp(this, &NavigationServer3D::_emit_avoidance_debug_changed_signal).call_deferred();
 	}
 #endif // DEBUG_ENABLED
 }

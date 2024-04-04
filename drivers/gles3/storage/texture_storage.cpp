@@ -1067,7 +1067,7 @@ Ref<Image> TextureStorage::texture_2d_get(RID p_texture) const {
 		glBindFramebuffer(GL_FRAMEBUFFER, temp_framebuffer);
 
 		glBindTexture(GL_TEXTURE_2D, temp_color_texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1077,7 +1077,7 @@ Ref<Image> TextureStorage::texture_2d_get(RID p_texture) const {
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_BLEND);
-		glDepthFunc(GL_LEQUAL);
+		glDepthFunc(GL_GEQUAL);
 		glColorMask(1, 1, 1, 1);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture->tex_id);
@@ -1090,7 +1090,7 @@ Ref<Image> TextureStorage::texture_2d_get(RID p_texture) const {
 
 		glReadPixels(0, 0, texture->alloc_width, texture->alloc_height, GL_RGBA, GL_UNSIGNED_BYTE, &w[0]);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, GLES3::TextureStorage::system_fbo);
 		glDeleteTextures(1, &temp_color_texture);
 		glDeleteFramebuffers(1, &temp_framebuffer);
 
@@ -1139,7 +1139,7 @@ Ref<Image> TextureStorage::texture_2d_layer_get(RID p_texture, int p_layer) cons
 	glBindFramebuffer(GL_FRAMEBUFFER, temp_framebuffer);
 
 	glBindTexture(GL_TEXTURE_2D, temp_color_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1162,7 +1162,7 @@ Ref<Image> TextureStorage::texture_2d_layer_get(RID p_texture, int p_layer) cons
 
 	glReadPixels(0, 0, texture->alloc_width, texture->alloc_height, GL_RGBA, GL_UNSIGNED_BYTE, &w[0]);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, GLES3::TextureStorage::system_fbo);
 	glDeleteTextures(1, &temp_color_texture);
 	glDeleteFramebuffers(1, &temp_framebuffer);
 
@@ -1183,7 +1183,7 @@ Ref<Image> TextureStorage::texture_2d_layer_get(RID p_texture, int p_layer) cons
 	return image;
 }
 
-Vector<Ref<Image>> TextureStorage::_texture_3d_read_framebuffer(Texture *p_texture) const {
+Vector<Ref<Image>> TextureStorage::_texture_3d_read_framebuffer(GLES3::Texture *p_texture) const {
 	ERR_FAIL_NULL_V(p_texture, Vector<Ref<Image>>());
 
 	Vector<Ref<Image>> ret;
@@ -1248,7 +1248,7 @@ Vector<Ref<Image>> TextureStorage::texture_3d_get(RID p_texture) const {
 	glBindFramebuffer(GL_FRAMEBUFFER, temp_framebuffer);
 
 	glBindTexture(GL_TEXTURE_2D, temp_color_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->alloc_width, texture->alloc_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1265,7 +1265,7 @@ Vector<Ref<Image>> TextureStorage::texture_3d_get(RID p_texture) const {
 
 	Vector<Ref<Image>> ret = _texture_3d_read_framebuffer(texture);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, GLES3::TextureStorage::system_fbo);
 	glDeleteTextures(1, &temp_color_texture);
 	glDeleteFramebuffers(1, &temp_framebuffer);
 
@@ -1610,7 +1610,7 @@ void TextureStorage::_texture_set_3d_data(RID p_texture, const Vector<Ref<Image>
 #endif
 }
 
-void TextureStorage::_texture_set_swizzle(Texture *p_texture, Image::Format p_real_format) {
+void TextureStorage::_texture_set_swizzle(GLES3::Texture *p_texture, Image::Format p_real_format) {
 #ifndef WEB_ENABLED
 	switch (p_texture->format) {
 		case Image::FORMAT_L8: {
@@ -1920,7 +1920,7 @@ void TextureStorage::update_texture_atlas() {
 			copy_effects->copy_to_rect(t->uv_rect);
 		}
 	}
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, GLES3::TextureStorage::system_fbo);
 }
 
 /* DECAL API */
@@ -2812,8 +2812,7 @@ void TextureStorage::_render_target_allocate_sdf(RenderTarget *rt) {
 	}
 
 	rt->process_size = size * scale / 100;
-	rt->process_size.x = MAX(rt->process_size.x, 1);
-	rt->process_size.y = MAX(rt->process_size.y, 1);
+	rt->process_size = rt->process_size.max(Size2i(1, 1));
 
 	glGenTextures(2, rt->sdf_texture_process);
 	glBindTexture(GL_TEXTURE_2D, rt->sdf_texture_process[0]);

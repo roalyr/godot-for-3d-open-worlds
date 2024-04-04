@@ -136,7 +136,7 @@ void BoneMapperItem::_open_picker() {
 	emit_signal(SNAME("pick"), profile_bone_name);
 }
 
-void BoneMapperItem::_value_changed(const String &p_property, Variant p_value, const String &p_name, bool p_changing) {
+void BoneMapperItem::_value_changed(const String &p_property, const Variant &p_value, const String &p_name, bool p_changing) {
 	bone_map->set(p_property, p_value);
 }
 
@@ -173,6 +173,7 @@ void BonePicker::create_editors() {
 	add_child(vbox);
 
 	bones = memnew(Tree);
+	bones->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	bones->set_select_mode(Tree::SELECT_SINGLE);
 	bones->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	bones->set_hide_root(true);
@@ -534,12 +535,12 @@ void BoneMapper::_clear_mapping_current_group() {
 }
 
 #ifdef MODULE_REGEX_ENABLED
-bool BoneMapper::is_match_with_bone_name(String p_bone_name, String p_word) {
+bool BoneMapper::is_match_with_bone_name(const String &p_bone_name, const String &p_word) {
 	RegEx re = RegEx(p_word);
 	return !re.search(p_bone_name.to_lower()).is_null();
 }
 
-int BoneMapper::search_bone_by_name(Skeleton3D *p_skeleton, Vector<String> p_picklist, BoneSegregation p_segregation, int p_parent, int p_child, int p_children_count) {
+int BoneMapper::search_bone_by_name(Skeleton3D *p_skeleton, const Vector<String> &p_picklist, BoneSegregation p_segregation, int p_parent, int p_child, int p_children_count) {
 	// There may be multiple candidates hit by existing the subsidiary bone.
 	// The one with the shortest name is probably the original.
 	LocalVector<String> hit_list;
@@ -617,7 +618,7 @@ int BoneMapper::search_bone_by_name(Skeleton3D *p_skeleton, Vector<String> p_pic
 	return skeleton->find_bone(shortest);
 }
 
-BoneMapper::BoneSegregation BoneMapper::guess_bone_segregation(String p_bone_name) {
+BoneMapper::BoneSegregation BoneMapper::guess_bone_segregation(const String &p_bone_name) {
 	String fixed_bn = p_bone_name.to_snake_case();
 
 	LocalVector<String> left_words;
@@ -1139,7 +1140,7 @@ void BoneMapper::auto_mapping_process(Ref<BoneMap> &p_bone_map) {
 				children.erase(ls_idx);
 				children.erase(rs_idx);
 				String word = "spine"; // It would be better to limit the search with "spine" because it could be mistaken with breast, wing and etc...
-				for (int i = 0; children.size(); i++) {
+				for (int i = 0; i < children.size(); i++) {
 					bone_idx = children[i];
 					if (is_match_with_bone_name(skeleton->get_bone_name(bone_idx), word)) {
 						neck = bone_idx;
@@ -1279,12 +1280,12 @@ void BoneMapper::auto_mapping_process(Ref<BoneMap> &p_bone_map) {
 }
 #endif // MODULE_REGEX_ENABLED
 
-void BoneMapper::_value_changed(const String &p_property, Variant p_value, const String &p_name, bool p_changing) {
+void BoneMapper::_value_changed(const String &p_property, const Variant &p_value, const String &p_name, bool p_changing) {
 	set(p_property, p_value);
 	recreate_editor();
 }
 
-void BoneMapper::_profile_changed(const String &p_property, Variant p_value, const String &p_name, bool p_changing) {
+void BoneMapper::_profile_changed(const String &p_property, const Variant &p_value, const String &p_name, bool p_changing) {
 	bone_map->set(p_property, p_value);
 
 	// Run auto mapping when setting SkeletonProfileHumanoid by GUI Editor.

@@ -37,6 +37,7 @@
 #include "editor/filesystem_dock.h"
 #include "editor/project_settings_editor.h"
 #include "editor/themes/editor_scale.h"
+#include "editor/themes/editor_theme_manager.h"
 #include "scene/gui/split_container.h"
 #include "servers/rendering/shader_preprocessor.h"
 #include "servers/rendering/shader_types.h"
@@ -597,8 +598,7 @@ void ShaderTextEditor::_update_warning_panel() {
 		warnings_panel->push_color(warnings_panel->get_theme_color(SNAME("warning_color"), EditorStringName(Editor)));
 		if (line != -1) {
 			warnings_panel->push_meta(line - 1);
-			warnings_panel->add_text(TTR("Line") + " " + itos(line));
-			warnings_panel->add_text(" (" + w.get_name() + "):");
+			warnings_panel->add_text(vformat(TTR("Line %d (%s):"), line, w.get_name()));
 			warnings_panel->pop(); // Meta goto.
 		} else {
 			warnings_panel->add_text(w.get_name() + ":");
@@ -740,7 +740,8 @@ void TextShaderEditor::_notification(int p_what) {
 }
 
 void TextShaderEditor::_editor_settings_changed() {
-	if (!EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor") &&
+	if (!EditorThemeManager::is_generated_theme_outdated() &&
+			!EditorSettings::get_singleton()->check_changed_settings_in_group("interface/editor") &&
 			!EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor")) {
 		return;
 	}
@@ -758,7 +759,7 @@ void TextShaderEditor::_show_warnings_panel(bool p_show) {
 	warnings_panel->set_visible(p_show);
 }
 
-void TextShaderEditor::_warning_clicked(Variant p_line) {
+void TextShaderEditor::_warning_clicked(const Variant &p_line) {
 	if (p_line.get_type() == Variant::INT) {
 		code_editor->get_text_editor()->set_caret_line(p_line.operator int64_t());
 	}
@@ -1161,9 +1162,7 @@ TextShaderEditor::TextShaderEditor() {
 	goto_menu->get_popup()->add_separator();
 
 	bookmarks_menu = memnew(PopupMenu);
-	bookmarks_menu->set_name("BookmarksMenu");
-	goto_menu->get_popup()->add_child(bookmarks_menu);
-	goto_menu->get_popup()->add_submenu_item(TTR("Bookmarks"), "BookmarksMenu");
+	goto_menu->get_popup()->add_submenu_node_item(TTR("Bookmarks"), bookmarks_menu);
 	_update_bookmark_list();
 	bookmarks_menu->connect("about_to_popup", callable_mp(this, &TextShaderEditor::_update_bookmark_list));
 	bookmarks_menu->connect("index_pressed", callable_mp(this, &TextShaderEditor::_bookmark_item_pressed));

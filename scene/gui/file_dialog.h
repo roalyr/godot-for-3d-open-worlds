@@ -120,6 +120,7 @@ private:
 		Ref<Texture2D> toggle_hidden;
 		Ref<Texture2D> folder;
 		Ref<Texture2D> file;
+		Ref<Texture2D> create_folder;
 
 		Color folder_icon_color;
 		Color file_icon_color;
@@ -171,6 +172,7 @@ private:
 
 	virtual void shortcut_input(const Ref<InputEvent> &p_event) override;
 
+	void _native_popup();
 	void _native_dialog_cb(bool p_ok, const Vector<String> &p_files, int p_filter, const Dictionary &p_selected_options);
 
 	bool _is_open_should_be_disabled();

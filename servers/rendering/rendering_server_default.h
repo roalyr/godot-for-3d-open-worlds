@@ -625,6 +625,7 @@ public:
 	FUNC2(viewport_set_texture_mipmap_bias, RID, float)
 
 	FUNC2(viewport_set_update_mode, RID, ViewportUpdateMode)
+	FUNC1RC(ViewportUpdateMode, viewport_get_update_mode, RID)
 
 	FUNC1RC(RID, viewport_get_render_target, RID)
 	FUNC1RC(RID, viewport_get_texture, RID)
@@ -852,6 +853,7 @@ public:
 
 	FUNCRIDSPLIT(canvas)
 	FUNC3(canvas_set_item_mirroring, RID, RID, const Point2 &)
+	FUNC3(canvas_set_item_repeat, RID, const Point2 &, int)
 	FUNC2(canvas_set_modulate, RID, const Color &)
 	FUNC3(canvas_set_parent, RID, RID, float)
 	FUNC1(canvas_set_disable_scale, bool)
@@ -925,6 +927,10 @@ public:
 	FUNC1(canvas_item_set_debug_redraw, bool)
 	FUNC0RC(bool, canvas_item_get_debug_redraw)
 
+	FUNC2(canvas_item_set_interpolated, RID, bool)
+	FUNC1(canvas_item_reset_physics_interpolation, RID)
+	FUNC2(canvas_item_transform_physics_interpolation, RID, const Transform2D &)
+
 	FUNCRIDSPLIT(canvas_light)
 
 	FUNC2(canvas_light_set_mode, RID, CanvasLightMode)
@@ -951,6 +957,10 @@ public:
 	FUNC2(canvas_light_set_shadow_color, RID, const Color &)
 	FUNC2(canvas_light_set_shadow_smooth, RID, float)
 
+	FUNC2(canvas_light_set_interpolated, RID, bool)
+	FUNC1(canvas_light_reset_physics_interpolation, RID)
+	FUNC2(canvas_light_transform_physics_interpolation, RID, const Transform2D &)
+
 	FUNCRIDSPLIT(canvas_light_occluder)
 	FUNC2(canvas_light_occluder_attach_to_canvas, RID, RID)
 	FUNC2(canvas_light_occluder_set_enabled, RID, bool)
@@ -958,6 +968,10 @@ public:
 	FUNC2(canvas_light_occluder_set_as_sdf_collision, RID, bool)
 	FUNC2(canvas_light_occluder_set_transform, RID, const Transform2D &)
 	FUNC2(canvas_light_occluder_set_light_mask, RID, int)
+
+	FUNC2(canvas_light_occluder_set_interpolated, RID, bool)
+	FUNC1(canvas_light_occluder_reset_physics_interpolation, RID)
+	FUNC2(canvas_light_occluder_transform_physics_interpolation, RID, const Transform2D &)
 
 	FUNCRIDSPLIT(canvas_occluder_polygon)
 	FUNC3(canvas_occluder_polygon_set_shape, RID, const Vector<Vector2> &, bool)
@@ -1019,6 +1033,11 @@ public:
 			command_queue.push(this, &RenderingServerDefault::_free, p_rid);
 		}
 	}
+
+	/* INTERPOLATION */
+
+	virtual void tick() override;
+	virtual void set_physics_interpolation_enabled(bool p_enabled) override;
 
 	/* EVENT QUEUING */
 

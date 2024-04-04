@@ -35,6 +35,7 @@
 #include "editor/editor_string_names.h"
 #include "editor/editor_undo_redo_manager.h"
 #include "editor/filesystem_dock.h"
+#include "editor/gui/editor_bottom_panel.h"
 #include "editor/inspector_dock.h"
 #include "editor/plugins/text_shader_editor.h"
 #include "editor/plugins/visual_shader_editor_plugin.h"
@@ -186,7 +187,7 @@ bool ShaderEditorPlugin::handles(Object *p_object) const {
 
 void ShaderEditorPlugin::make_visible(bool p_visible) {
 	if (p_visible) {
-		EditorNode::get_singleton()->make_bottom_panel_item_visible(window_wrapper);
+		EditorNode::get_bottom_panel()->make_item_visible(window_wrapper);
 	}
 }
 
@@ -624,12 +625,37 @@ void ShaderEditorPlugin::_file_removed(const String &p_removed_file) {
 	}
 }
 
+void ShaderEditorPlugin::_res_saved_callback(const Ref<Resource> &p_res) {
+	if (p_res.is_null()) {
+		return;
+	}
+	const String &path = p_res->get_path();
+
+	for (EditedShader &edited : edited_shaders) {
+		Ref<Resource> shader_res = edited.shader;
+		if (shader_res.is_null()) {
+			shader_res = edited.shader_inc;
+		}
+		ERR_FAIL_COND(shader_res.is_null());
+
+		if (!edited.shader_editor || !shader_res->is_built_in()) {
+			continue;
+		}
+
+		if (shader_res->get_path().get_slice("::", 0) == path) {
+			edited.shader_editor->tag_saved_version();
+			_update_shader_list();
+		}
+	}
+}
+
 void ShaderEditorPlugin::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &ShaderEditorPlugin::_resource_saved), CONNECT_DEFERRED);
 			EditorNode::get_singleton()->connect("scene_closed", callable_mp(this, &ShaderEditorPlugin::_close_builtin_shaders_from_scene));
 			FileSystemDock::get_singleton()->connect("file_removed", callable_mp(this, &ShaderEditorPlugin::_file_removed));
+			EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &ShaderEditorPlugin::_res_saved_callback));
 		} break;
 	}
 }
@@ -702,7 +728,7 @@ ShaderEditorPlugin::ShaderEditorPlugin() {
 	empty.instantiate();
 	shader_tabs->add_theme_style_override("panel", empty);
 
-	button = EditorNode::get_singleton()->add_bottom_panel_item(TTR("Shader Editor"), window_wrapper);
+	button = EditorNode::get_bottom_panel()->add_item(TTR("Shader Editor"), window_wrapper, ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_shader_editor_bottom_panel", TTR("Toggle Shader Editor Bottom Panel"), KeyModifierMask::ALT | Key::S));
 
 	shader_create_dialog = memnew(ShaderCreateDialog);
 	vb->add_child(shader_create_dialog);

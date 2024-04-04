@@ -927,52 +927,106 @@ static _FORCE_INLINE_ signed char natural_cmp_common(const char32_t *&r_this_str
 	return 0;
 }
 
+static _FORCE_INLINE_ signed char naturalcasecmp_to_base(const char32_t *p_this_str, const char32_t *p_that_str) {
+	if (p_this_str && p_that_str) {
+		while (*p_this_str == '.' || *p_that_str == '.') {
+			if (*p_this_str++ != '.') {
+				return 1;
+			}
+			if (*p_that_str++ != '.') {
+				return -1;
+			}
+			if (!*p_that_str) {
+				return 1;
+			}
+			if (!*p_this_str) {
+				return -1;
+			}
+		}
+
+		while (*p_this_str) {
+			if (!*p_that_str) {
+				return 1;
+			} else if (is_digit(*p_this_str)) {
+				if (!is_digit(*p_that_str)) {
+					return -1;
+				}
+
+				signed char ret = natural_cmp_common(p_this_str, p_that_str);
+				if (ret) {
+					return ret;
+				}
+			} else if (is_digit(*p_that_str)) {
+				return 1;
+			} else {
+				if (*p_this_str < *p_that_str) { // If current character in this is less, we are less.
+					return -1;
+				} else if (*p_this_str > *p_that_str) { // If current character in this is greater, we are greater.
+					return 1;
+				}
+
+				p_this_str++;
+				p_that_str++;
+			}
+		}
+		if (*p_that_str) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 signed char String::naturalcasecmp_to(const String &p_str) const {
 	const char32_t *this_str = get_data();
 	const char32_t *that_str = p_str.get_data();
 
-	if (this_str && that_str) {
-		while (*this_str == '.' || *that_str == '.') {
-			if (*this_str++ != '.') {
+	return naturalcasecmp_to_base(this_str, that_str);
+}
+
+static _FORCE_INLINE_ signed char naturalnocasecmp_to_base(const char32_t *p_this_str, const char32_t *p_that_str) {
+	if (p_this_str && p_that_str) {
+		while (*p_this_str == '.' || *p_that_str == '.') {
+			if (*p_this_str++ != '.') {
 				return 1;
 			}
-			if (*that_str++ != '.') {
+			if (*p_that_str++ != '.') {
 				return -1;
 			}
-			if (!*that_str) {
+			if (!*p_that_str) {
 				return 1;
 			}
-			if (!*this_str) {
+			if (!*p_this_str) {
 				return -1;
 			}
 		}
 
-		while (*this_str) {
-			if (!*that_str) {
+		while (*p_this_str) {
+			if (!*p_that_str) {
 				return 1;
-			} else if (is_digit(*this_str)) {
-				if (!is_digit(*that_str)) {
+			} else if (is_digit(*p_this_str)) {
+				if (!is_digit(*p_that_str)) {
 					return -1;
 				}
 
-				signed char ret = natural_cmp_common(this_str, that_str);
+				signed char ret = natural_cmp_common(p_this_str, p_that_str);
 				if (ret) {
 					return ret;
 				}
-			} else if (is_digit(*that_str)) {
+			} else if (is_digit(*p_that_str)) {
 				return 1;
 			} else {
-				if (*this_str < *that_str) { // If current character in this is less, we are less.
+				if (_find_upper(*p_this_str) < _find_upper(*p_that_str)) { // If current character in this is less, we are less.
 					return -1;
-				} else if (*this_str > *that_str) { // If current character in this is greater, we are greater.
+				} else if (_find_upper(*p_this_str) > _find_upper(*p_that_str)) { // If current character in this is greater, we are greater.
 					return 1;
 				}
 
-				this_str++;
-				that_str++;
+				p_this_str++;
+				p_that_str++;
 			}
 		}
-		if (*that_str) {
+		if (*p_that_str) {
 			return -1;
 		}
 	}
@@ -984,53 +1038,47 @@ signed char String::naturalnocasecmp_to(const String &p_str) const {
 	const char32_t *this_str = get_data();
 	const char32_t *that_str = p_str.get_data();
 
-	if (this_str && that_str) {
-		while (*this_str == '.' || *that_str == '.') {
-			if (*this_str++ != '.') {
-				return 1;
-			}
-			if (*that_str++ != '.') {
-				return -1;
-			}
-			if (!*that_str) {
-				return 1;
-			}
-			if (!*this_str) {
-				return -1;
-			}
-		}
+	return naturalnocasecmp_to_base(this_str, that_str);
+}
 
-		while (*this_str) {
-			if (!*that_str) {
-				return 1;
-			} else if (is_digit(*this_str)) {
-				if (!is_digit(*that_str)) {
-					return -1;
-				}
-
-				signed char ret = natural_cmp_common(this_str, that_str);
-				if (ret) {
-					return ret;
-				}
-			} else if (is_digit(*that_str)) {
-				return 1;
-			} else {
-				if (_find_upper(*this_str) < _find_upper(*that_str)) { // If current character in this is less, we are less.
-					return -1;
-				} else if (_find_upper(*this_str) > _find_upper(*that_str)) { // If current character in this is greater, we are greater.
-					return 1;
-				}
-
-				this_str++;
-				that_str++;
-			}
+static _FORCE_INLINE_ signed char file_cmp_common(const char32_t *&r_this_str, const char32_t *&r_that_str) {
+	// Compare leading `_` sequences.
+	while ((*r_this_str == '_' && *r_that_str) || (*r_this_str && *r_that_str == '_')) {
+		// Sort `_` lower than everything except `.`
+		if (*r_this_str != '_') {
+			return *r_this_str == '.' ? -1 : 1;
+		} else if (*r_that_str != '_') {
+			return *r_that_str == '.' ? 1 : -1;
 		}
-		if (*that_str) {
-			return -1;
-		}
+		r_this_str++;
+		r_that_str++;
 	}
 
 	return 0;
+}
+
+signed char String::filecasecmp_to(const String &p_str) const {
+	const char32_t *this_str = get_data();
+	const char32_t *that_str = p_str.get_data();
+
+	signed char ret = file_cmp_common(this_str, that_str);
+	if (ret) {
+		return ret;
+	}
+
+	return naturalcasecmp_to_base(this_str, that_str);
+}
+
+signed char String::filenocasecmp_to(const String &p_str) const {
+	const char32_t *this_str = get_data();
+	const char32_t *that_str = p_str.get_data();
+
+	signed char ret = file_cmp_common(this_str, that_str);
+	if (ret) {
+		return ret;
+	}
+
+	return naturalnocasecmp_to_base(this_str, that_str);
 }
 
 const char32_t *String::get_data() const {
@@ -1044,17 +1092,17 @@ String String::_camelcase_to_underscore() const {
 	int start_index = 0;
 
 	for (int i = 1; i < size(); i++) {
-		bool is_prev_upper = is_ascii_upper_case(cstr[i - 1]);
-		bool is_prev_lower = is_ascii_lower_case(cstr[i - 1]);
+		bool is_prev_upper = is_unicode_upper_case(cstr[i - 1]);
+		bool is_prev_lower = is_unicode_lower_case(cstr[i - 1]);
 		bool is_prev_digit = is_digit(cstr[i - 1]);
 
-		bool is_curr_upper = is_ascii_upper_case(cstr[i]);
-		bool is_curr_lower = is_ascii_lower_case(cstr[i]);
+		bool is_curr_upper = is_unicode_upper_case(cstr[i]);
+		bool is_curr_lower = is_unicode_lower_case(cstr[i]);
 		bool is_curr_digit = is_digit(cstr[i]);
 
 		bool is_next_lower = false;
 		if (i + 1 < size()) {
-			is_next_lower = is_ascii_lower_case(cstr[i + 1]);
+			is_next_lower = is_unicode_lower_case(cstr[i + 1]);
 		}
 
 		const bool cond_a = is_prev_lower && is_curr_upper; // aA
@@ -1536,7 +1584,7 @@ String String::num(double p_num, int p_decimals) {
 		fmt[5] = 'f';
 		fmt[6] = 0;
 	}
-	// if we want to convert a double with as much decimal places as as
+	// if we want to convert a double with as much decimal places as
 	// DBL_MAX or DBL_MIN then we would theoretically need a buffer of at least
 	// DBL_MAX_10_EXP + 2 for DBL_MAX and DBL_MAX_10_EXP + 4 for DBL_MIN.
 	// BUT those values where still giving me exceptions, so I tested from
@@ -1822,7 +1870,7 @@ Error String::parse_utf8(const char *p_utf8, int p_len, bool p_skip_cr) {
 	bool decode_failed = false;
 	{
 		const char *ptrtmp = p_utf8;
-		const char *ptrtmp_limit = &p_utf8[p_len];
+		const char *ptrtmp_limit = p_len >= 0 ? &p_utf8[p_len] : nullptr;
 		int skip = 0;
 		uint8_t c_start = 0;
 		while (ptrtmp != ptrtmp_limit && *ptrtmp) {
@@ -2099,7 +2147,7 @@ Error String::parse_utf16(const char16_t *p_utf16, int p_len) {
 	bool decode_error = false;
 	{
 		const char16_t *ptrtmp = p_utf16;
-		const char16_t *ptrtmp_limit = &p_utf16[p_len];
+		const char16_t *ptrtmp_limit = p_len >= 0 ? &p_utf16[p_len] : nullptr;
 		uint32_t c_prev = 0;
 		bool skip = false;
 		while (ptrtmp != ptrtmp_limit && *ptrtmp) {
@@ -2459,7 +2507,7 @@ bool String::is_numeric() const {
 	return true; // TODO: Use the parser below for this instead
 }
 
-template <class C>
+template <typename C>
 static double built_in_strtod(
 		/* A decimal ASCII floating-point number,
 		 * optionally preceded by white space. Must
@@ -3329,8 +3377,12 @@ bool String::begins_with(const String &p_string) const {
 
 bool String::begins_with(const char *p_string) const {
 	int l = length();
-	if (l == 0 || !p_string) {
+	if (!p_string) {
 		return false;
+	}
+
+	if (l == 0) {
+		return *p_string == 0;
 	}
 
 	const char32_t *str = &operator[](0);
@@ -5391,9 +5443,7 @@ String DTRN(const String &p_text, const String &p_text_plural, int p_n, const St
 
 /**
  * "Run-time TRanslate". Performs string replacement for internationalization
- * within a running project. The translation string must be supplied by the
- * project, as Godot does not provide built-in translations for `RTR()` strings
- * to keep binary size low. A translation context can optionally be specified to
+ * without the editor. A translation context can optionally be specified to
  * disambiguate between identical source strings in translations. When
  * placeholders are desired, use `vformat(RTR("Example: %s"), some_string)`.
  * If a string mentions a quantity (and may therefore need a dynamic plural form),
@@ -5407,9 +5457,8 @@ String RTR(const String &p_text, const String &p_context) {
 		String rtr = TranslationServer::get_singleton()->tool_translate(p_text, p_context);
 		if (rtr.is_empty() || rtr == p_text) {
 			return TranslationServer::get_singleton()->translate(p_text, p_context);
-		} else {
-			return rtr;
 		}
+		return rtr;
 	}
 
 	return p_text;
@@ -5417,13 +5466,10 @@ String RTR(const String &p_text, const String &p_context) {
 
 /**
  * "Run-time TRanslate for N items". Performs string replacement for
- * internationalization within a running project. The translation string must be
- * supplied by the project, as Godot does not provide built-in translations for
- * `RTRN()` strings to keep binary size low. A translation context can
- * optionally be specified to disambiguate between identical source strings in
- * translations. Use `RTR()` if the string doesn't need dynamic plural form.
- * When placeholders are desired, use
- * `vformat(RTRN("%d item", "%d items", some_integer), some_integer)`.
+ * internationalization without the editor. A translation context can optionally
+ * be specified to disambiguate between identical source strings in translations.
+ * Use `RTR()` if the string doesn't need dynamic plural form. When placeholders
+ * are desired, use `vformat(RTRN("%d item", "%d items", some_integer), some_integer)`.
  * The placeholder must be present in both strings to avoid run-time warnings in `vformat()`.
  *
  * NOTE: Do not use `RTRN()` in editor-only code (typically within the `editor/`
@@ -5434,9 +5480,8 @@ String RTRN(const String &p_text, const String &p_text_plural, int p_n, const St
 		String rtr = TranslationServer::get_singleton()->tool_translate_plural(p_text, p_text_plural, p_n, p_context);
 		if (rtr.is_empty() || rtr == p_text || rtr == p_text_plural) {
 			return TranslationServer::get_singleton()->translate_plural(p_text, p_text_plural, p_n, p_context);
-		} else {
-			return rtr;
 		}
+		return rtr;
 	}
 
 	// Return message based on English plural rule if translation is not possible.

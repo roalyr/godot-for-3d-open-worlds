@@ -32,6 +32,7 @@
 #define TEXT_SHADER_EDITOR_H
 
 #include "editor/code_editor.h"
+#include "scene/gui/margin_container.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/panel_container.h"
 #include "scene/gui/rich_text_label.h"
@@ -164,7 +165,7 @@ class TextShaderEditor : public MarginContainer {
 	void _reload_shader_include_from_disk();
 	void _reload();
 	void _show_warnings_panel(bool p_show);
-	void _warning_clicked(Variant p_line);
+	void _warning_clicked(const Variant &p_line);
 	void _update_warnings(bool p_validate);
 
 	void _script_validated(bool p_valid) {

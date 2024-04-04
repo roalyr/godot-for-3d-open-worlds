@@ -340,7 +340,7 @@ void _get_axis_angle(const Vector3 &p_normal, const Vector4 &p_tangent, float &r
 	if (d < 0.0) {
 		r_angle = CLAMP((1.0 - r_angle / Math_PI) * 0.5, 0.0, 0.49999);
 	} else {
-		r_angle = (r_angle / Math_PI) * 0.5 + 0.5;
+		r_angle = CLAMP((r_angle / Math_PI) * 0.5 + 0.5, 0.500008, 1.0);
 	}
 }
 
@@ -566,7 +566,8 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 								float angle;
 								Vector3 axis;
 								// Generate an arbitrary vector that is tangential to normal.
-								Vector3 tan = Vector3(0.0, 1.0, 0.0).cross(normal_src[i].normalized());
+								// This assumes that the normal is never (0,0,0).
+								Vector3 tan = Vector3(normal_src[i].z, -normal_src[i].x, normal_src[i].y).cross(normal_src[i].normalized()).normalized();
 								Vector4 tangent = Vector4(tan.x, tan.y, tan.z, 1.0);
 								_get_axis_angle(normal_src[i], tangent, angle, axis);
 
@@ -689,7 +690,8 @@ Error RenderingServer::_surface_set_data(Array p_arrays, uint64_t p_format, uint
 						// Set data for tangent.
 						for (int i = 0; i < p_vertex_array_len; i++) {
 							// Generate an arbitrary vector that is tangential to normal.
-							Vector3 tan = Vector3(0.0, 1.0, 0.0).cross(normal_src[i].normalized());
+							// This assumes that the normal is never (0,0,0).
+							Vector3 tan = Vector3(normal_src[i].z, -normal_src[i].x, normal_src[i].y).cross(normal_src[i].normalized()).normalized();
 							Vector2 res = tan.octahedron_tangent_encode(1.0);
 							uint16_t vector[2] = {
 								(uint16_t)CLAMP(res.x * 65535, 0, 65535),
@@ -2207,15 +2209,15 @@ void RenderingServer::fix_surface_compatibility(SurfaceData &p_surface, const St
 
 #ifdef TOOLS_ENABLED
 void RenderingServer::get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const {
-	String pf = p_function;
+	const String pf = p_function;
 	if (p_idx == 0) {
 		if (pf == "global_shader_parameter_set" || pf == "global_shader_parameter_set_override" ||
 				pf == "global_shader_parameter_get" || pf == "global_shader_parameter_get_type" || pf == "global_shader_parameter_remove") {
-			for (StringName E : global_shader_parameter_get_list()) {
+			for (const StringName &E : global_shader_parameter_get_list()) {
 				r_options->push_back(E.operator String().quote());
 			}
 		} else if (pf == "has_os_feature") {
-			for (String E : { "\"rgtc\"", "\"s3tc\"", "\"bptc\"", "\"etc\"", "\"etc2\"", "\"astc\"" }) {
+			for (const String E : { "\"rgtc\"", "\"s3tc\"", "\"bptc\"", "\"etc\"", "\"etc2\"", "\"astc\"" }) {
 				r_options->push_back(E);
 			}
 		}
@@ -2781,6 +2783,7 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("viewport_set_fsr_sharpness", "viewport", "sharpness"), &RenderingServer::viewport_set_fsr_sharpness);
 	ClassDB::bind_method(D_METHOD("viewport_set_texture_mipmap_bias", "viewport", "mipmap_bias"), &RenderingServer::viewport_set_texture_mipmap_bias);
 	ClassDB::bind_method(D_METHOD("viewport_set_update_mode", "viewport", "update_mode"), &RenderingServer::viewport_set_update_mode);
+	ClassDB::bind_method(D_METHOD("viewport_get_update_mode", "viewport"), &RenderingServer::viewport_get_update_mode);
 	ClassDB::bind_method(D_METHOD("viewport_set_clear_mode", "viewport", "clear_mode"), &RenderingServer::viewport_set_clear_mode);
 	ClassDB::bind_method(D_METHOD("viewport_get_render_target", "viewport"), &RenderingServer::viewport_get_render_target);
 	ClassDB::bind_method(D_METHOD("viewport_get_texture", "viewport"), &RenderingServer::viewport_get_texture);
@@ -3184,6 +3187,7 @@ void RenderingServer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("canvas_create"), &RenderingServer::canvas_create);
 	ClassDB::bind_method(D_METHOD("canvas_set_item_mirroring", "canvas", "item", "mirroring"), &RenderingServer::canvas_set_item_mirroring);
+	ClassDB::bind_method(D_METHOD("canvas_set_item_repeat", "item", "repeat_size", "repeat_times"), &RenderingServer::canvas_set_item_repeat);
 	ClassDB::bind_method(D_METHOD("canvas_set_modulate", "canvas", "color"), &RenderingServer::canvas_set_modulate);
 	ClassDB::bind_method(D_METHOD("canvas_set_disable_scale", "disable"), &RenderingServer::canvas_set_disable_scale);
 
@@ -3216,6 +3220,9 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_item_set_modulate", "item", "color"), &RenderingServer::canvas_item_set_modulate);
 	ClassDB::bind_method(D_METHOD("canvas_item_set_self_modulate", "item", "color"), &RenderingServer::canvas_item_set_self_modulate);
 	ClassDB::bind_method(D_METHOD("canvas_item_set_draw_behind_parent", "item", "enabled"), &RenderingServer::canvas_item_set_draw_behind_parent);
+	ClassDB::bind_method(D_METHOD("canvas_item_set_interpolated", "item", "interpolated"), &RenderingServer::canvas_item_set_interpolated);
+	ClassDB::bind_method(D_METHOD("canvas_item_reset_physics_interpolation", "item"), &RenderingServer::canvas_item_reset_physics_interpolation);
+	ClassDB::bind_method(D_METHOD("canvas_item_transform_physics_interpolation", "item", "transform"), &RenderingServer::canvas_item_transform_physics_interpolation);
 
 	/* Primitives */
 
@@ -3299,6 +3306,9 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_light_set_shadow_color", "light", "color"), &RenderingServer::canvas_light_set_shadow_color);
 	ClassDB::bind_method(D_METHOD("canvas_light_set_shadow_smooth", "light", "smooth"), &RenderingServer::canvas_light_set_shadow_smooth);
 	ClassDB::bind_method(D_METHOD("canvas_light_set_blend_mode", "light", "mode"), &RenderingServer::canvas_light_set_blend_mode);
+	ClassDB::bind_method(D_METHOD("canvas_light_set_interpolated", "light", "interpolated"), &RenderingServer::canvas_light_set_interpolated);
+	ClassDB::bind_method(D_METHOD("canvas_light_reset_physics_interpolation", "light"), &RenderingServer::canvas_light_reset_physics_interpolation);
+	ClassDB::bind_method(D_METHOD("canvas_light_transform_physics_interpolation", "light", "transform"), &RenderingServer::canvas_light_transform_physics_interpolation);
 
 	BIND_ENUM_CONSTANT(CANVAS_LIGHT_MODE_POINT);
 	BIND_ENUM_CONSTANT(CANVAS_LIGHT_MODE_DIRECTIONAL);
@@ -3321,6 +3331,9 @@ void RenderingServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("canvas_light_occluder_set_as_sdf_collision", "occluder", "enable"), &RenderingServer::canvas_light_occluder_set_as_sdf_collision);
 	ClassDB::bind_method(D_METHOD("canvas_light_occluder_set_transform", "occluder", "transform"), &RenderingServer::canvas_light_occluder_set_transform);
 	ClassDB::bind_method(D_METHOD("canvas_light_occluder_set_light_mask", "occluder", "mask"), &RenderingServer::canvas_light_occluder_set_light_mask);
+	ClassDB::bind_method(D_METHOD("canvas_light_occluder_set_interpolated", "occluder", "interpolated"), &RenderingServer::canvas_light_occluder_set_interpolated);
+	ClassDB::bind_method(D_METHOD("canvas_light_occluder_reset_physics_interpolation", "occluder"), &RenderingServer::canvas_light_occluder_reset_physics_interpolation);
+	ClassDB::bind_method(D_METHOD("canvas_light_occluder_transform_physics_interpolation", "occluder", "transform"), &RenderingServer::canvas_light_occluder_transform_physics_interpolation);
 
 	/* CANVAS LIGHT OCCLUDER POLYGON */
 

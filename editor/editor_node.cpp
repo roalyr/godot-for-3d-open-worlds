@@ -106,6 +106,7 @@
 #include "editor/export/project_export.h"
 #include "editor/fbx_importer_manager.h"
 #include "editor/filesystem_dock.h"
+#include "editor/gui/editor_bottom_panel.h"
 #include "editor/gui/editor_file_dialog.h"
 #include "editor/gui/editor_run_bar.h"
 #include "editor/gui/editor_scene_tabs.h"
@@ -164,10 +165,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-EditorNode *EditorNode::singleton = nullptr;
+#include "modules/modules_enabled.gen.h" // For gdscript, mono.
 
-// The metadata key used to store and retrieve the version text to copy to the clipboard.
-static const String META_TEXT_TO_COPY = "text_to_copy";
+EditorNode *EditorNode::singleton = nullptr;
 
 static const String EDITOR_NODE_CONFIG_SECTION = "EditorNode";
 
@@ -340,6 +340,8 @@ void EditorNode::shortcut_input(const Ref<InputEvent> &p_event) {
 			_editor_select_prev();
 		} else if (ED_IS_SHORTCUT("editor/command_palette", p_event)) {
 			_open_command_palette();
+		} else if (ED_IS_SHORTCUT("editor/toggle_last_opened_bottom_panel", p_event)) {
+			bottom_panel->toggle_last_opened_bottom_panel();
 		} else {
 		}
 
@@ -515,10 +517,8 @@ void EditorNode::_update_theme(bool p_skip_creation) {
 
 		scene_root_parent->add_theme_style_override("panel", theme->get_stylebox(SNAME("Content"), EditorStringName(EditorStyles)));
 		bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
-		main_menu->add_theme_style_override("pressed", theme->get_stylebox(SNAME("MenuTransparent"), EditorStringName(EditorStyles)));
 		distraction_free->set_icon(theme->get_icon(SNAME("DistractionFree"), EditorStringName(EditorIcons)));
-		distraction_free->add_theme_style_override("pressed", theme->get_stylebox(SNAME("MenuTransparent"), EditorStringName(EditorStyles)));
-		bottom_panel_raise->set_icon(theme->get_icon(SNAME("ExpandBottomDock"), EditorStringName(EditorIcons)));
+		distraction_free->add_theme_style_override("pressed", theme->get_stylebox("normal", "FlatMenuButton"));
 
 		help_menu->set_item_icon(help_menu->get_item_index(HELP_SEARCH), theme->get_icon(SNAME("HelpSearch"), EditorStringName(EditorIcons)));
 		help_menu->set_item_icon(help_menu->get_item_index(HELP_COPY_SYSTEM_INFO), theme->get_icon(SNAME("ActionCopy"), EditorStringName(EditorIcons)));
@@ -527,11 +527,6 @@ void EditorNode::_update_theme(bool p_skip_creation) {
 
 		if (EditorDebuggerNode::get_singleton()->is_visible()) {
 			bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanelDebuggerOverride"), EditorStringName(EditorStyles)));
-		}
-
-		for (int i = 0; i < bottom_panel_items.size(); i++) {
-			bottom_panel_items.write[i].button->add_theme_style_override("pressed", theme->get_stylebox(SNAME("MenuTransparent"), EditorStringName(EditorStyles)));
-			bottom_panel_items.write[i].button->add_theme_style_override("hover_pressed", theme->get_stylebox(SNAME("MenuHover"), EditorStringName(EditorStyles)));
 		}
 
 		for (int i = 0; i < main_editor_buttons.size(); i++) {
@@ -582,6 +577,9 @@ void EditorNode::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_POSTINITIALIZE: {
 			EditorHelp::generate_doc();
+#if defined(MODULE_GDSCRIPT_ENABLED) || defined(MODULE_MONO_ENABLED)
+			EditorHelpHighlighter::create_singleton();
+#endif
 		} break;
 
 		case NOTIFICATION_PROCESS: {
@@ -622,8 +620,6 @@ void EditorNode::_notification(int p_what) {
 			editor_selection->update();
 
 			ResourceImporterTexture::get_singleton()->update_imports();
-
-			bottom_panel_updating = false;
 
 			if (requested_first_scan) {
 				requested_first_scan = false;
@@ -668,6 +664,8 @@ void EditorNode::_notification(int p_what) {
 			command_palette->register_shortcuts_as_command();
 
 			callable_mp(this, &EditorNode::_begin_first_scan).call_deferred();
+
+			DisplayServer::get_singleton()->set_system_theme_change_callback(callable_mp(this, &EditorNode::_update_theme));
 
 			/* DO NOT LOAD SCENES HERE, WAIT FOR FILE SCANNING AND REIMPORT TO COMPLETE */
 		} break;
@@ -773,6 +771,9 @@ void EditorNode::_notification(int p_what) {
 				EditorFileDialog::set_default_display_mode((EditorFileDialog::DisplayMode)EDITOR_GET("filesystem/file_dialog/display_mode").operator int());
 			}
 
+			follow_system_theme = EDITOR_GET("interface/theme/follow_system_theme");
+			use_system_accent_color = EDITOR_GET("interface/theme/use_system_accent_color");
+
 			if (EditorThemeManager::is_generated_theme_outdated()) {
 				_update_theme();
 				_build_icon_type_cache();
@@ -804,6 +805,12 @@ void EditorNode::_notification(int p_what) {
 				_update_update_spinner();
 				_update_vsync_mode();
 			}
+
+#if defined(MODULE_GDSCRIPT_ENABLED) || defined(MODULE_MONO_ENABLED)
+			if (EditorSettings::get_singleton()->check_changed_settings_in_group("text_editor/theme/highlighting")) {
+				EditorHelpHighlighter::get_singleton()->reset_cache();
+			}
+#endif
 		} break;
 	}
 }
@@ -972,6 +979,9 @@ void EditorNode::_fs_changed() {
 						err = platform->export_zip(export_preset, export_defer.debug, export_path);
 					} else if (export_path.ends_with(".pck")) {
 						err = platform->export_pack(export_preset, export_defer.debug, export_path);
+					} else {
+						ERR_PRINT(vformat("Export path \"%s\" doesn't end with a supported extension.", export_path));
+						err = FAILED;
 					}
 				} else { // Normal project export.
 					String config_error;
@@ -998,7 +1008,9 @@ void EditorNode::_fs_changed() {
 		if (err != OK) {
 			ERR_PRINT(export_error);
 			_exit_editor(EXIT_FAILURE);
-		} else if (!export_error.is_empty()) {
+			return;
+		}
+		if (!export_error.is_empty()) {
 			WARN_PRINT(export_error);
 		}
 		_exit_editor(EXIT_SUCCESS);
@@ -1169,10 +1181,6 @@ void EditorNode::_titlebar_resized() {
 	}
 }
 
-void EditorNode::_version_button_pressed() {
-	DisplayServer::get_singleton()->clipboard_set(version_btn->get_meta(META_TEXT_TO_COPY));
-}
-
 void EditorNode::_update_undo_redo_allowed() {
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 	file_menu->set_item_disabled(file_menu->get_item_index(EDIT_UNDO), !undo_redo->has_undo());
@@ -1294,7 +1302,14 @@ void EditorNode::save_resource(const Ref<Resource> &p_resource) {
 	if (p_resource->is_built_in()) {
 		const String scene_path = p_resource->get_path().get_slice("::", 0);
 		if (!scene_path.is_empty()) {
-			save_scene_if_open(scene_path);
+			if (ResourceLoader::exists(scene_path) && ResourceLoader::get_resource_type(scene_path) == "PackedScene") {
+				save_scene_if_open(scene_path);
+			} else {
+				// Not a packed scene, so save it as regular resource.
+				Ref<Resource> parent_resource = ResourceCache::get_ref(scene_path);
+				ERR_FAIL_COND_MSG(parent_resource.is_null(), "Parent resource not loaded, can't save.");
+				save_resource(parent_resource);
+			}
 			return;
 		}
 	}
@@ -2051,8 +2066,9 @@ void EditorNode::_dialog_action(String p_file) {
 		} break;
 
 		case FILE_EXPORT_MESH_LIBRARY: {
-			bool merge_with_existing_library = file_export_lib_merge->is_pressed();
-			bool apply_mesh_instance_transforms = file_export_lib_apply_xforms->is_pressed();
+			const Dictionary &fd_options = file_export_lib->get_selected_options();
+			bool merge_with_existing_library = fd_options.get(TTR("Merge With Existing"), true);
+			bool apply_mesh_instance_transforms = fd_options.get(TTR("Apply MeshInstance Transforms"), false);
 
 			Ref<MeshLibrary> ml;
 			if (merge_with_existing_library && FileAccess::exists(p_file)) {
@@ -2491,8 +2507,8 @@ void EditorNode::_edit_current(bool p_skip_foreign, bool p_skip_inspector_update
 			editable_info,
 			info_is_warning);
 
-	Object *editor_owner = is_node ? (Object *)SceneTreeDock::get_singleton() : is_resource ? (Object *)InspectorDock::get_inspector_singleton()
-																							: (Object *)this;
+	Object *editor_owner = (is_node || current_obj->is_class("MultiNodeEdit")) ? (Object *)SceneTreeDock::get_singleton() : is_resource ? (Object *)InspectorDock::get_inspector_singleton()
+																																		: (Object *)this;
 
 	// Take care of the main editor plugin.
 
@@ -2708,8 +2724,8 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 				root_name = EditorNode::adjust_scene_name_casing(root_name);
 				file->set_current_path(root_name + "." + extensions.front()->get().to_lower());
 			}
-			file->popup_file_dialog();
 			file->set_title(TTR("Save Scene As..."));
+			file->popup_file_dialog();
 
 		} break;
 
@@ -3091,17 +3107,40 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 	}
 }
 
-String EditorNode::adjust_scene_name_casing(const String &root_name) {
+String EditorNode::adjust_scene_name_casing(const String &p_root_name) {
 	switch (GLOBAL_GET("editor/naming/scene_name_casing").operator int()) {
 		case SCENE_NAME_CASING_AUTO:
 			// Use casing of the root node.
 			break;
 		case SCENE_NAME_CASING_PASCAL_CASE:
-			return root_name.to_pascal_case();
+			return p_root_name.replace("-", "_").to_pascal_case();
 		case SCENE_NAME_CASING_SNAKE_CASE:
-			return root_name.replace("-", "_").to_snake_case();
+			return p_root_name.replace("-", "_").to_snake_case();
+		case SCENE_NAME_CASING_KEBAB_CASE:
+			return p_root_name.to_snake_case().replace("_", "-");
 	}
-	return root_name;
+	return p_root_name;
+}
+
+String EditorNode::adjust_script_name_casing(const String &p_file_name, ScriptLanguage::ScriptNameCasing p_auto_casing) {
+	int editor_casing = GLOBAL_GET("editor/naming/script_name_casing");
+	if (editor_casing == ScriptLanguage::SCRIPT_NAME_CASING_AUTO) {
+		// Use the script language's preferred casing.
+		editor_casing = p_auto_casing;
+	}
+
+	switch (editor_casing) {
+		case ScriptLanguage::SCRIPT_NAME_CASING_AUTO:
+			// Script language has no preference, so do not adjust.
+			break;
+		case ScriptLanguage::SCRIPT_NAME_CASING_PASCAL_CASE:
+			return p_file_name.replace("-", "_").to_pascal_case();
+		case ScriptLanguage::SCRIPT_NAME_CASING_SNAKE_CASE:
+			return p_file_name.replace("-", "_").to_snake_case();
+		case ScriptLanguage::SCRIPT_NAME_CASING_KEBAB_CASE:
+			return p_file_name.to_snake_case().replace("_", "-");
+	}
+	return p_file_name;
 }
 
 void EditorNode::_request_screenshot() {
@@ -3128,6 +3167,35 @@ void EditorNode::_save_screenshot(NodePath p_path) {
 	ERR_FAIL_COND_MSG(img.is_null(), "Cannot get an image from a viewport texture of the editor main screen.");
 	Error error = img->save_png(p_path);
 	ERR_FAIL_COND_MSG(error != OK, "Cannot save screenshot to file '" + p_path + "'.");
+}
+
+void EditorNode::_check_system_theme_changed() {
+	DisplayServer *display_server = DisplayServer::get_singleton();
+
+	bool system_theme_changed = false;
+
+	if (follow_system_theme) {
+		if (display_server->get_base_color() != last_system_base_color) {
+			system_theme_changed = true;
+			last_system_base_color = display_server->get_base_color();
+		}
+
+		if (display_server->is_dark_mode_supported() && display_server->is_dark_mode() != last_dark_mode_state) {
+			system_theme_changed = true;
+			last_dark_mode_state = display_server->is_dark_mode();
+		}
+	}
+
+	if (use_system_accent_color) {
+		if (display_server->get_accent_color() != last_system_accent_color) {
+			system_theme_changed = true;
+			last_system_accent_color = display_server->get_accent_color();
+		}
+	}
+
+	if (system_theme_changed) {
+		_update_theme();
+	}
 }
 
 void EditorNode::_tool_menu_option(int p_idx) {
@@ -3171,8 +3239,8 @@ void EditorNode::_export_as_menu_option(int p_idx) {
 			file_export_lib->add_filter("*." + E);
 		}
 
-		file_export_lib->popup_file_dialog();
 		file_export_lib->set_title(TTR("Export Mesh Library"));
+		file_export_lib->popup_file_dialog();
 	} else { // Custom menu options added by plugins
 		if (export_as_menu->get_item_submenu(p_idx).is_empty()) { // If not a submenu
 			Callable callback = export_as_menu->get_item_metadata(p_idx);
@@ -3722,14 +3790,6 @@ void EditorNode::_set_current_scene_nocheck(int p_idx) {
 		editor_folding.save_scene_folding(editor_data.get_edited_scene_root(p_idx), editor_data.get_scene_path(p_idx));
 	}
 
-	if (editor_data.check_and_update_scene(p_idx)) {
-		if (editor_data.get_scene_path(p_idx) != "") {
-			editor_folding.load_scene_folding(editor_data.get_edited_scene_root(p_idx), editor_data.get_scene_path(p_idx));
-		}
-
-		EditorUndoRedoManager::get_singleton()->clear_history(false, editor_data.get_scene_history_id(p_idx));
-	}
-
 	changing_scene = true;
 	editor_data.save_edited_scene_state(editor_selection, &editor_history, _get_main_scene_state());
 
@@ -3757,6 +3817,14 @@ void EditorNode::_set_current_scene_nocheck(int p_idx) {
 		if (new_scene->get_parent() != scene_root) {
 			scene_root->add_child(new_scene, true);
 		}
+	}
+
+	if (editor_data.check_and_update_scene(p_idx)) {
+		if (!editor_data.get_scene_path(p_idx).is_empty()) {
+			editor_folding.load_scene_folding(editor_data.get_edited_scene_root(p_idx), editor_data.get_scene_path(p_idx));
+		}
+
+		EditorUndoRedoManager::get_singleton()->clear_history(false, editor_data.get_scene_history_id(p_idx));
 	}
 
 	Dictionary state = editor_data.restore_edited_scene_state(editor_selection, &editor_history);
@@ -4301,7 +4369,7 @@ void EditorNode::_project_run_started() {
 	}
 
 	if (bool(EDITOR_GET("run/output/always_open_output_on_play"))) {
-		make_bottom_panel_item_visible(log);
+		bottom_panel->make_item_visible(log);
 	}
 }
 
@@ -4310,12 +4378,7 @@ void EditorNode::_project_run_stopped() {
 		return;
 	}
 
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control == log) {
-			_bottom_panel_switch(false, i);
-			break;
-		}
-	}
+	bottom_panel->make_item_visible(log, false);
 }
 
 void EditorNode::notify_all_debug_sessions_exited() {
@@ -4897,18 +4960,7 @@ void EditorNode::_save_central_editor_layout_to_config(Ref<ConfigFile> p_config_
 	int center_split_offset = center_split->get_split_offset();
 	p_config_file->set_value(EDITOR_NODE_CONFIG_SECTION, "center_split_offset", center_split_offset);
 
-	int selected_bottom_panel_item_idx = -1;
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].button->is_pressed()) {
-			selected_bottom_panel_item_idx = i;
-			break;
-		}
-	}
-	if (selected_bottom_panel_item_idx != -1) {
-		p_config_file->set_value(EDITOR_NODE_CONFIG_SECTION, "selected_bottom_panel_item", selected_bottom_panel_item_idx);
-	} else {
-		p_config_file->set_value(EDITOR_NODE_CONFIG_SECTION, "selected_bottom_panel_item", Variant());
-	}
+	bottom_panel->save_layout_to_config(p_config_file, EDITOR_NODE_CONFIG_SECTION);
 
 	// Debugger tab.
 
@@ -4934,27 +4986,11 @@ void EditorNode::_save_central_editor_layout_to_config(Ref<ConfigFile> p_config_
 void EditorNode::_load_central_editor_layout_from_config(Ref<ConfigFile> p_config_file) {
 	// Bottom panel.
 
-	bool has_active_tab = false;
-	if (p_config_file->has_section_key(EDITOR_NODE_CONFIG_SECTION, "selected_bottom_panel_item")) {
-		int selected_bottom_panel_item_idx = p_config_file->get_value(EDITOR_NODE_CONFIG_SECTION, "selected_bottom_panel_item");
-		if (selected_bottom_panel_item_idx >= 0 && selected_bottom_panel_item_idx < bottom_panel_items.size()) {
-			// Make sure we don't try to open contextual editors which are not enabled in the current context.
-			if (bottom_panel_items[selected_bottom_panel_item_idx].button->is_visible()) {
-				_bottom_panel_switch(true, selected_bottom_panel_item_idx);
-				has_active_tab = true;
-			}
-		}
-	}
+	bottom_panel->load_layout_from_config(p_config_file, EDITOR_NODE_CONFIG_SECTION);
 
 	if (p_config_file->has_section_key(EDITOR_NODE_CONFIG_SECTION, "center_split_offset")) {
 		int center_split_offset = p_config_file->get_value(EDITOR_NODE_CONFIG_SECTION, "center_split_offset");
 		center_split->set_split_offset(center_split_offset);
-
-		// If there is no active tab we need to collapse the panel.
-		if (!has_active_tab) {
-			bottom_panel_items[0].control->show(); // _bottom_panel_switch() can collapse only visible tabs.
-			_bottom_panel_switch(false, 0);
-		}
 	}
 
 	// Debugger tab.
@@ -5244,122 +5280,9 @@ void EditorNode::_scene_tab_closed(int p_tab) {
 	scene_tabs->update_scene_tabs();
 }
 
-Button *EditorNode::add_bottom_panel_item(String p_text, Control *p_item, bool p_at_front) {
-	Button *tb = memnew(Button);
-	tb->set_theme_type_variation("FlatMenuButton");
-	tb->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_switch_by_control).bind(p_item));
-	tb->set_drag_forwarding(Callable(), callable_mp(this, &EditorNode::_bottom_panel_drag_hover).bind(tb, p_item), Callable());
-	tb->set_text(p_text);
-	tb->set_toggle_mode(true);
-	tb->set_focus_mode(Control::FOCUS_NONE);
-	bottom_panel_vb->add_child(p_item);
-	bottom_panel_hb->move_to_front();
-	bottom_panel_hb_editors->add_child(tb);
-	if (p_at_front) {
-		bottom_panel_hb_editors->move_child(tb, 0);
-	}
-	p_item->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	p_item->hide();
-	BottomPanelItem bpi;
-	bpi.button = tb;
-	bpi.control = p_item;
-	bpi.name = p_text;
-	bottom_panel_items.push_back(bpi);
-
-	return tb;
-}
-
-void EditorNode::hide_bottom_panel() {
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control->is_visible()) {
-			_bottom_panel_switch(false, i);
-			break;
-		}
-	}
-}
-
-void EditorNode::make_bottom_panel_item_visible(Control *p_item) {
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control == p_item) {
-			_bottom_panel_switch(true, i);
-			break;
-		}
-	}
-}
-
-void EditorNode::raise_bottom_panel_item(Control *p_item) {
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control == p_item) {
-			bottom_panel_items[i].button->move_to_front();
-			SWAP(bottom_panel_items.write[i], bottom_panel_items.write[bottom_panel_items.size() - 1]);
-			break;
-		}
-	}
-}
-
-void EditorNode::remove_bottom_panel_item(Control *p_item) {
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control == p_item) {
-			if (p_item->is_visible_in_tree()) {
-				_bottom_panel_switch(false, i);
-			}
-			bottom_panel_vb->remove_child(bottom_panel_items[i].control);
-			bottom_panel_hb_editors->remove_child(bottom_panel_items[i].button);
-			memdelete(bottom_panel_items[i].button);
-			bottom_panel_items.remove_at(i);
-			break;
-		}
-	}
-}
-
-void EditorNode::_bottom_panel_switch_by_control(bool p_enable, Control *p_control) {
-	for (int i = 0; i < bottom_panel_items.size(); i++) {
-		if (bottom_panel_items[i].control == p_control) {
-			_bottom_panel_switch(p_enable, i);
-			return;
-		}
-	}
-}
-
-void EditorNode::_bottom_panel_switch(bool p_enable, int p_idx) {
-	if (bottom_panel_updating) {
-		return;
-	}
-	ERR_FAIL_INDEX(p_idx, bottom_panel_items.size());
-
-	if (bottom_panel_items[p_idx].control->is_visible() == p_enable) {
-		return;
-	}
-
-	if (p_enable) {
-		bottom_panel_updating = true;
-
-		for (int i = 0; i < bottom_panel_items.size(); i++) {
-			bottom_panel_items[i].button->set_pressed(i == p_idx);
-			bottom_panel_items[i].control->set_visible(i == p_idx);
-		}
-		if (EditorDebuggerNode::get_singleton() == bottom_panel_items[p_idx].control) {
-			// This is the debug panel which uses tabs, so the top section should be smaller.
-			bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanelDebuggerOverride"), EditorStringName(EditorStyles)));
-		} else {
-			bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
-		}
-		center_split->set_dragger_visibility(SplitContainer::DRAGGER_VISIBLE);
-		center_split->set_collapsed(false);
-		if (bottom_panel_raise->is_pressed()) {
-			top_split->hide();
-		}
-		bottom_panel_raise->show();
-	} else {
-		bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
-		bottom_panel_items[p_idx].button->set_pressed(false);
-		bottom_panel_items[p_idx].control->set_visible(false);
-		center_split->set_dragger_visibility(SplitContainer::DRAGGER_HIDDEN);
-		center_split->set_collapsed(true);
-		bottom_panel_raise->hide();
-		if (bottom_panel_raise->is_pressed()) {
-			top_split->show();
-		}
+void EditorNode::_cancel_close_scene_tab() {
+	if (_is_closing_editor()) {
+		tab_closing_menu_option = -1;
 	}
 }
 
@@ -5501,9 +5424,7 @@ void EditorNode::add_tool_menu_item(const String &p_name, const Callable &p_call
 void EditorNode::add_tool_submenu_item(const String &p_name, PopupMenu *p_submenu) {
 	ERR_FAIL_NULL(p_submenu);
 	ERR_FAIL_COND(p_submenu->get_parent() != nullptr);
-
-	tool_menu->add_child(p_submenu);
-	tool_menu->add_submenu_item(p_name, p_submenu->get_name(), TOOLS_CUSTOM);
+	tool_menu->add_submenu_node_item(p_name, p_submenu, TOOLS_CUSTOM);
 }
 
 void EditorNode::remove_tool_menu_item(const String &p_name) {
@@ -6079,17 +6000,6 @@ Vector<Ref<EditorResourceConversionPlugin>> EditorNode::find_resource_conversion
 	return ret;
 }
 
-void EditorNode::_bottom_panel_raise_toggled(bool p_pressed) {
-	top_split->set_visible(!p_pressed);
-}
-
-bool EditorNode::_bottom_panel_drag_hover(const Vector2 &, const Variant &, Button *p_button, Control *p_control) {
-	if (!p_button->is_pressed()) {
-		_bottom_panel_switch_by_control(true, p_control);
-	}
-	return false;
-}
-
 void EditorNode::_update_renderer_color() {
 	String rendering_method = renderer->get_selected_metadata();
 
@@ -6159,19 +6069,13 @@ void EditorNode::_resource_loaded(Ref<Resource> p_resource, const String &p_path
 
 void EditorNode::_feature_profile_changed() {
 	Ref<EditorFeatureProfile> profile = feature_profile_manager->get_current_profile();
-	// FIXME: Close all floating docks to avoid crash.
-	editor_dock_manager->close_all_floating_docks();
-	TabContainer *import_tabs = cast_to<TabContainer>(ImportDock::get_singleton()->get_parent());
-	TabContainer *node_tabs = cast_to<TabContainer>(NodeDock::get_singleton()->get_parent());
-	TabContainer *fs_tabs = cast_to<TabContainer>(FileSystemDock::get_singleton()->get_parent());
-	TabContainer *history_tabs = cast_to<TabContainer>(history_dock->get_parent());
 	if (profile.is_valid()) {
-		node_tabs->set_tab_hidden(node_tabs->get_tab_idx_from_control(NodeDock::get_singleton()), profile->is_feature_disabled(EditorFeatureProfile::FEATURE_NODE_DOCK));
+		editor_dock_manager->set_dock_enabled(NodeDock::get_singleton(), !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_NODE_DOCK));
 		// The Import dock is useless without the FileSystem dock. Ensure the configuration is valid.
 		bool fs_dock_disabled = profile->is_feature_disabled(EditorFeatureProfile::FEATURE_FILESYSTEM_DOCK);
-		fs_tabs->set_tab_hidden(fs_tabs->get_tab_idx_from_control(FileSystemDock::get_singleton()), fs_dock_disabled);
-		import_tabs->set_tab_hidden(import_tabs->get_tab_idx_from_control(ImportDock::get_singleton()), fs_dock_disabled || profile->is_feature_disabled(EditorFeatureProfile::FEATURE_IMPORT_DOCK));
-		history_tabs->set_tab_hidden(history_tabs->get_tab_idx_from_control(history_dock), profile->is_feature_disabled(EditorFeatureProfile::FEATURE_HISTORY_DOCK));
+		editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), !fs_dock_disabled);
+		editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), !fs_dock_disabled && !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_IMPORT_DOCK));
+		editor_dock_manager->set_dock_enabled(history_dock, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_HISTORY_DOCK));
 
 		main_editor_buttons[EDITOR_3D]->set_visible(!profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D));
 		main_editor_buttons[EDITOR_SCRIPT]->set_visible(!profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SCRIPT));
@@ -6184,18 +6088,16 @@ void EditorNode::_feature_profile_changed() {
 			editor_select(EDITOR_2D);
 		}
 	} else {
-		import_tabs->set_tab_hidden(import_tabs->get_tab_idx_from_control(ImportDock::get_singleton()), false);
-		node_tabs->set_tab_hidden(node_tabs->get_tab_idx_from_control(NodeDock::get_singleton()), false);
-		fs_tabs->set_tab_hidden(fs_tabs->get_tab_idx_from_control(FileSystemDock::get_singleton()), false);
-		history_tabs->set_tab_hidden(history_tabs->get_tab_idx_from_control(history_dock), false);
+		editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), true);
+		editor_dock_manager->set_dock_enabled(NodeDock::get_singleton(), true);
+		editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), true);
+		editor_dock_manager->set_dock_enabled(history_dock, true);
 		main_editor_buttons[EDITOR_3D]->set_visible(true);
 		main_editor_buttons[EDITOR_SCRIPT]->set_visible(true);
 		if (AssetLibraryEditorPlugin::is_available()) {
 			main_editor_buttons[EDITOR_ASSETLIB]->set_visible(true);
 		}
 	}
-
-	editor_dock_manager->update_dock_slots_visibility();
 }
 
 void EditorNode::_bind_methods() {
@@ -6328,7 +6230,9 @@ EditorNode::EditorNode() {
 			// Only if no touchscreen ui hint, disable emulation just in case.
 			Input::get_singleton()->set_emulate_touch_from_mouse(false);
 		}
-		DisplayServer::get_singleton()->cursor_set_custom_image(Ref<Resource>());
+		if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_CUSTOM_CURSOR_SHAPE)) {
+			DisplayServer::get_singleton()->cursor_set_custom_image(Ref<Resource>());
+		}
 	}
 
 	SceneState::set_disable_placeholders(true);
@@ -6652,7 +6556,6 @@ EditorNode::EditorNode() {
 	right_r_vsplit->add_child(dock_slot[EditorDockManager::DOCK_SLOT_RIGHT_BR]);
 
 	editor_dock_manager = memnew(EditorDockManager);
-	editor_dock_manager->connect("layout_changed", callable_mp(this, &EditorNode::_save_editor_layout));
 
 	// Save the splits for easier access.
 	editor_dock_manager->add_vsplit(left_l_vsplit);
@@ -6694,6 +6597,7 @@ EditorNode::EditorNode() {
 	distraction_free->set_theme_type_variation("FlatMenuButton");
 	ED_SHORTCUT_AND_COMMAND("editor/distraction_free_mode", TTR("Distraction Free Mode"), KeyModifierMask::CTRL | KeyModifierMask::SHIFT | Key::F11);
 	ED_SHORTCUT_OVERRIDE("editor/distraction_free_mode", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::D);
+	ED_SHORTCUT_AND_COMMAND("editor/toggle_last_opened_bottom_panel", TTR("Toggle Last Opened Bottom Panel"), KeyModifierMask::CMD_OR_CTRL | Key::J);
 	distraction_free->set_shortcut(ED_GET_SHORTCUT("editor/distraction_free_mode"));
 	distraction_free->set_tooltip_text(TTR("Toggle distraction-free mode."));
 	distraction_free->set_toggle_mode(true);
@@ -6719,7 +6623,7 @@ EditorNode::EditorNode() {
 	main_screen_vbox->add_theme_constant_override("separation", 0);
 	scene_root_parent->add_child(main_screen_vbox);
 
-	bool global_menu = !bool(EDITOR_GET("interface/editor/use_embedded_menu")) && DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_GLOBAL_MENU);
+	bool global_menu = !bool(EDITOR_GET("interface/editor/use_embedded_menu")) && NativeMenu::get_singleton()->has_feature(NativeMenu::FEATURE_GLOBAL_MENU);
 	bool can_expand = bool(EDITOR_GET("interface/editor/expand_to_title")) && DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_EXTEND_TO_TITLE);
 
 	if (can_expand) {
@@ -6731,7 +6635,7 @@ EditorNode::EditorNode() {
 
 	main_menu = memnew(MenuBar);
 	title_bar->add_child(main_menu);
-	main_menu->set_theme_type_variation("FlatMenuButton");
+	main_menu->set_theme_type_variation("MainMenuBar");
 	main_menu->set_start_index(0); // Main menu, add to the start of global menu.
 	main_menu->set_prefer_global_menu(global_menu);
 	main_menu->set_switch_on_hover(true);
@@ -6807,7 +6711,10 @@ EditorNode::EditorNode() {
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/new_inherited_scene", TTR("New Inherited Scene..."), KeyModifierMask::CMD_OR_CTRL + KeyModifierMask::SHIFT + Key::N), FILE_NEW_INHERITED_SCENE);
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/open_scene", TTR("Open Scene..."), KeyModifierMask::CMD_OR_CTRL + Key::O), FILE_OPEN_SCENE);
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/reopen_closed_scene", TTR("Reopen Closed Scene"), KeyModifierMask::CMD_OR_CTRL + KeyModifierMask::SHIFT + Key::T), FILE_OPEN_PREV);
-	file_menu->add_submenu_item(TTR("Open Recent"), "RecentScenes", FILE_OPEN_RECENT);
+
+	recent_scenes = memnew(PopupMenu);
+	file_menu->add_submenu_node_item(TTR("Open Recent"), recent_scenes, FILE_OPEN_RECENT);
+	recent_scenes->connect("id_pressed", callable_mp(this, &EditorNode::_open_recent_scene));
 
 	file_menu->add_separator();
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/save_scene", TTR("Save Scene"), KeyModifierMask::CMD_OR_CTRL + Key::S), FILE_SAVE_SCENE);
@@ -6823,9 +6730,7 @@ EditorNode::EditorNode() {
 
 	file_menu->add_separator();
 	export_as_menu = memnew(PopupMenu);
-	export_as_menu->set_name("Export");
-	file_menu->add_child(export_as_menu);
-	file_menu->add_submenu_item(TTR("Export As..."), "Export");
+	file_menu->add_submenu_node_item(TTR("Export As..."), export_as_menu);
 	export_as_menu->add_shortcut(ED_SHORTCUT("editor/export_as_mesh_library", TTR("MeshLibrary...")), FILE_EXPORT_MESH_LIBRARY);
 	export_as_menu->connect("index_pressed", callable_mp(this, &EditorNode::_export_as_menu_option));
 
@@ -6836,11 +6741,7 @@ EditorNode::EditorNode() {
 	file_menu->add_separator();
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/reload_saved_scene", TTR("Reload Saved Scene")), EDIT_RELOAD_SAVED_SCENE);
 	file_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/close_scene", TTR("Close Scene"), KeyModifierMask::CMD_OR_CTRL + KeyModifierMask::SHIFT + Key::W), FILE_CLOSE);
-
-	recent_scenes = memnew(PopupMenu);
-	recent_scenes->set_name("RecentScenes");
-	file_menu->add_child(recent_scenes);
-	recent_scenes->connect("id_pressed", callable_mp(this, &EditorNode::_open_recent_scene));
+	ED_SHORTCUT_OVERRIDE("editor/close_scene", "macos", KeyModifierMask::CMD_OR_CTRL + Key::W);
 
 	if (!global_menu || !OS::get_singleton()->has_feature("macos")) {
 		// On macOS  "Quit" and "About" options are in the "app" menu.
@@ -6851,9 +6752,9 @@ EditorNode::EditorNode() {
 	ED_SHORTCUT_AND_COMMAND("editor/editor_settings", TTR("Editor Settings..."));
 	ED_SHORTCUT_OVERRIDE("editor/editor_settings", "macos", KeyModifierMask::META + Key::COMMA);
 #ifdef MACOS_ENABLED
-	if (global_menu) {
+	if (global_menu && NativeMenu::get_singleton()->has_system_menu(NativeMenu::APPLICATION_MENU_ID)) {
 		apple_menu = memnew(PopupMenu);
-		apple_menu->set_system_menu_root("_apple");
+		apple_menu->set_system_menu(NativeMenu::APPLICATION_MENU_ID);
 		main_menu->add_child(apple_menu);
 
 		apple_menu->add_shortcut(ED_GET_SHORTCUT("editor/editor_settings"), SETTINGS_PREFERENCES);
@@ -6884,12 +6785,10 @@ EditorNode::EditorNode() {
 	project_menu->add_separator();
 
 	tool_menu = memnew(PopupMenu);
-	tool_menu->set_name("Tools");
 	tool_menu->connect("index_pressed", callable_mp(this, &EditorNode::_tool_menu_option));
-	project_menu->add_child(tool_menu);
-	project_menu->add_submenu_item(TTR("Tools"), "Tools");
-	tool_menu->add_item(TTR("Orphan Resource Explorer..."), TOOLS_ORPHAN_RESOURCES);
-	tool_menu->add_item(TTR("Upgrade Mesh Surfaces..."), TOOLS_SURFACE_UPGRADE);
+	project_menu->add_submenu_node_item(TTR("Tools"), tool_menu);
+	tool_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/orphan_resource_explorer", TTR("Orphan Resource Explorer...")), TOOLS_ORPHAN_RESOURCES);
+	tool_menu->add_shortcut(ED_SHORTCUT_AND_COMMAND("editor/upgrade_mesh_surfaces", TTR("Upgrade Mesh Surfaces...")), TOOLS_SURFACE_UPGRADE);
 
 	project_menu->add_separator();
 	project_menu->add_shortcut(ED_SHORTCUT("editor/reload_current_project", TTR("Reload Current Project")), RELOAD_CURRENT_PROJECT);
@@ -6937,12 +6836,12 @@ EditorNode::EditorNode() {
 	settings_menu->add_shortcut(ED_SHORTCUT("editor/command_palette", TTR("Command Palette..."), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::SHIFT | Key::P), HELP_COMMAND_PALETTE);
 	settings_menu->add_separator();
 
+	settings_menu->add_submenu_node_item(TTR("Editor Docks"), editor_dock_manager->get_docks_menu());
+
 	editor_layouts = memnew(PopupMenu);
-	editor_layouts->set_name("Layouts");
 	editor_layouts->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
-	settings_menu->add_child(editor_layouts);
+	settings_menu->add_submenu_node_item(TTR("Editor Layout"), editor_layouts);
 	editor_layouts->connect("id_pressed", callable_mp(this, &EditorNode::_layout_menu_option));
-	settings_menu->add_submenu_item(TTR("Editor Layout"), "Layouts");
 	settings_menu->add_separator();
 
 	ED_SHORTCUT_AND_COMMAND("editor/take_screenshot", TTR("Take Screenshot"), KeyModifierMask::CTRL | Key::F12);
@@ -6980,7 +6879,9 @@ EditorNode::EditorNode() {
 
 	help_menu = memnew(PopupMenu);
 	help_menu->set_name(TTR("Help"));
-	help_menu->set_system_menu_root("_help");
+	if (global_menu && NativeMenu::get_singleton()->has_system_menu(NativeMenu::HELP_MENU_ID)) {
+		help_menu->set_system_menu(NativeMenu::HELP_MENU_ID);
+	}
 	main_menu->add_child(help_menu);
 
 	help_menu->connect("id_pressed", callable_mp(this, &EditorNode::_menu_option));
@@ -7106,22 +7007,22 @@ EditorNode::EditorNode() {
 	history_dock = memnew(HistoryDock);
 
 	// Scene: Top left.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_LEFT_UR, SceneTreeDock::get_singleton(), TTR("Scene"));
+	editor_dock_manager->add_dock(SceneTreeDock::get_singleton(), TTR("Scene"), EditorDockManager::DOCK_SLOT_LEFT_UR);
 
 	// Import: Top left, behind Scene.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_LEFT_UR, ImportDock::get_singleton(), TTR("Import"));
+	editor_dock_manager->add_dock(ImportDock::get_singleton(), TTR("Import"), EditorDockManager::DOCK_SLOT_LEFT_UR);
 
 	// FileSystem: Bottom left.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_LEFT_BR, FileSystemDock::get_singleton(), TTR("FileSystem"));
+	editor_dock_manager->add_dock(FileSystemDock::get_singleton(), TTR("FileSystem"), EditorDockManager::DOCK_SLOT_LEFT_BR, ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_filesystem_bottom_panel", TTR("Toggle FileSystem Bottom Panel"), KeyModifierMask::ALT | Key::F));
 
 	// Inspector: Full height right.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_RIGHT_UL, InspectorDock::get_singleton(), TTR("Inspector"));
+	editor_dock_manager->add_dock(InspectorDock::get_singleton(), TTR("Inspector"), EditorDockManager::DOCK_SLOT_RIGHT_UL);
 
 	// Node: Full height right, behind Inspector.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_RIGHT_UL, NodeDock::get_singleton(), TTR("Node"));
+	editor_dock_manager->add_dock(NodeDock::get_singleton(), TTR("Node"), EditorDockManager::DOCK_SLOT_RIGHT_UL);
 
 	// History: Full height right, behind Node.
-	editor_dock_manager->add_control_to_dock(EditorDockManager::DOCK_SLOT_RIGHT_UL, history_dock, TTR("History"));
+	editor_dock_manager->add_dock(history_dock, TTR("History"), EditorDockManager::DOCK_SLOT_RIGHT_UL);
 
 	// Add some offsets to left_r and main hsplits to make LEFT_R and RIGHT_L docks wider than minsize.
 	left_r_hsplit->set_split_offset(270 * EDSCALE);
@@ -7149,62 +7050,12 @@ EditorNode::EditorNode() {
 
 	// Bottom panels.
 
-	bottom_panel = memnew(PanelContainer);
-	bottom_panel->add_theme_style_override("panel", theme->get_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
+	bottom_panel = memnew(EditorBottomPanel);
 	center_split->add_child(bottom_panel);
 	center_split->set_dragger_visibility(SplitContainer::DRAGGER_HIDDEN);
 
-	bottom_panel_vb = memnew(VBoxContainer);
-	bottom_panel->add_child(bottom_panel_vb);
-
-	bottom_panel_hb = memnew(HBoxContainer);
-	bottom_panel_hb->set_custom_minimum_size(Size2(0, 24 * EDSCALE)); // Adjust for the height of the "Expand Bottom Dock" icon.
-	bottom_panel_vb->add_child(bottom_panel_hb);
-
-	bottom_panel_hb_editors = memnew(HBoxContainer);
-	bottom_panel_hb_editors->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	bottom_panel_hb->add_child(bottom_panel_hb_editors);
-
-	editor_toaster = memnew(EditorToaster);
-	bottom_panel_hb->add_child(editor_toaster);
-
-	VBoxContainer *version_info_vbc = memnew(VBoxContainer);
-	bottom_panel_hb->add_child(version_info_vbc);
-
-	// Add a dummy control node for vertical spacing.
-	Control *v_spacer = memnew(Control);
-	version_info_vbc->add_child(v_spacer);
-
-	version_btn = memnew(LinkButton);
-	version_btn->set_text(VERSION_FULL_CONFIG);
-	String hash = String(VERSION_HASH);
-	if (hash.length() != 0) {
-		hash = " " + vformat("[%s]", hash.left(9));
-	}
-	// Set the text to copy in metadata as it slightly differs from the button's text.
-	version_btn->set_meta(META_TEXT_TO_COPY, "v" VERSION_FULL_BUILD + hash);
-	// Fade out the version label to be less prominent, but still readable.
-	version_btn->set_self_modulate(Color(1, 1, 1, 0.65));
-	version_btn->set_underline_mode(LinkButton::UNDERLINE_MODE_ON_HOVER);
-	version_btn->set_tooltip_text(TTR("Click to copy."));
-	version_btn->connect("pressed", callable_mp(this, &EditorNode::_version_button_pressed));
-	version_info_vbc->add_child(version_btn);
-
-	// Add a dummy control node for horizontal spacing.
-	Control *h_spacer = memnew(Control);
-	bottom_panel_hb->add_child(h_spacer);
-
-	bottom_panel_raise = memnew(Button);
-	bottom_panel_hb->add_child(bottom_panel_raise);
-	bottom_panel_raise->hide();
-	bottom_panel_raise->set_flat(false);
-	bottom_panel_raise->set_theme_type_variation("FlatMenuButton");
-	bottom_panel_raise->set_toggle_mode(true);
-	bottom_panel_raise->set_shortcut(ED_SHORTCUT_AND_COMMAND("editor/bottom_panel_expand", TTR("Expand Bottom Panel"), KeyModifierMask::SHIFT | Key::F12));
-	bottom_panel_raise->connect("toggled", callable_mp(this, &EditorNode::_bottom_panel_raise_toggled));
-
 	log = memnew(EditorLog);
-	Button *output_button = add_bottom_panel_item(TTR("Output"), log);
+	Button *output_button = bottom_panel->add_item(TTR("Output"), log, ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_output_bottom_panel", TTR("Toggle Output Bottom Panel"), KeyModifierMask::ALT | Key::O));
 	log->set_tool_button(output_button);
 
 	center_split->connect("resized", callable_mp(this, &EditorNode::_vp_resized));
@@ -7228,6 +7079,7 @@ EditorNode::EditorNode() {
 	save_confirmation->set_min_size(Vector2(450.0 * EDSCALE, 0));
 	save_confirmation->connect("confirmed", callable_mp(this, &EditorNode::_menu_confirm_current));
 	save_confirmation->connect("custom_action", callable_mp(this, &EditorNode::_discard_changes));
+	save_confirmation->connect("canceled", callable_mp(this, &EditorNode::_cancel_close_scene_tab));
 
 	gradle_build_manage_templates = memnew(ConfirmationDialog);
 	gradle_build_manage_templates->set_text(TTR("Android build template is missing, please install relevant templates."));
@@ -7286,16 +7138,8 @@ EditorNode::EditorNode() {
 	file_export_lib->set_title(TTR("Export Library"));
 	file_export_lib->set_file_mode(EditorFileDialog::FILE_MODE_SAVE_FILE);
 	file_export_lib->connect("file_selected", callable_mp(this, &EditorNode::_dialog_action));
-	file_export_lib_merge = memnew(CheckBox);
-	file_export_lib_merge->set_text(TTR("Merge With Existing"));
-	file_export_lib_merge->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
-	file_export_lib_merge->set_pressed(true);
-	file_export_lib->get_vbox()->add_child(file_export_lib_merge);
-	file_export_lib_apply_xforms = memnew(CheckBox);
-	file_export_lib_apply_xforms->set_text(TTR("Apply MeshInstance Transforms"));
-	file_export_lib_apply_xforms->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
-	file_export_lib_apply_xforms->set_pressed(false);
-	file_export_lib->get_vbox()->add_child(file_export_lib_apply_xforms);
+	file_export_lib->add_option(TTR("Merge With Existing"), Vector<String>(), true);
+	file_export_lib->add_option(TTR("Apply MeshInstance Transforms"), Vector<String>(), false);
 	gui_base->add_child(file_export_lib);
 
 	file_script = memnew(EditorFileDialog);
@@ -7365,17 +7209,15 @@ EditorNode::EditorNode() {
 	}
 
 	// More visually meaningful to have this later.
-	raise_bottom_panel_item(AnimationPlayerEditor::get_singleton());
+	bottom_panel->move_item_to_end(AnimationPlayerEditor::get_singleton());
 
 	add_editor_plugin(VersionControlEditorPlugin::get_singleton());
 
 	vcs_actions_menu = VersionControlEditorPlugin::get_singleton()->get_version_control_actions_panel();
-	vcs_actions_menu->set_name("Version Control");
 	vcs_actions_menu->connect("index_pressed", callable_mp(this, &EditorNode::_version_control_menu_option));
-	vcs_actions_menu->add_item(TTR("Create Version Control Metadata..."), RUN_VCS_METADATA);
+	vcs_actions_menu->add_item(TTR("Create/Override Version Control Metadata..."), RUN_VCS_METADATA);
 	vcs_actions_menu->add_item(TTR("Version Control Settings..."), RUN_VCS_SETTINGS);
-	project_menu->add_child(vcs_actions_menu);
-	project_menu->set_item_submenu(project_menu->get_item_index(VCS_MENU), "Version Control");
+	project_menu->set_item_submenu_node(project_menu->get_item_index(VCS_MENU), vcs_actions_menu);
 
 	add_editor_plugin(memnew(AudioBusesEditorPlugin(audio_bus_editor)));
 
@@ -7568,6 +7410,15 @@ EditorNode::EditorNode() {
 	String exec = OS::get_singleton()->get_executable_path();
 	// Save editor executable path for third-party tools.
 	EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "executable_path", exec);
+
+	follow_system_theme = EDITOR_GET("interface/theme/follow_system_theme");
+	use_system_accent_color = EDITOR_GET("interface/theme/use_system_accent_color");
+	system_theme_timer = memnew(Timer);
+	system_theme_timer->set_wait_time(1.0);
+	system_theme_timer->connect("timeout", callable_mp(this, &EditorNode::_check_system_theme_changed));
+	add_child(system_theme_timer);
+	system_theme_timer->set_owner(get_owner());
+	system_theme_timer->set_autostart(true);
 }
 
 EditorNode::~EditorNode() {
@@ -7577,6 +7428,9 @@ EditorNode::~EditorNode() {
 
 	remove_print_handler(&print_handler);
 	EditorHelp::cleanup_doc();
+#if defined(MODULE_GDSCRIPT_ENABLED) || defined(MODULE_MONO_ENABLED)
+	EditorHelpHighlighter::free_singleton();
+#endif
 	memdelete(editor_selection);
 	memdelete(editor_plugins_over);
 	memdelete(editor_plugins_force_over);

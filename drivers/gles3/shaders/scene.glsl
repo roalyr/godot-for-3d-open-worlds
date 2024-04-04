@@ -366,7 +366,9 @@ void main() {
 #if defined(COLOR_USED)
 	color_interp = color_attrib;
 #ifdef USE_INSTANCING
-	vec4 instance_color = vec4(unpackHalf2x16(instance_color_custom_data.x), unpackHalf2x16(instance_color_custom_data.y));
+	vec4 instance_color;
+	instance_color.xy = unpackHalf2x16(instance_color_custom_data.x);
+	instance_color.zw = unpackHalf2x16(instance_color_custom_data.y);
 	color_interp *= instance_color;
 #endif
 #endif
@@ -403,7 +405,9 @@ void main() {
 #endif //USE_MULTIVIEW
 
 #ifdef USE_INSTANCING
-	vec4 instance_custom = vec4(unpackHalf2x16(instance_color_custom_data.z), unpackHalf2x16(instance_color_custom_data.w));
+	vec4 instance_custom;
+	instance_custom.xy = unpackHalf2x16(instance_color_custom_data.z);
+	instance_custom.zw = unpackHalf2x16(instance_color_custom_data.w);
 #else
 	vec4 instance_custom = vec4(0.0);
 #endif
@@ -913,8 +917,7 @@ ivec2 multiview_uv(ivec2 uv) {
 uniform highp mat4 world_transform;
 uniform mediump float opaque_prepass_threshold;
 
-#ifndef MODE_RENDER_DEPTH
-#ifdef RENDER_MATERIAL
+#if defined(RENDER_MATERIAL)
 layout(location = 0) out vec4 albedo_output_buffer;
 layout(location = 1) out vec4 normal_output_buffer;
 layout(location = 2) out vec4 orm_output_buffer;
@@ -925,7 +928,6 @@ layout(location = 3) out vec4 emission_output_buffer;
 layout(location = 0) out vec4 frag_color;
 
 #endif // !RENDER_MATERIAL
-#endif // !MODE_RENDER_DEPTH
 
 vec3 F0(float metallic, float specular, vec3 albedo) {
 	float dielectric = 0.16 * specular * specular;
@@ -1712,7 +1714,7 @@ void main() {
 #ifdef MODE_RENDER_DEPTH
 #ifdef RENDER_SHADOWS_LINEAR
 	// Linearize the depth buffer if rendering cubemap shadows.
-	gl_FragDepth = (length(vertex) + scene_data.shadow_bias) / scene_data.z_far;
+	gl_FragDepth = (scene_data.z_far - (length(vertex) + scene_data.shadow_bias)) / scene_data.z_far;
 #endif
 
 // Nothing happens, so a tree-ssa optimizer will result in no fragment shader :)
@@ -1749,7 +1751,8 @@ void main() {
 #endif //!MODE_UNSHADED
 
 #ifndef FOG_DISABLED
-	fog = vec4(unpackHalf2x16(fog_rg), unpackHalf2x16(fog_ba));
+	fog.xy = unpackHalf2x16(fog_rg);
+	fog.zw = unpackHalf2x16(fog_ba);
 
 #ifndef DISABLE_FOG
 	if (scene_data.fog_enabled) {
@@ -1916,7 +1919,7 @@ void main() {
 	float omni_shadow = 1.0f;
 #ifndef SHADOWS_DISABLED
 	vec3 light_ray = ((positional_shadows[positional_shadow_index].shadow_matrix * vec4(shadow_coord.xyz, 1.0))).xyz;
-	omni_shadow = texture(omni_shadow_texture, vec4(light_ray, length(light_ray) * omni_lights[omni_light_index].inv_radius));
+	omni_shadow = texture(omni_shadow_texture, vec4(light_ray, 1.0 - length(light_ray) * omni_lights[omni_light_index].inv_radius));
 	omni_shadow = mix(1.0, omni_shadow, omni_lights[omni_light_index].shadow_opacity);
 #endif // SHADOWS_DISABLED
 	light_process_omni(omni_light_index, vertex, view, normal, f0, roughness, metallic, omni_shadow, albedo, alpha,
@@ -1966,7 +1969,8 @@ void main() {
 	vec3 additive_light_color = diffuse_light + specular_light;
 
 #ifndef FOG_DISABLED
-	fog = vec4(unpackHalf2x16(fog_rg), unpackHalf2x16(fog_ba));
+	fog.xy = unpackHalf2x16(fog_rg);
+	fog.zw = unpackHalf2x16(fog_ba);
 
 #ifndef DISABLE_FOG
 	if (scene_data.fog_enabled) {

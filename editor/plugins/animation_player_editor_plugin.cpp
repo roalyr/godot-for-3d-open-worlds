@@ -35,9 +35,11 @@
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
 #include "core/os/keyboard.h"
+#include "editor/editor_command_palette.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_undo_redo_manager.h"
+#include "editor/gui/editor_bottom_panel.h"
 #include "editor/gui/editor_file_dialog.h"
 #include "editor/inspector_dock.h"
 #include "editor/plugins/canvas_item_editor_plugin.h" // For onion skinning.
@@ -71,6 +73,8 @@ void AnimationPlayerEditor::_node_removed(Node *p_node) {
 		_update_player();
 
 		_ensure_dummy_player();
+
+		pin->set_pressed(false);
 	}
 }
 
@@ -793,7 +797,7 @@ void AnimationPlayerEditor::set_state(const Dictionary &p_state) {
 			}
 
 			_update_player();
-			EditorNode::get_singleton()->make_bottom_panel_item_visible(this);
+			EditorNode::get_bottom_panel()->make_item_visible(this);
 			set_process(true);
 			ensure_visibility();
 
@@ -2054,6 +2058,7 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 	blend_editor.dialog->add_child(blend_vb);
 
 	blend_editor.tree = memnew(Tree);
+	blend_editor.tree->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	blend_editor.tree->set_hide_root(true);
 	blend_editor.tree->set_columns(2);
 	blend_editor.tree->set_column_expand_ratio(0, 10);
@@ -2266,7 +2271,7 @@ bool AnimationPlayerEditorPlugin::handles(Object *p_object) const {
 
 void AnimationPlayerEditorPlugin::make_visible(bool p_visible) {
 	if (p_visible) {
-		EditorNode::get_singleton()->make_bottom_panel_item_visible(anim_editor);
+		EditorNode::get_bottom_panel()->make_item_visible(anim_editor);
 		anim_editor->set_process(true);
 		anim_editor->ensure_visibility();
 	}
@@ -2274,7 +2279,7 @@ void AnimationPlayerEditorPlugin::make_visible(bool p_visible) {
 
 AnimationPlayerEditorPlugin::AnimationPlayerEditorPlugin() {
 	anim_editor = memnew(AnimationPlayerEditor(this));
-	EditorNode::get_singleton()->add_bottom_panel_item(TTR("Animation"), anim_editor);
+	EditorNode::get_bottom_panel()->add_item(TTR("Animation"), anim_editor, ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_animation_bottom_panel", TTR("Toggle Animation Bottom Panel"), KeyModifierMask::ALT | Key::N));
 }
 
 AnimationPlayerEditorPlugin::~AnimationPlayerEditorPlugin() {

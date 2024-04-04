@@ -203,6 +203,7 @@ opts.Add(BoolVariable("custom_modules_recursive", "Detect custom modules recursi
 opts.Add(BoolVariable("dev_mode", "Alias for dev options: verbose=yes warnings=extra werror=yes tests=yes", False))
 opts.Add(BoolVariable("tests", "Build the unit tests", False))
 opts.Add(BoolVariable("fast_unsafe", "Enable unsafe options for faster rebuilds", False))
+opts.Add(BoolVariable("ninja", "Use the ninja backend for faster rebuilds", False))
 opts.Add(BoolVariable("compiledb", "Generate compilation DB (`compile_commands.json`) for external tools", False))
 opts.Add(BoolVariable("verbose", "Enable verbose output for the compilation", False))
 opts.Add(BoolVariable("progress", "Show a progress indicator during compilation", True))
@@ -930,17 +931,17 @@ if selected_platform in platform_list:
 
     GLSL_BUILDERS = {
         "RD_GLSL": env.Builder(
-            action=env.Run(glsl_builders.build_rd_headers, 'Building RD_GLSL header: "$TARGET"'),
+            action=env.Run(glsl_builders.build_rd_headers),
             suffix="glsl.gen.h",
             src_suffix=".glsl",
         ),
         "GLSL_HEADER": env.Builder(
-            action=env.Run(glsl_builders.build_raw_headers, 'Building GLSL header: "$TARGET"'),
+            action=env.Run(glsl_builders.build_raw_headers),
             suffix="glsl.gen.h",
             src_suffix=".glsl",
         ),
         "GLES3_GLSL": env.Builder(
-            action=env.Run(gles3_builders.build_gles3_headers, 'Building GLES3 GLSL header: "$TARGET"'),
+            action=env.Run(gles3_builders.build_gles3_headers),
             suffix="glsl.gen.h",
             src_suffix=".glsl",
         ),
@@ -956,25 +957,40 @@ if selected_platform in platform_list:
         env.vs_incs = []
         env.vs_srcs = []
 
-    if env["compiledb"]:
+    # CompileDB and Ninja are only available with certain SCons versions which
+    # not everybody might have yet, so we have to check.
+    from SCons import __version__ as scons_raw_version
+
+    scons_ver = env._get_major_minor_revision(scons_raw_version)
+    if env["compiledb"] and scons_ver < (4, 0, 0):
         # Generating the compilation DB (`compile_commands.json`) requires SCons 4.0.0 or later.
-        from SCons import __version__ as scons_raw_version
-
-        scons_ver = env._get_major_minor_revision(scons_raw_version)
-
-        if scons_ver < (4, 0, 0):
-            print("The `compiledb=yes` option requires SCons 4.0 or later, but your version is %s." % scons_raw_version)
-            Exit(255)
-
+        print("The `compiledb=yes` option requires SCons 4.0 or later, but your version is %s." % scons_raw_version)
+        Exit(255)
+    if scons_ver >= (4, 0, 0):
         env.Tool("compilation_db")
         env.Alias("compiledb", env.CompilationDatabase())
 
+    if env["ninja"]:
+        if scons_ver < (4, 2, 0):
+            print("The `ninja=yes` option requires SCons 4.2 or later, but your version is %s." % scons_raw_version)
+            Exit(255)
+
+        SetOption("experimental", "ninja")
+
+        # By setting this we allow the user to run ninja by themselves with all
+        # the flags they need, as apparently automatically running from scons
+        # is way slower.
+        SetOption("disable_execute_ninja", True)
+
+        env.Tool("ninja")
+
+    # Threads
     if env["threads"]:
         env.Append(CPPDEFINES=["THREADS_ENABLED"])
 
+    # Build subdirs, the build order is dependent on link order.
     Export("env")
 
-    # Build subdirs, the build order is dependent on link order.
     SConscript("core/SCsub")
     SConscript("servers/SCsub")
     SConscript("scene/SCsub")
@@ -1038,3 +1054,14 @@ def print_elapsed_time():
 
 
 atexit.register(print_elapsed_time)
+
+
+def purge_flaky_files():
+    paths_to_keep = ["ninja.build"]
+    for build_failure in GetBuildFailures():
+        path = build_failure.node.path
+        if os.path.isfile(path) and path not in paths_to_keep:
+            os.remove(path)
+
+
+atexit.register(purge_flaky_files)

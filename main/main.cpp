@@ -74,12 +74,15 @@
 #include "servers/navigation_server_3d.h"
 #include "servers/navigation_server_3d_dummy.h"
 #include "servers/physics_server_2d.h"
-#include "servers/physics_server_3d.h"
 #include "servers/register_server_types.h"
 #include "servers/rendering/rendering_server_default.h"
 #include "servers/text/text_server_dummy.h"
 #include "servers/text_server.h"
+
+#ifndef _3D_DISABLED
+#include "servers/physics_server_3d.h"
 #include "servers/xr_server.h"
+#endif // _3D_DISABLED
 
 #ifdef TESTS_ENABLED
 #include "tests/test_main.h"
@@ -142,15 +145,17 @@ static AudioServer *audio_server = nullptr;
 static DisplayServer *display_server = nullptr;
 static RenderingServer *rendering_server = nullptr;
 static CameraServer *camera_server = nullptr;
-static XRServer *xr_server = nullptr;
 static TextServerManager *tsman = nullptr;
-static PhysicsServer3DManager *physics_server_3d_manager = nullptr;
-static PhysicsServer3D *physics_server_3d = nullptr;
 static PhysicsServer2DManager *physics_server_2d_manager = nullptr;
 static PhysicsServer2D *physics_server_2d = nullptr;
 static NavigationServer3D *navigation_server_3d = nullptr;
 static NavigationServer2D *navigation_server_2d = nullptr;
 static ThemeDB *theme_db = nullptr;
+#ifndef _3D_DISABLED
+static PhysicsServer3DManager *physics_server_3d_manager = nullptr;
+static PhysicsServer3D *physics_server_3d = nullptr;
+static XRServer *xr_server = nullptr;
+#endif // _3D_DISABLED
 // We error out if setup2() doesn't turn this true
 static bool _start_success = false;
 
@@ -293,6 +298,7 @@ static Vector<String> get_files_with_extension(const String &p_root, const Strin
 
 // FIXME: Could maybe be moved to have less code in main.cpp.
 void initialize_physics() {
+#ifndef _3D_DISABLED
 	/// 3D Physics Server
 	physics_server_3d = PhysicsServer3DManager::get_singleton()->new_server(
 			GLOBAL_GET(PhysicsServer3DManager::setting_property_name));
@@ -302,6 +308,7 @@ void initialize_physics() {
 	}
 	ERR_FAIL_NULL(physics_server_3d);
 	physics_server_3d->init();
+#endif // _3D_DISABLED
 
 	// 2D Physics server
 	physics_server_2d = PhysicsServer2DManager::get_singleton()->new_server(
@@ -315,8 +322,10 @@ void initialize_physics() {
 }
 
 void finalize_physics() {
+#ifndef _3D_DISABLED
 	physics_server_3d->finish();
 	memdelete(physics_server_3d);
+#endif // _3D_DISABLED
 
 	physics_server_2d->finish();
 	memdelete(physics_server_2d);
@@ -384,6 +393,23 @@ void finalize_theme_db() {
 #else
 #define MAIN_PRINT(m_txt)
 #endif
+
+void Main::print_header(bool p_rich) {
+	if (VERSION_TIMESTAMP > 0) {
+		// Version timestamp available.
+		if (p_rich) {
+			Engine::get_singleton()->print_header_rich("\u001b[38;5;39m" + String(VERSION_NAME) + "\u001b[0m v" + get_full_version_string() + " (" + Time::get_singleton()->get_datetime_string_from_unix_time(VERSION_TIMESTAMP, true) + " UTC) - \u001b[4m" + String(VERSION_WEBSITE));
+		} else {
+			Engine::get_singleton()->print_header(String(VERSION_NAME) + " v" + get_full_version_string() + " (" + Time::get_singleton()->get_datetime_string_from_unix_time(VERSION_TIMESTAMP, true) + " UTC) - " + String(VERSION_WEBSITE));
+		}
+	} else {
+		if (p_rich) {
+			Engine::get_singleton()->print_header_rich("\u001b[38;5;39m" + String(VERSION_NAME) + "\u001b[0m v" + get_full_version_string() + " - \u001b[4m" + String(VERSION_WEBSITE));
+		} else {
+			Engine::get_singleton()->print_header(String(VERSION_NAME) + " v" + get_full_version_string() + " - " + String(VERSION_WEBSITE));
+		}
+	}
+}
 
 /**
  * Prints a copyright notice in the command-line help with colored text. A newline is
@@ -455,7 +481,7 @@ void Main::print_help_option(const char *p_option, const char *p_description, CL
 }
 
 void Main::print_help(const char *p_binary) {
-	print_line("\u001b[38;5;39m" + String(VERSION_NAME) + "\u001b[0m v" + get_full_version_string() + " - \u001b[4m" + String(VERSION_WEBSITE) + "\u001b[0m");
+	print_header(true);
 	print_help_copyright("Free and open source software under the terms of the MIT license.");
 	print_help_copyright("(c) 2014-present Godot Engine contributors. (c) 2007-present Juan Linietsky, Ariel Manzur.");
 
@@ -655,7 +681,9 @@ Error Main::test_setup() {
 		tsman->add_interface(ts);
 	}
 
+#ifndef _3D_DISABLED
 	physics_server_3d_manager = memnew(PhysicsServer3DManager);
+#endif // _3D_DISABLED
 	physics_server_2d_manager = memnew(PhysicsServer2DManager);
 
 	// From `Main::setup2()`.
@@ -739,6 +767,7 @@ Error Main::test_setup() {
 
 	return OK;
 }
+
 // The order is the same as in `Main::cleanup()`.
 void Main::test_cleanup() {
 	ERR_FAIL_COND(!_start_success);
@@ -783,9 +812,11 @@ void Main::test_cleanup() {
 	if (tsman) {
 		memdelete(tsman);
 	}
+#ifndef _3D_DISABLED
 	if (physics_server_3d_manager) {
 		memdelete(physics_server_3d_manager);
 	}
+#endif // _3D_DISABLED
 	if (physics_server_2d_manager) {
 		memdelete(physics_server_2d_manager);
 	}
@@ -948,8 +979,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	packed_data->add_pack_source(zip_packed_data);
 #endif
 
-	// Default exit code, can be modified for certain errors.
-	Error exit_code = ERR_INVALID_PARAMETER;
+	// Exit error code used in the `goto error` conditions.
+	// It's returned as the program exit code. ERR_HELP is special cased and handled as success (0).
+	Error exit_err = ERR_INVALID_PARAMETER;
 
 	I = args.front();
 	while (I) {
@@ -999,12 +1031,12 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "-h" || I->get() == "--help" || I->get() == "/?") { // display help
 
 			show_help = true;
-			exit_code = ERR_HELP; // Hack to force an early exit in `main()` with a success code.
+			exit_err = ERR_HELP; // Hack to force an early exit in `main()` with a success code.
 			goto error;
 
 		} else if (I->get() == "--version") {
 			print_line(get_full_version_string());
-			exit_code = ERR_HELP; // Hack to force an early exit in `main()` with a success code.
+			exit_err = ERR_HELP; // Hack to force an early exit in `main()` with a success code.
 			goto error;
 
 		} else if (I->get() == "-v" || I->get() == "--verbose") { // verbose output
@@ -1617,6 +1649,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			OS::get_singleton()->disable_crash_handler();
 		} else if (I->get() == "--skip-breakpoints") {
 			skip_breakpoints = true;
+#ifndef _3D_DISABLED
 		} else if (I->get() == "--xr-mode") {
 			if (I->next()) {
 				String xr_mode = I->next()->get().to_lower();
@@ -1635,7 +1668,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				OS::get_singleton()->print("Missing --xr-mode argument, aborting.\n");
 				goto error;
 			}
-
+#endif // _3D_DISABLED
 		} else if (I->get() == "--benchmark") {
 			OS::get_singleton()->set_use_benchmark(true);
 		} else if (I->get() == "--benchmark-file") {
@@ -1742,7 +1775,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	initialize_modules(MODULE_INITIALIZATION_LEVEL_CORE);
 	register_core_extensions(); // core extensions must be registered after globals setup and before display
 
-	ResourceUID::get_singleton()->load_from_cache(); // load UUIDs from cache.
+	ResourceUID::get_singleton()->load_from_cache(true); // load UUIDs from cache.
 
 	if (ProjectSettings::get_singleton()->has_custom_feature("dedicated_server")) {
 		audio_driver = NULL_AUDIO_DRIVER;
@@ -2430,7 +2463,7 @@ error:
 	OS::get_singleton()->finalize_core();
 	locale = String();
 
-	return exit_code;
+	return exit_err;
 }
 
 Error _parse_resource_dummy(void *p_data, VariantParser::Stream *p_stream, Ref<Resource> &r_res, int &line, String &r_err_str) {
@@ -2456,8 +2489,8 @@ Error Main::setup2() {
 	Thread::make_main_thread(); // Make whatever thread call this the main thread.
 	set_current_thread_safe_for_nodes(true);
 
-	// Print engine name and version
-	Engine::get_singleton()->print_header(String(VERSION_NAME) + " v" + get_full_version_string() + " - " + String(VERSION_WEBSITE));
+	// Don't use rich formatting to prevent ANSI escape codes from being written to log files.
+	print_header(false);
 
 #ifdef TOOLS_ENABLED
 	if (editor || project_manager || cmdline_tool) {
@@ -2561,7 +2594,9 @@ Error Main::setup2() {
 		tsman->add_interface(ts);
 	}
 
+#ifndef _3D_DISABLED
 	physics_server_3d_manager = memnew(PhysicsServer3DManager);
+#endif // _3D_DISABLED
 	physics_server_2d_manager = memnew(PhysicsServer2DManager);
 
 	register_server_types();
@@ -2757,6 +2792,7 @@ Error Main::setup2() {
 		OS::get_singleton()->benchmark_end_measure("Servers", "Audio");
 	}
 
+#ifndef _3D_DISABLED
 	/* Initialize XR Server */
 
 	{
@@ -2766,6 +2802,7 @@ Error Main::setup2() {
 
 		OS::get_singleton()->benchmark_end_measure("Servers", "XR");
 	}
+#endif // _3D_DISABLED
 
 	OS::get_singleton()->benchmark_end_measure("Startup", "Servers");
 
@@ -2854,7 +2891,7 @@ Error Main::setup2() {
 			}
 
 #if defined(TOOLS_ENABLED) && defined(MACOS_ENABLED)
-			if (OS::get_singleton()->get_bundle_icon_path().is_empty()) {
+			if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
 				Ref<Image> icon = memnew(Image(app_icon_png));
 				DisplayServer::get_singleton()->set_icon(icon);
 			}
@@ -3108,7 +3145,10 @@ String Main::get_rendering_driver_name() {
 // everything the main loop needs to know about frame timings
 static MainTimerSync main_timer_sync;
 
-bool Main::start() {
+// Return value should be EXIT_SUCCESS if we start successfully
+// and should move on to `OS::run`, and EXIT_FAILURE otherwise for
+// an early exit with that error code.
+int Main::start() {
 	ERR_FAIL_COND_V(!_start_success, false);
 
 	bool has_icon = false;
@@ -3245,7 +3285,7 @@ bool Main::start() {
 
 		{
 			Ref<DirAccess> da = DirAccess::open(doc_tool_path);
-			ERR_FAIL_COND_V_MSG(da.is_null(), false, "Argument supplied to --doctool must be a valid directory path.");
+			ERR_FAIL_COND_V_MSG(da.is_null(), EXIT_FAILURE, "Argument supplied to --doctool must be a valid directory path.");
 		}
 
 #ifndef MODULE_MONO_ENABLED
@@ -3280,11 +3320,11 @@ bool Main::start() {
 				// Create the module documentation directory if it doesn't exist
 				Ref<DirAccess> da = DirAccess::create_for_path(path);
 				err = da->make_dir_recursive(path);
-				ERR_FAIL_COND_V_MSG(err != OK, false, "Error: Can't create directory: " + path + ": " + itos(err));
+				ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error: Can't create directory: " + path + ": " + itos(err));
 
 				print_line("Loading docs from: " + path);
 				err = docsrc.load_classes(path);
-				ERR_FAIL_COND_V_MSG(err != OK, false, "Error loading docs from: " + path + ": " + itos(err));
+				ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error loading docs from: " + path + ": " + itos(err));
 			}
 		}
 
@@ -3292,11 +3332,11 @@ bool Main::start() {
 		// Create the main documentation directory if it doesn't exist
 		Ref<DirAccess> da = DirAccess::create_for_path(index_path);
 		err = da->make_dir_recursive(index_path);
-		ERR_FAIL_COND_V_MSG(err != OK, false, "Error: Can't create index directory: " + index_path + ": " + itos(err));
+		ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error: Can't create index directory: " + index_path + ": " + itos(err));
 
 		print_line("Loading classes from: " + index_path);
 		err = docsrc.load_classes(index_path);
-		ERR_FAIL_COND_V_MSG(err != OK, false, "Error loading classes from: " + index_path + ": " + itos(err));
+		ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error loading classes from: " + index_path + ": " + itos(err));
 		checked_paths.insert(index_path);
 
 		print_line("Merging docs...");
@@ -3305,20 +3345,19 @@ bool Main::start() {
 		for (const String &E : checked_paths) {
 			print_line("Erasing old docs at: " + E);
 			err = DocTools::erase_classes(E);
-			ERR_FAIL_COND_V_MSG(err != OK, false, "Error erasing old docs at: " + E + ": " + itos(err));
+			ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error erasing old docs at: " + E + ": " + itos(err));
 		}
 
 		print_line("Generating new docs...");
 		err = doc.save_classes(index_path, doc_data_classes);
-		ERR_FAIL_COND_V_MSG(err != OK, false, "Error saving new docs:" + itos(err));
+		ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error saving new docs:" + itos(err));
 
 		print_line("Deleting docs cache...");
 		if (FileAccess::exists(EditorHelp::get_cache_full_path())) {
 			DirAccess::remove_file_or_error(EditorHelp::get_cache_full_path());
 		}
 
-		OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-		return false;
+		return EXIT_SUCCESS;
 	}
 
 	// GDExtension API and interface.
@@ -3333,32 +3372,24 @@ bool Main::start() {
 		}
 
 		if (dump_gdextension_interface || dump_extension_api) {
-			OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-			return false;
+			return EXIT_SUCCESS;
 		}
 
 		if (validate_extension_api) {
 			Engine::get_singleton()->set_editor_hint(true); // "extension_api.json" should always contains editor singletons.
 			bool valid = GDExtensionAPIDump::validate_extension_json_file(validate_extension_api_file) == OK;
-			OS::get_singleton()->set_exit_code(valid ? EXIT_SUCCESS : EXIT_FAILURE);
-			return false;
+			return valid ? EXIT_SUCCESS : EXIT_FAILURE;
 		}
 	}
 
 #ifndef DISABLE_DEPRECATED
 	if (converting_project) {
 		int ret = ProjectConverter3To4(converter_max_kb_file, converter_max_line_length).convert();
-		if (ret) {
-			OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-		}
-		return false;
+		return ret ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 	if (validating_converting_project) {
 		bool ret = ProjectConverter3To4(converter_max_kb_file, converter_max_line_length).validate_conversion();
-		if (ret) {
-			OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-		}
-		return false;
+		return ret ? EXIT_SUCCESS : EXIT_FAILURE;
 	}
 #endif // DISABLE_DEPRECATED
 
@@ -3375,7 +3406,7 @@ bool Main::start() {
 		// this might end up triggered by valid usage, in which case we'll have to
 		// fine-tune further.
 		OS::get_singleton()->alert("Couldn't detect whether to run the editor, the project manager or a specific project. Aborting.");
-		ERR_FAIL_V_MSG(false, "Couldn't detect whether to run the editor, the project manager or a specific project. Aborting.");
+		ERR_FAIL_V_MSG(EXIT_FAILURE, "Couldn't detect whether to run the editor, the project manager or a specific project. Aborting.");
 	}
 #endif
 
@@ -3389,15 +3420,10 @@ bool Main::start() {
 
 	if (!script.is_empty()) {
 		Ref<Script> script_res = ResourceLoader::load(script);
-		ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
+		ERR_FAIL_COND_V_MSG(script_res.is_null(), EXIT_FAILURE, "Can't load script: " + script);
 
 		if (check_only) {
-			if (!script_res->is_valid()) {
-				OS::get_singleton()->set_exit_code(EXIT_FAILURE);
-			} else {
-				OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-			}
-			return false;
+			return script_res->is_valid() ? EXIT_SUCCESS : EXIT_FAILURE;
 		}
 
 		if (script_res->can_instantiate()) {
@@ -3409,13 +3435,13 @@ bool Main::start() {
 					memdelete(obj);
 				}
 				OS::get_singleton()->alert(vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
-				ERR_FAIL_V_MSG(false, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
+				ERR_FAIL_V_MSG(EXIT_FAILURE, vformat("Can't load the script \"%s\" as it doesn't inherit from SceneTree or MainLoop.", script));
 			}
 
 			script_loop->set_script(script_res);
 			main_loop = script_loop;
 		} else {
-			return false;
+			return EXIT_FAILURE;
 		}
 	} else { // Not based on script path.
 		if (!editor && !ClassDB::class_exists(main_loop_type) && ScriptServer::is_global_class(main_loop_type)) {
@@ -3423,7 +3449,7 @@ bool Main::start() {
 			Ref<Script> script_res = ResourceLoader::load(script_path);
 			if (script_res.is_null()) {
 				OS::get_singleton()->alert("Error: Could not load MainLoop script type: " + main_loop_type);
-				ERR_FAIL_V_MSG(false, vformat("Could not load global class %s.", main_loop_type));
+				ERR_FAIL_V_MSG(EXIT_FAILURE, vformat("Could not load global class %s.", main_loop_type));
 			}
 			StringName script_base = script_res->get_instance_base_type();
 			Object *obj = ClassDB::instantiate(script_base);
@@ -3433,7 +3459,7 @@ bool Main::start() {
 					memdelete(obj);
 				}
 				OS::get_singleton()->alert("Error: Invalid MainLoop script base type: " + script_base);
-				ERR_FAIL_V_MSG(false, vformat("The global class %s does not inherit from SceneTree or MainLoop.", main_loop_type));
+				ERR_FAIL_V_MSG(EXIT_FAILURE, vformat("The global class %s does not inherit from SceneTree or MainLoop.", main_loop_type));
 			}
 			script_loop->set_script(script_res);
 			main_loop = script_loop;
@@ -3447,15 +3473,15 @@ bool Main::start() {
 	if (!main_loop) {
 		if (!ClassDB::class_exists(main_loop_type)) {
 			OS::get_singleton()->alert("Error: MainLoop type doesn't exist: " + main_loop_type);
-			return false;
+			return EXIT_FAILURE;
 		} else {
 			Object *ml = ClassDB::instantiate(main_loop_type);
-			ERR_FAIL_NULL_V_MSG(ml, false, "Can't instance MainLoop type.");
+			ERR_FAIL_NULL_V_MSG(ml, EXIT_FAILURE, "Can't instance MainLoop type.");
 
 			main_loop = Object::cast_to<MainLoop>(ml);
 			if (!main_loop) {
 				memdelete(ml);
-				ERR_FAIL_V_MSG(false, "Invalid MainLoop type.");
+				ERR_FAIL_V_MSG(EXIT_FAILURE, "Invalid MainLoop type.");
 			}
 		}
 	}
@@ -3579,7 +3605,7 @@ bool Main::start() {
 			Error err;
 
 			Vector<String> paths = get_files_with_extension(gdscript_docs_path, "gd");
-			ERR_FAIL_COND_V_MSG(paths.is_empty(), false, "Couldn't find any GDScript files under the given directory: " + gdscript_docs_path);
+			ERR_FAIL_COND_V_MSG(paths.is_empty(), EXIT_FAILURE, "Couldn't find any GDScript files under the given directory: " + gdscript_docs_path);
 
 			for (const String &path : paths) {
 				Ref<GDScript> gdscript = ResourceLoader::load(path);
@@ -3594,14 +3620,13 @@ bool Main::start() {
 
 			Ref<DirAccess> da = DirAccess::create_for_path(doc_tool_path);
 			err = da->make_dir_recursive(doc_tool_path);
-			ERR_FAIL_COND_V_MSG(err != OK, false, "Error: Can't create GDScript docs directory: " + doc_tool_path + ": " + itos(err));
+			ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error: Can't create GDScript docs directory: " + doc_tool_path + ": " + itos(err));
 
 			HashMap<String, String> doc_data_classes;
 			err = docs.save_classes(doc_tool_path, doc_data_classes, false);
-			ERR_FAIL_COND_V_MSG(err != OK, false, "Error saving GDScript docs:" + itos(err));
+			ERR_FAIL_COND_V_MSG(err != OK, EXIT_FAILURE, "Error saving GDScript docs:" + itos(err));
 
-			OS::get_singleton()->set_exit_code(EXIT_SUCCESS);
-			return false;
+			return EXIT_SUCCESS;
 		}
 #endif // MODULE_GDSCRIPT_ENABLED
 
@@ -3716,7 +3741,7 @@ bool Main::start() {
 
 						if (sep == -1) {
 							Ref<DirAccess> da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-							ERR_FAIL_COND_V(da.is_null(), false);
+							ERR_FAIL_COND_V(da.is_null(), EXIT_FAILURE);
 
 							local_game_path = da->get_current_dir().path_join(local_game_path);
 						} else {
@@ -3766,12 +3791,12 @@ bool Main::start() {
 					scene = scenedata->instantiate();
 				}
 
-				ERR_FAIL_NULL_V_MSG(scene, false, "Failed loading scene: " + local_game_path + ".");
+				ERR_FAIL_NULL_V_MSG(scene, EXIT_FAILURE, "Failed loading scene: " + local_game_path + ".");
 				sml->add_current_scene(scene);
 
 #ifdef MACOS_ENABLED
 				String mac_icon_path = GLOBAL_GET("application/config/macos_native_icon");
-				if (!mac_icon_path.is_empty()) {
+				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_NATIVE_ICON) && !mac_icon_path.is_empty()) {
 					DisplayServer::get_singleton()->set_native_icon(mac_icon_path);
 					has_icon = true;
 				}
@@ -3779,14 +3804,14 @@ bool Main::start() {
 
 #ifdef WINDOWS_ENABLED
 				String win_icon_path = GLOBAL_GET("application/config/windows_native_icon");
-				if (!win_icon_path.is_empty()) {
+				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_NATIVE_ICON) && !win_icon_path.is_empty()) {
 					DisplayServer::get_singleton()->set_native_icon(win_icon_path);
 					has_icon = true;
 				}
 #endif
 
 				String icon_path = GLOBAL_GET("application/config/icon");
-				if ((!icon_path.is_empty()) && (!has_icon)) {
+				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && !icon_path.is_empty() && !has_icon) {
 					Ref<Image> icon;
 					icon.instantiate();
 					if (ImageLoader::load_image(icon_path, icon) == OK) {
@@ -3819,7 +3844,7 @@ bool Main::start() {
 #endif
 	}
 
-	if (!has_icon && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
+	if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && !has_icon && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
 		Ref<Image> icon = memnew(Image(app_icon_png));
 		DisplayServer::get_singleton()->set_icon(icon);
 	}
@@ -3839,7 +3864,7 @@ bool Main::start() {
 	OS::get_singleton()->benchmark_end_measure("Startup", "Total");
 	OS::get_singleton()->benchmark_dump();
 
-	return true;
+	return EXIT_SUCCESS;
 }
 
 /* Main iteration
@@ -3869,10 +3894,10 @@ static uint64_t physics_process_max = 0;
 static uint64_t process_max = 0;
 static uint64_t navigation_process_max = 0;
 
+// Return false means iterating further, returning true means `OS::run`
+// will terminate the program. In case of failure, the OS exit code needs
+// to be set explicitly here (defaults to EXIT_SUCCESS).
 bool Main::iteration() {
-	//for now do not error on this
-	//ERR_FAIL_COND_V(iterating, false);
-
 	iterating++;
 
 	const uint64_t ticks = OS::get_singleton()->get_ticks_usec();
@@ -3911,7 +3936,9 @@ bool Main::iteration() {
 	bool exit = false;
 
 	// process all our active interfaces
+#ifndef _3D_DISABLED
 	XRServer::get_singleton()->_process();
+#endif // _3D_DISABLED
 
 	NavigationServer2D::get_singleton()->sync();
 	NavigationServer3D::get_singleton()->sync();
@@ -3925,14 +3952,23 @@ bool Main::iteration() {
 
 		uint64_t physics_begin = OS::get_singleton()->get_ticks_usec();
 
+#ifndef _3D_DISABLED
 		PhysicsServer3D::get_singleton()->sync();
 		PhysicsServer3D::get_singleton()->flush_queries();
+#endif // _3D_DISABLED
+
+		// Prepare the fixed timestep interpolated nodes BEFORE they are updated
+		// by the physics server, otherwise the current and previous transforms
+		// may be the same, and no interpolation takes place.
+		OS::get_singleton()->get_main_loop()->iteration_prepare();
 
 		PhysicsServer2D::get_singleton()->sync();
 		PhysicsServer2D::get_singleton()->flush_queries();
 
 		if (OS::get_singleton()->get_main_loop()->physics_process(physics_step * time_scale)) {
+#ifndef _3D_DISABLED
 			PhysicsServer3D::get_singleton()->end_sync();
+#endif // _3D_DISABLED
 			PhysicsServer2D::get_singleton()->end_sync();
 
 			exit = true;
@@ -3948,8 +3984,10 @@ bool Main::iteration() {
 
 		message_queue->flush();
 
+#ifndef _3D_DISABLED
 		PhysicsServer3D::get_singleton()->end_sync();
 		PhysicsServer3D::get_singleton()->step(physics_step * time_scale);
+#endif // _3D_DISABLED
 
 		PhysicsServer2D::get_singleton()->end_sync();
 		PhysicsServer2D::get_singleton()->step(physics_step * time_scale);
@@ -4124,11 +4162,13 @@ void Main::cleanup(bool p_force) {
 	//clear global shader variables before scene and other graphics stuff are deinitialized.
 	rendering_server->global_shader_parameters_clear();
 
+#ifndef _3D_DISABLED
 	if (xr_server) {
 		// Now that we're unregistering properly in plugins we need to keep access to xr_server for a little longer
 		// We do however unset our primary interface
 		xr_server->set_primary_interface(Ref<XRInterface>());
 	}
+#endif // _3D_DISABLED
 
 #ifdef TOOLS_ENABLED
 	GDExtensionManager::get_singleton()->deinitialize_extensions(GDExtension::INITIALIZATION_LEVEL_EDITOR);
@@ -4158,9 +4198,11 @@ void Main::cleanup(bool p_force) {
 
 	EngineDebugger::deinitialize();
 
+#ifndef _3D_DISABLED
 	if (xr_server) {
 		memdelete(xr_server);
 	}
+#endif // _3D_DISABLED
 
 	if (audio_server) {
 		audio_server->finish();
@@ -4194,9 +4236,11 @@ void Main::cleanup(bool p_force) {
 	if (tsman) {
 		memdelete(tsman);
 	}
+#ifndef _3D_DISABLED
 	if (physics_server_3d_manager) {
 		memdelete(physics_server_3d_manager);
 	}
+#endif // _3D_DISABLED
 	if (physics_server_2d_manager) {
 		memdelete(physics_server_2d_manager);
 	}

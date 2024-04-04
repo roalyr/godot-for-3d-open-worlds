@@ -619,8 +619,8 @@ void EditorFeatureProfileManager::_class_list_item_selected() {
 			if (!(E.usage & PROPERTY_USAGE_EDITOR)) {
 				continue;
 			}
-			const String text = EditorPropertyNameProcessor::get_singleton()->process_name(name, text_style);
-			const String tooltip = EditorPropertyNameProcessor::get_singleton()->process_name(name, tooltip_style);
+			const String text = EditorPropertyNameProcessor::get_singleton()->process_name(name, text_style, name, class_name);
+			const String tooltip = EditorPropertyNameProcessor::get_singleton()->process_name(name, tooltip_style, name, class_name);
 
 			TreeItem *property = property_list->create_item(properties);
 			property->set_cell_mode(0, TreeItem::CELL_MODE_CHECK);
@@ -976,6 +976,7 @@ EditorFeatureProfileManager::EditorFeatureProfileManager() {
 	class_list_vbc->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 
 	class_list = memnew(Tree);
+	class_list->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	class_list_vbc->add_margin_child(TTR("Configure Selected Profile:"), class_list, true);
 	class_list->set_hide_root(true);
 	class_list->set_edit_checkbox_cell_only_when_checkbox_is_pressed(true);

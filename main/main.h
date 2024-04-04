@@ -35,7 +35,7 @@
 #include "core/os/thread.h"
 #include "core/typedefs.h"
 
-template <class T>
+template <typename T>
 class Vector;
 
 class Main {
@@ -46,6 +46,7 @@ class Main {
 		CLI_OPTION_AVAILABILITY_HIDDEN,
 	};
 
+	static void print_header(bool p_rich);
 	static void print_help_copyright(const char *p_notice);
 	static void print_help_title(const char *p_title);
 	static void print_help_option(const char *p_option, const char *p_description, CLIOptionAvailability p_availability = CLI_OPTION_AVAILABILITY_TEMPLATE_RELEASE);
@@ -77,7 +78,7 @@ public:
 	static Error test_setup();
 	static void test_cleanup();
 #endif
-	static bool start();
+	static int start();
 
 	static bool iteration();
 	static void force_redraw();

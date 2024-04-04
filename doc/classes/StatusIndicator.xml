@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="StatusIndicator" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
+<class name="StatusIndicator" inherits="Node" keywords="tray" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../class.xsd">
 	<brief_description>
 		Application status indicator (aka notification area icon).
 		[b]Note:[/b] Status indicator is implemented on macOS and Windows.
@@ -22,7 +22,7 @@
 	<signals>
 		<signal name="pressed">
 			<param index="0" name="mouse_button" type="int" />
-			<param index="1" name="position" type="Vector2i" />
+			<param index="1" name="mouse_position" type="Vector2i" />
 			<description>
 				Emitted when the status indicator is pressed.
 			</description>
