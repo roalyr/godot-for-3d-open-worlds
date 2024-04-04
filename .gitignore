@@ -363,3 +363,6 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+
+# GF3DOW other
+scons_cache/

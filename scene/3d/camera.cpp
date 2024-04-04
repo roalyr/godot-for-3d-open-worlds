@@ -523,9 +523,12 @@ void Camera::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fov", PROPERTY_HINT_RANGE, "1,179,0.1"), "set_fov", "get_fov");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size", PROPERTY_HINT_RANGE, "0.001,16384,0.001"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "frustum_offset"), "set_frustum_offset", "get_frustum_offset");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_EXP_RANGE, "0.01,8192,0.01,or_greater"), "set_znear", "get_znear");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_EXP_RANGE, "0.1,8192,0.1,or_greater"), "set_zfar", "get_zfar");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "affect_lod"), "set_affect_lod", "get_affect_lod");
+
+	// To accomodate for large distances.
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_RANGE, "0.01,8192,0.01,or_greater"), "set_znear", "get_znear");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_RANGE, "1.0,9e18,1.0"), "set_zfar", "get_zfar");
+  ADD_PROPERTY(PropertyInfo(Variant::BOOL, "affect_lod"), "set_affect_lod", "get_affect_lod");
+
 
 	BIND_ENUM_CONSTANT(PROJECTION_PERSPECTIVE);
 	BIND_ENUM_CONSTANT(PROJECTION_ORTHOGONAL);
