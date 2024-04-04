@@ -637,9 +637,8 @@ private:
 	RID indicators_instance;
 	RID cursor_mesh;
 	RID cursor_instance;
-	Ref<Material3D> indicator_mat;
+	Ref<SpatialMaterial> indicator_mat;
 	Ref<ShaderMaterial> grid_mat[3];
-	Ref<Material3D> cursor_material;
 
 	// Scene drag and drop support
 	Spatial *preview_node;
@@ -674,6 +673,7 @@ private:
 		MENU_VIEW_GRID,
 		MENU_VIEW_PORTAL_CULLING,
 		MENU_VIEW_OCCLUSION_CULLING,
+		MENU_VIEW_LEVEL_OF_DETAIL,
 		MENU_VIEW_GIZMOS_3D_ICONS,
 		MENU_VIEW_CAMERA_SETTINGS,
 		MENU_LOCK_SELECTED,

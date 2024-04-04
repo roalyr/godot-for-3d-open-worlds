@@ -36,6 +36,7 @@
 #include "editor/node_dock.h"
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
+#include "scene/3d/lod_manager.h"
 #include "scene/gui/label.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
@@ -162,7 +163,7 @@ void SceneTreeEditor::_toggle_visible(Node *p_node) {
 	}
 }
 
-void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
+void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_disable_visibility) {
 	if (!p_node) {
 		return;
 	}
@@ -405,9 +406,9 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 
 			bool v = p_node->call("is_visible");
 			if (v) {
-				item->add_button(0, get_icon("GuiVisibilityVisible", "EditorIcons"), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
+				item->add_button(0, get_icon("GuiVisibilityVisible", "EditorIcons"), BUTTON_VISIBILITY, p_disable_visibility, TTR("Toggle Visibility"));
 			} else {
-				item->add_button(0, get_icon("GuiVisibilityHidden", "EditorIcons"), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
+				item->add_button(0, get_icon("GuiVisibilityHidden", "EditorIcons"), BUTTON_VISIBILITY, p_disable_visibility, TTR("Toggle Visibility"));
 			}
 
 			if (!p_node->is_connected("visibility_changed", this, "_node_visibility_changed")) {
@@ -437,8 +438,12 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 		item->set_as_cursor(0);
 	}
 
+	// In some cases we want to disable visibility control by the user
+	// for automatically visibility-controlled children.
+	bool disable_visibility = p_node->is_class("LOD") && LODManager::is_enabled();
+
 	for (int i = 0; i < p_node->get_child_count(); i++) {
-		_add_nodes(p_node->get_child(i), item);
+		_add_nodes(p_node->get_child(i), item, disable_visibility);
 	}
 
 	if (valid_types.size()) {
@@ -594,9 +599,16 @@ bool SceneTreeEditor::_update_filter(TreeItem *p_parent, bool p_scroll_to_select
 	}
 
 	bool keep_for_children = false;
+
+	// Get the list of children ahead of time, as the list may be invalidated by deleting one of them.
+	LocalVector<TreeItem *> children;
 	for (TreeItem *child = p_parent->get_children(); child; child = child->get_next()) {
+		children.push_back(child);
+	}
+
+	for (uint32_t n = 0; n < children.size(); n++) {
 		// Always keep if at least one of the children are kept.
-		keep_for_children = _update_filter(child, p_scroll_to_selected) || keep_for_children;
+		keep_for_children = _update_filter(children[n], p_scroll_to_selected) || keep_for_children;
 	}
 
 	// Now find other reasons to keep this Node, too.
@@ -617,8 +629,6 @@ bool SceneTreeEditor::_update_filter(TreeItem *p_parent, bool p_scroll_to_select
 				}
 			}
 		}
-	} else {
-		memdelete(p_parent);
 	}
 
 	if (editor_selection) {
@@ -633,6 +643,10 @@ bool SceneTreeEditor::_update_filter(TreeItem *p_parent, bool p_scroll_to_select
 				p_parent->deselect(0);
 			}
 		}
+	}
+
+	if (!(keep || keep_for_children)) {
+		memdelete(p_parent);
 	}
 
 	return keep || keep_for_children;
