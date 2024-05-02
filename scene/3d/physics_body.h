@@ -292,7 +292,8 @@ private:
 
 	Vector3 floor_normal;
 	Vector3 floor_velocity;
-	RID on_floor_body;
+	RID on_floor_body_rid;
+	ObjectID on_floor_body_id;
 	bool on_floor;
 	bool on_ceiling;
 	bool on_wall;
@@ -347,7 +348,6 @@ public:
 	bool is_sync_to_physics_enabled() const;
 
 	KinematicBody();
-	~KinematicBody();
 };
 
 VARIANT_ENUM_CAST(KinematicBody::MovingPlatformApplyVelocityOnLeave);
@@ -355,7 +355,7 @@ VARIANT_ENUM_CAST(KinematicBody::MovingPlatformApplyVelocityOnLeave);
 class KinematicCollision : public Reference {
 	GDCLASS(KinematicCollision, Reference);
 
-	KinematicBody *owner;
+	ObjectID owner_id;
 	friend class KinematicBody;
 	KinematicBody::Collision collision;
 

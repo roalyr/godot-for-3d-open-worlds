@@ -151,7 +151,7 @@ def configure(env):
     env.AddMethod(create_template_zip, "CreateTemplateZip")
 
     # Closure compiler extern and support for ecmascript specs (const, let, etc).
-    env["ENV"]["EMCC_CLOSURE_ARGS"] = "--language_in ECMASCRIPT6"
+    env["ENV"]["EMCC_CLOSURE_ARGS"] = "--language_in ECMASCRIPT_2021"
 
     env["CC"] = "emcc"
     env["CXX"] = "em++"
@@ -206,6 +206,9 @@ def configure(env):
         # Workaround https://github.com/emscripten-core/emscripten/issues/19781.
         if cc_semver >= (3, 1, 42) and cc_semver < (3, 1, 46):
             env.Append(LINKFLAGS=["-Wl,-u,scalbnf"])
+        # Workaround https://github.com/emscripten-core/emscripten/issues/16836.
+        if cc_semver >= (3, 1, 47):
+            env.Append(LINKFLAGS=["-Wl,-u,_emscripten_run_callback_on_thread"])
 
     if env["gdnative_enabled"]:
         if cc_semver < (2, 0, 10):
@@ -220,6 +223,10 @@ def configure(env):
         env.Append(CPPDEFINES=["ZSTD_HAVE_WEAK_SYMBOLS=0"])
         env.extra_suffix = ".gdnative" + env.extra_suffix
 
+    # WASM_BIGINT is needed since emscripten ≥ 3.1.41
+    if cc_semver >= (3, 1, 41):
+        env.Append(LINKFLAGS=["-s", "WASM_BIGINT"])
+
     # Reduce code size by generating less support code (e.g. skip NodeJS support).
     env.Append(LINKFLAGS=["-s", "ENVIRONMENT=web,worker"])
 
@@ -233,6 +240,11 @@ def configure(env):
 
     # This setting just makes WebGL 2 APIs available, it does NOT disable WebGL 1.
     env.Append(LINKFLAGS=["-s", "USE_WEBGL2=1"])
+    # Breaking change since emscripten 3.1.51
+    # https://github.com/emscripten-core/emscripten/blob/main/ChangeLog.md#3151---121323
+    if cc_semver >= (3, 1, 51):
+        # Enables the use of *glGetProcAddress()
+        env.Append(LINKFLAGS=["-s", "GL_ENABLE_GET_PROC_ADDRESS=1"])
 
     # Do not call main immediately when the support code is ready.
     env.Append(LINKFLAGS=["-s", "INVOKE_RUN=0"])

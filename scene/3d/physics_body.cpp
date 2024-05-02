@@ -972,7 +972,7 @@ Ref<KinematicCollision> KinematicBody::_move(const Vector3 &p_motion, bool p_inf
 		// Create a new instance when the cached reference is invalid or still in use in script.
 		if (motion_cache.is_null() || motion_cache->reference_get_count() > 1) {
 			motion_cache.instance();
-			motion_cache->owner = this;
+			motion_cache->owner_id = get_instance_id();
 		}
 
 		motion_cache->collision = col;
@@ -1077,9 +1077,17 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 	float delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
 
 	Vector3 current_floor_velocity = floor_velocity;
-	if (on_floor && on_floor_body.is_valid()) {
-		// This approach makes sure there is less delay between the actual body velocity and the one we saved.
-		PhysicsDirectBodyState *bs = PhysicsServer::get_singleton()->body_get_direct_state(on_floor_body);
+
+	if (on_floor && on_floor_body_rid.is_valid()) {
+		PhysicsDirectBodyState *bs = nullptr;
+
+		// We need to check the on_floor_body still exists before accessing.
+		// A valid RID is no guarantee that the object has not been deleted.
+		if (ObjectDB::get_instance(on_floor_body_id)) {
+			// This approach makes sure there is less delay between the actual body velocity and the one we saved.
+			bs = PhysicsServer::get_singleton()->body_get_direct_state(on_floor_body_rid);
+		}
+
 		if (bs) {
 			Transform gt = get_global_transform();
 			Vector3 local_position = gt.origin - bs->get_transform().origin;
@@ -1087,7 +1095,8 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 		} else {
 			// Body is removed or destroyed, invalidate floor.
 			current_floor_velocity = Vector3();
-			on_floor_body = RID();
+			on_floor_body_rid = RID();
+			on_floor_body_id = ObjectID();
 		}
 	}
 
@@ -1098,17 +1107,18 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 	floor_normal = Vector3();
 	floor_velocity = Vector3();
 
-	if (current_floor_velocity != Vector3() && on_floor_body.is_valid()) {
+	if (current_floor_velocity != Vector3() && on_floor_body_rid.is_valid()) {
 		Collision floor_collision;
 		Set<RID> exclude;
-		exclude.insert(on_floor_body);
+		exclude.insert(on_floor_body_rid);
 		if (move_and_collide(current_floor_velocity * delta, p_infinite_inertia, floor_collision, true, false, false, exclude)) {
 			colliders.push_back(floor_collision);
 			_set_collision_direction(floor_collision, up_direction, p_floor_max_angle);
 		}
 	}
 
-	on_floor_body = RID();
+	on_floor_body_rid = RID();
+	on_floor_body_id = ObjectID();
 	Vector3 motion = body_velocity * delta;
 
 	// No sliding on first attempt to keep floor motion stable when possible,
@@ -1186,7 +1196,8 @@ Vector3 KinematicBody::_move_and_slide_internal(const Vector3 &p_linear_velocity
 				if (Math::acos(col.normal.dot(up_direction)) <= p_floor_max_angle + FLOOR_ANGLE_THRESHOLD) {
 					on_floor = true;
 					floor_normal = col.normal;
-					on_floor_body = col.collider_rid;
+					on_floor_body_rid = col.collider_rid;
+					on_floor_body_id = col.collider;
 					floor_velocity = col.collider_vel;
 					if (p_stop_on_slope) {
 						// move and collide may stray the object a bit because of pre un-stucking,
@@ -1237,7 +1248,8 @@ void KinematicBody::_set_collision_direction(const Collision &p_collision, const
 		if (Math::acos(p_collision.normal.dot(p_up_direction)) <= p_floor_max_angle + FLOOR_ANGLE_THRESHOLD) { //floor
 			on_floor = true;
 			floor_normal = p_collision.normal;
-			on_floor_body = p_collision.collider_rid;
+			on_floor_body_rid = p_collision.collider_rid;
+			on_floor_body_id = p_collision.collider;
 			floor_velocity = p_collision.collider_vel;
 		} else if (Math::acos(p_collision.normal.dot(-p_up_direction)) <= p_floor_max_angle + FLOOR_ANGLE_THRESHOLD) { //ceiling
 			on_ceiling = true;
@@ -1369,7 +1381,7 @@ Ref<KinematicCollision> KinematicBody::_get_slide_collision(int p_bounce) {
 	// Create a new instance when the cached reference is invalid or still in use in script.
 	if (slide_colliders[p_bounce].is_null() || slide_colliders[p_bounce]->reference_get_count() > 1) {
 		slide_colliders.write[p_bounce].instance();
-		slide_colliders.write[p_bounce]->owner = this;
+		slide_colliders.write[p_bounce]->owner_id = get_instance_id();
 	}
 
 	slide_colliders.write[p_bounce]->collision = colliders[p_bounce];
@@ -1429,7 +1441,8 @@ void KinematicBody::_notification(int p_what) {
 
 		// Reset move_and_slide() data.
 		on_floor = false;
-		on_floor_body = RID();
+		on_floor_body_rid = RID();
+		on_floor_body_id = ObjectID();
 		on_ceiling = false;
 		on_wall = false;
 		colliders.clear();
@@ -1508,18 +1521,6 @@ KinematicBody::KinematicBody() :
 	set_safe_margin(0.001);
 }
 
-KinematicBody::~KinematicBody() {
-	if (motion_cache.is_valid()) {
-		motion_cache->owner = nullptr;
-	}
-
-	for (int i = 0; i < slide_colliders.size(); i++) {
-		if (slide_colliders[i].is_valid()) {
-			slide_colliders.write[i]->owner = nullptr;
-		}
-	}
-}
-
 ///////////////////////////////////////
 
 Vector3 KinematicCollision::get_position() const {
@@ -1541,6 +1542,7 @@ real_t KinematicCollision::get_angle(const Vector3 &p_up_direction) const {
 }
 
 Object *KinematicCollision::get_local_shape() const {
+	PhysicsBody *owner = Object::cast_to<PhysicsBody>(ObjectDB::get_instance(owner_id));
 	if (!owner) {
 		return nullptr;
 	}
@@ -1616,7 +1618,7 @@ KinematicCollision::KinematicCollision() {
 	collision.collider = 0;
 	collision.collider_shape = 0;
 	collision.local_shape = 0;
-	owner = nullptr;
+	owner_id = 0;
 }
 
 ///////////////////////////////////////

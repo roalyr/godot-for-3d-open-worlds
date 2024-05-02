@@ -184,6 +184,10 @@ class SpatialEditorViewport : public Control {
 	friend class SpatialEditor;
 	friend class ViewportNavigationControl;
 	friend class ViewportRotationControl;
+
+	// These values are serialized, so if adding new values
+	// add to the bottom to preserve compatibility between
+	// editor versions.
 	enum {
 
 		VIEW_TOP,
@@ -213,6 +217,7 @@ class SpatialEditorViewport : public Control {
 		VIEW_CINEMATIC_PREVIEW,
 		VIEW_AUTO_ORTHOGONAL,
 		VIEW_PORTAL_CULLING,
+		VIEW_SELECTED_INFO,
 	};
 
 	enum ViewType {
@@ -283,6 +288,7 @@ private:
 	Vector2 previous_mouse_position;
 
 	Label *info_label;
+	Label *selected_info_label;
 	Label *cinema_label;
 	Label *locked_label;
 	Label *zoom_limit_label;

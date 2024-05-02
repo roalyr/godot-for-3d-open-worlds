@@ -426,9 +426,8 @@ void Node::move_child(Node *p_child, int p_pos) {
 	}
 	// notification second
 	move_child_notify(p_child);
-	for (int i = motion_from; i <= motion_to; i++) {
-		data.children[i]->notification(NOTIFICATION_MOVED_IN_PARENT);
-	}
+	Viewport::notify_canvas_parent_children_moved(*this, motion_from, motion_to + 1);
+
 	p_child->_propagate_groups_dirty();
 
 	data.blocked--;
@@ -517,25 +516,27 @@ void Node::set_pause_mode(PauseMode p_mode) {
 	}
 
 	bool prev_inherits = data.pause_mode == PAUSE_MODE_INHERIT;
+	bool prev_can_process = is_inside_tree() && can_process();
 	data.pause_mode = p_mode;
 	if (!is_inside_tree()) {
 		return; //pointless
 	}
-	if ((data.pause_mode == PAUSE_MODE_INHERIT) == prev_inherits) {
-		return; ///nothing changed
-	}
+	if ((data.pause_mode == PAUSE_MODE_INHERIT) != prev_inherits) {
+		Node *owner = nullptr;
 
-	Node *owner = nullptr;
-
-	if (data.pause_mode == PAUSE_MODE_INHERIT) {
-		if (data.parent) {
-			owner = data.parent->data.pause_owner;
+		if (data.pause_mode == PAUSE_MODE_INHERIT) {
+			if (data.parent) {
+				owner = data.parent->data.pause_owner;
+			}
+		} else {
+			owner = this;
 		}
-	} else {
-		owner = this;
-	}
 
-	_propagate_pause_owner(owner);
+		_propagate_pause_owner(owner);
+	}
+	if (prev_can_process != can_process()) {
+		_propagate_pause_change_notification(can_process() ? NOTIFICATION_UNPAUSED : NOTIFICATION_PAUSED);
+	}
 }
 
 Node::PauseMode Node::get_pause_mode() const {
@@ -549,6 +550,16 @@ void Node::_propagate_pause_owner(Node *p_owner) {
 	data.pause_owner = p_owner;
 	for (int i = 0; i < data.children.size(); i++) {
 		data.children[i]->_propagate_pause_owner(p_owner);
+	}
+}
+
+void Node::_propagate_pause_change_notification(int p_notification) {
+	notification(p_notification);
+
+	for (int i = 0; i < data.children.size(); i++) {
+		if (data.children[i]->data.pause_mode == PAUSE_MODE_INHERIT) {
+			data.children[i]->_propagate_pause_change_notification(p_notification);
+		}
 	}
 }
 
@@ -1364,8 +1375,10 @@ void Node::remove_child(Node *p_child) {
 
 	for (int i = idx; i < child_count; i++) {
 		children[i]->data.pos = i;
-		children[i]->notification(NOTIFICATION_MOVED_IN_PARENT);
 	}
+
+	Viewport::notify_canvas_parent_children_moved(*this, idx, child_count);
+	Viewport::notify_canvas_parent_child_count_reduced(*this);
 
 	p_child->data.parent = nullptr;
 	p_child->data.pos = -1;
@@ -1435,23 +1448,14 @@ Node *Node::get_node_or_null(const NodePath &p_path) const {
 			}
 
 		} else if (name.is_node_unique_name()) {
-			if (current->data.owned_unique_nodes.size()) {
-				// Has unique nodes in ownership
-				Node **unique = current->data.owned_unique_nodes.getptr(name);
-				if (!unique) {
-					return nullptr;
-				}
-				next = *unique;
-			} else if (current->data.owner) {
-				Node **unique = current->data.owner->data.owned_unique_nodes.getptr(name);
-				if (!unique) {
-					return nullptr;
-				}
-				next = *unique;
-			} else {
+			Node **unique = current->data.owned_unique_nodes.getptr(name);
+			if (!unique && current->data.owner) {
+				unique = current->data.owner->data.owned_unique_nodes.getptr(name);
+			}
+			if (!unique) {
 				return nullptr;
 			}
-
+			next = *unique;
 		} else {
 			next = nullptr;
 
@@ -3022,6 +3026,10 @@ bool Node::is_displayed_folded() const {
 	return data.display_folded;
 }
 
+bool Node::is_node_ready() const {
+	return !data.ready_first;
+}
+
 void Node::request_ready() {
 	data.ready_first = true;
 }
@@ -3122,6 +3130,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("queue_free"), &Node::queue_delete);
 
 	ClassDB::bind_method(D_METHOD("request_ready"), &Node::request_ready);
+	ClassDB::bind_method(D_METHOD("is_node_ready"), &Node::is_node_ready);
 
 	ClassDB::bind_method(D_METHOD("set_network_master", "id", "recursive"), &Node::set_network_master, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_network_master"), &Node::get_network_master);
@@ -3188,6 +3197,7 @@ void Node::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_DRAG_BEGIN);
 	BIND_CONSTANT(NOTIFICATION_DRAG_END);
 	BIND_CONSTANT(NOTIFICATION_PATH_CHANGED);
+	BIND_CONSTANT(NOTIFICATION_CHILD_ORDER_CHANGED);
 	BIND_CONSTANT(NOTIFICATION_INTERNAL_PROCESS);
 	BIND_CONSTANT(NOTIFICATION_INTERNAL_PHYSICS_PROCESS);
 	BIND_CONSTANT(NOTIFICATION_POST_ENTER_TREE);
@@ -3228,6 +3238,7 @@ void Node::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("tree_exited"));
 	ADD_SIGNAL(MethodInfo("child_entered_tree", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
 	ADD_SIGNAL(MethodInfo("child_exiting_tree", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "Node")));
+	ADD_SIGNAL(MethodInfo("child_order_changed"));
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "pause_mode", PROPERTY_HINT_ENUM, "Inherit,Stop,Process"), "set_pause_mode", "get_pause_mode");
 
