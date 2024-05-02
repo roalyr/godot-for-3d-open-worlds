@@ -688,6 +688,18 @@ void Viewport::_process_picking() {
 		physics_picking_events.clear();
 		return;
 	}
+#ifndef _3D_DISABLED
+	if (use_xr) {
+		if (XRServer::get_singleton() != nullptr) {
+			Ref<XRInterface> xr_interface = XRServer::get_singleton()->get_primary_interface();
+			if (xr_interface.is_valid() && xr_interface->is_initialized() && xr_interface->get_view_count() > 1) {
+				WARN_PRINT_ONCE("Object picking can't be used when stereo rendering, this will be turned off!");
+				physics_object_picking = false; // don't try again.
+				return;
+			}
+		}
+	}
+#endif
 
 	_drop_physics_mouseover(true);
 
@@ -856,9 +868,10 @@ void Viewport::_process_picking() {
 
 							if (send_event) {
 								co->_input_event_call(this, ev, res[i].shape);
-								if (physics_object_picking_first_only) {
-									break;
-								}
+							}
+
+							if (physics_object_picking_first_only) {
+								break;
 							}
 						}
 					}
@@ -970,7 +983,7 @@ void Viewport::_set_size(const Size2i &p_size, const Size2i &p_size_2d_override,
 		stretch_transform_new.scale(scale);
 	}
 
-	Size2i new_size = p_size.max(Size2i(2, 2));
+	Size2i new_size = p_size.maxi(2);
 	if (size == new_size && size_allocated == p_allocated && stretch_transform == stretch_transform_new && p_size_2d_override == size_2d_override) {
 		return;
 	}
@@ -1461,6 +1474,8 @@ void Viewport::_gui_show_tooltip() {
 	panel->set_flag(Window::FLAG_NO_FOCUS, true);
 	panel->set_flag(Window::FLAG_POPUP, false);
 	panel->set_flag(Window::FLAG_MOUSE_PASSTHROUGH, true);
+	// A non-embedded tooltip window will only be transparent if per_pixel_transparency is allowed in the main Viewport.
+	panel->set_flag(Window::FLAG_TRANSPARENT, true);
 	panel->set_wrap_controls(true);
 	panel->add_child(base_tooltip);
 	panel->gui_parent = this;
@@ -1469,17 +1484,25 @@ void Viewport::_gui_show_tooltip() {
 
 	tooltip_owner->add_child(gui.tooltip_popup);
 
+	Window *window = Object::cast_to<Window>(gui.tooltip_popup->get_embedder());
+	if (!window) { // Not embedded.
+		window = gui.tooltip_popup->get_parent_visible_window();
+	}
+	float win_scale = window->content_scale_factor;
 	Point2 tooltip_offset = GLOBAL_GET("display/mouse_cursor/tooltip_position_offset");
+	if (!gui.tooltip_popup->is_embedded()) {
+		tooltip_offset *= win_scale;
+	}
 	Rect2 r(gui.tooltip_pos + tooltip_offset, gui.tooltip_popup->get_contents_minimum_size());
-	r.size = r.size.min(panel->get_max_size());
-
-	Window *window = gui.tooltip_popup->get_parent_visible_window();
 	Rect2i vr;
 	if (gui.tooltip_popup->is_embedded()) {
 		vr = gui.tooltip_popup->get_embedder()->get_visible_rect();
 	} else {
+		panel->content_scale_factor = win_scale;
+		r.size *= win_scale;
 		vr = window->get_usable_parent_rect();
 	}
+	r.size = r.size.min(panel->get_max_size());
 
 	if (r.size.x + r.position.x > vr.size.x + vr.position.x) {
 		// Place it in the opposite direction. If it fails, just hug the border.
@@ -1711,7 +1734,6 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 				gui.mouse_focus_mask.set_flag(button_mask);
 			} else {
 				gui.mouse_focus = gui_find_control(mpos);
-				gui.last_mouse_focus = gui.mouse_focus;
 
 				if (!gui.mouse_focus) {
 					return;
@@ -2296,6 +2318,7 @@ void Viewport::_gui_force_drag(Control *p_base, const Variant &p_data, Control *
 	gui.dragging = true;
 	gui.drag_data = p_data;
 	gui.mouse_focus = nullptr;
+	gui.mouse_focus_mask.clear();
 
 	if (p_control) {
 		_gui_set_drag_preview(p_base, p_control);
@@ -2367,9 +2390,6 @@ void Viewport::_gui_remove_control(Control *p_control) {
 		gui.mouse_focus = nullptr;
 		gui.forced_mouse_focus = false;
 		gui.mouse_focus_mask.clear();
-	}
-	if (gui.last_mouse_focus == p_control) {
-		gui.last_mouse_focus = nullptr;
 	}
 	if (gui.key_focus == p_control) {
 		gui.key_focus = nullptr;
@@ -2748,7 +2768,7 @@ bool Viewport::_sub_windows_forward_input(const Ref<InputEvent> &p_event) {
 				Size2i min_size = gui.currently_dragged_subwindow->get_min_size();
 				Size2i min_size_clamped = gui.currently_dragged_subwindow->get_clamped_minimum_size();
 
-				min_size_clamped = min_size_clamped.max(Size2i(1, 1));
+				min_size_clamped = min_size_clamped.maxi(1);
 
 				Rect2i r = gui.subwindow_resize_from_rect;
 
@@ -2809,7 +2829,7 @@ bool Viewport::_sub_windows_forward_input(const Ref<InputEvent> &p_event) {
 
 				Size2i max_size = gui.currently_dragged_subwindow->get_max_size();
 				if ((max_size.x > 0 || max_size.y > 0) && (max_size.x >= min_size.x && max_size.y >= min_size.y)) {
-					max_size = max_size.max(Size2i(1, 1));
+					max_size = max_size.maxi(1);
 
 					if (r.size.x > max_size.x) {
 						r.size.x = max_size.x;
@@ -3566,6 +3586,13 @@ bool Viewport::gui_is_dragging() const {
 bool Viewport::gui_is_drag_successful() const {
 	ERR_READ_THREAD_GUARD_V(false);
 	return gui.drag_successful;
+}
+
+void Viewport::gui_cancel_drag() {
+	ERR_MAIN_THREAD_GUARD;
+	if (gui_is_dragging()) {
+		_perform_drop();
+	}
 }
 
 void Viewport::set_input_as_handled() {
@@ -4944,7 +4971,7 @@ Viewport::Viewport() {
 	unhandled_key_input_group = "_vp_unhandled_key_input" + id;
 
 	// Window tooltip.
-	gui.tooltip_delay = GLOBAL_DEF(PropertyInfo(Variant::FLOAT, "gui/timers/tooltip_delay_sec", PROPERTY_HINT_RANGE, "0,5,0.01,or_greater"), 0.5);
+	gui.tooltip_delay = GLOBAL_GET("gui/timers/tooltip_delay_sec");
 
 #ifndef _3D_DISABLED
 	set_scaling_3d_mode((Viewport::Scaling3DMode)(int)GLOBAL_GET("rendering/scaling_3d/mode"));

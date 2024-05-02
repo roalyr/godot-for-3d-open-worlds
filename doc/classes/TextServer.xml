@@ -1505,6 +1505,7 @@
 			<return type="PackedInt32Array" />
 			<param index="0" name="shaped" type="RID" />
 			<param index="1" name="grapheme_flags" type="int" enum="TextServer.GraphemeFlag" is_bitfield="true" default="264" />
+			<param index="2" name="skip_grapheme_flags" type="int" enum="TextServer.GraphemeFlag" is_bitfield="true" default="4" />
 			<description>
 				Breaks text into words and returns array of character ranges. Use [param grapheme_flags] to set what characters are used for breaking (see [enum GraphemeFlag]).
 			</description>
@@ -1732,6 +1733,16 @@
 			<param index="1" name="language" type="String" default="&quot;&quot;" />
 			<description>
 				Returns the string converted to lowercase.
+				[b]Note:[/b] Casing is locale dependent and context sensitive if server support [constant FEATURE_CONTEXT_SENSITIVE_CASE_CONVERSION] feature (supported by [TextServerAdvanced]).
+				[b]Note:[/b] The result may be longer or shorter than the original.
+			</description>
+		</method>
+		<method name="string_to_title" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="string" type="String" />
+			<param index="1" name="language" type="String" default="&quot;&quot;" />
+			<description>
+				Returns the string converted to title case.
 				[b]Note:[/b] Casing is locale dependent and context sensitive if server support [constant FEATURE_CONTEXT_SENSITIVE_CASE_CONVERSION] feature (supported by [TextServerAdvanced]).
 				[b]Note:[/b] The result may be longer or shorter than the original.
 			</description>

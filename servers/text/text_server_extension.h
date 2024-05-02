@@ -472,10 +472,10 @@ public:
 
 	virtual PackedInt32Array shaped_text_get_line_breaks_adv(const RID &p_shaped, const PackedFloat32Array &p_width, int64_t p_start = 0, bool p_once = true, BitField<TextServer::LineBreakFlag> p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const override;
 	virtual PackedInt32Array shaped_text_get_line_breaks(const RID &p_shaped, double p_width, int64_t p_start = 0, BitField<TextServer::LineBreakFlag> p_break_flags = BREAK_MANDATORY | BREAK_WORD_BOUND) const override;
-	virtual PackedInt32Array shaped_text_get_word_breaks(const RID &p_shaped, BitField<TextServer::GraphemeFlag> p_grapheme_flags = GRAPHEME_IS_SPACE | GRAPHEME_IS_PUNCTUATION) const override;
+	virtual PackedInt32Array shaped_text_get_word_breaks(const RID &p_shaped, BitField<TextServer::GraphemeFlag> p_grapheme_flags = GRAPHEME_IS_SPACE | GRAPHEME_IS_PUNCTUATION, BitField<TextServer::GraphemeFlag> p_skip_grapheme_flags = GRAPHEME_IS_VIRTUAL) const override;
 	GDVIRTUAL5RC(PackedInt32Array, _shaped_text_get_line_breaks_adv, RID, const PackedFloat32Array &, int64_t, bool, BitField<TextServer::LineBreakFlag>);
 	GDVIRTUAL4RC(PackedInt32Array, _shaped_text_get_line_breaks, RID, double, int64_t, BitField<TextServer::LineBreakFlag>);
-	GDVIRTUAL2RC(PackedInt32Array, _shaped_text_get_word_breaks, RID, BitField<TextServer::GraphemeFlag>);
+	GDVIRTUAL3RC(PackedInt32Array, _shaped_text_get_word_breaks, RID, BitField<TextServer::GraphemeFlag>, BitField<TextServer::GraphemeFlag>);
 
 	virtual int64_t shaped_text_get_trim_pos(const RID &p_shaped) const override;
 	virtual int64_t shaped_text_get_ellipsis_pos(const RID &p_shaped) const override;
@@ -566,8 +566,10 @@ public:
 
 	virtual String string_to_upper(const String &p_string, const String &p_language = "") const override;
 	virtual String string_to_lower(const String &p_string, const String &p_language = "") const override;
+	virtual String string_to_title(const String &p_string, const String &p_language = "") const override;
 	GDVIRTUAL2RC(String, _string_to_upper, const String &, const String &);
 	GDVIRTUAL2RC(String, _string_to_lower, const String &, const String &);
+	GDVIRTUAL2RC(String, _string_to_title, const String &, const String &);
 
 	TypedArray<Vector3i> parse_structured_text(StructuredTextParser p_parser_type, const Array &p_args, const String &p_text) const;
 	GDVIRTUAL3RC(TypedArray<Vector3i>, _parse_structured_text, StructuredTextParser, const Array &, const String &);

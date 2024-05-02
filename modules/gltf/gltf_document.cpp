@@ -3059,7 +3059,17 @@ Error GLTFDocument::_parse_meshes(Ref<GLTFState> p_state) {
 				array[Mesh::ARRAY_TANGENT] = tangents;
 			}
 
-			if (p_state->force_disable_compression || !a.has("POSITION") || !a.has("NORMAL") || p.has("targets") || (a.has("JOINTS_0") || a.has("JOINTS_1"))) {
+			// Disable compression if all z equals 0 (the mesh is 2D).
+			const Vector<Vector3> &vertices = array[Mesh::ARRAY_VERTEX];
+			bool is_mesh_2d = true;
+			for (int k = 0; k < vertices.size(); k++) {
+				if (!Math::is_zero_approx(vertices[k].z)) {
+					is_mesh_2d = false;
+					break;
+				}
+			}
+
+			if (p_state->force_disable_compression || is_mesh_2d || !a.has("POSITION") || !a.has("NORMAL") || p.has("targets") || (a.has("JOINTS_0") || a.has("JOINTS_1"))) {
 				flags &= ~RS::ARRAY_FLAG_COMPRESS_ATTRIBUTES;
 			}
 
@@ -5675,6 +5685,9 @@ void GLTFDocument::_generate_skeleton_bone_node(Ref<GLTFState> p_state, const GL
 
 	active_skeleton = skeleton;
 	current_node = active_skeleton;
+	if (active_skeleton) {
+		p_scene_parent = active_skeleton;
+	}
 
 	if (requires_extra_node) {
 		current_node = nullptr;
@@ -5868,6 +5881,7 @@ void GLTFDocument::_import_animation(Ref<GLTFState> p_state, AnimationPlayer *p_
 	Ref<Animation> animation;
 	animation.instantiate();
 	animation->set_name(anim_name);
+	animation->set_step(1.0 / p_bake_fps);
 
 	if (anim->get_loop()) {
 		animation->set_loop_mode(Animation::LOOP_LINEAR);
@@ -7094,6 +7108,9 @@ Node *GLTFDocument::_generate_scene_node_tree(Ref<GLTFState> p_state) {
 	if (p_state->extensions_used.has("GODOT_single_root")) {
 		_generate_scene_node(p_state, 0, nullptr, nullptr);
 		single_root = p_state->scene_nodes[0];
+		if (single_root && single_root->get_owner() && single_root->get_owner() != single_root) {
+			single_root = single_root->get_owner();
+		}
 	} else {
 		single_root = memnew(Node3D);
 		for (int32_t root_i = 0; root_i < p_state->root_nodes.size(); root_i++) {
@@ -7284,6 +7301,7 @@ Node *GLTFDocument::generate_scene(Ref<GLTFState> p_state, float p_bake_fps, boo
 }
 
 Error GLTFDocument::append_from_scene(Node *p_node, Ref<GLTFState> p_state, uint32_t p_flags) {
+	ERR_FAIL_NULL_V(p_node, FAILED);
 	Ref<GLTFState> state = p_state;
 	ERR_FAIL_COND_V(state.is_null(), FAILED);
 	state->use_named_skin_binds = p_flags & GLTF_IMPORT_USE_NAMED_SKIN_BINDS;

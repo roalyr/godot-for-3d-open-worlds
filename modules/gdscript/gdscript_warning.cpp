@@ -40,7 +40,7 @@ String GDScriptWarning::get_message() const {
 	switch (code) {
 		case UNASSIGNED_VARIABLE:
 			CHECK_SYMBOLS(1);
-			return vformat(R"(The variable "%s" was used but never assigned a value.)", symbols[0]);
+			return vformat(R"(The variable "%s" was used before being assigned a value.)", symbols[0]);
 		case UNASSIGNED_VARIABLE_OP_ASSIGN:
 			CHECK_SYMBOLS(1);
 			return vformat(R"(Using assignment with operation but the variable "%s" was not previously assigned a value.)", symbols[0]);
@@ -96,7 +96,7 @@ String GDScriptWarning::get_message() const {
 			return vformat(R"*(The method "%s()" is not present on the inferred type "%s" (but may be present on a subtype).)*", symbols[0], symbols[1]);
 		case UNSAFE_CAST:
 			CHECK_SYMBOLS(1);
-			return vformat(R"(The value is cast to "%s" but has an unknown type.)", symbols[0]);
+			return vformat(R"(Casting "Variant" to "%s" is unsafe.)", symbols[0]);
 		case UNSAFE_CALL_ARGUMENT:
 			CHECK_SYMBOLS(5);
 			return vformat(R"*(The argument %s of the %s "%s()" requires the subtype "%s" but the supertype "%s" was provided.)*", symbols[0], symbols[1], symbols[2], symbols[3], symbols[4]);
@@ -126,6 +126,9 @@ String GDScriptWarning::get_message() const {
 		case INT_AS_ENUM_WITHOUT_MATCH:
 			CHECK_SYMBOLS(3);
 			return vformat(R"(Cannot %s %s as Enum "%s": no enum member has matching value.)", symbols[0], symbols[1], symbols[2]);
+		case ENUM_VARIABLE_WITHOUT_DEFAULT:
+			CHECK_SYMBOLS(1);
+			return vformat(R"(The variable "%s" has an enum type and does not set an explicit default value. The default will be set to "0".)", symbols[0]);
 		case EMPTY_FILE:
 			return "Empty script file.";
 		case DEPRECATED_KEYWORD:
@@ -221,6 +224,7 @@ String GDScriptWarning::get_name_from_code(Code p_code) {
 		"NARROWING_CONVERSION",
 		"INT_AS_ENUM_WITHOUT_CAST",
 		"INT_AS_ENUM_WITHOUT_MATCH",
+		"ENUM_VARIABLE_WITHOUT_DEFAULT",
 		"EMPTY_FILE",
 		"DEPRECATED_KEYWORD",
 		"RENAMED_IN_GODOT_4_HINT",

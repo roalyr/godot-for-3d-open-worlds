@@ -10,9 +10,9 @@
 		[b]Overriding:[/b] Any project setting can be overridden by creating a file named [code]override.cfg[/code] in the project's root directory. This can also be used in exported projects by placing this file in the same directory as the project binary. Overriding will still take the base project settings' [url=$DOCS_URL/tutorials/export/feature_tags.html]feature tags[/url] in account. Therefore, make sure to [i]also[/i] override the setting with the desired feature tags if you want them to override base project settings on all platforms and configurations.
 	</description>
 	<tutorials>
-		<link title="3D Physics Tests Demo">https://godotengine.org/asset-library/asset/675</link>
-		<link title="3D Platformer Demo">https://godotengine.org/asset-library/asset/125</link>
-		<link title="OS Test Demo">https://godotengine.org/asset-library/asset/677</link>
+		<link title="3D Physics Tests Demo">https://godotengine.org/asset-library/asset/2747</link>
+		<link title="3D Platformer Demo">https://godotengine.org/asset-library/asset/2748</link>
+		<link title="Operating System Testing Demo">https://godotengine.org/asset-library/asset/2789</link>
 	</tutorials>
 	<methods>
 		<method name="add_property_info">
@@ -254,6 +254,7 @@
 			Path to an image used as the boot splash. If left empty, the default Godot Engine splash will be displayed instead.
 			[b]Note:[/b] Only effective if [member application/boot_splash/show_image] is [code]true[/code].
 			[b]Note:[/b] The only supported format is PNG. Using another image format will result in an error.
+			[b]Note:[/b] The image will also show when opening the project in the editor. If you want to display the default splash image in the editor, add an empty override for [code]editor_hint[/code] feature.
 		</member>
 		<member name="application/boot_splash/minimum_display_time" type="int" setter="" getter="" default="0">
 			Minimum boot splash display time (in milliseconds). It is not recommended to set too high values for this setting.
@@ -323,6 +324,11 @@
 			If [code]true[/code], disables printing to standard output. This is equivalent to starting the editor or project with the [code]--quiet[/code] [url=$DOCS_URL/tutorials/editor/command_line_tutorial.html]command line argument[/url]. See also [member application/run/disable_stderr].
 			Changes to this setting will only be applied upon restarting the application.
 		</member>
+		<member name="application/run/enable_alt_space_menu" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], allows the [kbd]Alt + Space[/kbd] keys to display the window menu. This menu allows the user to perform various window management operations such as moving, resizing, or minimizing the window.
+			[b]Note:[/b] When the menu is displayed, project execution will pause until the menu is [i]fully[/i] closed due to Windows behavior. Consider this when enabling this setting in a networked multiplayer game. The menu is only considered fully closed when an option is selected, when the user clicks outside, or when [kbd]Escape[/kbd] is pressed after bringing up the window menu [i]and[/i] another key is pressed afterwards.
+			[b]Note:[/b] This setting is implemented only on Windows.
+		</member>
 		<member name="application/run/flush_stdout_on_print" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], flushes the standard output stream every time a line is printed. This affects both terminal logging and file logging.
 			When running a project, this setting must be enabled if you want logs to be collected by service managers such as systemd/journalctl. This setting is disabled by default on release builds, since flushing on every printed line will negatively affect performance if lots of lines are printed in a rapid succession. Also, if this setting is enabled, logged files will still be written successfully if the application crashes or is otherwise killed by the user (without being closed "normally").
@@ -338,7 +344,7 @@
 			This setting can be overridden using the [code]--frame-delay &lt;ms;&gt;[/code] command line argument.
 		</member>
 		<member name="application/run/low_processor_mode" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], enables low-processor usage mode. This setting only works on desktop platforms. The screen is not redrawn if nothing changes visually. This is meant for writing applications and editors, but is pretty useless (and can hurt performance) in most games.
+			If [code]true[/code], enables low-processor usage mode. The screen is not redrawn if nothing changes visually. This is meant for writing applications and editors, but is pretty useless (and can hurt performance) in most games.
 		</member>
 		<member name="application/run/low_processor_mode_sleep_usec" type="int" setter="" getter="" default="6900">
 			Amount of sleeping between frames when the low-processor usage mode is enabled (in microseconds). Higher values will result in lower CPU usage.
@@ -483,6 +489,9 @@
 		<member name="debug/gdscript/warnings/enable" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], enables specific GDScript warnings (see [code]debug/gdscript/warnings/*[/code] settings). If [code]false[/code], disables all GDScript warnings.
 		</member>
+		<member name="debug/gdscript/warnings/enum_variable_without_default" type="int" setter="" getter="" default="1">
+			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when a variable has an enum type but no explicit default value, but only if the enum does not contain [code]0[/code] as a valid value.
+		</member>
 		<member name="debug/gdscript/warnings/exclude_addons" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], scripts in the [code]res://addons[/code] folder will not generate warnings.
 		</member>
@@ -569,7 +578,7 @@
 			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when using an expression whose type may not be compatible with the function parameter expected.
 		</member>
 		<member name="debug/gdscript/warnings/unsafe_cast" type="int" setter="" getter="" default="0">
-			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when performing an unsafe cast.
+			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when a [Variant] value is cast to a non-Variant.
 		</member>
 		<member name="debug/gdscript/warnings/unsafe_method_access" type="int" setter="" getter="" default="0">
 			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling a method whose presence is not guaranteed at compile-time in the class.
@@ -631,6 +640,9 @@
 		</member>
 		<member name="debug/shader_language/warnings/formatting_error" type="bool" setter="" getter="" default="true">
 			When set to [code]true[/code], produces a warning upon encountering certain formatting errors. Currently this only checks for empty statements. More formatting errors may be added over time.
+		</member>
+		<member name="debug/shader_language/warnings/magic_position_write" type="bool" setter="" getter="" default="true">
+			When set to [code]true[/code], produces a warning when the shader contains [code]POSITION = vec4(vertex,[/code] as this was very common code written in Godot 4.2 and earlier that was paired with a QuadMesh to produce a full screen post processes pass. With the switch to reversed z in 4.3, this trick no longer works, as it implicitly relied on the [code]VERTEX.z[/code] being 0.
 		</member>
 		<member name="debug/shader_language/warnings/treat_warnings_as_errors" type="bool" setter="" getter="" default="false">
 			When set to [code]true[/code], warnings are treated as errors.
@@ -786,8 +798,8 @@
 		<member name="display/window/energy_saving/keep_screen_on" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], keeps the screen on (even in case of inactivity), so the screensaver does not take over. Works on desktop and mobile platforms.
 		</member>
-		<member name="display/window/energy_saving/keep_screen_on.editor" type="bool" setter="" getter="" default="false">
-			Editor-only override for [member display/window/energy_saving/keep_screen_on]. Does not affect exported projects in debug or release mode.
+		<member name="display/window/energy_saving/keep_screen_on.editor_hint" type="bool" setter="" getter="" default="false">
+			Editor-only override for [member display/window/energy_saving/keep_screen_on]. Does not affect running project.
 		</member>
 		<member name="display/window/handheld/orientation" type="int" setter="" getter="" default="0">
 			The default screen orientation to use on mobile devices. See [enum DisplayServer.ScreenOrientation] for possible values.
@@ -964,7 +976,7 @@
 			The command-line arguments to append to Godot's own command line when running the project. This doesn't affect the editor itself.
 			It is possible to make another executable run Godot by using the [code]%command%[/code] placeholder. The placeholder will be replaced with Godot's own command line. Program-specific arguments should be placed [i]before[/i] the placeholder, whereas Godot-specific arguments should be placed [i]after[/i] the placeholder.
 			For example, this can be used to force the project to run on the dedicated GPU in an NVIDIA Optimus system on Linux:
-			[codeblock]
+			[codeblock lang=text]
 			prime-run %command%
 			[/codeblock]
 		</member>
@@ -1059,6 +1071,9 @@
 		</member>
 		<member name="gui/timers/tooltip_delay_sec" type="float" setter="" getter="" default="0.5">
 			Default delay for tooltips (in seconds).
+		</member>
+		<member name="gui/timers/tooltip_delay_sec.editor_hint" type="float" setter="" getter="" default="0.5">
+			Delay for tooltips in the editor.
 		</member>
 		<member name="input/ui_accept" type="Dictionary" setter="" getter="">
 			Default [InputEventAction] to confirm a focused button, menu or list item, or validate input.
@@ -1430,6 +1445,10 @@
 		</member>
 		<member name="internationalization/rendering/force_right_to_left_layout_direction" type="bool" setter="" getter="" default="false">
 			Force layout direction and text writing direction to RTL for all controls.
+		</member>
+		<member name="internationalization/rendering/root_node_auto_translate" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], root node will use [constant Node.AUTO_TRANSLATE_MODE_ALWAYS], otherwise [constant Node.AUTO_TRANSLATE_MODE_DISABLED] will be used.
+			[b]Note:[/b] This property is only read when the project starts. To change the auto translate mode at runtime, set [member Node.auto_translate_mode] of [member SceneTree.root] instead.
 		</member>
 		<member name="internationalization/rendering/root_node_layout_direction" type="int" setter="" getter="" default="0">
 			Root node default layout direction.
@@ -2727,6 +2746,10 @@
 		<member name="rendering/rendering_device/driver.windows" type="String" setter="" getter="">
 			Windows override for [member rendering/rendering_device/driver].
 		</member>
+		<member name="rendering/rendering_device/pipeline_cache/enable" type="bool" setter="" getter="" default="true">
+			Enable the pipeline cache that is saved to disk if the graphics API supports it.
+			[b]Note:[/b] This property is unable to control the pipeline caching the GPU driver itself does. Only turn this off along with deleting the contents of the driver's cache if you wish to simulate the experience a user will get when starting the game for the first time.
+		</member>
 		<member name="rendering/rendering_device/pipeline_cache/save_chunk_size_mb" type="float" setter="" getter="" default="3.0">
 			Determines at which interval pipeline cache is saved to disk. The lower the value, the more often it is saved.
 		</member>
@@ -2846,7 +2869,7 @@
 		<member name="rendering/vrs/texture" type="String" setter="" getter="" default="&quot;&quot;">
 			If [member rendering/vrs/mode] is set to [b]Texture[/b], this is the path to default texture loaded as the VRS image.
 			The texture [i]must[/i] use a lossless compression format so that colors can be matched precisely. The following VRS densities are mapped to various colors, with brighter colors representing a lower level of shading precision:
-			[codeblock]
+			[codeblock lang=text]
 			- 1×1 = rgb(0, 0, 0)     - #000000
 			- 1×2 = rgb(0, 85, 0)    - #005500
 			- 2×1 = rgb(85, 0, 0)    - #550000
@@ -2876,6 +2899,9 @@
 		</member>
 		<member name="xr/openxr/extensions/eye_gaze_interaction" type="bool" setter="" getter="" default="false">
 			Specify whether to enable eye tracking for this project. Depending on the platform, additional export configuration may be needed.
+		</member>
+		<member name="xr/openxr/extensions/hand_interaction_profile" type="bool" setter="" getter="" default="false">
+			If true the hand interaction profile extension will be activated if supported by the platform.
 		</member>
 		<member name="xr/openxr/extensions/hand_tracking" type="bool" setter="" getter="" default="true">
 			If true we enable the hand tracking extension if available.

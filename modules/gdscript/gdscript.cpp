@@ -739,10 +739,18 @@ Error GDScript::reload(bool p_keep_state) {
 		if (source_path.is_empty()) {
 			source_path = get_path();
 		}
-		Ref<GDScript> cached_script = GDScriptCache::get_cached_script(source_path);
-		if (!source_path.is_empty() && cached_script.is_null()) {
-			MutexLock lock(GDScriptCache::singleton->mutex);
-			GDScriptCache::singleton->shallow_gdscript_cache[source_path] = Ref<GDScript>(this);
+		if (!source_path.is_empty()) {
+			if (GDScriptCache::get_cached_script(source_path).is_null()) {
+				MutexLock lock(GDScriptCache::singleton->mutex);
+				GDScriptCache::singleton->shallow_gdscript_cache[source_path] = Ref<GDScript>(this);
+			}
+			if (GDScriptCache::has_parser(source_path)) {
+				Error err = OK;
+				Ref<GDScriptParserRef> parser_ref = GDScriptCache::get_parser(source_path, GDScriptParserRef::EMPTY, err);
+				if (parser_ref.is_valid() && parser_ref->get_source_hash() != source.hash()) {
+					GDScriptCache::remove_parser(source_path);
+				}
+			}
 		}
 	}
 
@@ -2884,7 +2892,7 @@ String ResourceFormatLoaderGDScript::get_resource_type(const String &p_path) con
 	return "";
 }
 
-void ResourceFormatLoaderGDScript::get_dependencies(const String &p_path, List<String> *p_dependencies, bool p_add_types) {
+void ResourceFormatLoaderGDScript::get_dependencies(const String &p_path, List<String> *r_dependencies, bool p_add_types) {
 	Ref<FileAccess> file = FileAccess::open(p_path, FileAccess::READ);
 	ERR_FAIL_COND_MSG(file.is_null(), "Cannot open file '" + p_path + "'.");
 
@@ -2898,8 +2906,13 @@ void ResourceFormatLoaderGDScript::get_dependencies(const String &p_path, List<S
 		return;
 	}
 
+	GDScriptAnalyzer analyzer(&parser);
+	if (OK != analyzer.analyze()) {
+		return;
+	}
+
 	for (const String &E : parser.get_dependencies()) {
-		p_dependencies->push_back(E);
+		r_dependencies->push_back(E);
 	}
 }
 

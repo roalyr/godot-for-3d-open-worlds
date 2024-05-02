@@ -34,6 +34,7 @@
 #include "joypad_windows.h"
 #include "lang_table.h"
 #include "windows_terminal_logger.h"
+#include "windows_utils.h"
 
 #include "core/debugger/engine_debugger.h"
 #include "core/debugger/script_debugger.h"
@@ -114,7 +115,24 @@ void RedirectStream(const char *p_file_name, const char *p_mode, FILE *p_cpp_str
 }
 
 void RedirectIOToConsole() {
+	// Save current handles.
+	HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE h_stderr = GetStdHandle(STD_ERROR_HANDLE);
+
 	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+		// Restore redirection (Note: if not redirected it's NULL handles not INVALID_HANDLE_VALUE).
+		if (h_stdin != 0) {
+			SetStdHandle(STD_INPUT_HANDLE, h_stdin);
+		}
+		if (h_stdout != 0) {
+			SetStdHandle(STD_OUTPUT_HANDLE, h_stdout);
+		}
+		if (h_stderr != 0) {
+			SetStdHandle(STD_ERROR_HANDLE, h_stderr);
+		}
+
+		// Update file handles.
 		RedirectStream("CONIN$", "r", stdin, STD_INPUT_HANDLE);
 		RedirectStream("CONOUT$", "w", stdout, STD_OUTPUT_HANDLE);
 		RedirectStream("CONOUT$", "w", stderr, STD_ERROR_HANDLE);
@@ -170,10 +188,6 @@ void OS_Windows::initialize() {
 	error_handlers.errfunc = _error_handler;
 	error_handlers.userdata = this;
 	add_error_handler(&error_handlers);
-#endif
-
-#ifndef WINDOWS_SUBSYSTEM_CONSOLE
-	RedirectIOToConsole();
 #endif
 
 	FileAccess::make_default<FileAccessWindows>(FileAccess::ACCESS_RESOURCES);
@@ -269,6 +283,10 @@ void OS_Windows::finalize() {
 }
 
 void OS_Windows::finalize_core() {
+	while (!temp_libraries.is_empty()) {
+		_remove_temp_library(temp_libraries.last()->key);
+	}
+
 	FileAccessWindows::finalize();
 
 	timeEndPeriod(1);
@@ -354,7 +372,7 @@ void debug_dynamic_library_check_dependencies(const String &p_root_path, const S
 }
 #endif
 
-Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_handle, bool p_also_set_library_path, String *r_resolved_path) {
+Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_handle, GDExtensionData *p_data) {
 	String path = p_path.replace("/", "\\");
 
 	if (!FileAccess::exists(path)) {
@@ -363,6 +381,35 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 	}
 
 	ERR_FAIL_COND_V(!FileAccess::exists(path), ERR_FILE_NOT_FOUND);
+
+	// Here we want a copy to be loaded.
+	// This is so the original file isn't locked and can be updated by a compiler.
+	if (p_data != nullptr && p_data->generate_temp_files) {
+		// Copy the file to the same directory as the original with a prefix in the name.
+		// This is so relative path to dependencies are satisfied.
+		String copy_path = path.get_base_dir().path_join("~" + path.get_file());
+
+		// If there's a left-over copy (possibly from a crash) then delete it first.
+		if (FileAccess::exists(copy_path)) {
+			DirAccess::remove_absolute(copy_path);
+		}
+
+		Error copy_err = DirAccess::copy_absolute(path, copy_path);
+		if (copy_err) {
+			ERR_PRINT("Error copying library: " + path);
+			return ERR_CANT_CREATE;
+		}
+
+		FileAccess::set_hidden_attribute(copy_path, true);
+
+		// Save the copied path so it can be deleted later.
+		path = copy_path;
+
+		Error pdb_err = WindowsUtils::copy_and_rename_pdb(path);
+		if (pdb_err != OK && pdb_err != ERR_SKIP) {
+			WARN_PRINT(vformat("Failed to rename the PDB file. The original PDB file for '%s' will be loaded.", path));
+		}
+	}
 
 	typedef DLL_DIRECTORY_COOKIE(WINAPI * PAddDllDirectory)(PCWSTR);
 	typedef BOOL(WINAPI * PRemoveDllDirectory)(DLL_DIRECTORY_COOKIE);
@@ -373,13 +420,17 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 	bool has_dll_directory_api = ((add_dll_directory != nullptr) && (remove_dll_directory != nullptr));
 	DLL_DIRECTORY_COOKIE cookie = nullptr;
 
-	if (p_also_set_library_path && has_dll_directory_api) {
+	if (p_data != nullptr && p_data->also_set_library_path && has_dll_directory_api) {
 		cookie = add_dll_directory((LPCWSTR)(path.get_base_dir().utf16().get_data()));
 	}
 
-	p_library_handle = (void *)LoadLibraryExW((LPCWSTR)(path.utf16().get_data()), nullptr, (p_also_set_library_path && has_dll_directory_api) ? LOAD_LIBRARY_SEARCH_DEFAULT_DIRS : 0);
-#ifdef DEBUG_ENABLED
+	p_library_handle = (void *)LoadLibraryExW((LPCWSTR)(path.utf16().get_data()), nullptr, (p_data != nullptr && p_data->also_set_library_path && has_dll_directory_api) ? LOAD_LIBRARY_SEARCH_DEFAULT_DIRS : 0);
 	if (!p_library_handle) {
+		if (p_data != nullptr && p_data->generate_temp_files) {
+			DirAccess::remove_absolute(path);
+		}
+
+#ifdef DEBUG_ENABLED
 		DWORD err_code = GetLastError();
 
 		HashSet<String> checekd_libs;
@@ -397,8 +448,10 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 		} else {
 			ERR_FAIL_V_MSG(ERR_CANT_OPEN, vformat("Can't open dynamic library: %s. Error: %s.", p_path, format_error_message(err_code)));
 		}
+#endif
 	}
-#else
+
+#ifndef DEBUG_ENABLED
 	ERR_FAIL_NULL_V_MSG(p_library_handle, ERR_CANT_OPEN, vformat("Can't open dynamic library: %s. Error: %s.", p_path, format_error_message(GetLastError())));
 #endif
 
@@ -406,8 +459,12 @@ Error OS_Windows::open_dynamic_library(const String &p_path, void *&p_library_ha
 		remove_dll_directory(cookie);
 	}
 
-	if (r_resolved_path != nullptr) {
-		*r_resolved_path = path;
+	if (p_data != nullptr && p_data->r_resolved_path != nullptr) {
+		*p_data->r_resolved_path = path;
+	}
+
+	if (p_data != nullptr && p_data->generate_temp_files) {
+		temp_libraries[p_library_handle] = path;
 	}
 
 	return OK;
@@ -417,7 +474,20 @@ Error OS_Windows::close_dynamic_library(void *p_library_handle) {
 	if (!FreeLibrary((HMODULE)p_library_handle)) {
 		return FAILED;
 	}
+
+	// Delete temporary copy of library if it exists.
+	_remove_temp_library(p_library_handle);
+
 	return OK;
+}
+
+void OS_Windows::_remove_temp_library(void *p_library_handle) {
+	if (temp_libraries.has(p_library_handle)) {
+		String path = temp_libraries[p_library_handle];
+		DirAccess::remove_absolute(path);
+		WindowsUtils::remove_temp_pdbs(path);
+		temp_libraries.erase(p_library_handle);
+	}
 }
 
 Error OS_Windows::get_dynamic_library_symbol_handle(void *p_library_handle, const String &p_name, void *&p_symbol_handle, bool p_optional) {
@@ -810,7 +880,9 @@ Dictionary OS_Windows::execute_with_pipe(const String &p_path, const List<String
 	CloseHandle(pipe_err[1]);
 
 	ProcessID pid = pi.pi.dwProcessId;
+	process_map_mutex.lock();
 	process_map->insert(pid, pi);
+	process_map_mutex.unlock();
 
 	Ref<FileAccessWindowsPipe> main_pipe;
 	main_pipe.instantiate();
@@ -957,13 +1029,16 @@ Error OS_Windows::create_process(const String &p_path, const List<String> &p_arg
 	if (r_child_id) {
 		*r_child_id = pid;
 	}
+	process_map_mutex.lock();
 	process_map->insert(pid, pi);
+	process_map_mutex.unlock();
 
 	return OK;
 }
 
 Error OS_Windows::kill(const ProcessID &p_pid) {
 	int ret = 0;
+	MutexLock lock(process_map_mutex);
 	if (process_map->has(p_pid)) {
 		const PROCESS_INFORMATION pi = (*process_map)[p_pid].pi;
 		process_map->erase(p_pid);
@@ -989,22 +1064,56 @@ int OS_Windows::get_process_id() const {
 }
 
 bool OS_Windows::is_process_running(const ProcessID &p_pid) const {
+	MutexLock lock(process_map_mutex);
 	if (!process_map->has(p_pid)) {
 		return false;
 	}
 
-	const PROCESS_INFORMATION &pi = (*process_map)[p_pid].pi;
+	const ProcessInfo &info = (*process_map)[p_pid];
+	if (!info.is_running) {
+		return false;
+	}
 
+	const PROCESS_INFORMATION &pi = info.pi;
 	DWORD dw_exit_code = 0;
 	if (!GetExitCodeProcess(pi.hProcess, &dw_exit_code)) {
 		return false;
 	}
 
 	if (dw_exit_code != STILL_ACTIVE) {
+		info.is_running = false;
+		info.exit_code = dw_exit_code;
 		return false;
 	}
 
 	return true;
+}
+
+int OS_Windows::get_process_exit_code(const ProcessID &p_pid) const {
+	MutexLock lock(process_map_mutex);
+	if (!process_map->has(p_pid)) {
+		return -1;
+	}
+
+	const ProcessInfo &info = (*process_map)[p_pid];
+	if (!info.is_running) {
+		return info.exit_code;
+	}
+
+	const PROCESS_INFORMATION &pi = info.pi;
+
+	DWORD dw_exit_code = 0;
+	if (!GetExitCodeProcess(pi.hProcess, &dw_exit_code)) {
+		return -1;
+	}
+
+	if (dw_exit_code == STILL_ACTIVE) {
+		return -1;
+	}
+
+	info.is_running = false;
+	info.exit_code = dw_exit_code;
+	return dw_exit_code;
 }
 
 Error OS_Windows::set_cwd(const String &p_cwd) {
@@ -1425,10 +1534,10 @@ void OS_Windows::unset_environment(const String &p_var) const {
 }
 
 String OS_Windows::get_stdin_string() {
-	WCHAR buff[1024];
+	char buff[1024];
 	DWORD count = 0;
-	if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), buff, 1024, &count, nullptr)) {
-		return String::utf16((const char16_t *)buff, count);
+	if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), buff, 1024, &count, nullptr)) {
+		return String::utf8((const char *)buff, count);
 	}
 
 	return String();
@@ -1811,6 +1920,13 @@ String OS_Windows::get_system_ca_certificates() {
 
 OS_Windows::OS_Windows(HINSTANCE _hInstance) {
 	hInstance = _hInstance;
+
+#ifndef WINDOWS_SUBSYSTEM_CONSOLE
+	RedirectIOToConsole();
+#endif
+
+	SetConsoleOutputCP(CP_UTF8);
+	SetConsoleCP(CP_UTF8);
 
 	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 

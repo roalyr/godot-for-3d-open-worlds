@@ -261,7 +261,7 @@ void RenderingDeviceGraph::_add_command_to_graph(ResourceTracker **p_resource_tr
 			}
 
 			if (resource_tracker->parent->usage == RESOURCE_USAGE_NONE) {
-				if (resource_tracker->parent->texture_driver_id != 0) {
+				if (resource_tracker->parent->texture_driver_id.id != 0) {
 					// If the resource is a texture, we transition it entirely to the layout determined by the first slice that uses it.
 					_add_texture_barrier_to_command(resource_tracker->parent->texture_driver_id, RDD::BarrierAccessBits(0), new_usage_access, RDG::RESOURCE_USAGE_NONE, new_resource_usage, resource_tracker->parent->texture_subresources, command_normalization_barriers, r_command->normalization_barrier_index, r_command->normalization_barrier_count);
 				}
@@ -324,7 +324,7 @@ void RenderingDeviceGraph::_add_command_to_graph(ResourceTracker **p_resource_tr
 								ERR_FAIL_MSG("Texture slices that overlap can't be used in the same command.");
 							} else {
 								// Delete the slice from the dirty list and revert it to the usage of the parent.
-								if (current_tracker->texture_driver_id != 0) {
+								if (current_tracker->texture_driver_id.id != 0) {
 									_add_texture_barrier_to_command(current_tracker->texture_driver_id, current_tracker->usage_access, new_usage_access, current_tracker->usage, resource_tracker->parent->usage, current_tracker->texture_subresources, command_normalization_barriers, r_command->normalization_barrier_index, r_command->normalization_barrier_count);
 
 									// Merge the area of the slice with the current tracking area of the command and indicate it's a write usage as well.
@@ -383,7 +383,7 @@ void RenderingDeviceGraph::_add_command_to_graph(ResourceTracker **p_resource_tr
 			while (current_tracker != nullptr) {
 				current_tracker->reset_if_outdated(tracking_frame);
 
-				if (current_tracker->texture_driver_id != 0) {
+				if (current_tracker->texture_driver_id.id != 0) {
 					// Transition all slices to the layout of the parent resource.
 					_add_texture_barrier_to_command(current_tracker->texture_driver_id, current_tracker->usage_access, new_usage_access, current_tracker->usage, resource_tracker->usage, current_tracker->texture_subresources, command_normalization_barriers, r_command->normalization_barrier_index, r_command->normalization_barrier_count);
 				}
@@ -495,18 +495,19 @@ void RenderingDeviceGraph::_add_command_to_graph(ResourceTracker **p_resource_tr
 			// We add this command to the adjacency list of all commands that were reading from the entire resource.
 			int32_t read_full_command_list_index = search_tracker->read_full_command_list_index;
 			while (read_full_command_list_index >= 0) {
-				const RecordedCommandListNode &command_list_node = command_list_nodes[read_full_command_list_index];
-				if (command_list_node.command_index == p_command_index) {
+				int32_t read_full_command_index = command_list_nodes[read_full_command_list_index].command_index;
+				int32_t read_full_next_index = command_list_nodes[read_full_command_list_index].next_list_index;
+				if (read_full_command_index == p_command_index) {
 					if (!resource_has_parent) {
 						// Only slices are allowed to be in different usages in the same command as they are guaranteed to have no overlap in the same command.
 						ERR_FAIL_MSG("Command can't have itself as a dependency.");
 					}
 				} else {
 					// Add this command to the adjacency list of each command that was reading this resource.
-					_add_adjacent_command(command_list_node.command_index, p_command_index, r_command);
+					_add_adjacent_command(read_full_command_index, p_command_index, r_command);
 				}
 
-				read_full_command_list_index = command_list_node.next_list_index;
+				read_full_command_list_index = read_full_next_index;
 			}
 
 			if (!resource_has_parent) {

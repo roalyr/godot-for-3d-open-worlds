@@ -360,6 +360,13 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 
 				incr += 3;
 			} break;
+			case OPCODE_ASSIGN_NULL: {
+				text += "assign ";
+				text += DADDR(1);
+				text += " = null";
+
+				incr += 2;
+			} break;
 			case OPCODE_ASSIGN_TRUE: {
 				text += "assign ";
 				text += DADDR(1);
@@ -669,6 +676,50 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += ")";
 
 				incr += 4 + argc;
+			} break;
+
+			case OPCODE_CALL_NATIVE_STATIC_VALIDATED_RETURN: {
+				int instr_var_args = _code_ptr[++ip];
+				text += "call native static method validated (return) ";
+				MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
+				int argc = _code_ptr[ip + 1 + instr_var_args];
+				text += DADDR(1 + argc) + " = ";
+				text += method->get_instance_class();
+				text += ".";
+				text += method->get_name();
+				text += "(";
+				for (int i = 0; i < argc; i++) {
+					if (i > 0)
+						text += ", ";
+					text += DADDR(1 + i);
+				}
+				text += ")";
+				incr = 4 + argc;
+			} break;
+
+			case OPCODE_CALL_NATIVE_STATIC_VALIDATED_NO_RETURN: {
+				int instr_var_args = _code_ptr[++ip];
+
+				text += "call native static method validated (no return) ";
+
+				MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
+
+				int argc = _code_ptr[ip + 1 + instr_var_args];
+
+				text += method->get_instance_class();
+				text += ".";
+				text += method->get_name();
+				text += "(";
+
+				for (int i = 0; i < argc; i++) {
+					if (i > 0) {
+						text += ", ";
+					}
+					text += DADDR(1 + i);
+				}
+				text += ")";
+
+				incr = 4 + argc;
 			} break;
 
 			case OPCODE_CALL_METHOD_BIND_VALIDATED_RETURN: {

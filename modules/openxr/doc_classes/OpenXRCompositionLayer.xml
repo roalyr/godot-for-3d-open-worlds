@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="OpenXRCompositionLayer" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+<class name="OpenXRCompositionLayer" inherits="Node3D" experimental="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
 	<brief_description>
 		The parent class of all OpenXR composition layer nodes.
 	</brief_description>
@@ -10,6 +10,15 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="intersects_ray" qualifiers="const">
+			<return type="Vector2" />
+			<param index="0" name="origin" type="Vector3" />
+			<param index="1" name="direction" type="Vector3" />
+			<description>
+				Returns UV coordinates where the given ray intersects with the composition layer. [param origin] and [param direction] must be in global space.
+				Returns [code]Vector2(-1.0, -1.0)[/code] if the ray doesn't intersect.
+			</description>
+		</method>
 		<method name="is_natively_supported" qualifiers="const">
 			<return type="bool" />
 			<description>

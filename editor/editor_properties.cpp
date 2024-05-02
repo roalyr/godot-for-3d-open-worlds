@@ -2755,7 +2755,8 @@ void EditorPropertyNodePath::_node_assign() {
 	Variant val = get_edited_property_value();
 	Node *n = nullptr;
 	if (val.get_type() == Variant::Type::NODE_PATH) {
-		n = get_base_node()->get_node_or_null(val);
+		Node *base_node = get_base_node();
+		n = base_node == nullptr ? nullptr : base_node->get_node_or_null(val);
 	} else {
 		n = Object::cast_to<Node>(val);
 	}
@@ -3407,7 +3408,7 @@ void EditorPropertyResource::update_property() {
 		}
 	}
 
-	resource_picker->set_edited_resource(res);
+	resource_picker->set_edited_resource_no_check(res);
 }
 
 void EditorPropertyResource::collapse_all_folding() {

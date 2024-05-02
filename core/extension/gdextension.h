@@ -37,6 +37,7 @@
 #include "core/io/config_file.h"
 #include "core/io/resource_loader.h"
 #include "core/object/ref_counted.h"
+#include "core/os/shared_object.h"
 
 class GDExtensionMethodBind;
 
@@ -47,9 +48,6 @@ class GDExtension : public Resource {
 
 	void *library = nullptr; // pointer if valid,
 	String library_path;
-#if defined(WINDOWS_ENABLED) && defined(TOOLS_ENABLED)
-	String temp_lib_path;
-#endif
 	bool reloadable = false;
 
 	struct Extension {
@@ -73,6 +71,7 @@ class GDExtension : public Resource {
 	struct ClassCreationDeprecatedInfo {
 #ifndef DISABLE_DEPRECATED
 		GDExtensionClassNotification notification_func = nullptr;
+		GDExtensionClassFreePropertyList free_property_list_func = nullptr;
 #endif // DISABLE_DEPRECATED
 	};
 
@@ -126,13 +125,10 @@ public:
 
 	static String get_extension_list_config_file();
 	static String find_extension_library(const String &p_path, Ref<ConfigFile> p_config, std::function<bool(String)> p_has_feature, PackedStringArray *r_tags = nullptr);
+	static Vector<SharedObject> find_extension_dependencies(const String &p_path, Ref<ConfigFile> p_config, std::function<bool(String)> p_has_feature);
 
-	Error open_library(const String &p_path, const String &p_entry_symbol);
+	Error open_library(const String &p_path, const String &p_entry_symbol, Vector<SharedObject> *p_dependencies = nullptr);
 	void close_library();
-
-#if defined(WINDOWS_ENABLED) && defined(TOOLS_ENABLED)
-	String get_temp_library_path() const { return temp_lib_path; }
-#endif
 
 	enum InitializationLevel {
 		INITIALIZATION_LEVEL_CORE = GDEXTENSION_INITIALIZATION_CORE,

@@ -3,6 +3,7 @@
 
 import glob, os
 import math
+from methods import print_error
 from pathlib import Path
 from os.path import normpath, basename
 
@@ -23,8 +24,9 @@ def clear_out_stale_files(output_folder, extension, fresh_files):
         return
 
     for file in glob.glob(output_folder + "/*." + extension):
+        file = Path(file)
         if not file in fresh_files:
-            # print("removed stale file: " + file)
+            # print("removed stale file: " + str(file))
             os.remove(file)
 
 
@@ -37,7 +39,7 @@ def find_files_in_folder(folder, sub_folder, include_list, extension, sought_exc
     abs_folder = base_folder_path + folder + "/" + sub_folder
 
     if not os.path.isdir(abs_folder):
-        print("SCU: ERROR: %s not found." % abs_folder)
+        print_error(f'SCU: "{abs_folder}" not found.')
         return include_list, found_exceptions
 
     os.chdir(abs_folder)
@@ -69,7 +71,7 @@ def write_output_file(file_count, include_list, start_line, end_line, output_fol
         # create
         os.mkdir(output_folder)
         if not os.path.isdir(output_folder):
-            print("SCU: ERROR: %s could not be created." % output_folder)
+            print_error(f'SCU: "{output_folder}" could not be created.')
             return
         if _verbose:
             print("SCU: Creating folder: %s" % output_folder)
@@ -97,13 +99,13 @@ def write_output_file(file_count, include_list, start_line, end_line, output_fol
     elif _verbose:
         print("SCU: Generation not needed for: " + short_filename)
 
-    return output_filename
+    return output_path
 
 
 def write_exception_output_file(file_count, exception_string, output_folder, output_filename_prefix, extension):
     output_folder = os.path.abspath(output_folder)
     if not os.path.isdir(output_folder):
-        print("SCU: ERROR: %s does not exist." % output_folder)
+        print_error(f"SCU: {output_folder} does not exist.")
         return
 
     file_text = exception_string + "\n"
@@ -124,7 +126,7 @@ def write_exception_output_file(file_count, exception_string, output_folder, out
     elif _verbose:
         print("SCU: Generation not needed for: " + short_filename)
 
-    return output_filename
+    return output_path
 
 
 def find_section_name(sub_folder):

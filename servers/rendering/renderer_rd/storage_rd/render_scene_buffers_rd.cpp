@@ -83,8 +83,7 @@ void RenderSceneBuffersRD::update_sizes(NamedTexture &p_named_texture) {
 	for (uint32_t mipmap = 0; mipmap < p_named_texture.format.mipmaps; mipmap++) {
 		p_named_texture.sizes.ptrw()[mipmap] = mipmap_size;
 
-		mipmap_size.width = MAX(1, mipmap_size.width >> 1);
-		mipmap_size.height = MAX(1, mipmap_size.height >> 1);
+		mipmap_size = Size2i(mipmap_size.width >> 1, mipmap_size.height >> 1).maxi(1);
 	}
 }
 
@@ -130,9 +129,10 @@ void RenderSceneBuffersRD::cleanup() {
 	named_textures.clear();
 
 	// Clear weight_buffer / blur textures.
-	for (const WeightBuffers &weight_buffer : weight_buffers) {
+	for (WeightBuffers &weight_buffer : weight_buffers) {
 		if (weight_buffer.weight.is_valid()) {
 			RD::get_singleton()->free(weight_buffer.weight);
+			weight_buffer.weight = RID();
 		}
 	}
 }

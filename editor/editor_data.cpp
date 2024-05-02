@@ -36,9 +36,9 @@
 #include "core/io/image_loader.h"
 #include "core/io/resource_loader.h"
 #include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
 #include "editor/editor_undo_redo_manager.h"
 #include "editor/multi_node_edit.h"
+#include "editor/plugins/editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
 #include "editor/themes/editor_scale.h"
 #include "scene/resources/packed_scene.h"
@@ -722,7 +722,7 @@ bool EditorData::check_and_update_scene(int p_idx) {
 
 		new_scene->set_scene_file_path(edited_scene[p_idx].root->get_scene_file_path());
 		Node *old_root = edited_scene[p_idx].root;
-		old_root->replace_by(new_scene, false, false);
+		EditorNode::get_singleton()->set_edited_scene(new_scene);
 		memdelete(old_root);
 		edited_scene.write[p_idx].selection = new_selection;
 

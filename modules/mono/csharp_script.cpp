@@ -410,115 +410,6 @@ ScriptLanguage::ScriptNameCasing CSharpLanguage::preferred_file_name_casing() co
 }
 
 #ifdef TOOLS_ENABLED
-struct VariantCsName {
-	Variant::Type variant_type;
-	const String cs_type;
-};
-
-static String variant_type_to_managed_name(const String &p_var_type_name) {
-	if (p_var_type_name.is_empty()) {
-		return "Variant";
-	}
-
-	if (ClassDB::class_exists(p_var_type_name)) {
-		return pascal_to_pascal_case(p_var_type_name);
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::OBJECT)) {
-		return "GodotObject";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::INT)) {
-		return "long";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::FLOAT)) {
-		return "double";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::STRING)) {
-		return "string"; // I prefer this one >:[
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::DICTIONARY)) {
-		return "Collections.Dictionary";
-	}
-
-	if (p_var_type_name.begins_with(Variant::get_type_name(Variant::ARRAY) + "[")) {
-		String element_type = p_var_type_name.trim_prefix(Variant::get_type_name(Variant::ARRAY) + "[").trim_suffix("]");
-		return "Collections.Array<" + variant_type_to_managed_name(element_type) + ">";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::ARRAY)) {
-		return "Collections.Array";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_BYTE_ARRAY)) {
-		return "byte[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_INT32_ARRAY)) {
-		return "int[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_INT64_ARRAY)) {
-		return "long[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_FLOAT32_ARRAY)) {
-		return "float[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_FLOAT64_ARRAY)) {
-		return "double[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_STRING_ARRAY)) {
-		return "string[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_VECTOR2_ARRAY)) {
-		return "Vector2[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_VECTOR3_ARRAY)) {
-		return "Vector3[]";
-	}
-	if (p_var_type_name == Variant::get_type_name(Variant::PACKED_COLOR_ARRAY)) {
-		return "Color[]";
-	}
-
-	if (p_var_type_name == Variant::get_type_name(Variant::SIGNAL)) {
-		return "Signal";
-	}
-
-	const VariantCsName var_types[] = {
-		{ Variant::BOOL, "bool" },
-		{ Variant::INT, "long" },
-		{ Variant::VECTOR2, "Vector2" },
-		{ Variant::VECTOR2I, "Vector2I" },
-		{ Variant::RECT2, "Rect2" },
-		{ Variant::RECT2I, "Rect2I" },
-		{ Variant::VECTOR3, "Vector3" },
-		{ Variant::VECTOR3I, "Vector3I" },
-		{ Variant::TRANSFORM2D, "Transform2D" },
-		{ Variant::VECTOR4, "Vector4" },
-		{ Variant::VECTOR4I, "Vector4I" },
-		{ Variant::PLANE, "Plane" },
-		{ Variant::QUATERNION, "Quaternion" },
-		{ Variant::AABB, "Aabb" },
-		{ Variant::BASIS, "Basis" },
-		{ Variant::TRANSFORM3D, "Transform3D" },
-		{ Variant::PROJECTION, "Projection" },
-		{ Variant::COLOR, "Color" },
-		{ Variant::STRING_NAME, "StringName" },
-		{ Variant::NODE_PATH, "NodePath" },
-		{ Variant::RID, "Rid" },
-		{ Variant::CALLABLE, "Callable" },
-	};
-
-	for (unsigned int i = 0; i < sizeof(var_types) / sizeof(VariantCsName); i++) {
-		if (p_var_type_name == Variant::get_type_name(var_types[i].variant_type)) {
-			return var_types[i].cs_type;
-		}
-	}
-
-	return "Variant";
-}
-
 String CSharpLanguage::make_function(const String &, const String &p_name, const PackedStringArray &p_args) const {
 	// The make_function() API does not work for C# scripts.
 	// It will always append the generated function at the very end of the script. In C#, it will break compilation by
@@ -1050,6 +941,31 @@ void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
 		to_reload_state.push_back(scr);
 	}
 
+	// Deserialize managed callables.
+	// This is done before reloading script's internal state, so potential callables invoked in properties work.
+	{
+		MutexLock lock(ManagedCallable::instances_mutex);
+
+		for (const KeyValue<ManagedCallable *, Array> &elem : ManagedCallable::instances_pending_reload) {
+			ManagedCallable *managed_callable = elem.key;
+			const Array &serialized_data = elem.value;
+
+			GCHandleIntPtr delegate = { nullptr };
+
+			bool success = GDMonoCache::managed_callbacks.DelegateUtils_TryDeserializeDelegateWithGCHandle(
+					&serialized_data, &delegate);
+
+			if (success) {
+				ERR_CONTINUE(delegate.value == nullptr);
+				managed_callable->delegate_handle = delegate;
+			} else if (OS::get_singleton()->is_stdout_verbose()) {
+				OS::get_singleton()->print("Failed to deserialize delegate\n");
+			}
+		}
+
+		ManagedCallable::instances_pending_reload.clear();
+	}
+
 	for (Ref<CSharpScript> &scr : to_reload_state) {
 		for (const ObjectID &obj_id : scr->pending_reload_instances) {
 			Object *obj = ObjectDB::get_instance(obj_id);
@@ -1072,7 +988,7 @@ void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
 					properties[G.first] = G.second;
 				}
 
-				// Restore serialized state and call OnAfterDeserialization
+				// Restore serialized state and call OnAfterDeserialize.
 				GDMonoCache::managed_callbacks.CSharpInstanceBridge_DeserializeState(
 						csi->get_gchandle_intptr(), &properties, &state_backup.event_signals);
 			}
@@ -1080,30 +996,6 @@ void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
 
 		scr->pending_reload_instances.clear();
 		scr->pending_reload_state.clear();
-	}
-
-	// Deserialize managed callables
-	{
-		MutexLock lock(ManagedCallable::instances_mutex);
-
-		for (const KeyValue<ManagedCallable *, Array> &elem : ManagedCallable::instances_pending_reload) {
-			ManagedCallable *managed_callable = elem.key;
-			const Array &serialized_data = elem.value;
-
-			GCHandleIntPtr delegate = { nullptr };
-
-			bool success = GDMonoCache::managed_callbacks.DelegateUtils_TryDeserializeDelegateWithGCHandle(
-					&serialized_data, &delegate);
-
-			if (success) {
-				ERR_CONTINUE(delegate.value == nullptr);
-				managed_callable->delegate_handle = delegate;
-			} else if (OS::get_singleton()->is_stdout_verbose()) {
-				OS::get_singleton()->print("Failed to deserialize delegate\n");
-			}
-		}
-
-		ManagedCallable::instances_pending_reload.clear();
 	}
 
 #ifdef TOOLS_ENABLED
@@ -2627,13 +2519,20 @@ MethodInfo CSharpScript::get_method_info(const StringName &p_method) const {
 		return MethodInfo();
 	}
 
+	MethodInfo mi;
 	for (const CSharpMethodInfo &E : methods) {
 		if (E.name == p_method) {
-			return E.method_info;
+			if (mi.name == p_method) {
+				// We already found a method with the same name before so
+				// that means this method has overloads, the best we can do
+				// is return an empty MethodInfo.
+				return MethodInfo();
+			}
+			mi = E.method_info;
 		}
 	}
 
-	return MethodInfo();
+	return mi;
 }
 
 Variant CSharpScript::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {

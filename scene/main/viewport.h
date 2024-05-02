@@ -345,7 +345,6 @@ private:
 		bool key_event_accepted = false;
 		HashMap<int, ObjectID> touch_focus;
 		Control *mouse_focus = nullptr;
-		Control *last_mouse_focus = nullptr;
 		Control *mouse_click_grabber = nullptr;
 		BitField<MouseButtonMask> mouse_focus_mask;
 		Control *key_focus = nullptr;
@@ -616,6 +615,7 @@ public:
 
 	bool gui_is_dragging() const;
 	bool gui_is_drag_successful() const;
+	void gui_cancel_drag();
 
 	Control *gui_find_control(const Point2 &p_global);
 

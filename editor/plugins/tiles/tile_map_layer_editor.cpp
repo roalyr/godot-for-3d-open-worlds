@@ -1079,9 +1079,6 @@ HashMap<Vector2i, TileMapCell> TileMapLayerEditorTilesPlugin::_draw_line(Vector2
 	}
 
 	// Get or create the pattern.
-	Ref<TileMapPattern> erase_pattern;
-	erase_pattern.instantiate();
-	erase_pattern->set_cell(Vector2i(0, 0), TileSet::INVALID_SOURCE, TileSetSource::INVALID_ATLAS_COORDS, TileSetSource::INVALID_TILE_ALTERNATIVE);
 	Ref<TileMapPattern> pattern = p_erase ? erase_pattern : selection_pattern;
 
 	HashMap<Vector2i, TileMapCell> output;
@@ -1132,9 +1129,6 @@ HashMap<Vector2i, TileMapCell> TileMapLayerEditorTilesPlugin::_draw_rect(Vector2
 	rect.size += Vector2i(1, 1);
 
 	// Get or create the pattern.
-	Ref<TileMapPattern> erase_pattern;
-	erase_pattern.instantiate();
-	erase_pattern->set_cell(Vector2i(0, 0), TileSet::INVALID_SOURCE, TileSetSource::INVALID_ATLAS_COORDS, TileSetSource::INVALID_TILE_ALTERNATIVE);
 	Ref<TileMapPattern> pattern = p_erase ? erase_pattern : selection_pattern;
 
 	HashMap<Vector2i, TileMapCell> err_output;
@@ -1189,9 +1183,6 @@ HashMap<Vector2i, TileMapCell> TileMapLayerEditorTilesPlugin::_draw_bucket_fill(
 	HashMap<Vector2i, TileMapCell> output;
 
 	// Get or create the pattern.
-	Ref<TileMapPattern> erase_pattern;
-	erase_pattern.instantiate();
-	erase_pattern->set_cell(Vector2i(0, 0), TileSet::INVALID_SOURCE, TileSetSource::INVALID_ATLAS_COORDS, TileSetSource::INVALID_TILE_ALTERNATIVE);
 	Ref<TileMapPattern> pattern = p_erase ? erase_pattern : selection_pattern;
 
 	if (!pattern->is_empty()) {
@@ -2199,6 +2190,9 @@ TileMapLayerEditorTilesPlugin::TileMapLayerEditorTilesPlugin() {
 	// --- Initialize references ---
 	tile_map_clipboard.instantiate();
 	selection_pattern.instantiate();
+
+	erase_pattern.instantiate();
+	erase_pattern->set_cell(Vector2i(0, 0), TileSet::INVALID_SOURCE, TileSetSource::INVALID_ATLAS_COORDS, TileSetSource::INVALID_TILE_ALTERNATIVE);
 
 	// --- Toolbar ---
 	toolbar = memnew(HBoxContainer);
@@ -3672,10 +3666,16 @@ void TileMapLayerEditor::_node_change(Node *p_node) {
 
 void TileMapLayerEditor::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_READY: {
+		case NOTIFICATION_ENTER_TREE: {
 			get_tree()->connect("node_added", callable_mp(this, &TileMapLayerEditor::_node_change));
 			get_tree()->connect("node_removed", callable_mp(this, &TileMapLayerEditor::_node_change));
 		} break;
+
+		case NOTIFICATION_EXIT_TREE: {
+			get_tree()->disconnect("node_added", callable_mp(this, &TileMapLayerEditor::_node_change));
+			get_tree()->disconnect("node_removed", callable_mp(this, &TileMapLayerEditor::_node_change));
+		} break;
+
 		case NOTIFICATION_THEME_CHANGED: {
 			missing_tile_texture = get_editor_theme_icon(SNAME("StatusWarning"));
 			warning_pattern_texture = get_editor_theme_icon(SNAME("WarningPattern"));

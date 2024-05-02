@@ -37,6 +37,7 @@
 
 class Button;
 class EditorSpinSlider;
+class MarginContainer;
 
 class EditorPropertyArrayObject : public RefCounted {
 	GDCLASS(EditorPropertyArrayObject, RefCounted);
@@ -134,6 +135,8 @@ class EditorPropertyArray : public EditorProperty {
 	void _reorder_button_down(int p_index);
 	void _reorder_button_up();
 	void _create_new_property_slot();
+
+	Node *get_base_node();
 
 protected:
 	Ref<EditorPropertyArrayObject> object;

@@ -405,6 +405,13 @@ void RenderSceneBuffersGLES3::_check_render_buffers() {
 	}
 }
 
+void RenderSceneBuffersGLES3::configure_for_probe(Size2i p_size) {
+	internal_size = p_size;
+	target_size = p_size;
+	scaling_3d_mode = RS::VIEWPORT_SCALING_3D_MODE_OFF;
+	view_count = 1;
+}
+
 void RenderSceneBuffersGLES3::_clear_msaa3d_buffers() {
 	for (const FBDEF &cached_fbo : msaa3d.cached_fbos) {
 		GLuint fbo = cached_fbo.fbo;
@@ -570,8 +577,7 @@ void RenderSceneBuffersGLES3::check_glow_buffers() {
 	GLES3::TextureStorage *texture_storage = GLES3::TextureStorage::get_singleton();
 	Size2i level_size = internal_size;
 	for (int i = 0; i < 4; i++) {
-		level_size.x = MAX(level_size.x >> 1, 4);
-		level_size.y = MAX(level_size.y >> 1, 4);
+		level_size = Size2i(level_size.x >> 1, level_size.y >> 1).maxi(4);
 
 		glow.levels[i].size = level_size;
 

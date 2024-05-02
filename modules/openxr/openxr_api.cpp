@@ -63,6 +63,208 @@
 #define OPENXR_LOADER_NAME "libopenxr_loader.so"
 #endif
 
+////////////////////////////////////
+// OpenXRAPI::OpenXRSwapChainInfo
+
+Vector<OpenXRAPI::OpenXRSwapChainInfo> OpenXRAPI::OpenXRSwapChainInfo::free_queue;
+
+bool OpenXRAPI::OpenXRSwapChainInfo::create(XrSwapchainCreateFlags p_create_flags, XrSwapchainUsageFlags p_usage_flags, int64_t p_swapchain_format, uint32_t p_width, uint32_t p_height, uint32_t p_sample_count, uint32_t p_array_size) {
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL_V(openxr_api, false);
+
+	XrSession xr_session = openxr_api->get_session();
+	ERR_FAIL_COND_V(xr_session == XR_NULL_HANDLE, false);
+
+	OpenXRGraphicsExtensionWrapper *xr_graphics_extension = openxr_api->get_graphics_extension();
+	ERR_FAIL_NULL_V(xr_graphics_extension, false);
+
+	// We already have a swapchain?
+	ERR_FAIL_COND_V(swapchain != XR_NULL_HANDLE, false);
+
+	XrResult result;
+
+	void *next_pointer = nullptr;
+	for (OpenXRExtensionWrapper *wrapper : openxr_api->get_registered_extension_wrappers()) {
+		void *np = wrapper->set_swapchain_create_info_and_get_next_pointer(next_pointer);
+		if (np != nullptr) {
+			next_pointer = np;
+		}
+	}
+
+	XrSwapchainCreateInfo swapchain_create_info = {
+		XR_TYPE_SWAPCHAIN_CREATE_INFO, // type
+		next_pointer, // next
+		p_create_flags, // createFlags
+		p_usage_flags, // usageFlags
+		p_swapchain_format, // format
+		p_sample_count, // sampleCount
+		p_width, // width
+		p_height, // height
+		1, // faceCount
+		p_array_size, // arraySize
+		1 // mipCount
+	};
+
+	XrSwapchain new_swapchain;
+	result = openxr_api->xrCreateSwapchain(xr_session, &swapchain_create_info, &new_swapchain);
+	if (XR_FAILED(result)) {
+		print_line("OpenXR: Failed to get swapchain [", openxr_api->get_error_string(result), "]");
+		return false;
+	}
+
+	if (!xr_graphics_extension->get_swapchain_image_data(new_swapchain, p_swapchain_format, p_width, p_height, p_sample_count, p_array_size, &swapchain_graphics_data)) {
+		openxr_api->xrDestroySwapchain(new_swapchain);
+		return false;
+	}
+
+	swapchain = new_swapchain;
+
+	return true;
+}
+
+void OpenXRAPI::OpenXRSwapChainInfo::queue_free() {
+	if (image_acquired) {
+		release();
+	}
+
+	if (swapchain != XR_NULL_HANDLE) {
+		free_queue.push_back(*this);
+
+		swapchain_graphics_data = nullptr;
+		swapchain = XR_NULL_HANDLE;
+	}
+}
+
+void OpenXRAPI::OpenXRSwapChainInfo::free_queued() {
+	for (OpenXRAPI::OpenXRSwapChainInfo &swapchain_info : free_queue) {
+		swapchain_info.free();
+	}
+	free_queue.clear();
+}
+
+void OpenXRAPI::OpenXRSwapChainInfo::free() {
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+
+	if (image_acquired) {
+		release();
+	}
+
+	if (openxr_api->get_graphics_extension() && swapchain_graphics_data != nullptr) {
+		openxr_api->get_graphics_extension()->cleanup_swapchain_graphics_data(&swapchain_graphics_data);
+	}
+
+	if (swapchain != XR_NULL_HANDLE) {
+		openxr_api->xrDestroySwapchain(swapchain);
+		swapchain = XR_NULL_HANDLE;
+	}
+}
+
+bool OpenXRAPI::OpenXRSwapChainInfo::acquire(bool &p_should_render) {
+	ERR_FAIL_COND_V(image_acquired, true); // This was not released when it should be, error out and reuse...
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL_V(openxr_api, false);
+
+	XrResult result;
+
+	if (!skip_acquire_swapchain) {
+		XrSwapchainImageAcquireInfo swapchain_image_acquire_info = {
+			XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO, // type
+			nullptr // next
+		};
+
+		result = openxr_api->xrAcquireSwapchainImage(swapchain, &swapchain_image_acquire_info, &image_index);
+		if (!XR_UNQUALIFIED_SUCCESS(result)) {
+			// Make sure end_frame knows we need to submit an empty frame
+			p_should_render = false;
+
+			if (XR_FAILED(result)) {
+				// Unexpected failure, log this!
+				print_line("OpenXR: failed to acquire swapchain image [", openxr_api->get_error_string(result), "]");
+				return false;
+			} else {
+				// In this scenario we silently fail, the XR runtime is simply not ready yet to acquire the swapchain.
+				return false;
+			}
+		}
+	}
+
+	XrSwapchainImageWaitInfo swapchain_image_wait_info = {
+		XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, // type
+		nullptr, // next
+		1000000000 // 1s timeout in nanoseconds
+	};
+
+	// Wait for a maximum of 10 seconds before calling it a critical failure...
+	for (int retry = 0; retry < 10; retry++) {
+		result = openxr_api->xrWaitSwapchainImage(swapchain, &swapchain_image_wait_info);
+		if (result != XR_TIMEOUT_EXPIRED) {
+			break;
+		}
+		WARN_PRINT("OpenXR: timed out waiting for swapchain image.");
+	}
+
+	if (!XR_UNQUALIFIED_SUCCESS(result)) {
+		// Make sure end_frame knows we need to submit an empty frame
+		p_should_render = false;
+
+		if (XR_FAILED(result)) {
+			// Unexpected failure, log this!
+			print_line("OpenXR: failed to wait for swapchain image [", openxr_api->get_error_string(result), "]");
+			return false;
+		} else {
+			WARN_PRINT("OpenXR: couldn't to wait for swapchain but not a complete error [" + openxr_api->get_error_string(result) + "]");
+
+			// Make sure to skip trying to acquire the swapchain image in the next frame
+			skip_acquire_swapchain = true;
+			return false;
+		}
+	} else {
+		skip_acquire_swapchain = false;
+	}
+
+	image_acquired = true;
+	return true;
+}
+
+bool OpenXRAPI::OpenXRSwapChainInfo::release() {
+	if (!image_acquired) {
+		// Already released or never acquired.
+		return true;
+	}
+
+	image_acquired = false; // Regardless if we succeed or not, consider this released.
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL_V(openxr_api, false);
+
+	XrSwapchainImageReleaseInfo swapchain_image_release_info = {
+		XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO, // type
+		nullptr // next
+	};
+	XrResult result = openxr_api->xrReleaseSwapchainImage(swapchain, &swapchain_image_release_info);
+	if (XR_FAILED(result)) {
+		print_line("OpenXR: failed to release swapchain image! [", openxr_api->get_error_string(result), "]");
+		return false;
+	}
+
+	return true;
+}
+
+RID OpenXRAPI::OpenXRSwapChainInfo::get_image() {
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+
+	if (image_acquired && openxr_api && openxr_api->get_graphics_extension()) {
+		return OpenXRAPI::get_singleton()->get_graphics_extension()->get_texture(swapchain_graphics_data, image_index);
+	} else {
+		return RID();
+	}
+}
+
+////////////////////////////////////
+// OpenXRAPI
+
 OpenXRAPI *OpenXRAPI::singleton = nullptr;
 Vector<OpenXRExtensionWrapper *> OpenXRAPI::registered_extension_wrappers;
 
@@ -720,6 +922,9 @@ bool OpenXRAPI::setup_play_space() {
 
 	// If we've previously created a play space, clean it up first.
 	if (play_space != XR_NULL_HANDLE) {
+		// TODO Investigate if destroying our play space here is safe,
+		// it may still be used in the rendering thread.
+
 		xrDestroySpace(play_space);
 	}
 	play_space = new_play_space;
@@ -729,7 +934,11 @@ bool OpenXRAPI::setup_play_space() {
 	if (emulating_local_floor) {
 		// We'll use the STAGE space to get the floor height, but we can't do that until
 		// after xrWaitFrame(), so just set this flag for now.
+		// Render state will be updated then.
 		should_reset_emulated_floor_height = true;
+	} else {
+		// Update render state so this play space is used rendering the upcoming frame.
+		set_render_play_space(play_space);
 	}
 
 	return true;
@@ -809,7 +1018,7 @@ bool OpenXRAPI::reset_emulated_floor_height() {
 		identityPose, // pose
 	};
 
-	result = xrLocateSpace(stage_space, local_space, get_next_frame_time(), &stage_location);
+	result = xrLocateSpace(stage_space, local_space, get_predicted_display_time(), &stage_location);
 
 	xrDestroySpace(local_space);
 	xrDestroySpace(stage_space);
@@ -834,6 +1043,9 @@ bool OpenXRAPI::reset_emulated_floor_height() {
 	// If we've made it this far, it means we can properly emulate LOCAL_FLOOR, so we'll
 	// report that as the reference space to the outside world.
 	reference_space = XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT;
+
+	// Update render state so this play space is used rendering the upcoming frame.
+	set_render_play_space(play_space);
 
 	return true;
 }
@@ -878,31 +1090,10 @@ bool OpenXRAPI::is_swapchain_format_supported(int64_t p_swapchain_format) {
 	return false;
 }
 
-bool OpenXRAPI::create_swapchains() {
+bool OpenXRAPI::obtain_swapchain_formats() {
 	ERR_FAIL_NULL_V(graphics_extension, false);
 	ERR_FAIL_COND_V(session == XR_NULL_HANDLE, false);
 
-	/*
-		TODO: We need to improve on this, for now we're taking our old approach of creating our main swapchains and substituting
-		those for the ones Godot normally creates.
-		This however means we can only use swapchains for our main XR view.
-
-		It would have been nicer if we could override the swapchain creation in Godot with ours but we have a timing issue here.
-		We can't create XR swapchains until after our XR session is fully instantiated, yet Godot creates its swapchain much earlier.
-
-		Also Godot only creates a swapchain for the main output.
-		OpenXR will require us to create swapchains as the render target for additional viewports if we want to use the layer system
-		to optimize text rendering and background rendering as OpenXR may choose to reuse the results for reprojection while we're
-		already rendering the next frame.
-
-		Finally an area we need to expand upon is that Foveated rendering is only enabled for the swap chain we create,
-		as we render 3D content into internal buffers that are copied into the swapchain, we do now have (basic) VRS support
-	*/
-
-	Size2 recommended_size = get_recommended_target_size();
-	uint32_t sample_count = 1;
-
-	// We start with our color swapchain...
 	{
 		// Build a vector with swapchain formats we want to use, from best fit to worst
 		Vector<int64_t> usable_swapchain_formats;
@@ -923,23 +1114,9 @@ bool OpenXRAPI::create_swapchains() {
 		} else {
 			print_verbose(String("Using color swap chain format:") + get_swapchain_format_name(color_swapchain_format));
 		}
-
-		if (!create_swapchain(0, XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_MUTABLE_FORMAT_BIT, color_swapchain_format, recommended_size.width, recommended_size.height, sample_count, view_count, swapchains[OPENXR_SWAPCHAIN_COLOR].swapchain, &swapchains[OPENXR_SWAPCHAIN_COLOR].swapchain_graphics_data)) {
-			return false;
-		}
 	}
 
-	views = (XrView *)memalloc(sizeof(XrView) * view_count);
-	ERR_FAIL_NULL_V_MSG(views, false, "OpenXR Couldn't allocate memory for views");
-
-	projection_views = (XrCompositionLayerProjectionView *)memalloc(sizeof(XrCompositionLayerProjectionView) * view_count);
-	ERR_FAIL_NULL_V_MSG(projection_views, false, "OpenXR Couldn't allocate memory for projection views");
-
-	// We create our depth swapchain if:
-	// - we've enabled submitting depth buffer
-	// - we support our depth layer extension
-	// - we have our spacewarp extension (not yet implemented)
-	if (submit_depth_buffer && OpenXRCompositionLayerDepthExtension::get_singleton()->is_available()) {
+	{
 		// Build a vector with swapchain formats we want to use, from best fit to worst
 		Vector<int64_t> usable_swapchain_formats;
 		depth_swapchain_format = 0;
@@ -954,18 +1131,52 @@ bool OpenXRAPI::create_swapchains() {
 		}
 
 		if (depth_swapchain_format == 0) {
-			print_line("Couldn't find usable depth swap chain format, depth buffer will not be submitted.");
+			WARN_PRINT_ONCE("Couldn't find usable depth swap chain format, depth buffer will not be submitted if requested.");
 		} else {
 			print_verbose(String("Using depth swap chain format:") + get_swapchain_format_name(depth_swapchain_format));
+		}
+	}
 
-			// Note, if VK_FORMAT_D32_SFLOAT is used here but we're using the forward+ renderer, we should probably output a warning.
+	return true;
+}
 
-			if (!create_swapchain(0, XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depth_swapchain_format, recommended_size.width, recommended_size.height, sample_count, view_count, swapchains[OPENXR_SWAPCHAIN_DEPTH].swapchain, &swapchains[OPENXR_SWAPCHAIN_DEPTH].swapchain_graphics_data)) {
-				return false;
-			}
+bool OpenXRAPI::create_main_swapchains(Size2i p_size) {
+	ERR_NOT_ON_RENDER_THREAD_V(false);
+	ERR_FAIL_NULL_V(graphics_extension, false);
+	ERR_FAIL_COND_V(session == XR_NULL_HANDLE, false);
 
-			depth_views = (XrCompositionLayerDepthInfoKHR *)memalloc(sizeof(XrCompositionLayerDepthInfoKHR) * view_count);
-			ERR_FAIL_NULL_V_MSG(depth_views, false, "OpenXR Couldn't allocate memory for depth views");
+	/*
+		TODO: We need to improve on this, for now we're taking our old approach of creating our main swapchains and substituting
+		those for the ones Godot normally creates.
+		This however means we can only use swapchains for our main XR view.
+
+		It would have been nicer if we could override the swapchain creation in Godot with ours but we have a timing issue here.
+		We can't create XR swapchains until after our XR session is fully instantiated, yet Godot creates its swapchain much earlier.
+
+		We only creates a swapchain for the main output here.
+		Additional swapchains may be created through our composition layer extension.
+
+		Finally an area we need to expand upon is that Foveated rendering is only enabled for the swap chain we create,
+		as we render 3D content into internal buffers that are copied into the swapchain, we do now have (basic) VRS support
+	*/
+
+	render_state.main_swapchain_size = p_size;
+	uint32_t sample_count = 1;
+
+	// We start with our color swapchain...
+	if (color_swapchain_format != 0) {
+		if (!render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].create(0, XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_MUTABLE_FORMAT_BIT, color_swapchain_format, render_state.main_swapchain_size.width, render_state.main_swapchain_size.height, sample_count, view_count)) {
+			return false;
+		}
+	}
+
+	// We create our depth swapchain if:
+	// - we've enabled submitting depth buffer
+	// - we support our depth layer extension
+	// - we have our spacewarp extension (not yet implemented)
+	if (depth_swapchain_format != 0 && submit_depth_buffer && OpenXRCompositionLayerDepthExtension::get_singleton()->is_available()) {
+		if (!render_state.main_swapchains[OPENXR_SWAPCHAIN_DEPTH].create(0, XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depth_swapchain_format, render_state.main_swapchain_size.width, render_state.main_swapchain_size.height, sample_count, view_count)) {
+			return false;
 		}
 	}
 
@@ -975,34 +1186,36 @@ bool OpenXRAPI::create_swapchains() {
 		// TBD
 	}
 
-	for (uint32_t i = 0; i < view_count; i++) {
-		views[i].type = XR_TYPE_VIEW;
-		views[i].next = nullptr;
+	for (uint32_t i = 0; i < render_state.view_count; i++) {
+		render_state.views[i].type = XR_TYPE_VIEW;
+		render_state.views[i].next = nullptr;
 
-		projection_views[i].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
-		projection_views[i].next = nullptr;
-		projection_views[i].subImage.swapchain = swapchains[OPENXR_SWAPCHAIN_COLOR].swapchain;
-		projection_views[i].subImage.imageArrayIndex = i;
-		projection_views[i].subImage.imageRect.offset.x = 0;
-		projection_views[i].subImage.imageRect.offset.y = 0;
-		projection_views[i].subImage.imageRect.extent.width = recommended_size.width;
-		projection_views[i].subImage.imageRect.extent.height = recommended_size.height;
+		render_state.projection_views[i].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
+		render_state.projection_views[i].next = nullptr;
+		render_state.projection_views[i].subImage.swapchain = render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].get_swapchain();
+		render_state.projection_views[i].subImage.imageArrayIndex = i;
+		render_state.projection_views[i].subImage.imageRect.offset.x = 0;
+		render_state.projection_views[i].subImage.imageRect.offset.y = 0;
+		render_state.projection_views[i].subImage.imageRect.extent.width = render_state.main_swapchain_size.width;
+		render_state.projection_views[i].subImage.imageRect.extent.height = render_state.main_swapchain_size.height;
 
-		if (submit_depth_buffer && OpenXRCompositionLayerDepthExtension::get_singleton()->is_available() && depth_views) {
-			projection_views[i].next = &depth_views[i];
+		if (render_state.submit_depth_buffer && OpenXRCompositionLayerDepthExtension::get_singleton()->is_available() && render_state.depth_views) {
+			render_state.projection_views[i].next = &render_state.depth_views[i];
 
-			depth_views[i].type = XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR;
-			depth_views[i].next = nullptr;
-			depth_views[i].subImage.swapchain = swapchains[OPENXR_SWAPCHAIN_DEPTH].swapchain;
-			depth_views[i].subImage.imageArrayIndex = i;
-			depth_views[i].subImage.imageRect.offset.x = 0;
-			depth_views[i].subImage.imageRect.offset.y = 0;
-			depth_views[i].subImage.imageRect.extent.width = recommended_size.width;
-			depth_views[i].subImage.imageRect.extent.height = recommended_size.height;
-			depth_views[i].minDepth = 0.0;
-			depth_views[i].maxDepth = 1.0;
-			depth_views[i].nearZ = 0.01; // Near and far Z will be set to the correct values in fill_projection_matrix
-			depth_views[i].farZ = 100.0;
+			render_state.depth_views[i].type = XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR;
+			render_state.depth_views[i].next = nullptr;
+			render_state.depth_views[i].subImage.swapchain = render_state.main_swapchains[OPENXR_SWAPCHAIN_DEPTH].get_swapchain();
+			render_state.depth_views[i].subImage.imageArrayIndex = i;
+			render_state.depth_views[i].subImage.imageRect.offset.x = 0;
+			render_state.depth_views[i].subImage.imageRect.offset.y = 0;
+			render_state.depth_views[i].subImage.imageRect.extent.width = render_state.main_swapchain_size.width;
+			render_state.depth_views[i].subImage.imageRect.extent.height = render_state.main_swapchain_size.height;
+			// OpenXR spec says that: minDepth < maxDepth.
+			render_state.depth_views[i].minDepth = 0.0;
+			render_state.depth_views[i].maxDepth = 1.0;
+			// But we can reverse near and far for reverse-Z.
+			render_state.depth_views[i].nearZ = 100.0; // Near and far Z will be set to the correct values in fill_projection_matrix
+			render_state.depth_views[i].farZ = 0.01;
 		}
 	};
 
@@ -1010,28 +1223,37 @@ bool OpenXRAPI::create_swapchains() {
 };
 
 void OpenXRAPI::destroy_session() {
-	if (running && session != XR_NULL_HANDLE) {
-		xrEndSession(session);
+	// TODO need to figure out if we're still rendering our current frame
+	// in a separate rendering thread and if so,
+	// if we need to wait for completion.
+	// We could be pulling the rug from underneath rendering...
+
+	if (running) {
+		if (session != XR_NULL_HANDLE) {
+			xrEndSession(session);
+		}
+
+		running = false;
+		render_state.running = false;
 	}
 
-	if (views != nullptr) {
-		memfree(views);
-		views = nullptr;
+	if (render_state.views != nullptr) {
+		memfree(render_state.views);
+		render_state.views = nullptr;
 	}
 
-	if (projection_views != nullptr) {
-		memfree(projection_views);
-		projection_views = nullptr;
+	if (render_state.projection_views != nullptr) {
+		memfree(render_state.projection_views);
+		render_state.projection_views = nullptr;
 	}
 
-	if (depth_views != nullptr) {
-		memfree(depth_views);
-		depth_views = nullptr;
+	if (render_state.depth_views != nullptr) {
+		memfree(render_state.depth_views);
+		render_state.depth_views = nullptr;
 	}
 
-	for (int i = 0; i < OPENXR_SWAPCHAIN_MAX; i++) {
-		free_swapchain(swapchains[i]);
-	}
+	free_main_swapchains();
+	OpenXRSwapChainInfo::free_queued();
 
 	if (supported_swapchain_formats != nullptr) {
 		memfree(supported_swapchain_formats);
@@ -1042,6 +1264,7 @@ void OpenXRAPI::destroy_session() {
 	if (play_space != XR_NULL_HANDLE) {
 		xrDestroySpace(play_space);
 		play_space = XR_NULL_HANDLE;
+		render_state.play_space = XR_NULL_HANDLE;
 	}
 	if (view_space != XR_NULL_HANDLE) {
 		xrDestroySpace(view_space);
@@ -1062,51 +1285,6 @@ void OpenXRAPI::destroy_session() {
 		xrDestroySession(session);
 		session = XR_NULL_HANDLE;
 	}
-}
-
-bool OpenXRAPI::create_swapchain(XrSwapchainCreateFlags p_create_flags, XrSwapchainUsageFlags p_usage_flags, int64_t p_swapchain_format, uint32_t p_width, uint32_t p_height, uint32_t p_sample_count, uint32_t p_array_size, XrSwapchain &r_swapchain, void **r_swapchain_graphics_data) {
-	ERR_FAIL_COND_V(session == XR_NULL_HANDLE, false);
-	ERR_FAIL_NULL_V(graphics_extension, false);
-
-	XrResult result;
-
-	void *next_pointer = nullptr;
-	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
-		void *np = wrapper->set_swapchain_create_info_and_get_next_pointer(next_pointer);
-		if (np != nullptr) {
-			next_pointer = np;
-		}
-	}
-
-	XrSwapchainCreateInfo swapchain_create_info = {
-		XR_TYPE_SWAPCHAIN_CREATE_INFO, // type
-		next_pointer, // next
-		p_create_flags, // createFlags
-		p_usage_flags, // usageFlags
-		p_swapchain_format, // format
-		p_sample_count, // sampleCount
-		p_width, // width
-		p_height, // height
-		1, // faceCount
-		p_array_size, // arraySize
-		1 // mipCount
-	};
-
-	XrSwapchain new_swapchain;
-	result = xrCreateSwapchain(session, &swapchain_create_info, &new_swapchain);
-	if (XR_FAILED(result)) {
-		print_line("OpenXR: Failed to get swapchain [", get_error_string(result), "]");
-		return false;
-	}
-
-	if (!graphics_extension->get_swapchain_image_data(new_swapchain, p_swapchain_format, p_width, p_height, p_sample_count, p_array_size, r_swapchain_graphics_data)) {
-		xrDestroySwapchain(new_swapchain);
-		return false;
-	}
-
-	r_swapchain = new_swapchain;
-
-	return true;
 }
 
 bool OpenXRAPI::on_state_idle() {
@@ -1135,19 +1313,9 @@ bool OpenXRAPI::on_state_ready() {
 		return false;
 	}
 
-	// This is when we create our swapchain, this can be a "long" time after Godot finishes, we can deal with this for now
-	// but once we want to provide Viewports for additional layers where OpenXR requires us to create further swapchains,
-	// we'll be creating those viewport WAY before we reach this point.
-	// We may need to implement a wait in our init in main.cpp polling our events until the session is ready.
-	// That will be very very ugly
-	// The other possibility is to create a separate OpenXRViewport type specifically for this goal as part of our OpenXR module
-
-	if (!create_swapchains()) {
-		return false;
-	}
-
 	// we're running
 	running = true;
+	set_render_session_running(true);
 
 	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
 		wrapper->on_state_ready();
@@ -1156,8 +1324,6 @@ bool OpenXRAPI::on_state_ready() {
 	if (xr_interface) {
 		xr_interface->on_state_ready();
 	}
-
-	// TODO Tell android
 
 	return true;
 }
@@ -1226,9 +1392,8 @@ bool OpenXRAPI::on_state_stopping() {
 		}
 
 		running = false;
+		set_render_session_running(false);
 	}
-
-	// TODO further cleanup
 
 	return true;
 }
@@ -1236,11 +1401,13 @@ bool OpenXRAPI::on_state_stopping() {
 bool OpenXRAPI::on_state_loss_pending() {
 	print_verbose("On state loss pending");
 
+	if (xr_interface) {
+		xr_interface->on_state_loss_pending();
+	}
+
 	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
 		wrapper->on_state_loss_pending();
 	}
-
-	// TODO need to look into the correct action here, read up on the spec but we may need to signal Godot to exit (if it's not already exiting)
 
 	return true;
 }
@@ -1248,11 +1415,13 @@ bool OpenXRAPI::on_state_loss_pending() {
 bool OpenXRAPI::on_state_exiting() {
 	print_verbose("On state existing");
 
+	if (xr_interface) {
+		xr_interface->on_state_exiting();
+	}
+
 	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
 		wrapper->on_state_exiting();
 	}
-
-	// TODO need to look into the correct action here, read up on the spec but we may need to signal Godot to exit (if it's not already exiting)
 
 	return true;
 }
@@ -1271,10 +1440,7 @@ void OpenXRAPI::set_view_configuration(XrViewConfigurationType p_view_configurat
 
 bool OpenXRAPI::set_requested_reference_space(XrReferenceSpaceType p_requested_reference_space) {
 	requested_reference_space = p_requested_reference_space;
-
-	if (is_initialized()) {
-		return setup_play_space();
-	}
+	play_space_is_dirty = true;
 
 	return true;
 }
@@ -1477,11 +1643,6 @@ bool OpenXRAPI::initialize_session() {
 		return false;
 	}
 
-	if (!setup_play_space()) {
-		destroy_session();
-		return false;
-	}
-
 	if (!setup_view_space()) {
 		destroy_session();
 		return false;
@@ -1491,6 +1652,13 @@ bool OpenXRAPI::initialize_session() {
 		destroy_session();
 		return false;
 	}
+
+	if (!obtain_swapchain_formats()) {
+		destroy_session();
+		return false;
+	}
+
+	allocate_view_buffers(view_count, submit_depth_buffer);
 
 	return true;
 }
@@ -1543,12 +1711,18 @@ XrHandTrackerEXT OpenXRAPI::get_hand_tracker(int p_hand_index) {
 }
 
 Size2 OpenXRAPI::get_recommended_target_size() {
+	RenderingServer *rendering_server = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_V(view_configuration_views, Size2());
 
 	Size2 target_size;
 
-	target_size.width = view_configuration_views[0].recommendedImageRectWidth * render_target_size_multiplier;
-	target_size.height = view_configuration_views[0].recommendedImageRectHeight * render_target_size_multiplier;
+	if (rendering_server && rendering_server->is_on_render_thread()) {
+		target_size.width = view_configuration_views[0].recommendedImageRectWidth * render_state.render_target_size_multiplier;
+		target_size.height = view_configuration_views[0].recommendedImageRectHeight * render_state.render_target_size_multiplier;
+	} else {
+		target_size.width = view_configuration_views[0].recommendedImageRectWidth * render_target_size_multiplier;
+		target_size.height = view_configuration_views[0].recommendedImageRectHeight * render_target_size_multiplier;
+	}
 
 	return target_size;
 }
@@ -1560,13 +1734,11 @@ XRPose::TrackingConfidence OpenXRAPI::get_head_center(Transform3D &r_transform, 
 		return XRPose::XR_TRACKING_CONFIDENCE_NONE;
 	}
 
-	// xrWaitFrame not run yet
-	if (frame_state.predictedDisplayTime == 0) {
+	// Get display time
+	XrTime display_time = get_predicted_display_time();
+	if (display_time == 0) {
 		return XRPose::XR_TRACKING_CONFIDENCE_NONE;
 	}
-
-	// Get timing for the next frame, as that is the current frame we're processing
-	XrTime display_time = get_next_frame_time();
 
 	XrSpaceVelocity velocity = {
 		XR_TYPE_SPACE_VELOCITY, // type
@@ -1611,53 +1783,47 @@ XRPose::TrackingConfidence OpenXRAPI::get_head_center(Transform3D &r_transform, 
 }
 
 bool OpenXRAPI::get_view_transform(uint32_t p_view, Transform3D &r_transform) {
-	if (!running) {
-		return false;
-	}
+	ERR_NOT_ON_RENDER_THREAD_V(false);
 
-	// xrWaitFrame not run yet
-	if (frame_state.predictedDisplayTime == 0) {
+	if (!render_state.running) {
 		return false;
 	}
 
 	// we don't have valid view info
-	if (views == nullptr || !view_pose_valid) {
+	if (render_state.views == nullptr || !render_state.view_pose_valid) {
 		return false;
 	}
 
 	// Note, the timing of this is set right before rendering, which is what we need here.
-	r_transform = transform_from_pose(views[p_view].pose);
+	r_transform = transform_from_pose(render_state.views[p_view].pose);
 
 	return true;
 }
 
 bool OpenXRAPI::get_view_projection(uint32_t p_view, double p_z_near, double p_z_far, Projection &p_camera_matrix) {
+	ERR_NOT_ON_RENDER_THREAD_V(false);
 	ERR_FAIL_NULL_V(graphics_extension, false);
 
-	if (!running) {
-		return false;
-	}
-
-	// xrWaitFrame not run yet
-	if (frame_state.predictedDisplayTime == 0) {
+	if (!render_state.running) {
 		return false;
 	}
 
 	// we don't have valid view info
-	if (views == nullptr || !view_pose_valid) {
+	if (render_state.views == nullptr || !render_state.view_pose_valid) {
 		return false;
 	}
 
 	// if we're using depth views, make sure we update our near and far there...
-	if (depth_views != nullptr) {
-		for (uint32_t i = 0; i < view_count; i++) {
-			depth_views[i].nearZ = p_z_near;
-			depth_views[i].farZ = p_z_far;
+	if (render_state.depth_views != nullptr) {
+		for (uint32_t i = 0; i < render_state.view_count; i++) {
+			// As we are using reverse-Z these need to be flipped.
+			render_state.depth_views[i].nearZ = p_z_far;
+			render_state.depth_views[i].farZ = p_z_near;
 		}
 	}
 
 	// now update our projection
-	return graphics_extension->create_projection_fov(views[p_view].fov, p_z_near, p_z_far, p_camera_matrix);
+	return graphics_extension->create_projection_fov(render_state.views[p_view].fov, p_z_near, p_z_far, p_camera_matrix);
 }
 
 bool OpenXRAPI::poll_events() {
@@ -1780,6 +1946,69 @@ bool OpenXRAPI::poll_events() {
 	}
 }
 
+void OpenXRAPI::_allocate_view_buffers(uint32_t p_view_count, bool p_submit_depth_buffer) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+
+	openxr_api->render_state.view_count = p_view_count;
+	openxr_api->render_state.submit_depth_buffer = p_submit_depth_buffer;
+
+	// Allocate buffers we'll be populating with view information.
+	openxr_api->render_state.views = (XrView *)memalloc(sizeof(XrView) * p_view_count);
+	ERR_FAIL_NULL_MSG(openxr_api->render_state.views, "OpenXR Couldn't allocate memory for views");
+	memset(openxr_api->render_state.views, 0, sizeof(XrView) * p_view_count);
+
+	openxr_api->render_state.projection_views = (XrCompositionLayerProjectionView *)memalloc(sizeof(XrCompositionLayerProjectionView) * p_view_count);
+	ERR_FAIL_NULL_MSG(openxr_api->render_state.projection_views, "OpenXR Couldn't allocate memory for projection views");
+	memset(openxr_api->render_state.projection_views, 0, sizeof(XrCompositionLayerProjectionView) * p_view_count);
+
+	if (p_submit_depth_buffer && OpenXRCompositionLayerDepthExtension::get_singleton()->is_available()) {
+		openxr_api->render_state.depth_views = (XrCompositionLayerDepthInfoKHR *)memalloc(sizeof(XrCompositionLayerDepthInfoKHR) * p_view_count);
+		ERR_FAIL_NULL_MSG(openxr_api->render_state.depth_views, "OpenXR Couldn't allocate memory for depth views");
+		memset(openxr_api->render_state.depth_views, 0, sizeof(XrCompositionLayerDepthInfoKHR) * p_view_count);
+	}
+}
+
+void OpenXRAPI::_set_render_session_running(bool p_is_running) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+	openxr_api->render_state.running = p_is_running;
+}
+
+void OpenXRAPI::_set_render_display_info(XrTime p_predicted_display_time, bool p_should_render) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+	openxr_api->render_state.predicted_display_time = p_predicted_display_time;
+	openxr_api->render_state.should_render = p_should_render;
+}
+
+void OpenXRAPI::_set_render_play_space(uint64_t p_play_space) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+	openxr_api->render_state.play_space = XrSpace(p_play_space);
+}
+
+void OpenXRAPI::_set_render_state_multiplier(double p_render_target_size_multiplier) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	OpenXRAPI *openxr_api = OpenXRAPI::get_singleton();
+	ERR_FAIL_NULL(openxr_api);
+	openxr_api->render_state.render_target_size_multiplier = p_render_target_size_multiplier;
+}
+
 bool OpenXRAPI::process() {
 	ERR_FAIL_COND_V(instance == XR_NULL_HANDLE, false);
 
@@ -1791,123 +2020,11 @@ bool OpenXRAPI::process() {
 		return false;
 	}
 
-	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
-		wrapper->on_process();
-	}
-
-	return true;
-}
-
-void OpenXRAPI::free_swapchain(OpenXRSwapChainInfo &p_swapchain) {
-	if (p_swapchain.image_acquired) {
-		release_image(p_swapchain);
-	}
-
-	if (graphics_extension && p_swapchain.swapchain_graphics_data != nullptr) {
-		graphics_extension->cleanup_swapchain_graphics_data(&p_swapchain.swapchain_graphics_data);
-	}
-
-	if (p_swapchain.swapchain != XR_NULL_HANDLE) {
-		xrDestroySwapchain(p_swapchain.swapchain);
-		p_swapchain.swapchain = XR_NULL_HANDLE;
-	}
-}
-
-bool OpenXRAPI::acquire_image(OpenXRSwapChainInfo &p_swapchain) {
-	ERR_FAIL_COND_V(p_swapchain.image_acquired, true); // This was not released when it should be, error out and reuse...
-
-	XrResult result;
-
-	if (!p_swapchain.skip_acquire_swapchain) {
-		XrSwapchainImageAcquireInfo swapchain_image_acquire_info = {
-			XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO, // type
-			nullptr // next
-		};
-
-		result = xrAcquireSwapchainImage(p_swapchain.swapchain, &swapchain_image_acquire_info, &p_swapchain.image_index);
-		if (!XR_UNQUALIFIED_SUCCESS(result)) {
-			// Make sure end_frame knows we need to submit an empty frame
-			frame_state.shouldRender = false;
-
-			if (XR_FAILED(result)) {
-				// Unexpected failure, log this!
-				print_line("OpenXR: failed to acquire swapchain image [", get_error_string(result), "]");
-				return false;
-			} else {
-				// In this scenario we silently fail, the XR runtime is simply not ready yet to acquire the swapchain.
-				return false;
-			}
-		}
-	}
-
-	XrSwapchainImageWaitInfo swapchain_image_wait_info = {
-		XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO, // type
-		nullptr, // next
-		17000000 // timeout in nanoseconds
-	};
-
-	result = xrWaitSwapchainImage(p_swapchain.swapchain, &swapchain_image_wait_info);
-	if (!XR_UNQUALIFIED_SUCCESS(result)) {
-		// Make sure end_frame knows we need to submit an empty frame
-		frame_state.shouldRender = false;
-
-		if (XR_FAILED(result)) {
-			// Unexpected failure, log this!
-			print_line("OpenXR: failed to wait for swapchain image [", get_error_string(result), "]");
-			return false;
-		} else {
-			// Make sure to skip trying to acquire the swapchain image in the next frame
-			p_swapchain.skip_acquire_swapchain = true;
-			return false;
-		}
-	} else {
-		p_swapchain.skip_acquire_swapchain = false;
-	}
-
-	p_swapchain.image_acquired = true;
-	return true;
-}
-
-RID OpenXRAPI::get_image(OpenXRSwapChainInfo &p_swapchain) {
-	if (p_swapchain.image_acquired) {
-		return graphics_extension->get_texture(p_swapchain.swapchain_graphics_data, p_swapchain.image_index);
-	} else {
-		return RID();
-	}
-}
-
-bool OpenXRAPI::release_image(OpenXRSwapChainInfo &p_swapchain) {
-	if (!p_swapchain.image_acquired) {
-		// Already released or never acquired.
-		return true;
-	}
-
-	p_swapchain.image_acquired = false; // Regardless if we succeed or not, consider this released.
-
-	XrSwapchainImageReleaseInfo swapchain_image_release_info = {
-		XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO, // type
-		nullptr // next
-	};
-	XrResult result = xrReleaseSwapchainImage(p_swapchain.swapchain, &swapchain_image_release_info);
-	if (XR_FAILED(result)) {
-		print_line("OpenXR: failed to release swapchain image! [", get_error_string(result), "]");
-		return false;
-	}
-
-	return true;
-}
-
-void OpenXRAPI::pre_render() {
-	ERR_FAIL_COND(instance == XR_NULL_HANDLE);
-
-	if (!running) {
-		return;
-	}
-
-	// Waitframe does 2 important things in our process:
-	// 1) It provides us with predictive timing, telling us when OpenXR expects to display the frame we're about to commit
-	// 2) It will use the previous timing to pause our thread so that rendering starts as close to displaying as possible
-	// This must thus be called as close to when we start rendering as possible
+	// We call xrWaitFrame as early as possible, this will allow OpenXR to get
+	// proper timing info between this point, and when we're ready to start rendering.
+	// As the name suggests, OpenXR can pause the thread to minimize the time between
+	// retrieving tracking data and using that tracking data to render.
+	// OpenXR thus works best if rendering is performed on a separate thread.
 	XrFrameWaitInfo frame_wait_info = { XR_TYPE_FRAME_WAIT_INFO, nullptr };
 	frame_state.predictedDisplayTime = 0;
 	frame_state.predictedDisplayPeriod = 0;
@@ -1922,7 +2039,9 @@ void OpenXRAPI::pre_render() {
 		frame_state.predictedDisplayPeriod = 0;
 		frame_state.shouldRender = false;
 
-		return;
+		set_render_display_info(0, false);
+
+		return false;
 	}
 
 	if (frame_state.predictedDisplayPeriod > 500000000) {
@@ -1931,9 +2050,51 @@ void OpenXRAPI::pre_render() {
 		frame_state.predictedDisplayPeriod = 0;
 	}
 
+	set_render_display_info(frame_state.predictedDisplayTime, frame_state.shouldRender);
+
+	if (unlikely(play_space_is_dirty)) {
+		setup_play_space();
+		play_space_is_dirty = false;
+	}
+
 	if (unlikely(should_reset_emulated_floor_height)) {
 		reset_emulated_floor_height();
 		should_reset_emulated_floor_height = false;
+	}
+
+	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
+		wrapper->on_process();
+	}
+
+	return true;
+}
+
+void OpenXRAPI::free_main_swapchains() {
+	for (int i = 0; i < OPENXR_SWAPCHAIN_MAX; i++) {
+		render_state.main_swapchains[i].queue_free();
+	}
+}
+
+void OpenXRAPI::pre_render() {
+	ERR_FAIL_COND(session == XR_NULL_HANDLE);
+
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	if (!render_state.running) {
+		return;
+	}
+
+	// Process any swapchains that were queued to be freed
+	OpenXRSwapChainInfo::free_queued();
+
+	Size2i swapchain_size = get_recommended_target_size();
+	if (swapchain_size != render_state.main_swapchain_size) {
+		// Out with the old.
+		free_main_swapchains();
+
+		// In with the new.
+		create_main_swapchains(swapchain_size);
 	}
 
 	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
@@ -1955,8 +2116,8 @@ void OpenXRAPI::pre_render() {
 		XR_TYPE_VIEW_LOCATE_INFO, // type
 		nullptr, // next
 		view_configuration, // viewConfigurationType
-		frame_state.predictedDisplayTime, // displayTime
-		play_space // space
+		render_state.predicted_display_time, // displayTime
+		render_state.play_space // space
 	};
 	XrViewState view_state = {
 		XR_TYPE_VIEW_STATE, // type
@@ -1964,7 +2125,7 @@ void OpenXRAPI::pre_render() {
 		0 // viewStateFlags
 	};
 	uint32_t view_count_output;
-	result = xrLocateViews(session, &view_locate_info, &view_state, view_count, &view_count_output, views);
+	XrResult result = xrLocateViews(session, &view_locate_info, &view_state, render_state.view_count, &view_count_output, render_state.views);
 	if (XR_FAILED(result)) {
 		print_line("OpenXR: Couldn't locate views [", get_error_string(result), "]");
 		return;
@@ -1977,9 +2138,9 @@ void OpenXRAPI::pre_render() {
 			pose_valid = false;
 		}
 	}
-	if (view_pose_valid != pose_valid) {
-		view_pose_valid = pose_valid;
-		if (!view_pose_valid) {
+	if (render_state.view_pose_valid != pose_valid) {
+		render_state.view_pose_valid = pose_valid;
+		if (!render_state.view_pose_valid) {
 			print_verbose("OpenXR View pose became invalid");
 		} else {
 			print_verbose("OpenXR View pose became valid");
@@ -1996,19 +2157,26 @@ void OpenXRAPI::pre_render() {
 		print_line("OpenXR: failed to being frame [", get_error_string(result), "]");
 		return;
 	}
+
+	// Reset this, we haven't found a viewport for output yet
+	render_state.has_xr_viewport = false;
 }
 
 bool OpenXRAPI::pre_draw_viewport(RID p_render_target) {
-	if (!can_render()) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD_V(false);
+
+	// We found an XR viewport!
+	render_state.has_xr_viewport = true;
+
+	if (instance == XR_NULL_HANDLE || session == XR_NULL_HANDLE || !render_state.running || !render_state.view_pose_valid || !render_state.should_render) {
 		return false;
 	}
 
-	// TODO: at some point in time we may support multiple viewports in which case we need to handle that...
-
 	// Acquire our images
 	for (int i = 0; i < OPENXR_SWAPCHAIN_MAX; i++) {
-		if (!swapchains[i].image_acquired && swapchains[i].swapchain != XR_NULL_HANDLE) {
-			if (!acquire_image(swapchains[i])) {
+		if (!render_state.main_swapchains[i].is_image_acquired() && render_state.main_swapchains[i].get_swapchain() != XR_NULL_HANDLE) {
+			if (!render_state.main_swapchains[i].acquire(render_state.should_render)) {
 				return false;
 			}
 		}
@@ -2022,24 +2190,33 @@ bool OpenXRAPI::pre_draw_viewport(RID p_render_target) {
 }
 
 XrSwapchain OpenXRAPI::get_color_swapchain() {
-	return swapchains[OPENXR_SWAPCHAIN_COLOR].swapchain;
+	ERR_NOT_ON_RENDER_THREAD_V(XR_NULL_HANDLE);
+
+	return render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].get_swapchain();
 }
 
 RID OpenXRAPI::get_color_texture() {
-	return get_image(swapchains[OPENXR_SWAPCHAIN_COLOR]);
+	ERR_NOT_ON_RENDER_THREAD_V(RID());
+
+	return render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].get_image();
 }
 
 RID OpenXRAPI::get_depth_texture() {
+	ERR_NOT_ON_RENDER_THREAD_V(RID());
+
 	// Note, image will not be acquired if we didn't have a suitable swap chain format.
-	if (submit_depth_buffer) {
-		return get_image(swapchains[OPENXR_SWAPCHAIN_DEPTH]);
+	if (render_state.submit_depth_buffer && render_state.main_swapchains[OPENXR_SWAPCHAIN_DEPTH].is_image_acquired()) {
+		return render_state.main_swapchains[OPENXR_SWAPCHAIN_DEPTH].get_image();
 	} else {
 		return RID();
 	}
 }
 
 void OpenXRAPI::post_draw_viewport(RID p_render_target) {
-	if (!can_render()) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	if (instance == XR_NULL_HANDLE || session == XR_NULL_HANDLE || !render_state.running || !render_state.view_pose_valid || !render_state.should_render) {
 		return;
 	}
 
@@ -2051,26 +2228,33 @@ void OpenXRAPI::post_draw_viewport(RID p_render_target) {
 void OpenXRAPI::end_frame() {
 	XrResult result;
 
-	ERR_FAIL_COND(instance == XR_NULL_HANDLE);
+	ERR_FAIL_COND(session == XR_NULL_HANDLE);
 
-	if (!running) {
+	// Must be called from rendering thread!
+	ERR_NOT_ON_RENDER_THREAD;
+
+	if (!render_state.running) {
 		return;
 	}
 
-	if (frame_state.shouldRender && view_pose_valid && !swapchains[OPENXR_SWAPCHAIN_COLOR].image_acquired) {
-		print_line("OpenXR: No viewport was marked with use_xr, there is no rendered output!");
+	if (render_state.should_render && render_state.view_pose_valid) {
+		if (!render_state.has_xr_viewport) {
+			print_line("OpenXR: No viewport was marked with use_xr, there is no rendered output!");
+		} else if (!render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].is_image_acquired()) {
+			print_line("OpenXR: No swapchain could be acquired to render to!");
+		}
 	}
 
 	// must have:
-	// - shouldRender set to true
+	// - should_render set to true
 	// - a valid view pose for projection_views[eye].pose to submit layer
 	// - an image to render
-	if (!frame_state.shouldRender || !view_pose_valid || !swapchains[OPENXR_SWAPCHAIN_COLOR].image_acquired) {
+	if (!render_state.should_render || !render_state.view_pose_valid || !render_state.main_swapchains[OPENXR_SWAPCHAIN_COLOR].is_image_acquired()) {
 		// submit 0 layers when we shouldn't render
 		XrFrameEndInfo frame_end_info = {
 			XR_TYPE_FRAME_END_INFO, // type
 			nullptr, // next
-			frame_state.predictedDisplayTime, // displayTime
+			render_state.predicted_display_time, // displayTime
 			environment_blend_mode, // environmentBlendMode
 			0, // layerCount
 			nullptr // layers
@@ -2087,14 +2271,14 @@ void OpenXRAPI::end_frame() {
 
 	// release our swapchain image if we acquired it
 	for (int i = 0; i < OPENXR_SWAPCHAIN_MAX; i++) {
-		if (swapchains[i].image_acquired) {
-			release_image(swapchains[i]);
+		if (render_state.main_swapchains[i].is_image_acquired()) {
+			render_state.main_swapchains[i].release();
 		}
 	}
 
-	for (uint32_t eye = 0; eye < view_count; eye++) {
-		projection_views[eye].fov = views[eye].fov;
-		projection_views[eye].pose = views[eye].pose;
+	for (uint32_t eye = 0; eye < render_state.view_count; eye++) {
+		render_state.projection_views[eye].fov = render_state.views[eye].fov;
+		render_state.projection_views[eye].pose = render_state.views[eye].pose;
 	}
 
 	Vector<OrderedCompositionLayer> ordered_layers_list;
@@ -2127,9 +2311,9 @@ void OpenXRAPI::end_frame() {
 		XR_TYPE_COMPOSITION_LAYER_PROJECTION, // type
 		nullptr, // next
 		layer_flags, // layerFlags
-		play_space, // space
-		view_count, // viewCount
-		projection_views, // views
+		render_state.play_space, // space
+		render_state.view_count, // viewCount
+		render_state.projection_views, // views
 	};
 	ordered_layers_list.push_back({ (const XrCompositionLayerBaseHeader *)&projection_layer, 0 });
 
@@ -2145,7 +2329,7 @@ void OpenXRAPI::end_frame() {
 	XrFrameEndInfo frame_end_info = {
 		XR_TYPE_FRAME_END_INFO, // type
 		nullptr, // next
-		frame_state.predictedDisplayTime, // displayTime
+		render_state.predicted_display_time, // displayTime
 		environment_blend_mode, // environmentBlendMode
 		static_cast<uint32_t>(layers_list.size()), // layerCount
 		layers_list.ptr() // layers
@@ -2188,6 +2372,7 @@ double OpenXRAPI::get_render_target_size_multiplier() const {
 
 void OpenXRAPI::set_render_target_size_multiplier(double multiplier) {
 	render_target_size_multiplier = multiplier;
+	set_render_state_multiplier(multiplier);
 }
 
 bool OpenXRAPI::is_foveation_supported() const {
@@ -2331,10 +2516,6 @@ OpenXRAPI::OpenXRAPI() {
 
 		submit_depth_buffer = GLOBAL_GET("xr/openxr/submit_depth_buffer");
 	}
-
-	// reset a few things that can't be done in our class definition
-	frame_state.predictedDisplayTime = 0;
-	frame_state.predictedDisplayPeriod = 0;
 }
 
 OpenXRAPI::~OpenXRAPI() {
@@ -3049,7 +3230,7 @@ XRPose::TrackingConfidence OpenXRAPI::get_action_pose(RID p_action, RID p_tracke
 		return XRPose::XR_TRACKING_CONFIDENCE_NONE;
 	}
 
-	XrTime display_time = get_next_frame_time();
+	XrTime display_time = get_predicted_display_time();
 	if (display_time == 0) {
 		return XRPose::XR_TRACKING_CONFIDENCE_NONE;
 	}

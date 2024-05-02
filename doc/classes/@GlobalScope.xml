@@ -368,7 +368,7 @@
 			<param index="1" name="curve" type="float" />
 			<description>
 				Returns an "eased" value of [param x] based on an easing function defined with [param curve]. This easing function is based on an exponent. The [param curve] can be any floating-point number, with specific values leading to the following behaviors:
-				[codeblock]
+				[codeblock lang=text]
 				- Lower than -1.0 (exclusive): Ease in-out
 				- 1.0: Linear
 				- Between -1.0 and 0.0 (exclusive): Ease out-in
@@ -460,8 +460,8 @@
 				    var x = i * 0.5 - 1.5
 				    print("%4.1f           %4.1f  | %4.1f" % [x, fmod(x, 1.5), fposmod(x, 1.5)])
 				[/codeblock]
-				Produces:
-				[codeblock]
+				Prints:
+				[codeblock lang=text]
 				 (x)  (fmod(x, 1.5))   (fposmod(x, 1.5))
 				-1.5           -0.0  |  0.0
 				-1.0           -1.0  |  0.5
@@ -696,6 +696,7 @@
 				[codeblock]
 				max(1, 7, 3, -6, 5) # Returns 7
 				[/codeblock]
+				[b]Note:[/b] When using this on vectors it will [i]not[/i] perform component-wise maximum, and will pick the largest value when compared using [code]x &lt; y[/code]. To perform component-wise maximum, use [method Vector2.max], [method Vector2i.max], [method Vector3.max], [method Vector3i.max], [method Vector4.max], and [method Vector4i.max].
 			</description>
 		</method>
 		<method name="maxf">
@@ -729,6 +730,7 @@
 				[codeblock]
 				min(1, 7, 3, -6, 5) # Returns -6
 				[/codeblock]
+				[b]Note:[/b] When using this on vectors it will [i]not[/i] perform component-wise minimum, and will pick the smallest value when compared using [code]x &lt; y[/code]. To perform component-wise minimum, use [method Vector2.min], [method Vector2i.min], [method Vector3.min], [method Vector3i.min], [method Vector4.min], and [method Vector4i.min].
 			</description>
 		</method>
 		<method name="minf">
@@ -818,8 +820,8 @@
 				for i in range(-3, 4):
 				    print("%2d       %2d  | %2d" % [i, i % 3, posmod(i, 3)])
 				[/codeblock]
-				Produces:
-				[codeblock]
+				Prints:
+				[codeblock lang=text]
 				(i)  (i % 3)   (posmod(i, 3))
 				-3        0  |  0
 				-2       -2  |  1
@@ -901,6 +903,7 @@
 		<method name="printraw" qualifiers="vararg">
 			<description>
 				Prints one or more arguments to strings in the best way possible to the OS terminal. Unlike [method print], no newline is automatically added at the end.
+				[b]Note:[/b] The OS terminal is [i]not[/i] the same as the editor's Output dock. The output sent to the OS terminal can be seen when running Godot from a terminal. On Windows, this requires using the [code]console.exe[/code] executable.
 				[codeblocks]
 				[gdscript]
 				printraw("A")
@@ -1457,7 +1460,7 @@
 				[/csharp]
 				[/codeblocks]
 				Prints:
-				[codeblock]
+				[codeblock lang=text]
 				{
 				    "a": 1,
 				    "b": 2
