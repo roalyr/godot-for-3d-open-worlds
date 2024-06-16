@@ -31,6 +31,7 @@
 #ifndef VARIANT_H
 #define VARIANT_H
 
+#include "core/core_string_names.h"
 #include "core/input/input_enums.h"
 #include "core/io/ip_address.h"
 #include "core/math/aabb.h"
@@ -75,6 +76,7 @@ typedef Vector<String> PackedStringArray;
 typedef Vector<Vector2> PackedVector2Array;
 typedef Vector<Vector3> PackedVector3Array;
 typedef Vector<Color> PackedColorArray;
+typedef Vector<Vector4> PackedVector4Array;
 
 class Variant {
 public:
@@ -126,6 +128,7 @@ public:
 		PACKED_VECTOR2_ARRAY,
 		PACKED_VECTOR3_ARRAY,
 		PACKED_COLOR_ARRAY,
+		PACKED_VECTOR4_ARRAY,
 
 		VARIANT_MAX
 	};
@@ -162,10 +165,12 @@ private:
 
 	friend struct _VariantCall;
 	friend class VariantInternal;
-	// Variant takes 20 bytes when real_t is float, and 36 if double
-	// it only allocates extra memory for aabb/matrix.
+	// Variant takes 24 bytes when real_t is float, and 40 bytes if double.
+	// It only allocates extra memory for AABB/Transform2D (24, 48 if double),
+	// Basis/Transform3D (48, 96 if double), Projection (64, 128 if double),
+	// and PackedArray/Array/Dictionary (platform-dependent).
 
-	Type type;
+	Type type = NIL;
 
 	struct ObjData {
 		ObjectID id;
@@ -297,6 +302,7 @@ private:
 			true, //PACKED_VECTOR2_ARRAY,
 			true, //PACKED_VECTOR3_ARRAY,
 			true, //PACKED_COLOR_ARRAY,
+			true, //PACKED_VECTOR4_ARRAY,
 		};
 
 		if (unlikely(needs_deinit[type])) { // Make it fast for types that don't need deinit.
@@ -409,6 +415,7 @@ public:
 	operator PackedVector3Array() const;
 	operator PackedVector2Array() const;
 	operator PackedColorArray() const;
+	operator PackedVector4Array() const;
 
 	operator Vector<::RID>() const;
 	operator Vector<Plane>() const;
@@ -474,6 +481,7 @@ public:
 	Variant(const PackedVector2Array &p_vector2_array);
 	Variant(const PackedVector3Array &p_vector3_array);
 	Variant(const PackedColorArray &p_color_array);
+	Variant(const PackedVector4Array &p_vector4_array);
 
 	Variant(const Vector<::RID> &p_array); // helper
 	Variant(const Vector<Plane> &p_array); // helper

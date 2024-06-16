@@ -145,13 +145,15 @@ Result Shape::appendArc(float cx, float cy, float radius, float startAngle, floa
     //just circle
     if (sweep >= 360.0f || sweep <= -360.0f) return appendCircle(cx, cy, radius, radius);
 
-    startAngle = (startAngle * MATH_PI) / 180.0f;
-    sweep = sweep * MATH_PI / 180.0f;
+    const float arcPrecision = 1e-5f;
+    startAngle = mathDeg2Rad(startAngle);
+    sweep = mathDeg2Rad(sweep);
 
-    auto nCurves = ceil(fabsf(sweep / MATH_PI2));
+    auto nCurves = static_cast<int>(fabsf(sweep / MATH_PI2));
+    if (fabsf(sweep / MATH_PI2) - nCurves > arcPrecision) ++nCurves;
     auto sweepSign = (sweep < 0 ? -1 : 1);
     auto fract = fmodf(sweep, MATH_PI2);
-    fract = (mathZero(fract)) ? MATH_PI2 * sweepSign : fract;
+    fract = (fabsf(fract) < arcPrecision) ? MATH_PI2 * sweepSign : fract;
 
     //Start from here
     Point start = {radius * cosf(startAngle), radius * sinf(startAngle)};
@@ -285,16 +287,14 @@ const Fill* Shape::fill() const noexcept
 
 Result Shape::order(bool strokeFirst) noexcept
 {
-    if (!pImpl->strokeFirst(strokeFirst)) return Result::FailedAllocation;
-
+    pImpl->strokeFirst(strokeFirst);
     return Result::Success;
 }
 
 
 Result Shape::stroke(float width) noexcept
 {
-    if (!pImpl->strokeWidth(width)) return Result::FailedAllocation;
-
+    pImpl->strokeWidth(width);
     return Result::Success;
 }
 
@@ -307,8 +307,7 @@ float Shape::strokeWidth() const noexcept
 
 Result Shape::stroke(uint8_t r, uint8_t g, uint8_t b, uint8_t a) noexcept
 {
-    if (!pImpl->strokeColor(r, g, b, a)) return Result::FailedAllocation;
-
+    pImpl->strokeColor(r, g, b, a);
     return Result::Success;
 }
 
@@ -347,27 +346,25 @@ uint32_t Shape::strokeDash(const float** dashPattern) const noexcept
 
 Result Shape::stroke(StrokeCap cap) noexcept
 {
-    if (!pImpl->strokeCap(cap)) return Result::FailedAllocation;
-
+    pImpl->strokeCap(cap);
     return Result::Success;
 }
 
 
 Result Shape::stroke(StrokeJoin join) noexcept
 {
-    if (!pImpl->strokeJoin(join)) return Result::FailedAllocation;
-
+    pImpl->strokeJoin(join);
     return Result::Success;
 }
+
 
 Result Shape::strokeMiterlimit(float miterlimit) noexcept
 {
     // https://www.w3.org/TR/SVG2/painting.html#LineJoin
     // - A negative value for stroke-miterlimit must be treated as an illegal value.
-    if (miterlimit < 0.0f) return Result::NonSupport;
+    if (miterlimit < 0.0f) return Result::InvalidArguments;
     // TODO Find out a reasonable max value.
-    if (!pImpl->strokeMiterlimit(miterlimit)) return Result::FailedAllocation;
-
+    pImpl->strokeMiterlimit(miterlimit);
     return Result::Success;
 }
 
@@ -383,9 +380,23 @@ StrokeJoin Shape::strokeJoin() const noexcept
     return pImpl->rs.strokeJoin();
 }
 
+
 float Shape::strokeMiterlimit() const noexcept
 {
     return pImpl->rs.strokeMiterlimit();
+}
+
+
+Result Shape::strokeTrim(float begin, float end, bool simultaneous) noexcept
+{
+    pImpl->strokeTrim(begin, end, simultaneous);
+    return Result::Success;
+}
+
+
+bool Shape::strokeTrim(float* begin, float* end) const noexcept
+{
+    return pImpl->strokeTrim(begin, end);
 }
 
 

@@ -554,10 +554,10 @@
 			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when defining a local or subclass member variable that would shadow a variable that is inherited from a parent class.
 		</member>
 		<member name="debug/gdscript/warnings/standalone_expression" type="int" setter="" getter="" default="1">
-			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling an expression that has no effect on the surrounding code, such as writing [code]2 + 2[/code] as a statement.
+			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling an expression that may have no effect on the surrounding code, such as writing [code]2 + 2[/code] as a statement.
 		</member>
 		<member name="debug/gdscript/warnings/standalone_ternary" type="int" setter="" getter="" default="1">
-			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling a ternary expression that has no effect on the surrounding code, such as writing [code]42 if active else 0[/code] as a statement.
+			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling a ternary expression that may have no effect on the surrounding code, such as writing [code]42 if active else 0[/code] as a statement.
 		</member>
 		<member name="debug/gdscript/warnings/static_called_on_instance" type="int" setter="" getter="" default="1">
 			When set to [code]warn[/code] or [code]error[/code], produces a warning or an error respectively when calling a static method from an instance of a class instead of from the class directly.
@@ -902,8 +902,9 @@
 		<member name="display/window/vsync/vsync_mode" type="int" setter="" getter="" default="1">
 			Sets the V-Sync mode for the main game window. The editor's own V-Sync mode can be set using [member EditorSettings.interface/editor/vsync_mode].
 			See [enum DisplayServer.VSyncMode] for possible values and how they affect the behavior of your application.
-			Depending on the platform and used renderer, the engine will fall back to [b]Enabled[/b] if the desired mode is not supported.
-			[b]Note:[/b] V-Sync modes other than [b]Enabled[/b] are only supported in the Forward+ and Mobile rendering methods, not Compatibility.
+			Depending on the platform and rendering method, the engine will fall back to [b]Enabled[/b] if the desired mode is not supported.
+			V-Sync can be disabled on the command line using the [code]--disable-vsync[/code] [url=$DOCS_URL/tutorials/editor/command_line_tutorial.html]command line argument[/url].
+			[b]Note:[/b] The [b]Adaptive[/b] and [b]Mailbox[/b] V-Sync modes are only supported in the Forward+ and Mobile rendering methods, not Compatibility.
 			[b]Note:[/b] This property is only read when the project starts. To change the V-Sync mode at runtime, call [method DisplayServer.window_set_vsync_mode] instead.
 		</member>
 		<member name="dotnet/project/assembly_name" type="String" setter="" getter="" default="&quot;&quot;">
@@ -1002,7 +1003,7 @@
 		</member>
 		<member name="filesystem/import/fbx2gltf/enabled" type="bool" setter="" getter="" default="true">
 			If [code]true[/code], Autodesk FBX 3D scene files with the [code].fbx[/code] extension will be imported by converting them to glTF 2.0.
-			This requires configuring a path to an FBX2glTF executable in the editor settings at [member EditorSettings.filesystem/import/fbx2gltf/fbx2gltf_path].
+			This requires configuring a path to an FBX2glTF executable in the editor settings at [member EditorSettings.filesystem/import/fbx/fbx2gltf_path].
 		</member>
 		<member name="filesystem/import/fbx2gltf/enabled.android" type="bool" setter="" getter="" default="false">
 			Override for [member filesystem/import/fbx2gltf/enabled] on Android where FBX2glTF can't easily be accessed from Godot.
@@ -2713,8 +2714,8 @@
 		<member name="rendering/renderer/rendering_method.web" type="String" setter="" getter="" default="&quot;gl_compatibility&quot;">
 			Override for [member rendering/renderer/rendering_method] on web.
 		</member>
-		<member name="rendering/rendering_device/d3d12/agility_sdk_version" type="int" setter="" getter="" default="610">
-			Version code of the Direct3D 12 Agility SDK to use ([code]D3D12SDKVersion[/code]).
+		<member name="rendering/rendering_device/d3d12/agility_sdk_version" type="int" setter="" getter="" default="613">
+			Version code of the [url=https://devblogs.microsoft.com/directx/directx12agility/]Direct3D 12 Agility SDK[/url] to use ([code]D3D12SDKVersion[/code]). This must match the [i]minor[/i] version that is installed next to the editor binary and in the export templates directory for the current editor version. For example, if you have [code]1.613.3[/code] installed, you need to input [code]613[/code] here.
 		</member>
 		<member name="rendering/rendering_device/d3d12/max_misc_descriptors_per_frame" type="int" setter="" getter="" default="512">
 			The number of entries in the miscellaneous descriptors heap the Direct3D 12 rendering driver uses each frame, used for various operations like clearing a texture.

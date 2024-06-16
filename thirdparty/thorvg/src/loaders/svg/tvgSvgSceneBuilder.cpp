@@ -203,9 +203,9 @@ static bool _appendClipUseNode(SvgLoaderData& loaderData, SvgNode* node, Shape* 
     if (node->transform) finalTransform = *node->transform;
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         Matrix m = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
-        finalTransform = mathMultiply(&finalTransform, &m);
+        finalTransform *= m;
     }
-    if (child->transform) finalTransform = mathMultiply(child->transform, &finalTransform);
+    if (child->transform) finalTransform = *child->transform * finalTransform;
 
     return _appendClipShape(loaderData, child, shape, vBox, svgPath, mathIdentity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
 }
@@ -228,13 +228,13 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
         m = *node->transform;
     }
     if (compNode->transform) {
-        m = mathMultiply(&m, compNode->transform);
+        m *= *compNode->transform;
     }
     if (!compNode->node.clip.userSpace) {
         float x, y, w, h;
         P(paint)->bounds(&x, &y, &w, &h, false, false);
         Matrix mBBox = {w, 0, x, 0, h, y, 0, 0, 1};
-        m = mathMultiply(&m, &mBBox);
+        m *= mBBox;
     }
     return m;
 }
@@ -310,7 +310,7 @@ static void _applyProperty(SvgLoaderData& loaderData, SvgNode* node, Shape* vg, 
 
     //Clip transformation is applied directly to the path in the _appendClipShape function
     if (node->transform && !clip) vg->transform(*node->transform);
-    if (node->type == SvgNodeType::Doc || !node->display) return;
+    if (node->type == SvgNodeType::Doc || !node->style->display) return;
 
     //If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
@@ -474,7 +474,10 @@ static bool _appendClipShape(SvgLoaderData& loaderData, SvgNode* node, Shape* sh
         auto ptsCnt = shape->pathCoords(&pts);
 
         auto p = const_cast<Point*>(pts) + currentPtsCnt;
-        while (currentPtsCnt++ < ptsCnt) mathMultiply(p++, m);
+        while (currentPtsCnt++ < ptsCnt) {
+            *p *= *m;
+            ++p;
+        }
     }
 
     _applyProperty(loaderData, node, shape, vBox, svgPath, true);
@@ -505,6 +508,7 @@ static constexpr struct
 } imageMimeTypes[] = {
     {"jpeg", sizeof("jpeg"), imageMimeTypeEncoding::base64},
     {"png", sizeof("png"), imageMimeTypeEncoding::base64},
+    {"webp", sizeof("webp"), imageMimeTypeEncoding::base64},
     {"svg+xml", sizeof("svg+xml"), imageMimeTypeEncoding::base64 | imageMimeTypeEncoding::utf8},
 };
 
@@ -557,7 +561,7 @@ static bool _isValidImageMimeTypeAndEncoding(const char** href, const char** mim
 
 static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode* node, const Box& vBox, const string& svgPath)
 {
-    if (!node->node.image.href) return nullptr;
+    if (!node->node.image.href || !strlen(node->node.image.href)) return nullptr;
     auto picture = Picture::gen();
 
     TaskScheduler::async(false);    //force to load a picture on the same thread
@@ -615,7 +619,7 @@ static unique_ptr<Picture> _imageBuildHelper(SvgLoaderData& loaderData, SvgNode*
         auto sy = node->node.image.h / h;
         m = {sx, 0, node->node.image.x, 0, sy, node->node.image.y, 0, 0, 1};
     }
-    if (node->transform) m = mathMultiply(node->transform, &m);
+    if (node->transform) m = *node->transform * m;
     picture->transform(m);
 
     _applyComposition(loaderData, picture.get(), node, vBox, svgPath);
@@ -708,7 +712,7 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
     if (node->transform) mUseTransform = *node->transform;
     if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
         Matrix mTranslate = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
-        mUseTransform = mathMultiply(&mUseTransform, &mTranslate);
+        mUseTransform *= mTranslate;
     }
 
     if (node->node.use.symbol) {
@@ -732,9 +736,9 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
         // mSceneTransform = mUseTransform * mSymbolTransform * mViewBox
         Matrix mSceneTransform = mViewBox;
         if (node->node.use.symbol->transform) {
-            mSceneTransform = mathMultiply(node->node.use.symbol->transform, &mViewBox);
+            mSceneTransform = *node->node.use.symbol->transform * mViewBox;
         }
-        mSceneTransform = mathMultiply(&mUseTransform, &mSceneTransform);
+        mSceneTransform = mUseTransform * mSceneTransform;
         scene->transform(mSceneTransform);
 
         if (node->node.use.symbol->node.symbol.overflowVisible) {
@@ -746,7 +750,7 @@ static unique_ptr<Scene> _useBuildHelper(SvgLoaderData& loaderData, const SvgNod
             // mClipTransform = mUseTransform * mSymbolTransform
             Matrix mClipTransform = mUseTransform;
             if (node->node.use.symbol->transform) {
-                mClipTransform = mathMultiply(&mUseTransform, node->node.use.symbol->transform);
+                mClipTransform = mUseTransform * *node->node.use.symbol->transform;
             }
             viewBoxClip->transform(mClipTransform);
 
@@ -782,13 +786,13 @@ static unique_ptr<Scene> _sceneBuildHelper(SvgLoaderData& loaderData, const SvgN
         // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
         if (!mask && node->transform && node->type != SvgNodeType::Symbol) scene->transform(*node->transform);
 
-        if (node->display && node->style->opacity != 0) {
+        if (node->style->display && node->style->opacity != 0) {
             auto child = node->child.data;
             for (uint32_t i = 0; i < node->child.count; ++i, ++child) {
                 if (_isGroupType((*child)->type)) {
                     if ((*child)->type == SvgNodeType::Use)
                         scene->push(_useBuildHelper(loaderData, *child, vBox, svgPath, depth + 1, isMaskWhite));
-                    else
+                    else if (!((*child)->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use))
                         scene->push(_sceneBuildHelper(loaderData, *child, vBox, svgPath, false, depth + 1, isMaskWhite));
                 } else if ((*child)->type == SvgNodeType::Image) {
                     auto image = _imageBuildHelper(loaderData, *child, vBox, svgPath);

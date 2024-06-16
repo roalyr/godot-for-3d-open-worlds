@@ -154,11 +154,11 @@ void EditorExportPlatformWeb::_fix_html(Vector<uint8_t> &p_html, const Ref<Edito
 
 	String head_include;
 	if (p_preset->get("html/export_icon")) {
-		head_include += "<link id='-gd-engine-icon' rel='icon' type='image/png' href='" + p_name + ".icon.png' />\n";
-		head_include += "<link rel='apple-touch-icon' href='" + p_name + ".apple-touch-icon.png'/>\n";
+		head_include += "<link id=\"-gd-engine-icon\" rel=\"icon\" type=\"image/png\" href=\"" + p_name + ".icon.png\" />\n";
+		head_include += "<link rel=\"apple-touch-icon\" href=\"" + p_name + ".apple-touch-icon.png\"/>\n";
 	}
 	if (p_preset->get("progressive_web_app/enabled")) {
-		head_include += "<link rel='manifest' href='" + p_name + ".manifest.json'>\n";
+		head_include += "<link rel=\"manifest\" href=\"" + p_name + ".manifest.json\">\n";
 		config["serviceWorker"] = p_name + ".service.worker.js";
 	}
 
@@ -585,17 +585,20 @@ bool EditorExportPlatformWeb::poll_export() {
 		}
 	}
 
+	int prev = menu_options;
+	menu_options = preset.is_valid();
 	HTTPServerState prev_server_state = server_state;
 	server_state = HTTP_SERVER_STATE_OFF;
 	if (server->is_listening()) {
-		if (preset.is_null()) {
+		if (preset.is_null() || menu_options == 0) {
 			server->stop();
 		} else {
 			server_state = HTTP_SERVER_STATE_ON;
+			menu_options += 1;
 		}
 	}
 
-	return server_state != prev_server_state;
+	return server_state != prev_server_state || menu_options != prev;
 }
 
 Ref<ImageTexture> EditorExportPlatformWeb::get_option_icon(int p_index) const {

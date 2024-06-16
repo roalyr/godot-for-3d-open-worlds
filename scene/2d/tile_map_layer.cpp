@@ -30,7 +30,6 @@
 
 #include "tile_map_layer.h"
 
-#include "core/core_string_names.h"
 #include "core/io/marshalls.h"
 #include "scene/2d/tile_map.h"
 #include "scene/gui/control.h"
@@ -206,14 +205,14 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 
 	// Check if anything changed that might change the quadrant shape.
 	// If so, recreate everything.
-	bool quandrant_shape_changed = dirty.flags[DIRTY_FLAGS_LAYER_RENDERING_QUADRANT_SIZE] ||
-			(is_y_sort_enabled() && (dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ENABLED] || dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ORIGIN] || dirty.flags[DIRTY_FLAGS_LAYER_LOCAL_TRANSFORM] || dirty.flags[DIRTY_FLAGS_TILE_SET]));
+	bool quadrant_shape_changed = dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ENABLED] || dirty.flags[DIRTY_FLAGS_TILE_SET] ||
+			(is_y_sort_enabled() && (dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ORIGIN] || dirty.flags[DIRTY_FLAGS_LAYER_X_DRAW_ORDER_REVERSED] || dirty.flags[DIRTY_FLAGS_LAYER_LOCAL_TRANSFORM])) ||
+			(!is_y_sort_enabled() && dirty.flags[DIRTY_FLAGS_LAYER_RENDERING_QUADRANT_SIZE]);
 
 	// Free all quadrants.
-	if (forced_cleanup || quandrant_shape_changed) {
+	if (forced_cleanup || quadrant_shape_changed) {
 		for (const KeyValue<Vector2i, Ref<RenderingQuadrant>> &kv : rendering_quadrant_map) {
-			for (int i = 0; i < kv.value->canvas_items.size(); i++) {
-				const RID &ci = kv.value->canvas_items[i];
+			for (const RID &ci : kv.value->canvas_items) {
 				if (ci.is_valid()) {
 					rs->free(ci);
 				}
@@ -266,9 +265,8 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 				rendering_quadrant->canvas_items.clear();
 
 				// Sort the quadrant cells.
-				if (is_y_sort_enabled()) {
-					// For compatibility reasons, we use another comparator for Y-sorted layers.
-					rendering_quadrant->cells.sort_custom<CellDataYSortedComparator>();
+				if (is_y_sort_enabled() && x_draw_order_reversed) {
+					rendering_quadrant->cells.sort_custom<CellDataYSortedXReversedComparator>();
 				} else {
 					rendering_quadrant->cells.sort();
 				}
@@ -342,7 +340,7 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 					}
 
 					// Drawing the tile in the canvas item.
-					TileMap::draw_tile(ci, local_tile_pos - rendering_quadrant->canvas_items_position, tile_set, cell_data.cell.source_id, cell_data.cell.get_atlas_coords(), cell_data.cell.alternative_tile, -1, get_self_modulate(), tile_data, random_animation_offset);
+					draw_tile(ci, local_tile_pos - rendering_quadrant->canvas_items_position, tile_set, cell_data.cell.source_id, cell_data.cell.get_atlas_coords(), cell_data.cell.alternative_tile, -1, get_self_modulate(), tile_data, random_animation_offset);
 				}
 
 				// Reset physics interpolation for any recreated canvas items.
@@ -354,8 +352,7 @@ void TileMapLayer::_rendering_update(bool p_force_cleanup) {
 
 			} else {
 				// Free the quadrant.
-				for (int i = 0; i < rendering_quadrant->canvas_items.size(); i++) {
-					const RID &ci = rendering_quadrant->canvas_items[i];
+				for (const RID &ci : rendering_quadrant->canvas_items) {
 					if (ci.is_valid()) {
 						rs->free(ci);
 					}
@@ -606,6 +603,7 @@ void TileMapLayer::_rendering_occluders_update_cell(CellData &r_cell_data) {
 						rs->canvas_light_occluder_set_polygon(occluder, tile_data->get_occluder(occlusion_layer_index, flip_h, flip_v, transpose)->get_rid());
 						rs->canvas_light_occluder_attach_to_canvas(occluder, get_canvas());
 						rs->canvas_light_occluder_set_light_mask(occluder, tile_set->get_occlusion_layer_light_mask(occlusion_layer_index));
+						rs->canvas_light_occluder_set_as_sdf_collision(occluder, tile_set->get_occlusion_layer_sdf_collision(occlusion_layer_index));
 					} else {
 						// Clear occluder.
 						if (occluder.is_valid()) {
@@ -1600,11 +1598,11 @@ RBSet<TerrainConstraint> TileMapLayer::_get_terrain_constraints_from_painted_cel
 void TileMapLayer::_tile_set_changed() {
 	dirty.flags[DIRTY_FLAGS_TILE_SET] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::_renamed() {
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::_update_notify_local_transform() {
@@ -1698,18 +1696,18 @@ void TileMapLayer::_notification(int p_what) {
 			_internal_update(true);
 		} break;
 
-		case TileMap::NOTIFICATION_ENTER_CANVAS: {
+		case NOTIFICATION_ENTER_CANVAS: {
 			dirty.flags[DIRTY_FLAGS_LAYER_IN_CANVAS] = true;
 			_queue_internal_update();
 		} break;
 
-		case TileMap::NOTIFICATION_EXIT_CANVAS: {
+		case NOTIFICATION_EXIT_CANVAS: {
 			dirty.flags[DIRTY_FLAGS_LAYER_IN_CANVAS] = true;
 			// Update immediately on exiting, and force cleanup.
 			_internal_update(true);
 		} break;
 
-		case TileMap::NOTIFICATION_VISIBILITY_CHANGED: {
+		case NOTIFICATION_VISIBILITY_CHANGED: {
 			dirty.flags[DIRTY_FLAGS_LAYER_VISIBILITY] = true;
 			_queue_internal_update();
 		} break;
@@ -1772,6 +1770,8 @@ void TileMapLayer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_y_sort_origin", "y_sort_origin"), &TileMapLayer::set_y_sort_origin);
 	ClassDB::bind_method(D_METHOD("get_y_sort_origin"), &TileMapLayer::get_y_sort_origin);
+	ClassDB::bind_method(D_METHOD("set_x_draw_order_reversed", "x_draw_order_reversed"), &TileMapLayer::set_x_draw_order_reversed);
+	ClassDB::bind_method(D_METHOD("is_x_draw_order_reversed"), &TileMapLayer::is_x_draw_order_reversed);
 	ClassDB::bind_method(D_METHOD("set_rendering_quadrant_size", "size"), &TileMapLayer::set_rendering_quadrant_size);
 	ClassDB::bind_method(D_METHOD("get_rendering_quadrant_size"), &TileMapLayer::get_rendering_quadrant_size);
 
@@ -1798,6 +1798,7 @@ void TileMapLayer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "tile_set", PROPERTY_HINT_RESOURCE_TYPE, "TileSet"), "set_tile_set", "get_tile_set");
 	ADD_GROUP("Rendering", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "y_sort_origin"), "set_y_sort_origin", "get_y_sort_origin");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "x_draw_order_reversed"), "set_x_draw_order_reversed", "is_x_draw_order_reversed");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "rendering_quadrant_size"), "set_rendering_quadrant_size", "get_rendering_quadrant_size");
 	ADD_GROUP("Physics", "");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "collision_enabled"), "set_collision_enabled", "is_collision_enabled");
@@ -1807,7 +1808,7 @@ void TileMapLayer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "navigation_enabled"), "set_navigation_enabled", "is_navigation_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "navigation_visibility_mode", PROPERTY_HINT_ENUM, "Default,Force Show,Force Hide"), "set_navigation_visibility_mode", "get_navigation_visibility_mode");
 
-	ADD_SIGNAL(MethodInfo(CoreStringNames::get_singleton()->changed));
+	ADD_SIGNAL(MethodInfo(CoreStringName(changed)));
 
 	ADD_PROPERTY_DEFAULT("tile_map_data_format", TileMapDataFormat::TILE_MAP_DATA_FORMAT_1);
 
@@ -1816,12 +1817,24 @@ void TileMapLayer::_bind_methods() {
 	BIND_ENUM_CONSTANT(DEBUG_VISIBILITY_MODE_FORCE_SHOW);
 }
 
+void TileMapLayer::_validate_property(PropertyInfo &p_property) const {
+	if (is_y_sort_enabled()) {
+		if (p_property.name == "rendering_quadrant_size") {
+			p_property.usage |= PROPERTY_USAGE_READ_ONLY;
+		}
+	} else {
+		if (p_property.name == "x_draw_order_reversed") {
+			p_property.usage |= PROPERTY_USAGE_READ_ONLY;
+		}
+	}
+}
+
 void TileMapLayer::_update_self_texture_filter(RS::CanvasItemTextureFilter p_texture_filter) {
 	// Set a default texture filter for the whole tilemap.
 	CanvasItem::_update_self_texture_filter(p_texture_filter);
 	dirty.flags[DIRTY_FLAGS_LAYER_TEXTURE_FILTER] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::_update_self_texture_repeat(RS::CanvasItemTextureRepeat p_texture_repeat) {
@@ -1829,7 +1842,7 @@ void TileMapLayer::_update_self_texture_repeat(RS::CanvasItemTextureRepeat p_tex
 	CanvasItem::_update_self_texture_repeat(p_texture_repeat);
 	dirty.flags[DIRTY_FLAGS_LAYER_TEXTURE_REPEAT] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::set_as_tile_map_internal_node(int p_index) {
@@ -2164,6 +2177,91 @@ TileMapCell TileMapLayer::get_cell(const Vector2i &p_coords) const {
 	}
 }
 
+void TileMapLayer::draw_tile(RID p_canvas_item, const Vector2 &p_position, const Ref<TileSet> p_tile_set, int p_atlas_source_id, const Vector2i &p_atlas_coords, int p_alternative_tile, int p_frame, Color p_modulation, const TileData *p_tile_data_override, real_t p_normalized_animation_offset) {
+	ERR_FAIL_COND(p_tile_set.is_null());
+	ERR_FAIL_COND(!p_tile_set->has_source(p_atlas_source_id));
+	ERR_FAIL_COND(!p_tile_set->get_source(p_atlas_source_id)->has_tile(p_atlas_coords));
+	ERR_FAIL_COND(!p_tile_set->get_source(p_atlas_source_id)->has_alternative_tile(p_atlas_coords, p_alternative_tile));
+	TileSetSource *source = *p_tile_set->get_source(p_atlas_source_id);
+	TileSetAtlasSource *atlas_source = Object::cast_to<TileSetAtlasSource>(source);
+	if (atlas_source) {
+		// Check for the frame.
+		if (p_frame >= 0) {
+			ERR_FAIL_INDEX(p_frame, atlas_source->get_tile_animation_frames_count(p_atlas_coords));
+		}
+
+		// Get the texture.
+		Ref<Texture2D> tex = atlas_source->get_runtime_texture();
+		if (tex.is_null()) {
+			return;
+		}
+
+		// Check if we are in the texture, return otherwise.
+		Vector2i grid_size = atlas_source->get_atlas_grid_size();
+		if (p_atlas_coords.x >= grid_size.x || p_atlas_coords.y >= grid_size.y) {
+			return;
+		}
+
+		// Get tile data.
+		const TileData *tile_data = p_tile_data_override ? p_tile_data_override : atlas_source->get_tile_data(p_atlas_coords, p_alternative_tile);
+
+		// Get the tile modulation.
+		Color modulate = tile_data->get_modulate() * p_modulation;
+
+		// Compute the offset.
+		Vector2 tile_offset = tile_data->get_texture_origin();
+
+		// Get destination rect.
+		Rect2 dest_rect;
+		dest_rect.size = atlas_source->get_runtime_tile_texture_region(p_atlas_coords).size;
+		dest_rect.size.x += FP_ADJUST;
+		dest_rect.size.y += FP_ADJUST;
+
+		bool transpose = tile_data->get_transpose() ^ bool(p_alternative_tile & TileSetAtlasSource::TRANSFORM_TRANSPOSE);
+		if (transpose) {
+			dest_rect.position = (p_position - Vector2(dest_rect.size.y, dest_rect.size.x) / 2 - tile_offset);
+		} else {
+			dest_rect.position = (p_position - dest_rect.size / 2 - tile_offset);
+		}
+
+		if (tile_data->get_flip_h() ^ bool(p_alternative_tile & TileSetAtlasSource::TRANSFORM_FLIP_H)) {
+			dest_rect.size.x = -dest_rect.size.x;
+		}
+
+		if (tile_data->get_flip_v() ^ bool(p_alternative_tile & TileSetAtlasSource::TRANSFORM_FLIP_V)) {
+			dest_rect.size.y = -dest_rect.size.y;
+		}
+
+		// Draw the tile.
+		if (p_frame >= 0) {
+			Rect2i source_rect = atlas_source->get_runtime_tile_texture_region(p_atlas_coords, p_frame);
+			tex->draw_rect_region(p_canvas_item, dest_rect, source_rect, modulate, transpose, p_tile_set->is_uv_clipping());
+		} else if (atlas_source->get_tile_animation_frames_count(p_atlas_coords) == 1) {
+			Rect2i source_rect = atlas_source->get_runtime_tile_texture_region(p_atlas_coords, 0);
+			tex->draw_rect_region(p_canvas_item, dest_rect, source_rect, modulate, transpose, p_tile_set->is_uv_clipping());
+		} else {
+			real_t speed = atlas_source->get_tile_animation_speed(p_atlas_coords);
+			real_t animation_duration = atlas_source->get_tile_animation_total_duration(p_atlas_coords) / speed;
+			real_t animation_offset = p_normalized_animation_offset * animation_duration;
+			// Accumulate durations unaffected by the speed to avoid accumulating floating point division errors.
+			// Aka do `sum(duration[i]) / speed` instead of `sum(duration[i] / speed)`.
+			real_t time_unscaled = 0.0;
+			for (int frame = 0; frame < atlas_source->get_tile_animation_frames_count(p_atlas_coords); frame++) {
+				real_t frame_duration_unscaled = atlas_source->get_tile_animation_frame_duration(p_atlas_coords, frame);
+				real_t slice_start = time_unscaled / speed;
+				real_t slice_end = (time_unscaled + frame_duration_unscaled) / speed;
+				RenderingServer::get_singleton()->canvas_item_add_animation_slice(p_canvas_item, animation_duration, slice_start, slice_end, animation_offset);
+
+				Rect2i source_rect = atlas_source->get_runtime_tile_texture_region(p_atlas_coords, frame);
+				tex->draw_rect_region(p_canvas_item, dest_rect, source_rect, modulate, transpose, p_tile_set->is_uv_clipping());
+
+				time_unscaled += frame_duration_unscaled;
+			}
+			RenderingServer::get_singleton()->canvas_item_add_animation_slice(p_canvas_item, 1.0, 0.0, 1.0, 0.0);
+		}
+	}
+}
+
 void TileMapLayer::set_cell(const Vector2i &p_coords, int p_source_id, const Vector2i &p_atlas_coords, int p_alternative_tile) {
 	// Set the current cell tile (using integer position).
 	Vector2i pk(p_coords);
@@ -2214,7 +2312,7 @@ void TileMapLayer::erase_cell(const Vector2i &p_coords) {
 }
 
 void TileMapLayer::fix_invalid_tiles() {
-	ERR_FAIL_COND_MSG(tile_set.is_null(), "Cannot call fix_invalid_tiles() on a TileMap without a valid TileSet.");
+	ERR_FAIL_COND_MSG(tile_set.is_null(), "Cannot call fix_invalid_tiles() on a TileMapLayer without a valid TileSet.");
 
 	RBSet<Vector2i> coords;
 	for (const KeyValue<Vector2i, CellData> &E : tile_map_layer_data) {
@@ -2504,7 +2602,7 @@ void TileMapLayer::update_internals() {
 void TileMapLayer::notify_runtime_tile_data_update() {
 	dirty.flags[TileMapLayer::DIRTY_FLAGS_LAYER_RUNTIME_UPDATE] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 Vector2i TileMapLayer::map_pattern(const Vector2i &p_position_in_tilemap, const Vector2i &p_coords_in_pattern, Ref<TileMapPattern> p_pattern) {
@@ -2539,7 +2637,7 @@ void TileMapLayer::set_enabled(bool p_enabled) {
 	enabled = p_enabled;
 	dirty.flags[DIRTY_FLAGS_LAYER_ENABLED] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 bool TileMapLayer::is_enabled() const {
@@ -2565,7 +2663,7 @@ void TileMapLayer::set_tile_set(const Ref<TileSet> &p_tile_set) {
 		tile_set->connect_changed(callable_mp(this, &TileMapLayer::_tile_set_changed));
 	}
 
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 
 	// Trigger updates for TileSet's read-only status.
 	notify_property_list_changed();
@@ -2677,7 +2775,7 @@ void TileMapLayer::set_self_modulate(const Color &p_self_modulate) {
 	CanvasItem::set_self_modulate(p_self_modulate);
 	dirty.flags[DIRTY_FLAGS_LAYER_SELF_MODULATE] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::set_y_sort_enabled(bool p_y_sort_enabled) {
@@ -2687,8 +2785,9 @@ void TileMapLayer::set_y_sort_enabled(bool p_y_sort_enabled) {
 	CanvasItem::set_y_sort_enabled(p_y_sort_enabled);
 	dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ENABLED] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 
+	notify_property_list_changed();
 	_update_notify_local_transform();
 }
 
@@ -2699,11 +2798,25 @@ void TileMapLayer::set_y_sort_origin(int p_y_sort_origin) {
 	y_sort_origin = p_y_sort_origin;
 	dirty.flags[DIRTY_FLAGS_LAYER_Y_SORT_ORIGIN] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 int TileMapLayer::get_y_sort_origin() const {
 	return y_sort_origin;
+}
+
+void TileMapLayer::set_x_draw_order_reversed(bool p_x_draw_order_reversed) {
+	if (x_draw_order_reversed == p_x_draw_order_reversed) {
+		return;
+	}
+	x_draw_order_reversed = p_x_draw_order_reversed;
+	dirty.flags[DIRTY_FLAGS_LAYER_X_DRAW_ORDER_REVERSED] = true;
+	_queue_internal_update();
+	emit_signal(CoreStringName(changed));
+}
+
+bool TileMapLayer::is_x_draw_order_reversed() const {
+	return x_draw_order_reversed;
 }
 
 void TileMapLayer::set_z_index(int p_z_index) {
@@ -2713,7 +2826,7 @@ void TileMapLayer::set_z_index(int p_z_index) {
 	CanvasItem::set_z_index(p_z_index);
 	dirty.flags[DIRTY_FLAGS_LAYER_Z_INDEX] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::set_light_mask(int p_light_mask) {
@@ -2723,19 +2836,18 @@ void TileMapLayer::set_light_mask(int p_light_mask) {
 	CanvasItem::set_light_mask(p_light_mask);
 	dirty.flags[DIRTY_FLAGS_LAYER_LIGHT_MASK] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 void TileMapLayer::set_rendering_quadrant_size(int p_size) {
 	if (rendering_quadrant_size == p_size) {
 		return;
 	}
-	dirty.flags[DIRTY_FLAGS_LAYER_RENDERING_QUADRANT_SIZE] = true;
 	ERR_FAIL_COND_MSG(p_size < 1, "TileMapQuadrant size cannot be smaller than 1.");
-
 	rendering_quadrant_size = p_size;
+	dirty.flags[DIRTY_FLAGS_LAYER_RENDERING_QUADRANT_SIZE] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 int TileMapLayer::get_rendering_quadrant_size() const {
@@ -2749,7 +2861,7 @@ void TileMapLayer::set_collision_enabled(bool p_enabled) {
 	collision_enabled = p_enabled;
 	dirty.flags[DIRTY_FLAGS_LAYER_COLLISION_ENABLED] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 bool TileMapLayer::is_collision_enabled() const {
@@ -2757,10 +2869,13 @@ bool TileMapLayer::is_collision_enabled() const {
 }
 
 void TileMapLayer::set_use_kinematic_bodies(bool p_use_kinematic_bodies) {
+	if (use_kinematic_bodies == p_use_kinematic_bodies) {
+		return;
+	}
 	use_kinematic_bodies = p_use_kinematic_bodies;
 	dirty.flags[DIRTY_FLAGS_LAYER_USE_KINEMATIC_BODIES] = p_use_kinematic_bodies;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 bool TileMapLayer::is_using_kinematic_bodies() const {
@@ -2774,7 +2889,7 @@ void TileMapLayer::set_collision_visibility_mode(TileMapLayer::DebugVisibilityMo
 	collision_visibility_mode = p_show_collision;
 	dirty.flags[DIRTY_FLAGS_LAYER_COLLISION_VISIBILITY_MODE] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 TileMapLayer::DebugVisibilityMode TileMapLayer::get_collision_visibility_mode() const {
@@ -2788,7 +2903,7 @@ void TileMapLayer::set_navigation_enabled(bool p_enabled) {
 	navigation_enabled = p_enabled;
 	dirty.flags[DIRTY_FLAGS_LAYER_NAVIGATION_ENABLED] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 bool TileMapLayer::is_navigation_enabled() const {
@@ -2802,7 +2917,7 @@ void TileMapLayer::set_navigation_map(RID p_map) {
 	navigation_map_override = p_map;
 	dirty.flags[DIRTY_FLAGS_LAYER_NAVIGATION_MAP] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 RID TileMapLayer::get_navigation_map() const {
@@ -2821,7 +2936,7 @@ void TileMapLayer::set_navigation_visibility_mode(TileMapLayer::DebugVisibilityM
 	navigation_visibility_mode = p_show_navigation;
 	dirty.flags[DIRTY_FLAGS_LAYER_NAVIGATION_VISIBILITY_MODE] = true;
 	_queue_internal_update();
-	emit_signal(CoreStringNames::get_singleton()->changed);
+	emit_signal(CoreStringName(changed));
 }
 
 TileMapLayer::DebugVisibilityMode TileMapLayer::get_navigation_visibility_mode() const {

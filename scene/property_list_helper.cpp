@@ -36,14 +36,17 @@ const PropertyListHelper::Property *PropertyListHelper::_get_property(const Stri
 		return nullptr;
 	}
 
-	{
-		const String index_string = components[0].trim_prefix(prefix);
-		if (!index_string.is_valid_int()) {
-			return nullptr;
-		}
-		*r_index = index_string.to_int();
+	const String index_string = components[0].trim_prefix(prefix);
+	if (!index_string.is_valid_int()) {
+		return nullptr;
 	}
 
+	int index = index_string.to_int();
+	if (index < 0 || index >= _call_array_length_getter()) {
+		return nullptr;
+	}
+
+	*r_index = index;
 	return property_list.getptr(components[1]);
 }
 
@@ -66,6 +69,11 @@ Variant PropertyListHelper::_call_getter(const Property *p_property, int p_index
 	return p_property->getter->call(object, argptrs, 1, ce);
 }
 
+int PropertyListHelper::_call_array_length_getter() const {
+	Callable::CallError ce;
+	return array_length_getter->call(object, nullptr, 0, ce);
+}
+
 void PropertyListHelper::set_prefix(const String &p_prefix) {
 	prefix = p_prefix;
 }
@@ -83,7 +91,13 @@ bool PropertyListHelper::is_initialized() const {
 }
 
 void PropertyListHelper::setup_for_instance(const PropertyListHelper &p_base, Object *p_object) {
+	DEV_ASSERT(!p_base.prefix.is_empty());
+	DEV_ASSERT(p_base.array_length_getter != nullptr);
+	DEV_ASSERT(!p_base.property_list.is_empty());
+	DEV_ASSERT(p_object != nullptr);
+
 	prefix = p_base.prefix;
+	array_length_getter = p_base.array_length_getter;
 	property_list = p_base.property_list;
 	object = p_object;
 }
@@ -108,8 +122,9 @@ bool PropertyListHelper::is_property_valid(const String &p_property, int *r_inde
 	return property_list.has(components[1]);
 }
 
-void PropertyListHelper::get_property_list(List<PropertyInfo> *p_list, int p_count) const {
-	for (int i = 0; i < p_count; i++) {
+void PropertyListHelper::get_property_list(List<PropertyInfo> *p_list) const {
+	const int property_count = _call_array_length_getter();
+	for (int i = 0; i < property_count; i++) {
 		for (const KeyValue<String, Property> &E : property_list) {
 			const Property &property = E.value;
 
@@ -163,7 +178,9 @@ bool PropertyListHelper::property_get_revert(const String &p_property, Variant &
 
 PropertyListHelper::~PropertyListHelper() {
 	// No object = it's the main helper. Do a cleanup.
-	if (!object) {
+	if (!object && is_initialized()) {
+		memdelete(array_length_getter);
+
 		for (const KeyValue<String, Property> &E : property_list) {
 			if (E.value.setter) {
 				memdelete(E.value.setter);

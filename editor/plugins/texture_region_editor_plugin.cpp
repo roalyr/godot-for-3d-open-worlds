@@ -842,8 +842,8 @@ void TextureRegionEditor::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_THEME_CHANGED: {
-			texture_preview->add_theme_style_override("panel", get_theme_stylebox(SNAME("TextureRegionPreviewBG"), EditorStringName(EditorStyles)));
-			texture_overlay->add_theme_style_override("panel", get_theme_stylebox(SNAME("TextureRegionPreviewFG"), EditorStringName(EditorStyles)));
+			texture_preview->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("TextureRegionPreviewBG"), EditorStringName(EditorStyles)));
+			texture_overlay->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("TextureRegionPreviewFG"), EditorStringName(EditorStyles)));
 
 			zoom_out->set_icon(get_editor_theme_icon(SNAME("ZoomLess")));
 			zoom_reset->set_icon(get_editor_theme_icon(SNAME("ZoomReset")));
@@ -881,13 +881,13 @@ void TextureRegionEditor::_node_removed(Node *p_node) {
 
 void TextureRegionEditor::_clear_edited_object() {
 	if (node_sprite_2d) {
-		node_sprite_2d->disconnect("texture_changed", callable_mp(this, &TextureRegionEditor::_texture_changed));
+		node_sprite_2d->disconnect(SceneStringName(texture_changed), callable_mp(this, &TextureRegionEditor::_texture_changed));
 	}
 	if (node_sprite_3d) {
-		node_sprite_3d->disconnect("texture_changed", callable_mp(this, &TextureRegionEditor::_texture_changed));
+		node_sprite_3d->disconnect(SceneStringName(texture_changed), callable_mp(this, &TextureRegionEditor::_texture_changed));
 	}
 	if (node_ninepatch) {
-		node_ninepatch->disconnect("texture_changed", callable_mp(this, &TextureRegionEditor::_texture_changed));
+		node_ninepatch->disconnect(SceneStringName(texture_changed), callable_mp(this, &TextureRegionEditor::_texture_changed));
 	}
 	if (res_stylebox.is_valid()) {
 		res_stylebox->disconnect_changed(callable_mp(this, &TextureRegionEditor::_texture_changed));
@@ -924,7 +924,7 @@ void TextureRegionEditor::edit(Object *p_obj) {
 		if (is_resource) {
 			Object::cast_to<Resource>(p_obj)->connect_changed(callable_mp(this, &TextureRegionEditor::_texture_changed));
 		} else {
-			p_obj->connect("texture_changed", callable_mp(this, &TextureRegionEditor::_texture_changed));
+			p_obj->connect(SceneStringName(texture_changed), callable_mp(this, &TextureRegionEditor::_texture_changed));
 		}
 		_edit_region();
 	}
@@ -1212,14 +1212,14 @@ TextureRegionEditor::TextureRegionEditor() {
 	vb->add_child(texture_preview);
 	texture_preview->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	texture_preview->set_clip_contents(true);
-	texture_preview->connect("draw", callable_mp(this, &TextureRegionEditor::_texture_preview_draw));
+	texture_preview->connect(SceneStringName(draw), callable_mp(this, &TextureRegionEditor::_texture_preview_draw));
 
 	texture_overlay = memnew(Panel);
 	texture_preview->add_child(texture_overlay);
 	texture_overlay->set_focus_mode(Control::FOCUS_CLICK);
-	texture_overlay->connect("draw", callable_mp(this, &TextureRegionEditor::_texture_overlay_draw));
-	texture_overlay->connect("gui_input", callable_mp(this, &TextureRegionEditor::_texture_overlay_input));
-	texture_overlay->connect("focus_exited", callable_mp(panner.ptr(), &ViewPanner::release_pan_key));
+	texture_overlay->connect(SceneStringName(draw), callable_mp(this, &TextureRegionEditor::_texture_overlay_draw));
+	texture_overlay->connect(SceneStringName(gui_input), callable_mp(this, &TextureRegionEditor::_texture_overlay_input));
+	texture_overlay->connect(SceneStringName(focus_exited), callable_mp(panner.ptr(), &ViewPanner::release_pan_key));
 
 	HBoxContainer *zoom_hb = memnew(HBoxContainer);
 	texture_overlay->add_child(zoom_hb);
@@ -1228,19 +1228,19 @@ TextureRegionEditor::TextureRegionEditor() {
 	zoom_out = memnew(Button);
 	zoom_out->set_flat(true);
 	zoom_out->set_tooltip_text(TTR("Zoom Out"));
-	zoom_out->connect("pressed", callable_mp(this, &TextureRegionEditor::_zoom_out));
+	zoom_out->connect(SceneStringName(pressed), callable_mp(this, &TextureRegionEditor::_zoom_out));
 	zoom_hb->add_child(zoom_out);
 
 	zoom_reset = memnew(Button);
 	zoom_reset->set_flat(true);
 	zoom_reset->set_tooltip_text(TTR("Zoom Reset"));
-	zoom_reset->connect("pressed", callable_mp(this, &TextureRegionEditor::_zoom_reset));
+	zoom_reset->connect(SceneStringName(pressed), callable_mp(this, &TextureRegionEditor::_zoom_reset));
 	zoom_hb->add_child(zoom_reset);
 
 	zoom_in = memnew(Button);
 	zoom_in->set_flat(true);
 	zoom_in->set_tooltip_text(TTR("Zoom In"));
-	zoom_in->connect("pressed", callable_mp(this, &TextureRegionEditor::_zoom_in));
+	zoom_in->connect(SceneStringName(pressed), callable_mp(this, &TextureRegionEditor::_zoom_in));
 	zoom_hb->add_child(zoom_in);
 
 	vscroll = memnew(VScrollBar);
@@ -1271,7 +1271,7 @@ bool EditorInspectorPluginTextureRegion::parse_property(Object *p_object, const 
 		if (((Object::cast_to<Sprite2D>(p_object) || Object::cast_to<Sprite3D>(p_object) || Object::cast_to<NinePatchRect>(p_object) || Object::cast_to<StyleBoxTexture>(p_object)) && p_path == "region_rect") || (Object::cast_to<AtlasTexture>(p_object) && p_path == "region")) {
 			Button *button = EditorInspector::create_inspector_action_button(TTR("Edit Region"));
 			button->set_icon(texture_region_editor->get_editor_theme_icon(SNAME("RegionEdit")));
-			button->connect("pressed", callable_mp(this, &EditorInspectorPluginTextureRegion::_region_edit).bind(p_object));
+			button->connect(SceneStringName(pressed), callable_mp(this, &EditorInspectorPluginTextureRegion::_region_edit).bind(p_object));
 			add_property_editor(p_path, button, true);
 		}
 	}

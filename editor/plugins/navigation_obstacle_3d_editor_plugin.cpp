@@ -31,7 +31,6 @@
 #include "navigation_obstacle_3d_editor_plugin.h"
 
 #include "canvas_item_editor_plugin.h"
-#include "core/core_string_names.h"
 #include "core/input/input.h"
 #include "core/io/file_access.h"
 #include "core/math/geometry_2d.h"
@@ -527,13 +526,13 @@ NavigationObstacle3DEditor::NavigationObstacle3DEditor() {
 	button_create = memnew(Button);
 	button_create->set_theme_type_variation("FlatButton");
 	add_child(button_create);
-	button_create->connect("pressed", callable_mp(this, &NavigationObstacle3DEditor::_menu_option).bind(MODE_CREATE));
+	button_create->connect(SceneStringName(pressed), callable_mp(this, &NavigationObstacle3DEditor::_menu_option).bind(MODE_CREATE));
 	button_create->set_toggle_mode(true);
 
 	button_edit = memnew(Button);
 	button_edit->set_theme_type_variation("FlatButton");
 	add_child(button_edit);
-	button_edit->connect("pressed", callable_mp(this, &NavigationObstacle3DEditor::_menu_option).bind(MODE_EDIT));
+	button_edit->connect(SceneStringName(pressed), callable_mp(this, &NavigationObstacle3DEditor::_menu_option).bind(MODE_EDIT));
 	button_edit->set_toggle_mode(true);
 
 	mode = MODE_EDIT;

@@ -99,7 +99,9 @@ void FileDialog::set_visible(bool p_visible) {
 #endif
 
 	if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_NATIVE_DIALOG_FILE) && (use_native_dialog || OS::get_singleton()->is_sandboxed())) {
-		_native_popup();
+		if (p_visible) {
+			_native_popup();
+		}
 	} else {
 		ConfirmationDialog::set_visible(p_visible);
 	}
@@ -1344,6 +1346,7 @@ void FileDialog::_bind_methods() {
 	Option defaults;
 
 	base_property_helper.set_prefix("option_");
+	base_property_helper.set_array_length_getter(&FileDialog::get_option_count);
 	base_property_helper.register_property(PropertyInfo(Variant::STRING, "name"), defaults.name, &FileDialog::set_option_name, &FileDialog::get_option_name);
 	base_property_helper.register_property(PropertyInfo(Variant::PACKED_STRING_ARRAY, "values"), defaults.values, &FileDialog::set_option_values, &FileDialog::get_option_values);
 	base_property_helper.register_property(PropertyInfo(Variant::INT, "default"), defaults.default_idx, &FileDialog::set_option_default, &FileDialog::get_option_default);
@@ -1408,9 +1411,9 @@ FileDialog::FileDialog() {
 	hbc->add_child(dir_prev);
 	hbc->add_child(dir_next);
 	hbc->add_child(dir_up);
-	dir_prev->connect("pressed", callable_mp(this, &FileDialog::_go_back));
-	dir_next->connect("pressed", callable_mp(this, &FileDialog::_go_forward));
-	dir_up->connect("pressed", callable_mp(this, &FileDialog::_go_up));
+	dir_prev->connect(SceneStringName(pressed), callable_mp(this, &FileDialog::_go_back));
+	dir_next->connect(SceneStringName(pressed), callable_mp(this, &FileDialog::_go_forward));
+	dir_up->connect(SceneStringName(pressed), callable_mp(this, &FileDialog::_go_up));
 
 	hbc->add_child(memnew(Label(ETR("Path:"))));
 
@@ -1429,7 +1432,7 @@ FileDialog::FileDialog() {
 	refresh = memnew(Button);
 	refresh->set_theme_type_variation("FlatButton");
 	refresh->set_tooltip_text(ETR("Refresh files."));
-	refresh->connect("pressed", callable_mp(this, &FileDialog::update_file_list));
+	refresh->connect(SceneStringName(pressed), callable_mp(this, &FileDialog::update_file_list));
 	hbc->add_child(refresh);
 
 	show_hidden = memnew(Button);
@@ -1446,7 +1449,7 @@ FileDialog::FileDialog() {
 	makedir = memnew(Button);
 	makedir->set_theme_type_variation("FlatButton");
 	makedir->set_tooltip_text(ETR("Create a new folder."));
-	makedir->connect("pressed", callable_mp(this, &FileDialog::_make_dir));
+	makedir->connect(SceneStringName(pressed), callable_mp(this, &FileDialog::_make_dir));
 	hbc->add_child(makedir);
 	vbox->add_child(hbc);
 

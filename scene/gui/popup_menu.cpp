@@ -1014,9 +1014,6 @@ void PopupMenu::_notification(int p_what) {
 				float pm_delay = pm->get_submenu_popup_delay();
 				set_submenu_popup_delay(pm_delay);
 			}
-			if (!is_embedded()) {
-				set_flag(FLAG_NO_FOCUS, true);
-			}
 			if (system_menu_id != NativeMenu::INVALID_MENU_ID) {
 				bind_global_menu();
 			}
@@ -1029,7 +1026,7 @@ void PopupMenu::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_THEME_CHANGED: {
-			scroll_container->add_theme_style_override("panel", theme_cache.panel_style);
+			scroll_container->add_theme_style_override(SceneStringName(panel), theme_cache.panel_style);
 
 			[[fallthrough]];
 		}
@@ -2425,7 +2422,7 @@ void PopupMenu::activate_item(int p_idx) {
 		hide();
 	}
 
-	emit_signal(SNAME("id_pressed"), id);
+	emit_signal(SceneStringName(id_pressed), id);
 	emit_signal(SNAME("index_pressed"), p_idx);
 }
 
@@ -2808,6 +2805,7 @@ void PopupMenu::_bind_methods() {
 	Item defaults(true);
 
 	base_property_helper.set_prefix("item_");
+	base_property_helper.set_array_length_getter(&PopupMenu::get_item_count);
 	base_property_helper.register_property(PropertyInfo(Variant::STRING, "text"), defaults.text, &PopupMenu::set_item_text, &PopupMenu::get_item_text);
 	base_property_helper.register_property(PropertyInfo(Variant::OBJECT, "icon", PROPERTY_HINT_RESOURCE_TYPE, "Texture2D"), defaults.icon, &PopupMenu::set_item_icon, &PopupMenu::get_item_icon);
 	base_property_helper.register_property(PropertyInfo(Variant::INT, "checkable", PROPERTY_HINT_ENUM, "No,As checkbox,As radio button"), defaults.checkable_type, &PopupMenu::_set_item_checkable_type, &PopupMenu::_get_item_checkable_type);
@@ -2828,6 +2826,8 @@ void PopupMenu::popup(const Rect2i &p_bounds) {
 	if (native) {
 		NativeMenu::get_singleton()->popup(global_menu, (p_bounds != Rect2i()) ? p_bounds.position : get_position());
 	} else {
+		set_flag(FLAG_NO_FOCUS, !is_embedded());
+
 		moved = Vector2();
 		popup_time_msec = OS::get_singleton()->get_ticks_msec();
 		if (!is_embedded()) {
@@ -2855,6 +2855,8 @@ void PopupMenu::set_visible(bool p_visible) {
 			NativeMenu::get_singleton()->popup(global_menu, get_position());
 		}
 	} else {
+		set_flag(FLAG_NO_FOCUS, !is_embedded());
+
 		Popup::set_visible(p_visible);
 	}
 }
@@ -2873,7 +2875,7 @@ PopupMenu::PopupMenu() {
 	control->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	control->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	scroll_container->add_child(control, false, INTERNAL_MODE_FRONT);
-	control->connect("draw", callable_mp(this, &PopupMenu::_draw_items));
+	control->connect(SceneStringName(draw), callable_mp(this, &PopupMenu::_draw_items));
 
 	submenu_timer = memnew(Timer);
 	submenu_timer->set_wait_time(0.3);

@@ -217,6 +217,16 @@ static ufbx_skin_deformer *_find_skin_deformer(ufbx_skin_cluster *p_cluster) {
 	return nullptr;
 }
 
+static String _find_element_name(ufbx_element *p_element) {
+	if (p_element->name.length > 0) {
+		return FBXDocument::_as_string(p_element->name);
+	} else if (p_element->instances.count > 0) {
+		return _find_element_name(&p_element->instances[0]->element);
+	} else {
+		return "";
+	}
+}
+
 struct ThreadPoolFBX {
 	struct Group {
 		ufbx_thread_pool_context ctx = {};
@@ -693,10 +703,7 @@ Error FBXDocument::_parse_meshes(Ref<FBXState> p_state) {
 
 				// Find the first imported skin deformer
 				for (ufbx_skin_deformer *fbx_skin : fbx_mesh->skin_deformers) {
-					if (!p_state->skin_indices.has(fbx_skin->typed_id)) {
-						continue;
-					}
-					GLTFSkinIndex skin_i = p_state->skin_indices[fbx_skin->typed_id];
+					GLTFSkinIndex skin_i = p_state->original_skin_indices[fbx_skin->typed_id];
 					if (skin_i < 0) {
 						continue;
 					}
@@ -1374,6 +1381,10 @@ Error FBXDocument::_parse_animations(Ref<FBXState> p_state) {
 		additional_data["time_end"] = fbx_anim_stack->time_end;
 		animation->set_additional_data("GODOT_animation_time_begin_time_end", additional_data);
 		ufbx_bake_opts opts = {};
+		opts.resample_rate = p_state->get_bake_fps();
+		opts.minimum_sample_rate = p_state->get_bake_fps();
+		opts.max_keyframe_segments = 1024;
+
 		ufbx_error error;
 		ufbx_unique_ptr<ufbx_baked_anim> fbx_baked_anim{ ufbx_bake_anim(fbx_scene, fbx_anim_stack->anim, &opts, &error) };
 		if (!fbx_baked_anim) {
@@ -1752,7 +1763,7 @@ void FBXDocument::_generate_skeleton_bone_node(Ref<FBXState> p_state, const GLTF
 	}
 }
 
-void FBXDocument::_import_animation(Ref<FBXState> p_state, AnimationPlayer *p_animation_player, const GLTFAnimationIndex p_index, const float p_bake_fps, const bool p_trimming, const bool p_remove_immutable_tracks) {
+void FBXDocument::_import_animation(Ref<FBXState> p_state, AnimationPlayer *p_animation_player, const GLTFAnimationIndex p_index, const bool p_trimming, const bool p_remove_immutable_tracks) {
 	Ref<GLTFAnimation> anim = p_state->animations[p_index];
 
 	String anim_name = anim->get_name();
@@ -1764,7 +1775,7 @@ void FBXDocument::_import_animation(Ref<FBXState> p_state, AnimationPlayer *p_an
 	Ref<Animation> animation;
 	animation.instantiate();
 	animation->set_name(anim_name);
-	animation->set_step(1.0 / p_bake_fps);
+	animation->set_step(1.0 / p_state->get_bake_fps());
 
 	if (anim->get_loop()) {
 		animation->set_loop_mode(Animation::LOOP_LINEAR);
@@ -2029,7 +2040,7 @@ Error FBXDocument::_parse(Ref<FBXState> p_state, String p_path, Ref<FileAccess> 
 	opts.space_conversion = UFBX_SPACE_CONVERSION_MODIFY_GEOMETRY;
 	if (!p_state->get_allow_geometry_helper_nodes()) {
 		opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_MODIFY_GEOMETRY_NO_FALLBACK;
-		opts.inherit_mode_handling = UFBX_INHERIT_MODE_HANDLING_IGNORE;
+		opts.inherit_mode_handling = UFBX_INHERIT_MODE_HANDLING_COMPENSATE_NO_FALLBACK;
 	} else {
 		opts.geometry_transform_handling = UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES;
 		opts.inherit_mode_handling = UFBX_INHERIT_MODE_HANDLING_COMPENSATE;
@@ -2071,6 +2082,32 @@ Error FBXDocument::_parse(Ref<FBXState> p_state, String p_path, Ref<FileAccess> 
 		ERR_FAIL_V_MSG(ERR_PARSE_ERROR, err_buf);
 	}
 
+	const int max_warning_count = 10;
+	int warning_count[UFBX_WARNING_TYPE_COUNT] = {};
+	int ignored_warning_count = 0;
+	for (const ufbx_warning &warning : p_state->scene->metadata.warnings) {
+		if (warning_count[warning.type]++ < max_warning_count) {
+			if (warning.count > 1) {
+				WARN_PRINT(vformat("FBX: ufbx warning: %s (x%d)", _as_string(warning.description), (int)warning.count));
+			} else {
+				String element_name;
+				if (warning.element_id != UFBX_NO_INDEX) {
+					element_name = _find_element_name(p_state->scene->elements[warning.element_id]);
+				}
+				if (!element_name.is_empty()) {
+					WARN_PRINT(vformat("FBX: ufbx warning in '%s': %s", element_name, _as_string(warning.description)));
+				} else {
+					WARN_PRINT(vformat("FBX: ufbx warning: %s", _as_string(warning.description)));
+				}
+			}
+		} else {
+			ignored_warning_count++;
+		}
+	}
+	if (ignored_warning_count > 0) {
+		WARN_PRINT(vformat("FBX: ignored %d further ufbx warnings", ignored_warning_count));
+	}
+
 	err = _parse_fbx_state(p_state, p_path);
 	ERR_FAIL_COND_V(err != OK, err);
 
@@ -2085,6 +2122,7 @@ Node *FBXDocument::generate_scene(Ref<GLTFState> p_state, float p_bake_fps, bool
 	ERR_FAIL_COND_V(state.is_null(), nullptr);
 	ERR_FAIL_NULL_V(state, nullptr);
 	ERR_FAIL_INDEX_V(0, state->root_nodes.size(), nullptr);
+	p_state->set_bake_fps(p_bake_fps);
 	GLTFNodeIndex fbx_root = state->root_nodes.write[0];
 	Node *fbx_root_node = state->get_scene_node(fbx_root);
 	Node *root = fbx_root_node;
@@ -2098,7 +2136,7 @@ Node *FBXDocument::generate_scene(Ref<GLTFState> p_state, float p_bake_fps, bool
 		root->add_child(ap, true);
 		ap->set_owner(root);
 		for (int i = 0; i < state->animations.size(); i++) {
-			_import_animation(state, ap, i, p_bake_fps, p_trimming, p_remove_immutable_tracks);
+			_import_animation(state, ap, i, p_trimming, p_remove_immutable_tracks);
 		}
 	}
 	ERR_FAIL_NULL_V(root, nullptr);
@@ -2341,7 +2379,7 @@ Error FBXDocument::_parse_skins(Ref<FBXState> p_state) {
 	HashMap<GLTFNodeIndex, bool> joint_mapping;
 
 	for (const ufbx_skin_deformer *fbx_skin : fbx_scene->skin_deformers) {
-		if (fbx_skin->clusters.count == 0) {
+		if (fbx_skin->clusters.count == 0 || fbx_skin->weights.count == 0) {
 			p_state->skin_indices.push_back(-1);
 			continue;
 		}
@@ -2387,8 +2425,9 @@ Error FBXDocument::_parse_skins(Ref<FBXState> p_state) {
 			}
 		}
 	}
+	p_state->original_skin_indices = p_state->skin_indices.duplicate();
 	Error err = SkinTool::_asset_parse_skins(
-			p_state->skin_indices.duplicate(),
+			p_state->original_skin_indices,
 			p_state->skins.duplicate(),
 			p_state->nodes.duplicate(),
 			p_state->skin_indices,

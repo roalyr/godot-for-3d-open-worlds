@@ -30,7 +30,6 @@
 
 #include "variant.h"
 
-#include "core/core_string_names.h"
 #include "core/crypto/crypto_core.h"
 #include "core/debugger/engine_debugger.h"
 #include "core/io/compression.h"
@@ -1632,7 +1631,7 @@ int Variant::get_enum_value(Variant::Type p_type, const StringName &p_enum_name,
 	VARARG_CLASS1(m_type, m_name, m_method, m_arg_type)                \
 	register_builtin_method<Method_##m_type##_##m_name>(sarray(m_arg_name), Vector<Variant>());
 
-static void _register_variant_builtin_methods() {
+static void _register_variant_builtin_methods_string() {
 	_VariantCall::constant_data = memnew_arr(_VariantCall::ConstantData, Variant::VARIANT_MAX);
 	_VariantCall::enum_data = memnew_arr(_VariantCall::EnumData, Variant::VARIANT_MAX);
 	builtin_method_info = memnew_arr(BuiltinMethodMap, Variant::VARIANT_MAX);
@@ -1648,19 +1647,19 @@ static void _register_variant_builtin_methods() {
 	bind_string_method(filenocasecmp_to, sarray("to"), varray());
 	bind_string_method(length, sarray(), varray());
 	bind_string_method(substr, sarray("from", "len"), varray(-1));
-	bind_string_method(get_slice, sarray("delimiter", "slice"), varray());
+	bind_string_methodv(get_slice, static_cast<String (String::*)(const String &, int) const>(&String::get_slice), sarray("delimiter", "slice"), varray());
 	bind_string_method(get_slicec, sarray("delimiter", "slice"), varray());
-	bind_string_method(get_slice_count, sarray("delimiter"), varray());
+	bind_string_methodv(get_slice_count, static_cast<int (String::*)(const String &) const>(&String::get_slice_count), sarray("delimiter"), varray());
 	bind_string_methodv(find, static_cast<int (String::*)(const String &, int) const>(&String::find), sarray("what", "from"), varray(0));
-	bind_string_method(count, sarray("what", "from", "to"), varray(0, 0));
-	bind_string_method(countn, sarray("what", "from", "to"), varray(0, 0));
-	bind_string_method(findn, sarray("what", "from"), varray(0));
-	bind_string_method(rfind, sarray("what", "from"), varray(-1));
-	bind_string_method(rfindn, sarray("what", "from"), varray(-1));
+	bind_string_methodv(findn, static_cast<int (String::*)(const String &, int) const>(&String::findn), sarray("what", "from"), varray(0));
+	bind_string_methodv(count, static_cast<int (String::*)(const String &, int, int) const>(&String::count), sarray("what", "from", "to"), varray(0, 0));
+	bind_string_methodv(countn, static_cast<int (String::*)(const String &, int, int) const>(&String::countn), sarray("what", "from", "to"), varray(0, 0));
+	bind_string_methodv(rfind, static_cast<int (String::*)(const String &, int) const>(&String::rfind), sarray("what", "from"), varray(-1));
+	bind_string_methodv(rfindn, static_cast<int (String::*)(const String &, int) const>(&String::rfindn), sarray("what", "from"), varray(-1));
 	bind_string_method(match, sarray("expr"), varray());
 	bind_string_method(matchn, sarray("expr"), varray());
 	bind_string_methodv(begins_with, static_cast<bool (String::*)(const String &) const>(&String::begins_with), sarray("text"), varray());
-	bind_string_method(ends_with, sarray("text"), varray());
+	bind_string_methodv(ends_with, static_cast<bool (String::*)(const String &) const>(&String::ends_with), sarray("text"), varray());
 	bind_string_method(is_subsequence_of, sarray("text"), varray());
 	bind_string_method(is_subsequence_ofn, sarray("text"), varray());
 	bind_string_method(bigrams, sarray(), varray());
@@ -1668,7 +1667,7 @@ static void _register_variant_builtin_methods() {
 
 	bind_string_method(format, sarray("values", "placeholder"), varray("{_}"));
 	bind_string_methodv(replace, static_cast<String (String::*)(const String &, const String &) const>(&String::replace), sarray("what", "forwhat"), varray());
-	bind_string_method(replacen, sarray("what", "forwhat"), varray());
+	bind_string_methodv(replacen, static_cast<String (String::*)(const String &, const String &) const>(&String::replacen), sarray("what", "forwhat"), varray());
 	bind_string_method(repeat, sarray("count"), varray());
 	bind_string_method(reverse, sarray(), varray());
 	bind_string_method(insert, sarray("position", "what"), varray());
@@ -1677,8 +1676,8 @@ static void _register_variant_builtin_methods() {
 	bind_string_method(to_camel_case, sarray(), varray());
 	bind_string_method(to_pascal_case, sarray(), varray());
 	bind_string_method(to_snake_case, sarray(), varray());
-	bind_string_method(split, sarray("delimiter", "allow_empty", "maxsplit"), varray("", true, 0));
-	bind_string_method(rsplit, sarray("delimiter", "allow_empty", "maxsplit"), varray("", true, 0));
+	bind_string_methodv(split, static_cast<Vector<String> (String::*)(const String &, bool, int) const>(&String::split), sarray("delimiter", "allow_empty", "maxsplit"), varray("", true, 0));
+	bind_string_methodv(rsplit, static_cast<Vector<String> (String::*)(const String &, bool, int) const>(&String::rsplit), sarray("delimiter", "allow_empty", "maxsplit"), varray("", true, 0));
 	bind_string_method(split_floats, sarray("delimiter", "allow_empty"), varray(true));
 	bind_string_method(join, sarray("parts"), varray());
 
@@ -1707,6 +1706,7 @@ static void _register_variant_builtin_methods() {
 	bind_string_method(sha256_buffer, sarray(), varray());
 	bind_string_method(is_empty, sarray(), varray());
 	bind_string_methodv(contains, static_cast<bool (String::*)(const String &) const>(&String::contains), sarray("what"), varray());
+	bind_string_methodv(containsn, static_cast<bool (String::*)(const String &) const>(&String::containsn), sarray("what"), varray());
 
 	bind_string_method(is_absolute_path, sarray(), varray());
 	bind_string_method(is_relative_path, sarray(), varray());
@@ -1741,8 +1741,8 @@ static void _register_variant_builtin_methods() {
 	bind_string_method(rpad, sarray("min_length", "character"), varray(" "));
 	bind_string_method(pad_decimals, sarray("digits"), varray());
 	bind_string_method(pad_zeros, sarray("digits"), varray());
-	bind_string_method(trim_prefix, sarray("prefix"), varray());
-	bind_string_method(trim_suffix, sarray("suffix"), varray());
+	bind_string_methodv(trim_prefix, static_cast<String (String::*)(const String &) const>(&String::trim_prefix), sarray("prefix"), varray());
+	bind_string_methodv(trim_suffix, static_cast<String (String::*)(const String &) const>(&String::trim_suffix), sarray("suffix"), varray());
 
 	bind_string_method(to_ascii_buffer, sarray(), varray());
 	bind_string_method(to_utf8_buffer, sarray(), varray());
@@ -1761,7 +1761,9 @@ static void _register_variant_builtin_methods() {
 	/* StringName */
 
 	bind_method(StringName, hash, sarray(), varray());
+}
 
+static void _register_variant_builtin_methods_math() {
 	/* Vector2 */
 
 	bind_method(Vector2, angle, sarray(), varray());
@@ -2059,7 +2061,9 @@ static void _register_variant_builtin_methods() {
 	bind_static_method(Color, from_ok_hsl, sarray("h", "s", "l", "alpha"), varray(1.0));
 
 	bind_static_method(Color, from_rgbe9995, sarray("rgbe"), varray());
+}
 
+static void _register_variant_builtin_methods_misc() {
 	/* RID */
 
 	bind_method(RID, is_valid, sarray(), varray());
@@ -2261,7 +2265,10 @@ static void _register_variant_builtin_methods() {
 	bind_method(Dictionary, get_or_add, sarray("key", "default"), varray(Variant()));
 	bind_method(Dictionary, make_read_only, sarray(), varray());
 	bind_method(Dictionary, is_read_only, sarray(), varray());
+	bind_method(Dictionary, recursive_equal, sarray("dictionary", "recursion_count"), varray());
+}
 
+static void _register_variant_builtin_methods_array() {
 	/* Array */
 
 	bind_method(Array, size, sarray(), varray());
@@ -2568,6 +2575,32 @@ static void _register_variant_builtin_methods() {
 	bind_method(PackedColorArray, rfind, sarray("value", "from"), varray(-1));
 	bind_method(PackedColorArray, count, sarray("value"), varray());
 
+	/* Vector4 Array */
+
+	bind_method(PackedVector4Array, size, sarray(), varray());
+	bind_method(PackedVector4Array, is_empty, sarray(), varray());
+	bind_method(PackedVector4Array, set, sarray("index", "value"), varray());
+	bind_method(PackedVector4Array, push_back, sarray("value"), varray());
+	bind_method(PackedVector4Array, append, sarray("value"), varray());
+	bind_method(PackedVector4Array, append_array, sarray("array"), varray());
+	bind_method(PackedVector4Array, remove_at, sarray("index"), varray());
+	bind_method(PackedVector4Array, insert, sarray("at_index", "value"), varray());
+	bind_method(PackedVector4Array, fill, sarray("value"), varray());
+	bind_methodv(PackedVector4Array, resize, &PackedVector4Array::resize_zeroed, sarray("new_size"), varray());
+	bind_method(PackedVector4Array, clear, sarray(), varray());
+	bind_method(PackedVector4Array, has, sarray("value"), varray());
+	bind_method(PackedVector4Array, reverse, sarray(), varray());
+	bind_method(PackedVector4Array, slice, sarray("begin", "end"), varray(INT_MAX));
+	bind_method(PackedVector4Array, to_byte_array, sarray(), varray());
+	bind_method(PackedVector4Array, sort, sarray(), varray());
+	bind_method(PackedVector4Array, bsearch, sarray("value", "before"), varray(true));
+	bind_method(PackedVector4Array, duplicate, sarray(), varray());
+	bind_method(PackedVector4Array, find, sarray("value", "from"), varray(0));
+	bind_method(PackedVector4Array, rfind, sarray("value", "from"), varray(-1));
+	bind_method(PackedVector4Array, count, sarray("value"), varray());
+}
+
+static void _register_variant_builtin_constants() {
 	/* Register constants */
 
 	int ncc = Color::get_named_color_count();
@@ -2725,7 +2758,11 @@ static void _register_variant_builtin_methods() {
 }
 
 void Variant::_register_variant_methods() {
-	_register_variant_builtin_methods(); //needs to be out due to namespace
+	_register_variant_builtin_methods_string();
+	_register_variant_builtin_methods_math();
+	_register_variant_builtin_methods_misc();
+	_register_variant_builtin_methods_array();
+	_register_variant_builtin_constants();
 }
 
 void Variant::_unregister_variant_methods() {

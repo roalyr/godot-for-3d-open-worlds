@@ -33,6 +33,7 @@
 #include "core/input/input.h"
 #include "core/os/keyboard.h"
 #include "core/string/string_builder.h"
+#include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
 #include "editor/plugins/script_editor_plugin.h"
@@ -199,6 +200,7 @@ bool FindReplaceBar::_search(uint32_t p_flags, int p_from_line, int p_from_col) 
 }
 
 void FindReplaceBar::_replace() {
+	text_editor->begin_complex_operation();
 	text_editor->remove_secondary_carets();
 	bool selection_enabled = text_editor->has_selection(0);
 	Point2i selection_begin, selection_end;
@@ -210,7 +212,6 @@ void FindReplaceBar::_replace() {
 	String repl_text = get_replace_text();
 	int search_text_len = get_search_text().length();
 
-	text_editor->begin_complex_operation();
 	if (selection_enabled && is_selection_only()) {
 		// Restrict search_current() to selected region.
 		text_editor->set_caret_line(selection_begin.width, false, true, -1, 0);
@@ -249,6 +250,7 @@ void FindReplaceBar::_replace() {
 }
 
 void FindReplaceBar::_replace_all() {
+	text_editor->begin_complex_operation();
 	text_editor->remove_secondary_carets();
 	text_editor->disconnect("text_changed", callable_mp(this, &FindReplaceBar::_editor_text_changed));
 	// Line as x so it gets priority in comparison, column as y.
@@ -278,8 +280,6 @@ void FindReplaceBar::_replace_all() {
 	int rc = 0;
 
 	replace_all_mode = true;
-
-	text_editor->begin_complex_operation();
 
 	if (selection_enabled && is_selection_only()) {
 		text_editor->set_caret_line(selection_begin.width, false, true, -1, 0);
@@ -619,6 +619,7 @@ void FindReplaceBar::_replace_text_submitted(const String &p_text) {
 		search_prev();
 	} else {
 		_replace();
+		search_next();
 	}
 }
 
@@ -709,7 +710,7 @@ FindReplaceBar::FindReplaceBar() {
 	search_text->set_custom_minimum_size(Size2(100 * EDSCALE, 0));
 	search_text->connect("text_changed", callable_mp(this, &FindReplaceBar::_search_text_changed));
 	search_text->connect("text_submitted", callable_mp(this, &FindReplaceBar::_search_text_submitted));
-	search_text->connect("focus_exited", callable_mp(this, &FindReplaceBar::_focus_lost));
+	search_text->connect(SceneStringName(focus_exited), callable_mp(this, &FindReplaceBar::_focus_lost));
 
 	matches_label = memnew(Label);
 	hbc_button_search->add_child(matches_label);
@@ -720,14 +721,14 @@ FindReplaceBar::FindReplaceBar() {
 	find_prev->set_tooltip_text(TTR("Previous Match"));
 	hbc_button_search->add_child(find_prev);
 	find_prev->set_focus_mode(FOCUS_NONE);
-	find_prev->connect("pressed", callable_mp(this, &FindReplaceBar::search_prev));
+	find_prev->connect(SceneStringName(pressed), callable_mp(this, &FindReplaceBar::search_prev));
 
 	find_next = memnew(Button);
 	find_next->set_flat(true);
 	find_next->set_tooltip_text(TTR("Next Match"));
 	hbc_button_search->add_child(find_next);
 	find_next->set_focus_mode(FOCUS_NONE);
-	find_next->connect("pressed", callable_mp(this, &FindReplaceBar::search_next));
+	find_next->connect(SceneStringName(pressed), callable_mp(this, &FindReplaceBar::search_next));
 
 	case_sensitive = memnew(CheckBox);
 	hbc_option_search->add_child(case_sensitive);
@@ -748,17 +749,17 @@ FindReplaceBar::FindReplaceBar() {
 	replace_text->set_tooltip_text(TTR("Replace"));
 	replace_text->set_custom_minimum_size(Size2(100 * EDSCALE, 0));
 	replace_text->connect("text_submitted", callable_mp(this, &FindReplaceBar::_replace_text_submitted));
-	replace_text->connect("focus_exited", callable_mp(this, &FindReplaceBar::_focus_lost));
+	replace_text->connect(SceneStringName(focus_exited), callable_mp(this, &FindReplaceBar::_focus_lost));
 
 	replace = memnew(Button);
 	hbc_button_replace->add_child(replace);
 	replace->set_text(TTR("Replace"));
-	replace->connect("pressed", callable_mp(this, &FindReplaceBar::_replace));
+	replace->connect(SceneStringName(pressed), callable_mp(this, &FindReplaceBar::_replace));
 
 	replace_all = memnew(Button);
 	hbc_button_replace->add_child(replace_all);
 	replace_all->set_text(TTR("Replace All"));
-	replace_all->connect("pressed", callable_mp(this, &FindReplaceBar::_replace_all));
+	replace_all->connect(SceneStringName(pressed), callable_mp(this, &FindReplaceBar::_replace_all));
 
 	selection_only = memnew(CheckBox);
 	hbc_option_replace->add_child(selection_only);
@@ -770,7 +771,7 @@ FindReplaceBar::FindReplaceBar() {
 	add_child(hide_button);
 	hide_button->set_tooltip_text(TTR("Hide"));
 	hide_button->set_focus_mode(FOCUS_NONE);
-	hide_button->connect("pressed", callable_mp(this, &FindReplaceBar::_hide_bar).bind(false));
+	hide_button->connect(SceneStringName(pressed), callable_mp(this, &FindReplaceBar::_hide_bar).bind(false));
 	hide_button->set_v_size_flags(SIZE_SHRINK_CENTER);
 }
 
@@ -971,7 +972,7 @@ Ref<Texture2D> CodeTextEditor::_get_completion_icon(const ScriptLanguage::CodeCo
 			if (has_theme_icon(p_option.display, EditorStringName(EditorIcons))) {
 				tex = get_editor_theme_icon(p_option.display);
 			} else {
-				tex = get_editor_theme_icon(SNAME("Object"));
+				tex = EditorNode::get_singleton()->get_class_icon(p_option.display);
 			}
 		} break;
 		case ScriptLanguage::CODE_COMPLETION_KIND_ENUM:
@@ -1120,6 +1121,31 @@ void CodeTextEditor::trim_trailing_whitespace() {
 	if (trimmed_whitespace) {
 		text_editor->merge_overlapping_carets();
 		text_editor->end_complex_operation();
+	}
+}
+
+void CodeTextEditor::trim_final_newlines() {
+	int final_line = text_editor->get_line_count() - 1;
+	int check_line = final_line;
+
+	String line = text_editor->get_line(check_line);
+
+	while (line.is_empty() && check_line > -1) {
+		--check_line;
+
+		line = text_editor->get_line(check_line);
+	}
+
+	++check_line;
+
+	if (check_line < final_line) {
+		text_editor->begin_complex_operation();
+
+		text_editor->remove_text(check_line, 0, final_line, 0);
+
+		text_editor->merge_overlapping_carets();
+		text_editor->end_complex_operation();
+		text_editor->queue_redraw();
 	}
 }
 
@@ -1712,7 +1738,7 @@ CodeTextEditor::CodeTextEditor() {
 	toggle_scripts_button = memnew(Button);
 	toggle_scripts_button->set_flat(true);
 	toggle_scripts_button->set_v_size_flags(SIZE_EXPAND | SIZE_SHRINK_CENTER);
-	toggle_scripts_button->connect("pressed", callable_mp(this, &CodeTextEditor::_toggle_scripts_pressed));
+	toggle_scripts_button->connect(SceneStringName(pressed), callable_mp(this, &CodeTextEditor::_toggle_scripts_pressed));
 	status_bar->add_child(toggle_scripts_button);
 	toggle_scripts_button->hide();
 
@@ -1727,7 +1753,7 @@ CodeTextEditor::CodeTextEditor() {
 	scroll->add_child(error);
 	error->set_v_size_flags(SIZE_EXPAND | SIZE_SHRINK_CENTER);
 	error->set_mouse_filter(MOUSE_FILTER_STOP);
-	error->connect("gui_input", callable_mp(this, &CodeTextEditor::_error_pressed));
+	error->connect(SceneStringName(gui_input), callable_mp(this, &CodeTextEditor::_error_pressed));
 
 	// Errors
 	error_button = memnew(Button);
@@ -1735,7 +1761,7 @@ CodeTextEditor::CodeTextEditor() {
 	status_bar->add_child(error_button);
 	error_button->set_v_size_flags(SIZE_EXPAND | SIZE_SHRINK_CENTER);
 	error_button->set_default_cursor_shape(CURSOR_POINTING_HAND);
-	error_button->connect("pressed", callable_mp(this, &CodeTextEditor::_error_button_pressed));
+	error_button->connect(SceneStringName(pressed), callable_mp(this, &CodeTextEditor::_error_button_pressed));
 	error_button->set_tooltip_text(TTR("Errors"));
 	set_error_count(0);
 
@@ -1745,7 +1771,7 @@ CodeTextEditor::CodeTextEditor() {
 	status_bar->add_child(warning_button);
 	warning_button->set_v_size_flags(SIZE_EXPAND | SIZE_SHRINK_CENTER);
 	warning_button->set_default_cursor_shape(CURSOR_POINTING_HAND);
-	warning_button->connect("pressed", callable_mp(this, &CodeTextEditor::_warning_button_pressed));
+	warning_button->connect(SceneStringName(pressed), callable_mp(this, &CodeTextEditor::_warning_button_pressed));
 	warning_button->set_tooltip_text(TTR("Warnings"));
 	set_warning_count(0);
 
@@ -1768,7 +1794,7 @@ CodeTextEditor::CodeTextEditor() {
 		zoom_menu->set_item_metadata(i, z);
 	}
 
-	zoom_menu->connect("id_pressed", callable_mp(this, &CodeTextEditor::_zoom_popup_id_pressed));
+	zoom_menu->connect(SceneStringName(id_pressed), callable_mp(this, &CodeTextEditor::_zoom_popup_id_pressed));
 
 	status_bar->add_child(memnew(VSeparator));
 
@@ -1788,7 +1814,7 @@ CodeTextEditor::CodeTextEditor() {
 	indentation_txt->set_tooltip_text(TTR("Indentation"));
 	indentation_txt->set_mouse_filter(MOUSE_FILTER_STOP);
 
-	text_editor->connect("gui_input", callable_mp(this, &CodeTextEditor::_text_editor_gui_input));
+	text_editor->connect(SceneStringName(gui_input), callable_mp(this, &CodeTextEditor::_text_editor_gui_input));
 	text_editor->connect("caret_changed", callable_mp(this, &CodeTextEditor::_line_col_changed));
 	text_editor->connect("text_changed", callable_mp(this, &CodeTextEditor::_text_changed));
 	text_editor->connect("code_completion_requested", callable_mp(this, &CodeTextEditor::_complete_request));

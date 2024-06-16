@@ -1,9 +1,10 @@
 import os
-import sys
 import platform
 import subprocess
-from methods import print_warning, print_error
+import sys
 from typing import TYPE_CHECKING
+
+from methods import print_error, print_warning
 
 if TYPE_CHECKING:
     from SCons.Script.SConscript import SConsEnvironment
@@ -66,11 +67,11 @@ def get_min_target_api():
 
 
 def get_flags():
-    return [
-        ("arch", "arm64"),  # Default for convenience.
-        ("target", "template_debug"),
-        ("supported", ["mono"]),
-    ]
+    return {
+        "arch": "arm64",
+        "target": "template_debug",
+        "supported": ["mono"],
+    }
 
 
 # Check if Android NDK version is installed
@@ -88,7 +89,7 @@ def install_ndk_if_needed(env: "SConsEnvironment"):
         else:
             print_error(
                 f'Cannot find "{sdkmanager}". Please ensure ANDROID_HOME is correct and cmdline-tools'
-                f'are installed, or install NDK version "{get_ndk_version()}" manually.'
+                f' are installed, or install NDK version "{get_ndk_version()}" manually.'
             )
             sys.exit(255)
     env["ANDROID_NDK_ROOT"] = get_android_ndk_root(env)

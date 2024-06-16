@@ -465,11 +465,11 @@ Path3DGizmo::Path3DGizmo(Path3D *p_path, float p_disk_size) {
 	// Connecting to a signal once, rather than plaguing the implementation with calls to `Node3DEditor::update_transform_gizmo`.
 	path->connect("curve_changed", callable_mp(this, &Path3DGizmo::_update_transform_gizmo));
 
-	Path3DEditorPlugin::singleton->curve_edit->connect("pressed", callable_mp(this, &Path3DGizmo::redraw));
-	Path3DEditorPlugin::singleton->curve_edit_curve->connect("pressed", callable_mp(this, &Path3DGizmo::redraw));
-	Path3DEditorPlugin::singleton->curve_create->connect("pressed", callable_mp(this, &Path3DGizmo::redraw));
-	Path3DEditorPlugin::singleton->curve_del->connect("pressed", callable_mp(this, &Path3DGizmo::redraw));
-	Path3DEditorPlugin::singleton->curve_close->connect("pressed", callable_mp(this, &Path3DGizmo::redraw));
+	Path3DEditorPlugin::singleton->curve_edit->connect(SceneStringName(pressed), callable_mp(this, &Path3DGizmo::redraw));
+	Path3DEditorPlugin::singleton->curve_edit_curve->connect(SceneStringName(pressed), callable_mp(this, &Path3DGizmo::redraw));
+	Path3DEditorPlugin::singleton->curve_create->connect(SceneStringName(pressed), callable_mp(this, &Path3DGizmo::redraw));
+	Path3DEditorPlugin::singleton->curve_del->connect(SceneStringName(pressed), callable_mp(this, &Path3DGizmo::redraw));
+	Path3DEditorPlugin::singleton->curve_close->connect(SceneStringName(pressed), callable_mp(this, &Path3DGizmo::redraw));
 }
 
 EditorPlugin::AfterGUIInput Path3DEditorPlugin::forward_3d_gui_input(Camera3D *p_camera, const Ref<InputEvent> &p_event) {
@@ -650,14 +650,14 @@ void Path3DEditorPlugin::edit(Object *p_object) {
 		path = Object::cast_to<Path3D>(p_object);
 		if (path) {
 			if (path->get_curve().is_valid()) {
-				path->get_curve()->emit_signal(SNAME("changed"));
+				path->get_curve()->emit_signal(CoreStringName(changed));
 			}
 		}
 	} else {
 		Path3D *pre = path;
 		path = nullptr;
 		if (pre) {
-			pre->get_curve()->emit_signal(SNAME("changed"));
+			pre->get_curve()->emit_signal(CoreStringName(changed));
 		}
 	}
 
@@ -679,7 +679,7 @@ void Path3DEditorPlugin::make_visible(bool p_visible) {
 			Path3D *pre = path;
 			path = nullptr;
 			if (pre && pre->get_curve().is_valid()) {
-				pre->get_curve()->emit_signal(SNAME("changed"));
+				pre->get_curve()->emit_signal(CoreStringName(changed));
 			}
 		}
 	}
@@ -788,12 +788,12 @@ void Path3DEditorPlugin::_update_theme() {
 void Path3DEditorPlugin::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-			curve_create->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_CREATE));
-			curve_edit_curve->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_CURVE));
-			curve_edit_tilt->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_TILT));
-			curve_edit->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT));
-			curve_del->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_DELETE));
-			curve_close->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_close_curve));
+			curve_create->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_CREATE));
+			curve_edit_curve->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_CURVE));
+			curve_edit_tilt->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_TILT));
+			curve_edit->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT));
+			curve_del->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_DELETE));
+			curve_close->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_close_curve));
 
 			_update_theme();
 		} break;
@@ -802,7 +802,7 @@ void Path3DEditorPlugin::_notification(int p_what) {
 			// FIXME: This can trigger theme updates when the nodes that we want to update are not yet available.
 			// The toolbar should be extracted to a dedicated control and theme updates should be handled through
 			// the notification.
-			Node3DEditor::get_singleton()->connect("theme_changed", callable_mp(this, &Path3DEditorPlugin::_update_theme));
+			Node3DEditor::get_singleton()->connect(SceneStringName(theme_changed), callable_mp(this, &Path3DEditorPlugin::_update_theme));
 		} break;
 	}
 }
@@ -875,7 +875,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_clear_points->set_theme_type_variation("FlatButton");
 	curve_clear_points->set_focus_mode(Control::FOCUS_NONE);
 	curve_clear_points->set_tooltip_text(TTR("Clear Points"));
-	curve_clear_points->connect("pressed", callable_mp(this, &Path3DEditorPlugin::_confirm_clear_points));
+	curve_clear_points->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_confirm_clear_points));
 	topmenu_bar->add_child(curve_clear_points);
 
 	clear_points_dialog = memnew(ConfirmationDialog);
@@ -896,7 +896,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	menu->set_item_checked(HANDLE_OPTION_ANGLE, mirror_handle_angle);
 	menu->add_check_item(TTR("Mirror Handle Lengths"));
 	menu->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
-	menu->connect("id_pressed", callable_mp(this, &Path3DEditorPlugin::_handle_option_pressed));
+	menu->connect(SceneStringName(id_pressed), callable_mp(this, &Path3DEditorPlugin::_handle_option_pressed));
 
 	curve_edit->set_pressed(true);
 }
@@ -1050,7 +1050,7 @@ int Path3DGizmoPlugin::get_priority() const {
 }
 
 Path3DGizmoPlugin::Path3DGizmoPlugin(float p_disk_size) {
-	Color path_color = EDITOR_DEF_RST("editors/3d_gizmos/gizmo_colors/path", Color(0.5, 0.5, 1.0, 0.9));
+	Color path_color = SceneTree::get_singleton()->get_debug_paths_color();
 	Color path_tilt_color = EDITOR_DEF_RST("editors/3d_gizmos/gizmo_colors/path_tilt", Color(1.0, 1.0, 0.4, 0.9));
 	disk_size = p_disk_size;
 

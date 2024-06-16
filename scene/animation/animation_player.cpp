@@ -32,7 +32,6 @@
 #include "animation_player.compat.inc"
 
 #include "core/config/engine.h"
-#include "scene/scene_string_names.h"
 
 bool AnimationPlayer::_set(const StringName &p_name, const Variant &p_value) {
 	String name = p_name;
@@ -41,7 +40,7 @@ bool AnimationPlayer::_set(const StringName &p_name, const Variant &p_value) {
 	} else if (name.begins_with("next/")) {
 		String which = name.get_slicec('/', 1);
 		animation_set_next(which, p_value);
-	} else if (p_name == SceneStringNames::get_singleton()->blend_times) {
+	} else if (p_name == SceneStringName(blend_times)) {
 		Array array = p_value;
 		int len = array.size();
 		ERR_FAIL_COND_V(len % 3, false);
@@ -77,7 +76,7 @@ bool AnimationPlayer::_get(const StringName &p_name, Variant &r_ret) const {
 		String which = name.get_slicec('/', 1);
 		r_ret = animation_get_next(which);
 
-	} else if (name == "blend_times") {
+	} else if (p_name == SceneStringName(blend_times)) {
 		Vector<BlendKey> keys;
 		for (const KeyValue<BlendKey, double> &E : blend_times) {
 			keys.ordered_insert(E.key);
@@ -125,6 +124,8 @@ void AnimationPlayer::_validate_property(PropertyInfo &p_property) const {
 		}
 
 		p_property.hint_string = hint;
+	} else if (!auto_capture && p_property.name.begins_with("playback_auto_capture_")) {
+		p_property.usage = PROPERTY_USAGE_NONE;
 	}
 }
 
@@ -233,6 +234,9 @@ void AnimationPlayer::_process_playback_data(PlaybackData &cd, double p_delta, f
 		pi.delta = delta;
 		pi.seeked = p_seeked;
 	}
+	if (Math::is_zero_approx(pi.delta) && backwards) {
+		pi.delta = -0.0; // Sign is needed to handle converted Continuous track from Discrete track correctly.
+	}
 	// AnimationPlayer doesn't have internal seeking.
 	// However, immediately after playback, discrete keys should be retrieved with EXACT mode since behind keys must be ignored at that time.
 	pi.is_external_seeking = !p_started;
@@ -256,7 +260,7 @@ void AnimationPlayer::_blend_playback_data(double p_delta, bool p_started) {
 
 	bool seeked = c.seeked; // The animation may be changed during process, so it is safer that the state is changed before process.
 
-	if (p_delta != 0) {
+	if (!Math::is_zero_approx(p_delta)) {
 		c.seeked = false;
 	}
 
@@ -324,14 +328,14 @@ void AnimationPlayer::_blend_post_process() {
 				String new_name = playback.assigned;
 				playback_queue.pop_front();
 				if (end_notify) {
-					emit_signal(SceneStringNames::get_singleton()->animation_changed, old, new_name);
+					emit_signal(SceneStringName(animation_changed), old, new_name);
 				}
 			} else {
 				_clear_caches();
 				playing = false;
 				_set_process(false);
 				if (end_notify) {
-					emit_signal(SceneStringNames::get_singleton()->animation_finished, playback.assigned);
+					emit_signal(SceneStringName(animation_finished), playback.assigned);
 					if (movie_quit_on_finish && OS::get_singleton()->has_feature("movie")) {
 						print_line(vformat("Movie Maker mode is enabled. Quitting on animation finish as requested by: %s", get_path()));
 						get_tree()->quit();
@@ -372,7 +376,7 @@ void AnimationPlayer::play_backwards(const StringName &p_name, double p_custom_b
 
 void AnimationPlayer::play(const StringName &p_name, double p_custom_blend, float p_custom_scale, bool p_from_end) {
 	if (auto_capture) {
-		play_with_capture(p_name, -1.0, p_custom_blend, p_custom_scale, p_from_end);
+		play_with_capture(p_name, auto_capture_duration, p_custom_blend, p_custom_scale, p_from_end, auto_capture_transition_type, auto_capture_ease_type);
 	} else {
 		_play(p_name, p_custom_blend, p_custom_scale, p_from_end);
 	}
@@ -446,10 +450,10 @@ void AnimationPlayer::_play(const StringName &p_name, double p_custom_blend, flo
 	} else {
 		if (p_from_end && c.current.pos == 0) {
 			// Animation reset but played backwards, set position to the end.
-			c.current.pos = c.current.from->animation->get_length();
+			seek(c.current.from->animation->get_length(), true, true);
 		} else if (!p_from_end && c.current.pos == c.current.from->animation->get_length()) {
 			// Animation resumed but already ended, set position to the beginning.
-			c.current.pos = 0;
+			seek(0, true, true);
 		} else if (playing) {
 			return;
 		}
@@ -461,7 +465,7 @@ void AnimationPlayer::_play(const StringName &p_name, double p_custom_blend, flo
 	_set_process(true); // Always process when starting an animation.
 	playing = true;
 
-	emit_signal(SceneStringNames::get_singleton()->animation_started, c.assigned);
+	emit_signal(SceneStringName(animation_started), c.assigned);
 
 	if (is_inside_tree() && Engine::get_singleton()->is_editor_hint()) {
 		return; // No next in this case.
@@ -580,6 +584,8 @@ void AnimationPlayer::seek(double p_time, bool p_update, bool p_update_only) {
 		return;
 	}
 
+	bool is_backward = p_time < playback.current.pos;
+
 	_check_immediately_after_start();
 
 	playback.current.pos = p_time;
@@ -595,7 +601,7 @@ void AnimationPlayer::seek(double p_time, bool p_update, bool p_update_only) {
 
 	playback.seeked = true;
 	if (p_update) {
-		_process_animation(0, p_update_only);
+		_process_animation(is_backward ? -0.0 : 0.0, p_update_only);
 		playback.seeked = false; // If animation was proceeded here, no more seek in internal process.
 	}
 }
@@ -716,10 +722,35 @@ double AnimationPlayer::get_blend_time(const StringName &p_animation1, const Str
 
 void AnimationPlayer::set_auto_capture(bool p_auto_capture) {
 	auto_capture = p_auto_capture;
+	notify_property_list_changed();
 }
 
 bool AnimationPlayer::is_auto_capture() const {
 	return auto_capture;
+}
+
+void AnimationPlayer::set_auto_capture_duration(double p_auto_capture_duration) {
+	auto_capture_duration = p_auto_capture_duration;
+}
+
+double AnimationPlayer::get_auto_capture_duration() const {
+	return auto_capture_duration;
+}
+
+void AnimationPlayer::set_auto_capture_transition_type(Tween::TransitionType p_auto_capture_transition_type) {
+	auto_capture_transition_type = p_auto_capture_transition_type;
+}
+
+Tween::TransitionType AnimationPlayer::get_auto_capture_transition_type() const {
+	return auto_capture_transition_type;
+}
+
+void AnimationPlayer::set_auto_capture_ease_type(Tween::EaseType p_auto_capture_ease_type) {
+	auto_capture_ease_type = p_auto_capture_ease_type;
+}
+
+Tween::EaseType AnimationPlayer::get_auto_capture_ease_type() const {
+	return auto_capture_ease_type;
 }
 
 #ifdef TOOLS_ENABLED
@@ -814,6 +845,12 @@ void AnimationPlayer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_auto_capture", "auto_capture"), &AnimationPlayer::set_auto_capture);
 	ClassDB::bind_method(D_METHOD("is_auto_capture"), &AnimationPlayer::is_auto_capture);
+	ClassDB::bind_method(D_METHOD("set_auto_capture_duration", "auto_capture_duration"), &AnimationPlayer::set_auto_capture_duration);
+	ClassDB::bind_method(D_METHOD("get_auto_capture_duration"), &AnimationPlayer::get_auto_capture_duration);
+	ClassDB::bind_method(D_METHOD("set_auto_capture_transition_type", "auto_capture_transition_type"), &AnimationPlayer::set_auto_capture_transition_type);
+	ClassDB::bind_method(D_METHOD("get_auto_capture_transition_type"), &AnimationPlayer::get_auto_capture_transition_type);
+	ClassDB::bind_method(D_METHOD("set_auto_capture_ease_type", "auto_capture_ease_type"), &AnimationPlayer::set_auto_capture_ease_type);
+	ClassDB::bind_method(D_METHOD("get_auto_capture_ease_type"), &AnimationPlayer::get_auto_capture_ease_type);
 
 	ClassDB::bind_method(D_METHOD("play", "name", "custom_blend", "custom_speed", "from_end"), &AnimationPlayer::play, DEFVAL(StringName()), DEFVAL(-1), DEFVAL(1.0), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("play_backwards", "name", "custom_blend"), &AnimationPlayer::play_backwards, DEFVAL(StringName()), DEFVAL(-1));
@@ -856,6 +893,9 @@ void AnimationPlayer::_bind_methods() {
 
 	ADD_GROUP("Playback Options", "playback_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "playback_auto_capture"), "set_auto_capture", "is_auto_capture");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "playback_auto_capture_duration", PROPERTY_HINT_NONE, "suffix:s"), "set_auto_capture_duration", "get_auto_capture_duration");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "playback_auto_capture_transition_type", PROPERTY_HINT_ENUM, "Linear,Sine,Quint,Quart,Expo,Elastic,Cubic,Circ,Bounce,Back,Spring"), "set_auto_capture_transition_type", "get_auto_capture_transition_type");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "playback_auto_capture_ease_type", PROPERTY_HINT_ENUM, "In,Out,InOut,OutIn"), "set_auto_capture_ease_type", "get_auto_capture_ease_type");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "playback_default_blend_time", PROPERTY_HINT_RANGE, "0,4096,0.01,suffix:s"), "set_default_blend_time", "get_default_blend_time");
 
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "speed_scale", PROPERTY_HINT_RANGE, "-4,4,0.001,or_less,or_greater"), "set_speed_scale", "get_speed_scale");

@@ -35,14 +35,13 @@
 #include "core/io/marshalls.h"
 #include "scene/main/node.h"
 #include "scene/main/window.h"
-#include "scene/scene_string_names.h"
 
 SceneCacheInterface::NodeCache &SceneCacheInterface::_track(Node *p_node) {
 	const ObjectID oid = p_node->get_instance_id();
 	NodeCache *nc = nodes_cache.getptr(oid);
 	if (!nc) {
 		nodes_cache[oid] = NodeCache();
-		p_node->connect(SceneStringNames::get_singleton()->tree_exited, callable_mp(this, &SceneCacheInterface::_remove_node_cache).bind(oid), Object::CONNECT_ONE_SHOT);
+		p_node->connect(SceneStringName(tree_exited), callable_mp(this, &SceneCacheInterface::_remove_node_cache).bind(oid), Object::CONNECT_ONE_SHOT);
 	}
 	return nodes_cache[oid];
 }
@@ -77,7 +76,7 @@ void SceneCacheInterface::on_peer_change(int p_id, bool p_connected) {
 		for (KeyValue<int, ObjectID> E : pinfo->recv_nodes) {
 			NodeCache *nc = nodes_cache.getptr(E.value);
 			ERR_CONTINUE(!nc);
-			nc->recv_ids.erase(E.key);
+			nc->recv_ids.erase(p_id);
 		}
 		for (const ObjectID &oid : pinfo->sent_nodes) {
 			NodeCache *nc = nodes_cache.getptr(oid);
@@ -286,7 +285,7 @@ void SceneCacheInterface::clear() {
 	for (KeyValue<ObjectID, NodeCache> &E : nodes_cache) {
 		Object *obj = ObjectDB::get_instance(E.key);
 		ERR_CONTINUE(!obj);
-		obj->disconnect(SceneStringNames::get_singleton()->tree_exited, callable_mp(this, &SceneCacheInterface::_remove_node_cache));
+		obj->disconnect(SceneStringName(tree_exited), callable_mp(this, &SceneCacheInterface::_remove_node_cache));
 	}
 	peers_info.clear();
 	nodes_cache.clear();

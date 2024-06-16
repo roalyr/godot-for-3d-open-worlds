@@ -37,7 +37,7 @@
 #include "core/object/script_language.h"
 #include "core/os/keyboard.h"
 #include "core/string/string_builder.h"
-#include "core/version.h"
+#include "core/version_generated.gen.h"
 #include "editor/doc_data_compressed.gen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_paths.h"
@@ -93,6 +93,7 @@ const Vector<String> classes_with_csharp_differences = {
 	"PackedStringArray",
 	"PackedVector2Array",
 	"PackedVector3Array",
+	"PackedVector4Array",
 	"Variant",
 };
 #endif
@@ -107,6 +108,7 @@ const Vector<String> packed_array_types = {
 	"PackedStringArray",
 	"PackedVector2Array",
 	"PackedVector3Array",
+	"PackedVector4Array",
 };
 
 // TODO: this is sometimes used directly as doc->something, other times as EditorHelp::get_doc_data(), which is thread-safe.
@@ -194,7 +196,7 @@ void EditorHelp::_update_theme_item_cache() {
 	class_desc->add_theme_font_override("normal_font", theme_cache.doc_font);
 	class_desc->add_theme_font_size_override("normal_font_size", theme_cache.doc_font_size);
 
-	class_desc->add_theme_constant_override("line_separation", get_theme_constant(SNAME("line_separation"), SNAME("EditorHelp")));
+	class_desc->add_theme_constant_override(SceneStringName(line_separation), get_theme_constant(SceneStringName(line_separation), SNAME("EditorHelp")));
 	class_desc->add_theme_constant_override("table_h_separation", get_theme_constant(SNAME("table_h_separation"), SNAME("EditorHelp")));
 	class_desc->add_theme_constant_override("table_v_separation", get_theme_constant(SNAME("table_v_separation"), SNAME("EditorHelp")));
 	class_desc->add_theme_constant_override("text_highlight_h_padding", get_theme_constant(SNAME("text_highlight_h_padding"), SNAME("EditorHelp")));
@@ -343,7 +345,7 @@ void EditorHelp::_class_desc_resized(bool p_force_update_theme) {
 		Ref<StyleBox> class_desc_stylebox = theme_cache.background_style->duplicate();
 		class_desc_stylebox->set_content_margin(SIDE_LEFT, display_margin);
 		class_desc_stylebox->set_content_margin(SIDE_RIGHT, display_margin);
-		class_desc->add_theme_style_override("normal", class_desc_stylebox);
+		class_desc->add_theme_style_override(CoreStringName(normal), class_desc_stylebox);
 		class_desc->add_theme_style_override("focused", class_desc_stylebox);
 	}
 }
@@ -1965,7 +1967,7 @@ void EditorHelp::_update_doc() {
 
 					class_desc->add_text(argument.name);
 					class_desc->add_text(": ");
-					_add_type(argument.type);
+					_add_type(argument.type, argument.enumeration, argument.is_bitfield);
 
 					if (!argument.default_value.is_empty()) {
 						class_desc->push_color(theme_cache.symbol_color);
@@ -2338,7 +2340,10 @@ void EditorHelp::_help_callback(const String &p_topic) {
 
 	if (class_desc->is_ready()) {
 		// call_deferred() is not enough.
-		class_desc->connect("draw", callable_mp(class_desc, &RichTextLabel::scroll_to_paragraph).bind(line), CONNECT_ONE_SHOT | CONNECT_DEFERRED);
+		if (class_desc->is_connected(SceneStringName(draw), callable_mp(class_desc, &RichTextLabel::scroll_to_paragraph))) {
+			class_desc->disconnect(SceneStringName(draw), callable_mp(class_desc, &RichTextLabel::scroll_to_paragraph));
+		}
+		class_desc->connect(SceneStringName(draw), callable_mp(class_desc, &RichTextLabel::scroll_to_paragraph).bind(line), CONNECT_ONE_SHOT | CONNECT_DEFERRED);
 	} else {
 		scroll_to = line;
 	}
@@ -2888,7 +2893,7 @@ void EditorHelp::_load_doc_thread(void *p_udata) {
 		callable_mp_static(&EditorHelp::_gen_extensions_docs).call_deferred();
 	} else {
 		// We have to go back to the main thread to start from scratch, bypassing any possibly existing cache.
-		callable_mp_static(&EditorHelp::generate_doc).bind(false).call_deferred();
+		callable_mp_static(&EditorHelp::generate_doc).call_deferred(false);
 	}
 
 	OS::get_singleton()->benchmark_end_measure("EditorHelp", vformat("Generate Documentation (Run %d)", doc_generation_count));
@@ -3097,10 +3102,10 @@ EditorHelp::EditorHelp() {
 	class_desc->set_threaded(true);
 	class_desc->set_v_size_flags(SIZE_EXPAND_FILL);
 
-	class_desc->connect("finished", callable_mp(this, &EditorHelp::_class_desc_finished));
+	class_desc->connect(SceneStringName(finished), callable_mp(this, &EditorHelp::_class_desc_finished));
 	class_desc->connect("meta_clicked", callable_mp(this, &EditorHelp::_class_desc_select));
-	class_desc->connect("gui_input", callable_mp(this, &EditorHelp::_class_desc_input));
-	class_desc->connect("resized", callable_mp(this, &EditorHelp::_class_desc_resized).bind(false));
+	class_desc->connect(SceneStringName(gui_input), callable_mp(this, &EditorHelp::_class_desc_input));
+	class_desc->connect(SceneStringName(resized), callable_mp(this, &EditorHelp::_class_desc_resized).bind(false));
 
 	// Added second so it opens at the bottom so it won't offset the entire widget.
 	find_bar = memnew(FindBar);
@@ -3115,7 +3120,7 @@ EditorHelp::EditorHelp() {
 
 	toggle_scripts_button = memnew(Button);
 	toggle_scripts_button->set_flat(true);
-	toggle_scripts_button->connect("pressed", callable_mp(this, &EditorHelp::_toggle_scripts_pressed));
+	toggle_scripts_button->connect(SceneStringName(pressed), callable_mp(this, &EditorHelp::_toggle_scripts_pressed));
 	status_bar->add_child(toggle_scripts_button);
 
 	class_desc->set_selection_enabled(true);
@@ -3378,6 +3383,7 @@ EditorHelpBit::HelpData EditorHelpBit::_get_theme_item_help_data(const StringNam
 			if (theme_item.name == p_theme_item_name) {
 				result = current;
 				found = true;
+
 				if (!is_native) {
 					break;
 				}
@@ -3697,12 +3703,8 @@ void EditorHelpBit::set_custom_text(const String &p_type, const String &p_name, 
 	}
 }
 
-void EditorHelpBit::prepend_description(const String &p_text) {
-	if (help_data.description.is_empty()) {
-		help_data.description = p_text;
-	} else {
-		help_data.description = p_text + "\n" + help_data.description;
-	}
+void EditorHelpBit::set_description(const String &p_text) {
+	help_data.description = p_text;
 
 	if (is_inside_tree()) {
 		_update_labels();
@@ -3721,7 +3723,7 @@ void EditorHelpBit::set_content_height_limits(float p_min, float p_max) {
 
 void EditorHelpBit::update_content_height() {
 	float content_height = content->get_content_height();
-	const Ref<StyleBox> style = content->get_theme_stylebox("normal");
+	const Ref<StyleBox> style = content->get_theme_stylebox(CoreStringName(normal));
 	if (style.is_valid()) {
 		content_height += style->get_content_margin(SIDE_TOP) + style->get_content_margin(SIDE_BOTTOM);
 	}
@@ -3733,6 +3735,7 @@ EditorHelpBit::EditorHelpBit(const String &p_symbol) {
 
 	title = memnew(RichTextLabel);
 	title->set_theme_type_variation("EditorHelpBitTitle");
+	title->set_custom_minimum_size(Size2(512 * EDSCALE, 0)); // GH-93031. Set the minimum width even if `fit_content` is true.
 	title->set_fit_content(true);
 	title->set_selection_enabled(true);
 	//title->set_context_menu_enabled(true); // TODO: Fix opening context menu hides tooltip.
@@ -3758,6 +3761,14 @@ EditorHelpBit::EditorHelpBit(const String &p_symbol) {
 
 /// EditorHelpBitTooltip ///
 
+void EditorHelpBitTooltip::_safe_queue_free() {
+	if (_pushing_input > 0) {
+		_need_free = true;
+	} else {
+		queue_free();
+	}
+}
+
 void EditorHelpBitTooltip::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_WM_MOUSE_ENTER:
@@ -3776,7 +3787,13 @@ void EditorHelpBitTooltip::_input_from_window(const Ref<InputEvent> &p_event) {
 	} else {
 		const Ref<InputEventMouse> mouse_event = p_event;
 		if (mouse_event.is_null()) {
+			// GH-91652. Prevents use-after-free since `ProgressDialog` calls `Main::iteration()`.
+			_pushing_input++;
 			get_parent_viewport()->push_input(p_event);
+			_pushing_input--;
+			if (_pushing_input <= 0 && _need_free) {
+				queue_free();
+			}
 		}
 	}
 }
@@ -3837,12 +3854,12 @@ EditorHelpBitTooltip::EditorHelpBitTooltip(Control *p_target) {
 
 	timer = memnew(Timer);
 	timer->set_wait_time(0.2);
-	timer->connect("timeout", callable_mp(static_cast<Node *>(this), &Node::queue_free));
+	timer->connect("timeout", callable_mp(this, &EditorHelpBitTooltip::_safe_queue_free));
 	add_child(timer);
 
 	ERR_FAIL_NULL(p_target);
-	p_target->connect("mouse_entered", callable_mp(timer, &Timer::stop));
-	p_target->connect("mouse_exited", callable_mp(timer, &Timer::start).bind(-1));
+	p_target->connect(SceneStringName(mouse_entered), callable_mp(timer, &Timer::stop));
+	p_target->connect(SceneStringName(mouse_exited), callable_mp(timer, &Timer::start).bind(-1));
 }
 
 #if defined(MODULE_GDSCRIPT_ENABLED) || defined(MODULE_MONO_ENABLED)
@@ -4031,13 +4048,13 @@ FindBar::FindBar() {
 	find_prev->set_flat(true);
 	add_child(find_prev);
 	find_prev->set_focus_mode(FOCUS_NONE);
-	find_prev->connect("pressed", callable_mp(this, &FindBar::search_prev));
+	find_prev->connect(SceneStringName(pressed), callable_mp(this, &FindBar::search_prev));
 
 	find_next = memnew(Button);
 	find_next->set_flat(true);
 	add_child(find_next);
 	find_next->set_focus_mode(FOCUS_NONE);
-	find_next->connect("pressed", callable_mp(this, &FindBar::search_next));
+	find_next->connect(SceneStringName(pressed), callable_mp(this, &FindBar::search_next));
 
 	Control *space = memnew(Control);
 	add_child(space);
@@ -4048,7 +4065,7 @@ FindBar::FindBar() {
 	hide_button->set_focus_mode(FOCUS_NONE);
 	hide_button->set_ignore_texture_size(true);
 	hide_button->set_stretch_mode(TextureButton::STRETCH_KEEP_CENTERED);
-	hide_button->connect("pressed", callable_mp(this, &FindBar::_hide_bar));
+	hide_button->connect(SceneStringName(pressed), callable_mp(this, &FindBar::_hide_bar));
 }
 
 void FindBar::popup_search() {

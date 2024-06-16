@@ -1359,23 +1359,26 @@ void RasterizerSceneGLES3::_fill_render_list(RenderListType p_render_list, const
 			// LOD
 
 			if (p_render_data->screen_mesh_lod_threshold > 0.0 && mesh_storage->mesh_surface_has_lod(surf->surface)) {
-				// Get the LOD support points on the mesh AABB.
-				Vector3 lod_support_min = inst->transformed_aabb.get_support(p_render_data->cam_transform.basis.get_column(Vector3::AXIS_Z));
-				Vector3 lod_support_max = inst->transformed_aabb.get_support(-p_render_data->cam_transform.basis.get_column(Vector3::AXIS_Z));
-
-				// Get the distances to those points on the AABB from the camera origin.
-				float distance_min = (float)p_render_data->cam_transform.origin.distance_to(lod_support_min);
-				float distance_max = (float)p_render_data->cam_transform.origin.distance_to(lod_support_max);
-
 				float distance = 0.0;
 
-				if (distance_min * distance_max < 0.0) {
-					//crossing plane
-					distance = 0.0;
-				} else if (distance_min >= 0.0) {
-					distance = distance_min;
-				} else if (distance_max <= 0.0) {
-					distance = -distance_max;
+				// Check if camera is NOT inside the mesh AABB.
+				if (!inst->transformed_aabb.has_point(p_render_data->main_cam_transform.origin)) {
+					// Get the LOD support points on the mesh AABB.
+					Vector3 lod_support_min = inst->transformed_aabb.get_support(p_render_data->main_cam_transform.basis.get_column(Vector3::AXIS_Z));
+					Vector3 lod_support_max = inst->transformed_aabb.get_support(-p_render_data->main_cam_transform.basis.get_column(Vector3::AXIS_Z));
+
+					// Get the distances to those points on the AABB from the camera origin.
+					float distance_min = (float)p_render_data->main_cam_transform.origin.distance_to(lod_support_min);
+					float distance_max = (float)p_render_data->main_cam_transform.origin.distance_to(lod_support_max);
+
+					if (distance_min * distance_max < 0.0) {
+						//crossing plane
+						distance = 0.0;
+					} else if (distance_min >= 0.0) {
+						distance = distance_min;
+					} else if (distance_max <= 0.0) {
+						distance = -distance_max;
+					}
 				}
 
 				if (p_render_data->cam_orthogonal) {
@@ -1985,7 +1988,6 @@ void RasterizerSceneGLES3::_render_shadows(const RenderDataGLES3 *p_render_data,
 	LocalVector<int> shadows;
 	LocalVector<int> directional_shadows;
 
-	Plane camera_plane(-p_render_data->cam_transform.basis.get_column(Vector3::AXIS_Z), p_render_data->cam_transform.origin);
 	float lod_distance_multiplier = p_render_data->cam_projection.get_lod_multiplier();
 
 	// Put lights into buckets for omni (cube shadows), directional, and spot.
@@ -2014,20 +2016,20 @@ void RasterizerSceneGLES3::_render_shadows(const RenderDataGLES3 *p_render_data,
 
 		// Render cubemap shadows.
 		for (const int &index : cube_shadows) {
-			_render_shadow_pass(p_render_data->render_shadows[index].light, p_render_data->shadow_atlas, p_render_data->render_shadows[index].pass, p_render_data->render_shadows[index].instances, camera_plane, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
+			_render_shadow_pass(p_render_data->render_shadows[index].light, p_render_data->shadow_atlas, p_render_data->render_shadows[index].pass, p_render_data->render_shadows[index].instances, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
 		}
 		// Render directional shadows.
 		for (uint32_t i = 0; i < directional_shadows.size(); i++) {
-			_render_shadow_pass(p_render_data->render_shadows[directional_shadows[i]].light, p_render_data->shadow_atlas, p_render_data->render_shadows[directional_shadows[i]].pass, p_render_data->render_shadows[directional_shadows[i]].instances, camera_plane, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
+			_render_shadow_pass(p_render_data->render_shadows[directional_shadows[i]].light, p_render_data->shadow_atlas, p_render_data->render_shadows[directional_shadows[i]].pass, p_render_data->render_shadows[directional_shadows[i]].instances, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
 		}
 		// Render positional shadows (Spotlight and Omnilight with dual-paraboloid).
 		for (uint32_t i = 0; i < shadows.size(); i++) {
-			_render_shadow_pass(p_render_data->render_shadows[shadows[i]].light, p_render_data->shadow_atlas, p_render_data->render_shadows[shadows[i]].pass, p_render_data->render_shadows[shadows[i]].instances, camera_plane, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
+			_render_shadow_pass(p_render_data->render_shadows[shadows[i]].light, p_render_data->shadow_atlas, p_render_data->render_shadows[shadows[i]].pass, p_render_data->render_shadows[shadows[i]].instances, lod_distance_multiplier, p_render_data->screen_mesh_lod_threshold, p_render_data->render_info, p_viewport_size, p_render_data->cam_transform);
 		}
 	}
 }
 
-void RasterizerSceneGLES3::_render_shadow_pass(RID p_light, RID p_shadow_atlas, int p_pass, const PagedArray<RenderGeometryInstance *> &p_instances, const Plane &p_camera_plane, float p_lod_distance_multiplier, float p_screen_mesh_lod_threshold, RenderingMethod::RenderInfo *p_render_info, const Size2i &p_viewport_size, const Transform3D &p_main_cam_transform) {
+void RasterizerSceneGLES3::_render_shadow_pass(RID p_light, RID p_shadow_atlas, int p_pass, const PagedArray<RenderGeometryInstance *> &p_instances, float p_lod_distance_multiplier, float p_screen_mesh_lod_threshold, RenderingMethod::RenderInfo *p_render_info, const Size2i &p_viewport_size, const Transform3D &p_main_cam_transform) {
 	GLES3::LightStorage *light_storage = GLES3::LightStorage::get_singleton();
 
 	ERR_FAIL_COND(!light_storage->owns_light_instance(p_light));
@@ -2243,9 +2245,9 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 	}
 
 	bool glow_enabled = false;
-	if (p_environment.is_valid() && rb.is_valid()) {
+	if (p_environment.is_valid()) {
 		glow_enabled = environment_get_glow_enabled(p_environment);
-		rb->set_glow_enabled(glow_enabled); // ensure our intermediate buffer is available if glow is enabled
+		rb->ensure_internal_buffers(); // Ensure our intermediate buffer is available if glow is enabled
 		if (glow_enabled) {
 			// If glow is enabled, we apply tonemapping etc. in post, so disable it during rendering
 			apply_color_adjustments_in_post = true;
@@ -2337,6 +2339,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 	if (render_data.environment.is_valid()) {
 		bool use_bcs = environment_get_adjustments_enabled(render_data.environment);
 		if (use_bcs) {
+			rb->ensure_internal_buffers();
 			apply_color_adjustments_in_post = true;
 		}
 
@@ -2394,6 +2397,8 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 		RS::EnvironmentBG bg_mode = environment_get_background(render_data.environment);
 		float bg_energy_multiplier = environment_get_bg_energy_multiplier(render_data.environment);
 		bg_energy_multiplier *= environment_get_bg_intensity(render_data.environment);
+		RS::EnvironmentReflectionSource reflection_source = environment_get_reflection_source(render_data.environment);
+		RS::EnvironmentAmbientSource ambient_source = environment_get_ambient_source(render_data.environment);
 
 		if (render_data.camera_attributes.is_valid()) {
 			bg_energy_multiplier *= RSG::camera_attributes->camera_attributes_get_exposure_normalization_factor(render_data.camera_attributes);
@@ -2404,7 +2409,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 				clear_color.r *= bg_energy_multiplier;
 				clear_color.g *= bg_energy_multiplier;
 				clear_color.b *= bg_energy_multiplier;
-				if (environment_get_fog_enabled(render_data.environment)) {
+				if (!render_data.transparent_bg && environment_get_fog_enabled(render_data.environment)) {
 					draw_sky_fog_only = true;
 					GLES3::MaterialStorage::get_singleton()->material_set_param(sky_globals.fog_material, "clear_color", Variant(clear_color));
 				}
@@ -2414,13 +2419,13 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 				clear_color.r *= bg_energy_multiplier;
 				clear_color.g *= bg_energy_multiplier;
 				clear_color.b *= bg_energy_multiplier;
-				if (environment_get_fog_enabled(render_data.environment)) {
+				if (!render_data.transparent_bg && environment_get_fog_enabled(render_data.environment)) {
 					draw_sky_fog_only = true;
 					GLES3::MaterialStorage::get_singleton()->material_set_param(sky_globals.fog_material, "clear_color", Variant(clear_color));
 				}
 			} break;
 			case RS::ENV_BG_SKY: {
-				draw_sky = true;
+				draw_sky = !render_data.transparent_bg;
 			} break;
 			case RS::ENV_BG_CANVAS: {
 				keep_color = true;
@@ -2433,8 +2438,14 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 			default: {
 			}
 		}
+
+		bool sky_reflections = reflection_source == RS::ENV_REFLECTION_SOURCE_SKY;
+		sky_reflections |= reflection_source == RS::ENV_REFLECTION_SOURCE_BG && bg_mode == RS::ENV_BG_SKY;
+		bool sky_ambient = ambient_source == RS::ENV_AMBIENT_SOURCE_SKY;
+		sky_ambient |= ambient_source == RS::ENV_AMBIENT_SOURCE_BG && bg_mode == RS::ENV_BG_SKY;
+
 		// setup sky if used for ambient, reflections, or background
-		if (draw_sky || draw_sky_fog_only || environment_get_reflection_source(render_data.environment) == RS::ENV_REFLECTION_SOURCE_SKY || environment_get_ambient_source(render_data.environment) == RS::ENV_AMBIENT_SOURCE_SKY) {
+		if (draw_sky || draw_sky_fog_only || sky_reflections || sky_ambient) {
 			RENDER_TIMESTAMP("Setup Sky");
 			Projection projection = render_data.cam_projection;
 			if (is_reflection_probe) {
@@ -2448,7 +2459,7 @@ void RasterizerSceneGLES3::render_scene(const Ref<RenderSceneBuffers> &p_render_
 			_setup_sky(&render_data, *render_data.lights, projection, render_data.cam_transform, screen_size);
 
 			if (environment_get_sky(render_data.environment).is_valid()) {
-				if (environment_get_reflection_source(render_data.environment) == RS::ENV_REFLECTION_SOURCE_SKY || environment_get_ambient_source(render_data.environment) == RS::ENV_AMBIENT_SOURCE_SKY || (environment_get_reflection_source(render_data.environment) == RS::ENV_REFLECTION_SOURCE_BG && environment_get_background(render_data.environment) == RS::ENV_BG_SKY)) {
+				if (sky_reflections || sky_ambient) {
 					_update_sky_radiance(render_data.environment, projection, render_data.cam_transform, sky_energy_multiplier);
 				}
 			} else {
@@ -2706,27 +2717,32 @@ void RasterizerSceneGLES3::_render_post_processing(const RenderDataGLES3 *p_rend
 		rb->check_glow_buffers();
 	}
 
-	bool use_bcs = environment_get_adjustments_enabled(p_render_data->environment);
 	uint64_t bcs_spec_constants = 0;
-	RID color_correction_texture = environment_get_color_correction(p_render_data->environment);
-	if (use_bcs && color_correction_texture.is_valid()) {
-		bcs_spec_constants |= PostShaderGLES3::USE_BCS;
-		bcs_spec_constants |= PostShaderGLES3::USE_COLOR_CORRECTION;
+	if (p_render_data->environment.is_valid()) {
+		bool use_bcs = environment_get_adjustments_enabled(p_render_data->environment);
+		RID color_correction_texture = environment_get_color_correction(p_render_data->environment);
+		if (use_bcs) {
+			bcs_spec_constants |= PostShaderGLES3::USE_BCS;
 
-		bool use_1d_lut = environment_get_use_1d_color_correction(p_render_data->environment);
-		GLenum texture_target = GL_TEXTURE_3D;
-		if (use_1d_lut) {
-			bcs_spec_constants |= PostShaderGLES3::USE_1D_LUT;
-			texture_target = GL_TEXTURE_2D;
+			if (color_correction_texture.is_valid()) {
+				bcs_spec_constants |= PostShaderGLES3::USE_COLOR_CORRECTION;
+
+				bool use_1d_lut = environment_get_use_1d_color_correction(p_render_data->environment);
+				GLenum texture_target = GL_TEXTURE_3D;
+				if (use_1d_lut) {
+					bcs_spec_constants |= PostShaderGLES3::USE_1D_LUT;
+					texture_target = GL_TEXTURE_2D;
+				}
+
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(texture_target, texture_storage->texture_get_texid(color_correction_texture));
+				glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+				glTexParameteri(texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			}
 		}
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(texture_target, texture_storage->texture_get_texid(color_correction_texture));
-		glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	}
 
 	if (view_count == 1) {
@@ -3645,7 +3661,7 @@ void RasterizerSceneGLES3::_render_uv2(const PagedArray<RenderGeometryInstance *
 		glDrawBuffers(draw_buffers.size(), draw_buffers.ptr());
 
 		glClearColor(0.0, 0.0, 0.0, 0.0);
-		RasterizerGLES3::clear_depth(1.0);
+		RasterizerGLES3::clear_depth(0.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		uint64_t base_spec_constant = 0;

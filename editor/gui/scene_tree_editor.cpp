@@ -232,22 +232,26 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 	item->set_icon(0, icon);
 	item->set_metadata(0, p_node->get_path());
 
+	if (connecting_signal) {
+		// Add script icons for all scripted nodes.
+		Ref<Script> scr = p_node->get_script();
+		if (scr.is_valid()) {
+			item->add_button(0, get_editor_theme_icon(SNAME("Script")), BUTTON_SCRIPT);
+			if (EditorNode::get_singleton()->get_object_custom_type_base(p_node) == scr) {
+				// Disable button on custom scripts (pure visual cue).
+				item->set_button_disabled(0, item->get_button_count(0) - 1, true);
+			}
+		}
+	}
+
 	if (connect_to_script_mode) {
 		Color accent = get_theme_color(SNAME("accent_color"), EditorStringName(Editor));
 
 		Ref<Script> scr = p_node->get_script();
-		if (!scr.is_null() && EditorNode::get_singleton()->get_object_custom_type_base(p_node) != scr) {
-			//has script
-			item->add_button(0, get_editor_theme_icon(SNAME("Script")), BUTTON_SCRIPT);
-		} else {
-			//has no script (or script is a custom type)
+		bool has_custom_script = scr.is_valid() && EditorNode::get_singleton()->get_object_custom_type_base(p_node) == scr;
+		if (scr.is_null() || has_custom_script) {
 			_set_item_custom_color(item, get_theme_color(SNAME("font_disabled_color"), EditorStringName(Editor)));
 			item->set_selectable(0, false);
-
-			if (!scr.is_null()) { // make sure to mark the script if a custom type
-				item->add_button(0, get_editor_theme_icon(SNAME("Script")), BUTTON_SCRIPT);
-				item->set_button_disabled(0, item->get_button_count(0) - 1, true);
-			}
 
 			accent.a *= 0.7;
 		}
@@ -291,7 +295,7 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 		const PackedStringArray warnings = p_node->get_configuration_warnings();
 		const int num_warnings = warnings.size();
 		if (num_warnings > 0) {
-			String warning_icon;
+			StringName warning_icon;
 			if (num_warnings == 1) {
 				warning_icon = SNAME("NodeWarning");
 			} else if (num_warnings <= 3) {
@@ -373,8 +377,8 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 	}
 
 	if (can_open_instance && is_scene_tree_dock) { // Show buttons only when necessary (SceneTreeDock) to avoid crashes.
-		if (!p_node->is_connected("script_changed", callable_mp(this, &SceneTreeEditor::_node_script_changed))) {
-			p_node->connect("script_changed", callable_mp(this, &SceneTreeEditor::_node_script_changed).bind(p_node));
+		if (!p_node->is_connected(CoreStringName(script_changed), callable_mp(this, &SceneTreeEditor::_node_script_changed))) {
+			p_node->connect(CoreStringName(script_changed), callable_mp(this, &SceneTreeEditor::_node_script_changed).bind(p_node));
 		}
 
 		Ref<Script> scr = p_node->get_script();
@@ -394,7 +398,7 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 			item->set_button_color(0, item->get_button_count(0) - 1, button_color);
 		}
 
-		if (p_node->has_method("is_visible") && p_node->has_method("set_visible") && p_node->has_signal("visibility_changed")) {
+		if (p_node->has_method("is_visible") && p_node->has_method("set_visible") && p_node->has_signal(SceneStringName(visibility_changed))) {
 			bool is_visible = p_node->call("is_visible");
 			if (is_visible) {
 				item->add_button(0, get_editor_theme_icon(SNAME("GuiVisibilityVisible")), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
@@ -402,8 +406,8 @@ void SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 				item->add_button(0, get_editor_theme_icon(SNAME("GuiVisibilityHidden")), BUTTON_VISIBILITY, false, TTR("Toggle Visibility"));
 			}
 			const Callable vis_changed = callable_mp(this, &SceneTreeEditor::_node_visibility_changed);
-			if (!p_node->is_connected("visibility_changed", vis_changed)) {
-				p_node->connect("visibility_changed", vis_changed.bind(p_node));
+			if (!p_node->is_connected(SceneStringName(visibility_changed), vis_changed)) {
+				p_node->connect(SceneStringName(visibility_changed), vis_changed.bind(p_node));
 			}
 			_update_visibility_color(p_node, item);
 		}
@@ -573,13 +577,13 @@ void SceneTreeEditor::_node_removed(Node *p_node) {
 		return; //speed up exit
 	}
 
-	if (p_node->is_connected("script_changed", callable_mp(this, &SceneTreeEditor::_node_script_changed))) {
-		p_node->disconnect("script_changed", callable_mp(this, &SceneTreeEditor::_node_script_changed));
+	if (p_node->is_connected(CoreStringName(script_changed), callable_mp(this, &SceneTreeEditor::_node_script_changed))) {
+		p_node->disconnect(CoreStringName(script_changed), callable_mp(this, &SceneTreeEditor::_node_script_changed));
 	}
 
-	if (p_node->has_signal("visibility_changed")) {
-		if (p_node->is_connected("visibility_changed", callable_mp(this, &SceneTreeEditor::_node_visibility_changed))) {
-			p_node->disconnect("visibility_changed", callable_mp(this, &SceneTreeEditor::_node_visibility_changed));
+	if (p_node->has_signal(SceneStringName(visibility_changed))) {
+		if (p_node->is_connected(SceneStringName(visibility_changed), callable_mp(this, &SceneTreeEditor::_node_visibility_changed))) {
+			p_node->disconnect(SceneStringName(visibility_changed), callable_mp(this, &SceneTreeEditor::_node_visibility_changed));
 		}
 	}
 
@@ -614,9 +618,9 @@ void SceneTreeEditor::_update_tree(bool p_scroll_to_selected) {
 
 	updating_tree = true;
 	tree->clear();
+	last_hash = hash_djb2_one_64(0);
 	if (get_scene_node()) {
 		_add_nodes(get_scene_node(), nullptr);
-		last_hash = hash_djb2_one_64(0);
 		_compute_hash(get_scene_node(), last_hash);
 	}
 	updating_tree = false;
@@ -755,11 +759,11 @@ bool SceneTreeEditor::_item_matches_all_terms(TreeItem *p_item, const PackedStri
 					node->get_groups(&group_info_list);
 
 					bool term_in_groups = false;
-					for (int j = 0; j < group_info_list.size(); j++) {
-						if (!group_info_list[j].persistent) {
+					for (const Node::GroupInfo &group_info : group_info_list) {
+						if (!group_info.persistent) {
 							continue; // Ignore internal groups.
 						}
-						if (String(group_info_list[j].name).to_lower().contains(argument)) {
+						if (String(group_info.name).to_lower().contains(argument)) {
 							term_in_groups = true;
 							break;
 						}
@@ -912,7 +916,7 @@ void SceneTreeEditor::_notification(int p_what) {
 			get_tree()->connect("tree_process_mode_changed", callable_mp(this, &SceneTreeEditor::_tree_process_mode_changed));
 			get_tree()->connect("node_removed", callable_mp(this, &SceneTreeEditor::_node_removed));
 			get_tree()->connect("node_renamed", callable_mp(this, &SceneTreeEditor::_node_renamed));
-			get_tree()->connect("node_configuration_warning_changed", callable_mp(this, &SceneTreeEditor::_warning_changed));
+			get_tree()->connect(SceneStringName(node_configuration_warning_changed), callable_mp(this, &SceneTreeEditor::_warning_changed));
 
 			tree->connect("item_collapsed", callable_mp(this, &SceneTreeEditor::_cell_collapsed));
 
@@ -925,7 +929,7 @@ void SceneTreeEditor::_notification(int p_what) {
 			get_tree()->disconnect("node_removed", callable_mp(this, &SceneTreeEditor::_node_removed));
 			get_tree()->disconnect("node_renamed", callable_mp(this, &SceneTreeEditor::_node_renamed));
 			tree->disconnect("item_collapsed", callable_mp(this, &SceneTreeEditor::_cell_collapsed));
-			get_tree()->disconnect("node_configuration_warning_changed", callable_mp(this, &SceneTreeEditor::_warning_changed));
+			get_tree()->disconnect(SceneStringName(node_configuration_warning_changed), callable_mp(this, &SceneTreeEditor::_warning_changed));
 		} break;
 
 		case NOTIFICATION_THEME_CHANGED: {
@@ -1368,22 +1372,35 @@ bool SceneTreeEditor::can_drop_data_fw(const Point2 &p_point, const Variant &p_d
 		}
 
 		bool scene_drop = true;
+		bool audio_drop = true;
 		for (int i = 0; i < files.size(); i++) {
 			String ftype = EditorFileSystem::get_singleton()->get_file_type(files[i]);
 			if (ftype != "PackedScene") {
 				scene_drop = false;
-				break;
+			}
+			if (audio_drop && !ClassDB::is_parent_class(ftype, "AudioStream")) {
+				audio_drop = false;
 			}
 		}
 
 		if (scene_drop) {
 			tree->set_drop_mode_flags(Tree::DROP_MODE_INBETWEEN | Tree::DROP_MODE_ON_ITEM);
-		} else {
-			if (files.size() > 1) {
-				return false;
-			}
-			tree->set_drop_mode_flags(Tree::DROP_MODE_ON_ITEM);
+			return true;
 		}
+
+		if (audio_drop) {
+			if (files.size() > 1) {
+				tree->set_drop_mode_flags(Tree::DROP_MODE_INBETWEEN);
+			} else {
+				tree->set_drop_mode_flags(Tree::DROP_MODE_INBETWEEN | Tree::DROP_MODE_ON_ITEM);
+			}
+			return true;
+		}
+
+		if (files.size() > 1) {
+			return false;
+		}
+		tree->set_drop_mode_flags(Tree::DROP_MODE_ON_ITEM);
 
 		return true;
 	}

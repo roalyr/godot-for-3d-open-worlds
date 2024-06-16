@@ -45,7 +45,7 @@
 #endif //RD_ENABLED
 
 #ifdef GLES3_ENABLED
-#include "wayland/egl_manager_wayland.h"
+#include "drivers/egl/egl_manager.h"
 #endif
 
 #if defined(SPEECHD_ENABLED)
@@ -126,7 +126,7 @@ class DisplayServerWayland : public DisplayServer {
 #endif
 
 #ifdef GLES3_ENABLED
-	EGLManagerWayland *egl_manager = nullptr;
+	EGLManager *egl_manager = nullptr;
 #endif
 
 #ifdef SPEECHD_ENABLED
@@ -280,12 +280,14 @@ public:
 
 	virtual void set_context(Context p_context) override;
 
-	static DisplayServer *create_func(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Point2i *p_position, const Size2i &p_resolution, int p_screen, Error &r_error);
+	virtual bool is_window_transparency_available() const override;
+
+	static DisplayServer *create_func(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Point2i *p_position, const Size2i &p_resolution, int p_screen, Context p_context, Error &r_error);
 	static Vector<String> get_rendering_drivers_func();
 
 	static void register_wayland_driver();
 
-	DisplayServerWayland(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i &p_resolution, Error &r_error);
+	DisplayServerWayland(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i &p_resolution, Context p_context, Error &r_error);
 	~DisplayServerWayland();
 };
 

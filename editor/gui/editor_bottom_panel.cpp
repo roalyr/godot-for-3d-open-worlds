@@ -81,9 +81,9 @@ void EditorBottomPanel::_switch_to_item(bool p_visible, int p_idx) {
 		}
 		if (EditorDebuggerNode::get_singleton() == items[p_idx].control) {
 			// This is the debug panel which uses tabs, so the top section should be smaller.
-			add_theme_style_override("panel", get_theme_stylebox(SNAME("BottomPanelDebuggerOverride"), EditorStringName(EditorStyles)));
+			add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("BottomPanelDebuggerOverride"), EditorStringName(EditorStyles)));
 		} else {
-			add_theme_style_override("panel", get_theme_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
+			add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
 		}
 		center_split->set_dragger_visibility(SplitContainer::DRAGGER_VISIBLE);
 		center_split->set_collapsed(false);
@@ -92,7 +92,7 @@ void EditorBottomPanel::_switch_to_item(bool p_visible, int p_idx) {
 		}
 		expand_button->show();
 	} else {
-		add_theme_style_override("panel", get_theme_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
+		add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("BottomPanel"), EditorStringName(EditorStyles)));
 		items[p_idx].button->set_pressed_no_signal(false);
 		items[p_idx].control->set_visible(false);
 		center_split->set_dragger_visibility(SplitContainer::DRAGGER_HIDDEN);
@@ -265,7 +265,7 @@ EditorBottomPanel::EditorBottomPanel() {
 		build_date = TTR("(unknown)");
 	}
 	version_btn->set_tooltip_text(vformat(TTR("Git commit date: %s\nClick to copy the version information."), build_date));
-	version_btn->connect("pressed", callable_mp(this, &EditorBottomPanel::_version_button_pressed));
+	version_btn->connect(SceneStringName(pressed), callable_mp(this, &EditorBottomPanel::_version_button_pressed));
 	version_btn->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
 	bottom_hbox->add_child(version_btn);
 

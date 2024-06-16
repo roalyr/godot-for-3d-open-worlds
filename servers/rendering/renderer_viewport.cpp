@@ -85,7 +85,7 @@ Vector<RendererViewport::Viewport *> RendererViewport::_sort_active_viewports() 
 	}
 
 	while (!nodes.is_empty()) {
-		const Viewport *node = nodes[0];
+		const Viewport *node = nodes.front()->get();
 		nodes.pop_front();
 
 		for (int i = active_viewports.size() - 1; i >= 0; --i) {
@@ -678,7 +678,7 @@ void RendererViewport::draw_viewports(bool p_swap_buffers) {
 #endif // _3D_DISABLED
 
 	if (Engine::get_singleton()->is_editor_hint()) {
-		set_default_clear_color(GLOBAL_GET("rendering/environment/defaults/default_clear_color"));
+		RSG::texture_storage->set_default_clear_color(GLOBAL_GET("rendering/environment/defaults/default_clear_color"));
 	}
 
 	if (sorted_active_viewports_dirty) {
@@ -971,7 +971,7 @@ void RendererViewport::_viewport_set_size(Viewport *p_viewport, int p_width, int
 }
 
 bool RendererViewport::_viewport_requires_motion_vectors(Viewport *p_viewport) {
-	return p_viewport->use_taa || p_viewport->scaling_3d_mode == RenderingServer::VIEWPORT_SCALING_3D_MODE_FSR2;
+	return p_viewport->use_taa || p_viewport->scaling_3d_mode == RenderingServer::VIEWPORT_SCALING_3D_MODE_FSR2 || p_viewport->debug_draw == RenderingServer::VIEWPORT_DEBUG_DRAW_MOTION_VECTORS;
 }
 
 void RendererViewport::viewport_set_active(RID p_viewport, bool p_active) {
@@ -1370,7 +1370,13 @@ void RendererViewport::viewport_set_debug_draw(RID p_viewport, RS::ViewportDebug
 	Viewport *viewport = viewport_owner.get_or_null(p_viewport);
 	ERR_FAIL_NULL(viewport);
 
+	bool motion_vectors_before = _viewport_requires_motion_vectors(viewport);
 	viewport->debug_draw = p_draw;
+
+	bool motion_vectors_after = _viewport_requires_motion_vectors(viewport);
+	if (motion_vectors_before != motion_vectors_after) {
+		num_viewports_with_motion_vectors += motion_vectors_after ? 1 : -1;
+	}
 }
 
 void RendererViewport::viewport_set_measure_render_time(RID p_viewport, bool p_enable) {
@@ -1450,6 +1456,13 @@ void RendererViewport::viewport_set_vrs_mode(RID p_viewport, RS::ViewportVRSMode
 	_configure_3d_render_buffers(viewport);
 }
 
+void RendererViewport::viewport_set_vrs_update_mode(RID p_viewport, RS::ViewportVRSUpdateMode p_mode) {
+	Viewport *viewport = viewport_owner.get_or_null(p_viewport);
+	ERR_FAIL_NULL(viewport);
+
+	RSG::texture_storage->render_target_set_vrs_update_mode(viewport->render_target, p_mode);
+}
+
 void RendererViewport::viewport_set_vrs_texture(RID p_viewport, RID p_texture) {
 	Viewport *viewport = viewport_owner.get_or_null(p_viewport);
 	ERR_FAIL_NULL(viewport);
@@ -1512,10 +1525,6 @@ void RendererViewport::handle_timestamp(String p_timestamp, uint64_t p_cpu_time,
 		viewport->time_cpu_end = p_cpu_time;
 		viewport->time_gpu_end = p_gpu_time;
 	}
-}
-
-void RendererViewport::set_default_clear_color(const Color &p_color) {
-	RSG::texture_storage->set_default_clear_color(p_color);
 }
 
 void RendererViewport::viewport_set_canvas_cull_mask(RID p_viewport, uint32_t p_canvas_cull_mask) {

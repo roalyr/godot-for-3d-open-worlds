@@ -42,6 +42,7 @@
 #include "jni_utils.h"
 #include "net_socket_android.h"
 #include "os_android.h"
+#include "plugin/godot_plugin_jni.h"
 #include "string_android.h"
 #include "thread_jandroid.h"
 #include "tts_android.h"
@@ -78,6 +79,9 @@ static void _terminate(JNIEnv *env, bool p_restart = false) {
 	step.set(-1); // Ensure no further steps are attempted and no further events are sent
 
 	// lets cleanup
+	// Unregister android plugins
+	unregister_plugins_singletons();
+
 	if (java_class_wrapper) {
 		memdelete(java_class_wrapper);
 	}
@@ -294,11 +298,13 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_dispatchTouchEvent(JN
 
 	Vector<AndroidInputHandler::TouchPos> points;
 	for (int i = 0; i < pointer_count; i++) {
-		jfloat p[3];
-		env->GetFloatArrayRegion(position, i * 3, 3, p);
+		jfloat p[6];
+		env->GetFloatArrayRegion(position, i * 6, 6, p);
 		AndroidInputHandler::TouchPos tp;
-		tp.pos = Point2(p[1], p[2]);
 		tp.id = (int)p[0];
+		tp.pos = Point2(p[1], p[2]);
+		tp.pressure = p[3];
+		tp.tilt = Vector2(p[4], p[5]);
 		points.push_back(tp);
 	}
 
