@@ -97,6 +97,16 @@ void OpenXRInterface::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_hand_interaction_supported"), &OpenXRInterface::is_hand_interaction_supported);
 	ClassDB::bind_method(D_METHOD("is_eye_gaze_interaction_supported"), &OpenXRInterface::is_eye_gaze_interaction_supported);
 
+	// VRS
+	ClassDB::bind_method(D_METHOD("get_vrs_min_radius"), &OpenXRInterface::get_vrs_min_radius);
+	ClassDB::bind_method(D_METHOD("set_vrs_min_radius", "radius"), &OpenXRInterface::set_vrs_min_radius);
+	ClassDB::bind_method(D_METHOD("get_vrs_strength"), &OpenXRInterface::get_vrs_strength);
+	ClassDB::bind_method(D_METHOD("set_vrs_strength", "strength"), &OpenXRInterface::set_vrs_strength);
+
+	ADD_GROUP("Vulkan VRS", "vrs_");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "vrs_min_radius", PROPERTY_HINT_RANGE, "1.0,100.0,1.0"), "set_vrs_min_radius", "get_vrs_min_radius");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "vrs_strength", PROPERTY_HINT_RANGE, "0.1,10.0,0.1"), "set_vrs_strength", "get_vrs_strength");
+
 	BIND_ENUM_CONSTANT(HAND_LEFT);
 	BIND_ENUM_CONSTANT(HAND_RIGHT);
 	BIND_ENUM_CONSTANT(HAND_MAX);
@@ -381,7 +391,7 @@ OpenXRInterface::Action *OpenXRInterface::create_action(ActionSet *p_action_set,
 
 	// we link our actions back to our trackers so we know which actions to check when we're processing our trackers
 	for (int i = 0; i < p_trackers.size(); i++) {
-		if (p_trackers[i]->actions.find(action) == -1) {
+		if (!p_trackers[i]->actions.has(action)) {
 			p_trackers[i]->actions.push_back(action);
 		}
 	}
@@ -870,6 +880,22 @@ Array OpenXRInterface::get_action_sets() const {
 	}
 
 	return arr;
+}
+
+float OpenXRInterface::get_vrs_min_radius() const {
+	return xr_vrs.get_vrs_min_radius();
+}
+
+void OpenXRInterface::set_vrs_min_radius(float p_vrs_min_radius) {
+	xr_vrs.set_vrs_min_radius(p_vrs_min_radius);
+}
+
+float OpenXRInterface::get_vrs_strength() const {
+	return xr_vrs.get_vrs_strength();
+}
+
+void OpenXRInterface::set_vrs_strength(float p_vrs_strength) {
+	xr_vrs.set_vrs_strength(p_vrs_strength);
 }
 
 double OpenXRInterface::get_render_target_size_multiplier() const {
@@ -1433,6 +1459,24 @@ Vector3 OpenXRInterface::get_hand_joint_angular_velocity(Hand p_hand, HandJoints
 	}
 
 	return Vector3();
+}
+
+RID OpenXRInterface::get_vrs_texture() {
+	if (!openxr_api) {
+		return RID();
+	}
+
+	PackedVector2Array eye_foci;
+
+	Size2 target_size = get_render_target_size();
+	real_t aspect_ratio = target_size.x / target_size.y;
+	uint32_t view_count = get_view_count();
+
+	for (uint32_t v = 0; v < view_count; v++) {
+		eye_foci.push_back(openxr_api->get_eye_focus(v, aspect_ratio));
+	}
+
+	return xr_vrs.make_vrs_texture(target_size, eye_foci);
 }
 
 OpenXRInterface::OpenXRInterface() {

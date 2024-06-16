@@ -54,6 +54,7 @@
 #endif
 
 #include "extensions/openxr_composition_layer_depth_extension.h"
+#include "extensions/openxr_eye_gaze_interaction.h"
 #include "extensions/openxr_fb_display_refresh_rate_extension.h"
 #include "extensions/openxr_fb_foveation_extension.h"
 #include "extensions/openxr_fb_update_swapchain_extension.h"
@@ -1219,6 +1220,10 @@ bool OpenXRAPI::create_main_swapchains(Size2i p_size) {
 		}
 	};
 
+	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
+		wrapper->on_main_swapchains_created();
+	}
+
 	return true;
 };
 
@@ -1334,8 +1339,8 @@ bool OpenXRAPI::on_state_synchronized() {
 	// Just in case, see if we already have active trackers...
 	List<RID> trackers;
 	tracker_owner.get_owned_list(&trackers);
-	for (int i = 0; i < trackers.size(); i++) {
-		tracker_check_profile(trackers[i]);
+	for (const RID &tracker : trackers) {
+		tracker_check_profile(tracker);
 	}
 
 	for (OpenXRExtensionWrapper *wrapper : registered_extension_wrappers) {
@@ -1826,6 +1831,46 @@ bool OpenXRAPI::get_view_projection(uint32_t p_view, double p_z_near, double p_z
 	return graphics_extension->create_projection_fov(render_state.views[p_view].fov, p_z_near, p_z_far, p_camera_matrix);
 }
 
+Vector2 OpenXRAPI::get_eye_focus(uint32_t p_view, float p_aspect) {
+	ERR_FAIL_NULL_V(graphics_extension, Vector2());
+
+	if (!render_state.running) {
+		return Vector2();
+	}
+
+	// xrWaitFrame not run yet
+	if (render_state.predicted_display_time == 0) {
+		return Vector2();
+	}
+
+	// we don't have valid view info
+	if (render_state.views == nullptr || !render_state.view_pose_valid) {
+		return Vector2();
+	}
+
+	Projection cm;
+	if (!graphics_extension->create_projection_fov(render_state.views[p_view].fov, 0.1, 1000.0, cm)) {
+		return Vector2();
+	}
+
+	// Default focus to center...
+	Vector3 focus = cm.xform(Vector3(0.0, 0.0, 999.9));
+
+	// Lets check for eye tracking...
+	OpenXREyeGazeInteractionExtension *eye_gaze_interaction = OpenXREyeGazeInteractionExtension::get_singleton();
+	if (eye_gaze_interaction && eye_gaze_interaction->supports_eye_gaze_interaction()) {
+		Vector3 eye_gaze_pose;
+		if (eye_gaze_interaction->get_eye_gaze_pose(1.0, eye_gaze_pose)) {
+			Transform3D view_transform = transform_from_pose(render_state.views[p_view].pose);
+
+			eye_gaze_pose = view_transform.xform_inv(eye_gaze_pose);
+			focus = cm.xform(eye_gaze_pose);
+		}
+	}
+
+	return Vector2(focus.x, focus.y);
+}
+
 bool OpenXRAPI::poll_events() {
 	ERR_FAIL_COND_V(instance == XR_NULL_HANDLE, false);
 
@@ -1922,8 +1967,8 @@ bool OpenXRAPI::poll_events() {
 
 				List<RID> trackers;
 				tracker_owner.get_owned_list(&trackers);
-				for (int i = 0; i < trackers.size(); i++) {
-					tracker_check_profile(trackers[i], event->session);
+				for (const RID &tracker : trackers) {
+					tracker_check_profile(tracker, event->session);
 				}
 
 			} break;
@@ -2261,7 +2306,7 @@ void OpenXRAPI::end_frame() {
 		};
 		result = xrEndFrame(session, &frame_end_info);
 		if (XR_FAILED(result)) {
-			print_line("OpenXR: failed to end frame! [", get_error_string(result), "]");
+			print_line("OpenXR: rendering skipped and failed to end frame! [", get_error_string(result), "]");
 			return;
 		}
 
@@ -2633,10 +2678,23 @@ bool OpenXRAPI::xr_result(XrResult result, const char *format, Array args) const
 RID OpenXRAPI::get_tracker_rid(XrPath p_path) {
 	List<RID> current;
 	tracker_owner.get_owned_list(&current);
-	for (int i = 0; i < current.size(); i++) {
-		Tracker *tracker = tracker_owner.get_or_null(current[i]);
+	for (const RID &E : current) {
+		Tracker *tracker = tracker_owner.get_or_null(E);
 		if (tracker && tracker->toplevel_path == p_path) {
-			return current[i];
+			return E;
+		}
+	}
+
+	return RID();
+}
+
+RID OpenXRAPI::find_tracker(const String &p_name) {
+	List<RID> current;
+	tracker_owner.get_owned_list(&current);
+	for (const RID &E : current) {
+		Tracker *tracker = tracker_owner.get_or_null(E);
+		if (tracker && tracker->name == p_name) {
+			return E;
 		}
 	}
 
@@ -2827,10 +2885,23 @@ void OpenXRAPI::action_set_free(RID p_action_set) {
 RID OpenXRAPI::get_action_rid(XrAction p_action) {
 	List<RID> current;
 	action_owner.get_owned_list(&current);
-	for (int i = 0; i < current.size(); i++) {
-		Action *action = action_owner.get_or_null(current[i]);
+	for (const RID &E : current) {
+		Action *action = action_owner.get_or_null(E);
 		if (action && action->handle == p_action) {
-			return current[i];
+			return E;
+		}
+	}
+
+	return RID();
+}
+
+RID OpenXRAPI::find_action(const String &p_name) {
+	List<RID> current;
+	action_owner.get_owned_list(&current);
+	for (const RID &E : current) {
+		Action *action = action_owner.get_or_null(E);
+		if (action && action->name == p_name) {
+			return E;
 		}
 	}
 
@@ -2931,10 +3002,10 @@ void OpenXRAPI::action_free(RID p_action) {
 RID OpenXRAPI::get_interaction_profile_rid(XrPath p_path) {
 	List<RID> current;
 	interaction_profile_owner.get_owned_list(&current);
-	for (int i = 0; i < current.size(); i++) {
-		InteractionProfile *ip = interaction_profile_owner.get_or_null(current[i]);
+	for (const RID &E : current) {
+		InteractionProfile *ip = interaction_profile_owner.get_or_null(E);
 		if (ip && ip->path == p_path) {
-			return current[i];
+			return E;
 		}
 	}
 

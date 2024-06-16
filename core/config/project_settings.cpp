@@ -31,7 +31,6 @@
 #include "project_settings.h"
 
 #include "core/core_bind.h" // For Compression enum.
-#include "core/core_string_names.h"
 #include "core/input/input_map.h"
 #include "core/io/config_file.h"
 #include "core/io/dir_access.h"
@@ -253,7 +252,7 @@ bool ProjectSettings::get_ignore_value_in_docs(const String &p_name) const {
 }
 
 void ProjectSettings::add_hidden_prefix(const String &p_prefix) {
-	ERR_FAIL_COND_MSG(hidden_prefixes.find(p_prefix) > -1, vformat("Hidden prefix '%s' already exists.", p_prefix));
+	ERR_FAIL_COND_MSG(hidden_prefixes.has(p_prefix), vformat("Hidden prefix '%s' already exists.", p_prefix));
 	hidden_prefixes.push_back(p_prefix);
 }
 
@@ -291,7 +290,7 @@ bool ProjectSettings::_set(const StringName &p_name, const Variant &p_value) {
 			}
 		}
 	} else {
-		if (p_name == CoreStringNames::get_singleton()->_custom_features) {
+		if (p_name == CoreStringName(_custom_features)) {
 			Vector<String> custom_feature_array = String(p_value).split(",");
 			for (int i = 0; i < custom_feature_array.size(); i++) {
 				custom_features.insert(custom_feature_array[i]);
@@ -875,7 +874,7 @@ Error ProjectSettings::_save_settings_binary(const String &p_file, const RBMap<S
 	if (!p_custom_features.is_empty()) {
 		// Store how many properties are saved, add one for custom features, which must always go first.
 		file->store_32(count + 1);
-		String key = CoreStringNames::get_singleton()->_custom_features;
+		String key = CoreStringName(_custom_features);
 		file->store_pascal_string(key);
 
 		int len;
@@ -1557,7 +1556,11 @@ ProjectSettings::ProjectSettings() {
 	GLOBAL_DEF_RST("rendering/rendering_device/d3d12/max_misc_descriptors_per_frame", 512);
 	custom_prop_info["rendering/rendering_device/d3d12/max_misc_descriptors_per_frame"] = PropertyInfo(Variant::INT, "rendering/rendering_device/d3d12/max_misc_descriptors_per_frame", PROPERTY_HINT_RANGE, "32,4096");
 
-	GLOBAL_DEF_RST(PropertyInfo(Variant::INT, "rendering/rendering_device/d3d12/agility_sdk_version"), 610);
+	// The default value must match the minor part of the Agility SDK version
+	// installed by the scripts provided in the repository
+	// (check `misc/scripts/install_d3d12_sdk_windows.py`).
+	// For example, if the script installs 1.613.3, the default value must be 613.
+	GLOBAL_DEF_RST(PropertyInfo(Variant::INT, "rendering/rendering_device/d3d12/agility_sdk_version"), 613);
 
 	GLOBAL_DEF_BASIC(PropertyInfo(Variant::INT, "rendering/textures/canvas_textures/default_texture_filter", PROPERTY_HINT_ENUM, "Nearest,Linear,Linear Mipmap,Nearest Mipmap"), 1);
 	GLOBAL_DEF_BASIC(PropertyInfo(Variant::INT, "rendering/textures/canvas_textures/default_texture_repeat", PROPERTY_HINT_ENUM, "Disable,Enable,Mirror"), 0);

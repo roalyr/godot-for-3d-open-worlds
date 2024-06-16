@@ -305,7 +305,7 @@ void EditorPropertyFontMetaOverride::update_property() {
 			Button *remove = memnew(Button);
 			remove->set_icon(get_editor_theme_icon(SNAME("Remove")));
 			hbox->add_child(remove);
-			remove->connect("pressed", callable_mp(this, &EditorPropertyFontMetaOverride::_remove).bind(remove, name));
+			remove->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyFontMetaOverride::_remove).bind(remove, name));
 
 			prop->update_property();
 		}
@@ -316,7 +316,7 @@ void EditorPropertyFontMetaOverride::update_property() {
 		} else {
 			button_add = EditorInspector::create_inspector_action_button(TTR("Add Locale"));
 		}
-		button_add->connect("pressed", callable_mp(this, &EditorPropertyFontMetaOverride::_add_menu));
+		button_add->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyFontMetaOverride::_add_menu));
 		property_vbox->add_child(button_add);
 
 		updating = false;
@@ -359,7 +359,7 @@ EditorPropertyFontMetaOverride::EditorPropertyFontMetaOverride(bool p_script) {
 	edit = memnew(Button);
 	edit->set_h_size_flags(SIZE_EXPAND_FILL);
 	edit->set_clip_text(true);
-	edit->connect("pressed", callable_mp(this, &EditorPropertyFontMetaOverride::_edit_pressed));
+	edit->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyFontMetaOverride::_edit_pressed));
 	edit->set_toggle_mode(true);
 	add_child(edit);
 	add_focusable(edit);
@@ -372,7 +372,7 @@ EditorPropertyFontMetaOverride::EditorPropertyFontMetaOverride(bool p_script) {
 		}
 	}
 	add_child(menu);
-	menu->connect("id_pressed", callable_mp(this, &EditorPropertyFontMetaOverride::_add_script));
+	menu->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyFontMetaOverride::_add_script));
 
 	locale_select = memnew(EditorLocaleDialog);
 	locale_select->connect("locale_selected", callable_mp(this, &EditorPropertyFontMetaOverride::_add_lang));
@@ -530,7 +530,7 @@ EditorPropertyOTVariation::EditorPropertyOTVariation() {
 	edit = memnew(Button);
 	edit->set_h_size_flags(SIZE_EXPAND_FILL);
 	edit->set_clip_text(true);
-	edit->connect("pressed", callable_mp(this, &EditorPropertyOTVariation::_edit_pressed));
+	edit->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyOTVariation::_edit_pressed));
 	edit->set_toggle_mode(true);
 	add_child(edit);
 	add_focusable(edit);
@@ -784,7 +784,7 @@ void EditorPropertyOTFeatures::update_property() {
 				Button *remove = memnew(Button);
 				remove->set_icon(get_editor_theme_icon(SNAME("Remove")));
 				hbox->add_child(remove);
-				remove->connect("pressed", callable_mp(this, &EditorPropertyOTFeatures::_remove).bind(remove, name_tag));
+				remove->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyOTFeatures::_remove).bind(remove, name_tag));
 
 				prop->update_property();
 			}
@@ -792,7 +792,7 @@ void EditorPropertyOTFeatures::update_property() {
 
 		button_add = EditorInspector::create_inspector_action_button(TTR("Add Feature"));
 		button_add->set_icon(get_editor_theme_icon(SNAME("Add")));
-		button_add->connect("pressed", callable_mp(this, &EditorPropertyOTFeatures::_add_menu));
+		button_add->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyOTFeatures::_add_menu));
 		property_vbox->add_child(button_add);
 
 		updating = false;
@@ -833,19 +833,19 @@ EditorPropertyOTFeatures::EditorPropertyOTFeatures() {
 	edit = memnew(Button);
 	edit->set_h_size_flags(SIZE_EXPAND_FILL);
 	edit->set_clip_text(true);
-	edit->connect("pressed", callable_mp(this, &EditorPropertyOTFeatures::_edit_pressed));
+	edit->connect(SceneStringName(pressed), callable_mp(this, &EditorPropertyOTFeatures::_edit_pressed));
 	edit->set_toggle_mode(true);
 	add_child(edit);
 	add_focusable(edit);
 
 	menu = memnew(PopupMenu);
 	add_child(menu);
-	menu->connect("id_pressed", callable_mp(this, &EditorPropertyOTFeatures::_add_feature));
+	menu->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyOTFeatures::_add_feature));
 
 	for (int i = 0; i < FGRP_MAX; i++) {
 		menu_sub[i] = memnew(PopupMenu);
 		menu->add_child(menu_sub[i]);
-		menu_sub[i]->connect("id_pressed", callable_mp(this, &EditorPropertyOTFeatures::_add_feature));
+		menu_sub[i]->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyOTFeatures::_add_feature));
 	}
 
 	group_names[FGRP_STYLISTIC_SET] = TTRC("Stylistic Sets");
@@ -1018,7 +1018,7 @@ EditorPropertyFontNamesArray::EditorPropertyFontNamesArray() {
 		}
 	}
 	add_child(menu);
-	menu->connect("id_pressed", callable_mp(this, &EditorPropertyFontNamesArray::_add_font));
+	menu->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyFontNamesArray::_add_font));
 }
 
 /*************************************************************************/

@@ -197,6 +197,7 @@ class EditorFileSystem : public Node {
 	};
 
 	HashMap<String, FileCache> file_cache;
+	HashSet<String> dep_update_list;
 
 	struct ScanProgress {
 		float low = 0;
@@ -309,6 +310,7 @@ public:
 	void scan();
 	void scan_changes();
 	void update_file(const String &p_file);
+	void update_files(const Vector<String> &p_script_paths);
 	HashSet<String> get_valid_extensions() const;
 	void register_global_class_script(const String &p_search_path, const String &p_target_path);
 

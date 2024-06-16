@@ -2828,7 +2828,7 @@ int Tree::propagate_mouse_event(const Point2i &p_pos, int x_ofs, int y_ofs, int 
 			return -1;
 		}
 
-		if (!p_item->disable_folding && !hide_folding && p_item->first_child && (p_pos.x >= x_ofs && p_pos.x < (x_ofs + theme_cache.item_margin))) {
+		if (!p_item->disable_folding && !hide_folding && p_item->first_child && (p_pos.x < (x_ofs + theme_cache.item_margin))) {
 			if (enable_recursive_folding && p_mod->is_shift_pressed()) {
 				p_item->set_collapsed_recursive(!p_item->is_collapsed());
 			} else {
@@ -3152,10 +3152,12 @@ int Tree::propagate_mouse_event(const Point2i &p_pos, int x_ofs, int y_ofs, int 
 }
 
 void Tree::_text_editor_popup_modal_close() {
-	if (Input::get_singleton()->is_key_pressed(Key::ESCAPE) ||
-			Input::get_singleton()->is_key_pressed(Key::KP_ENTER) ||
-			Input::get_singleton()->is_key_pressed(Key::ENTER)) {
-		return;
+	if (popup_edit_commited) {
+		return; // Already processed by LineEdit/TextEdit commit.
+	}
+
+	if (popup_editor->get_hide_reason() == Popup::HIDE_REASON_CANCELED) {
+		return; // ESC pressed, app focus lost, or forced close from code.
 	}
 
 	if (value_editor->has_point(value_editor->get_local_mouse_position())) {
@@ -3174,9 +3176,18 @@ void Tree::_text_editor_popup_modal_close() {
 }
 
 void Tree::_text_editor_gui_input(const Ref<InputEvent> &p_event) {
+	if (popup_edit_commited) {
+		return; // Already processed by _text_editor_popup_modal_close
+	}
+
+	if (popup_editor->get_hide_reason() == Popup::HIDE_REASON_CANCELED) {
+		return; // ESC pressed, app focus lost, or forced close from code.
+	}
+
 	if (p_event->is_action_pressed("ui_text_newline_blank", true)) {
 		accept_event();
 	} else if (p_event->is_action_pressed("ui_text_newline")) {
+		popup_edit_commited = true; // End edit popup processing.
 		popup_editor->hide();
 		_apply_multiline_edit();
 		accept_event();
@@ -3207,6 +3218,15 @@ void Tree::_apply_multiline_edit() {
 }
 
 void Tree::_line_editor_submit(String p_text) {
+	if (popup_edit_commited) {
+		return; // Already processed by _text_editor_popup_modal_close
+	}
+
+	if (popup_editor->get_hide_reason() == Popup::HIDE_REASON_CANCELED) {
+		return; // ESC pressed, app focus lost, or forced close from code.
+	}
+
+	popup_edit_commited = true; // End edit popup processing.
 	popup_editor->hide();
 
 	if (!popup_edited_item) {
@@ -4074,6 +4094,7 @@ bool Tree::edit_selected(bool p_force_edit) {
 		if (!popup_editor->is_embedded()) {
 			popup_editor->set_content_scale_factor(popup_scale);
 		}
+		popup_edit_commited = false; // Start edit popup processing.
 		popup_editor->popup();
 		popup_editor->child_controls_changed();
 
@@ -4093,6 +4114,7 @@ bool Tree::edit_selected(bool p_force_edit) {
 		if (!popup_editor->is_embedded()) {
 			popup_editor->set_content_scale_factor(popup_scale);
 		}
+		popup_edit_commited = false; // Start edit popup processing.
 		popup_editor->popup();
 		popup_editor->child_controls_changed();
 
@@ -5797,9 +5819,9 @@ Tree::Tree() {
 	h_scroll->connect("value_changed", callable_mp(this, &Tree::_scroll_moved));
 	v_scroll->connect("value_changed", callable_mp(this, &Tree::_scroll_moved));
 	line_editor->connect("text_submitted", callable_mp(this, &Tree::_line_editor_submit));
-	text_editor->connect("gui_input", callable_mp(this, &Tree::_text_editor_gui_input));
+	text_editor->connect(SceneStringName(gui_input), callable_mp(this, &Tree::_text_editor_gui_input));
 	popup_editor->connect("popup_hide", callable_mp(this, &Tree::_text_editor_popup_modal_close));
-	popup_menu->connect("id_pressed", callable_mp(this, &Tree::popup_select));
+	popup_menu->connect(SceneStringName(id_pressed), callable_mp(this, &Tree::popup_select));
 	value_editor->connect("value_changed", callable_mp(this, &Tree::value_editor_changed));
 
 	set_notify_transform(true);

@@ -37,7 +37,8 @@
 
 #include "core/config/engine.h"
 #include "core/config/project_settings.h"
-#include "core/core_string_names.h"
+
+#include "scene/scene_string_names.h"
 
 bool GDScriptCompiler::_is_class_member_property(CodeGen &codegen, const StringName &p_name) {
 	if (codegen.function_node && codegen.function_node->is_static) {
@@ -241,9 +242,9 @@ static bool _can_use_validate_call(const MethodBind *p_method, const Vector<GDSc
 	}
 	MethodInfo info;
 	ClassDB::get_method_info(p_method->get_instance_class(), p_method->get_name(), &info);
-	for (int i = 0; i < p_arguments.size(); i++) {
-		const PropertyInfo &prop = info.arguments[i];
-		if (!_is_exact_type(prop, p_arguments[i].type)) {
+	int i = 0;
+	for (List<PropertyInfo>::ConstIterator itr = info.arguments.begin(); itr != info.arguments.end(); ++itr, ++i) {
+		if (!_is_exact_type(*itr, p_arguments[i].type)) {
 			return false;
 		}
 	}
@@ -346,7 +347,7 @@ GDScriptCodeGenerator::Address GDScriptCompiler::_parse_expression(CodeGen &code
 							scr = scr->_base;
 						}
 
-						if (nc && (identifier == CoreStringNames::get_singleton()->_free || ClassDB::has_signal(nc->get_name(), identifier) || ClassDB::has_method(nc->get_name(), identifier))) {
+						if (nc && (identifier == CoreStringName(free_) || ClassDB::has_signal(nc->get_name(), identifier) || ClassDB::has_method(nc->get_name(), identifier))) {
 							// Get like it was a property.
 							GDScriptCodeGenerator::Address temp = codegen.add_temporary(); // TODO: Get type here.
 							GDScriptCodeGenerator::Address self(GDScriptCodeGenerator::Address::SELF);
@@ -2235,7 +2236,7 @@ GDScriptFunction *GDScriptCompiler::_parse_function(Error &r_error, GDScript *p_
 		return_type = _gdtype_from_datatype(p_func->get_datatype(), p_script);
 	} else {
 		if (p_for_ready) {
-			func_name = "_ready";
+			func_name = SceneStringName(_ready);
 		} else {
 			func_name = "@implicit_new";
 		}
@@ -2666,7 +2667,10 @@ Error GDScriptCompiler::_prepare_compilation(GDScript *p_script, const GDScriptP
 
 	GDScriptDataType base_type = _gdtype_from_datatype(p_class->base_type, p_script, false);
 
+	ERR_FAIL_COND_V_MSG(base_type.native_type == StringName(), ERR_BUG, vformat(R"(Failed to get base class for "%s")", p_script->path));
+
 	int native_idx = GDScriptLanguage::get_singleton()->get_global_map()[base_type.native_type];
+
 	p_script->native = GDScriptLanguage::get_singleton()->get_global_array()[native_idx];
 	ERR_FAIL_COND_V(p_script->native.is_null(), ERR_BUG);
 
@@ -3224,7 +3228,11 @@ Error GDScriptCompiler::compile(const GDScriptParser *p_parser, GDScript *p_scri
 		GDScriptCache::add_static_script(p_script);
 	}
 
-	return GDScriptCache::finish_compiling(main_script->path);
+	err = GDScriptCache::finish_compiling(main_script->path);
+	if (err) {
+		main_script->valid = false;
+	}
+	return err;
 }
 
 String GDScriptCompiler::get_error() const {

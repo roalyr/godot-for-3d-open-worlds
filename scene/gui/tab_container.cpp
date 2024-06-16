@@ -362,8 +362,8 @@ void TabContainer::_on_mouse_exited() {
 Vector<Control *> TabContainer::_get_tab_controls() const {
 	Vector<Control *> controls;
 	for (int i = 0; i < get_child_count(); i++) {
-		Control *control = Object::cast_to<Control>(get_child(i));
-		if (!control || control->is_set_as_top_level() || control == tab_bar || children_removing.has(control)) {
+		Control *control = as_sortable_control(get_child(i), SortableVisbilityMode::IGNORE);
+		if (!control || control == tab_bar || children_removing.has(control)) {
 			continue;
 		}
 
@@ -539,8 +539,8 @@ void TabContainer::add_child_notify(Node *p_child) {
 		return;
 	}
 
-	Control *c = Object::cast_to<Control>(p_child);
-	if (!c || c->is_set_as_top_level()) {
+	Control *c = as_sortable_control(p_child, SortableVisbilityMode::IGNORE);
+	if (!c) {
 		return;
 	}
 	c->hide();
@@ -554,7 +554,7 @@ void TabContainer::add_child_notify(Node *p_child) {
 	}
 
 	p_child->connect("renamed", callable_mp(this, &TabContainer::_refresh_tab_names));
-	p_child->connect(SNAME("visibility_changed"), callable_mp(this, &TabContainer::_on_tab_visibility_changed).bind(c));
+	p_child->connect(SceneStringName(visibility_changed), callable_mp(this, &TabContainer::_on_tab_visibility_changed).bind(c));
 
 	// TabBar won't emit the "tab_changed" signal when not inside the tree.
 	if (!is_inside_tree()) {
@@ -569,8 +569,8 @@ void TabContainer::move_child_notify(Node *p_child) {
 		return;
 	}
 
-	Control *c = Object::cast_to<Control>(p_child);
-	if (c && !c->is_set_as_top_level()) {
+	Control *c = as_sortable_control(p_child, SortableVisbilityMode::IGNORE);
+	if (c) {
 		tab_bar->move_tab(c->get_meta("_tab_index"), get_tab_idx_from_control(c));
 	}
 
@@ -584,8 +584,8 @@ void TabContainer::remove_child_notify(Node *p_child) {
 		return;
 	}
 
-	Control *c = Object::cast_to<Control>(p_child);
-	if (!c || c->is_set_as_top_level()) {
+	Control *c = as_sortable_control(p_child, SortableVisbilityMode::IGNORE);
+	if (!c) {
 		return;
 	}
 
@@ -607,7 +607,7 @@ void TabContainer::remove_child_notify(Node *p_child) {
 	p_child->remove_meta("_tab_index");
 	p_child->remove_meta("_tab_name");
 	p_child->disconnect("renamed", callable_mp(this, &TabContainer::_refresh_tab_names));
-	p_child->disconnect(SNAME("visibility_changed"), callable_mp(this, &TabContainer::_on_tab_visibility_changed));
+	p_child->disconnect(SceneStringName(visibility_changed), callable_mp(this, &TabContainer::_on_tab_visibility_changed));
 
 	// TabBar won't emit the "tab_changed" signal when not inside the tree.
 	if (!is_inside_tree()) {
@@ -1121,5 +1121,5 @@ TabContainer::TabContainer() {
 	tab_bar->connect("tab_button_pressed", callable_mp(this, &TabContainer::_on_tab_button_pressed));
 	tab_bar->connect("active_tab_rearranged", callable_mp(this, &TabContainer::_on_active_tab_rearranged));
 
-	connect("mouse_exited", callable_mp(this, &TabContainer::_on_mouse_exited));
+	connect(SceneStringName(mouse_exited), callable_mp(this, &TabContainer::_on_mouse_exited));
 }

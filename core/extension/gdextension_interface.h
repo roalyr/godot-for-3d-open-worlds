@@ -96,6 +96,7 @@ typedef enum {
 	GDEXTENSION_VARIANT_TYPE_PACKED_VECTOR2_ARRAY,
 	GDEXTENSION_VARIANT_TYPE_PACKED_VECTOR3_ARRAY,
 	GDEXTENSION_VARIANT_TYPE_PACKED_COLOR_ARRAY,
+	GDEXTENSION_VARIANT_TYPE_PACKED_VECTOR4_ARRAY,
 
 	GDEXTENSION_VARIANT_TYPE_VARIANT_MAX
 } GDExtensionVariantType;
@@ -1581,6 +1582,7 @@ typedef void (*GDExtensionInterfaceStringNewWithLatin1CharsAndLen)(GDExtensionUn
 /**
  * @name string_new_with_utf8_chars_and_len
  * @since 4.1
+ * @deprecated in Godot 4.3. Use `string_new_with_utf8_chars_and_len2` instead.
  *
  * Creates a String from a UTF-8 encoded C string with the given length.
  *
@@ -1591,8 +1593,23 @@ typedef void (*GDExtensionInterfaceStringNewWithLatin1CharsAndLen)(GDExtensionUn
 typedef void (*GDExtensionInterfaceStringNewWithUtf8CharsAndLen)(GDExtensionUninitializedStringPtr r_dest, const char *p_contents, GDExtensionInt p_size);
 
 /**
+ * @name string_new_with_utf8_chars_and_len2
+ * @since 4.3
+ *
+ * Creates a String from a UTF-8 encoded C string with the given length.
+ *
+ * @param r_dest A pointer to a Variant to hold the newly created String.
+ * @param p_contents A pointer to a UTF-8 encoded C string.
+ * @param p_size The number of bytes (not code units).
+ *
+ * @return Error code signifying if the operation successful.
+ */
+typedef GDExtensionInt (*GDExtensionInterfaceStringNewWithUtf8CharsAndLen2)(GDExtensionUninitializedStringPtr r_dest, const char *p_contents, GDExtensionInt p_size);
+
+/**
  * @name string_new_with_utf16_chars_and_len
  * @since 4.1
+ * @deprecated in Godot 4.3. Use `string_new_with_utf16_chars_and_len2` instead.
  *
  * Creates a String from a UTF-16 encoded C string with the given length.
  *
@@ -1601,6 +1618,21 @@ typedef void (*GDExtensionInterfaceStringNewWithUtf8CharsAndLen)(GDExtensionUnin
  * @param p_size The number of characters (not bytes).
  */
 typedef void (*GDExtensionInterfaceStringNewWithUtf16CharsAndLen)(GDExtensionUninitializedStringPtr r_dest, const char16_t *p_contents, GDExtensionInt p_char_count);
+
+/**
+ * @name string_new_with_utf16_chars_and_len2
+ * @since 4.3
+ *
+ * Creates a String from a UTF-16 encoded C string with the given length.
+ *
+ * @param r_dest A pointer to a Variant to hold the newly created String.
+ * @param p_contents A pointer to a UTF-16 encoded C string.
+ * @param p_size The number of characters (not bytes).
+ * @param p_default_little_endian If true, UTF-16 use little endian.
+ *
+ * @return Error code signifying if the operation successful.
+ */
+typedef GDExtensionInt (*GDExtensionInterfaceStringNewWithUtf16CharsAndLen2)(GDExtensionUninitializedStringPtr r_dest, const char16_t *p_contents, GDExtensionInt p_char_count, GDExtensionBool p_default_little_endian);
 
 /**
  * @name string_new_with_utf32_chars_and_len
@@ -1898,6 +1930,36 @@ typedef void (*GDExtensionInterfaceFileAccessStoreBuffer)(GDExtensionObjectPtr p
  */
 typedef uint64_t (*GDExtensionInterfaceFileAccessGetBuffer)(GDExtensionConstObjectPtr p_instance, uint8_t *p_dst, uint64_t p_length);
 
+/* INTERFACE: Image Utilities */
+
+/**
+ * @name image_ptrw
+ * @since 4.3
+ *
+ * Returns writable pointer to internal Image buffer.
+ *
+ * @param p_instance A pointer to a Image object.
+ *
+ * @return Pointer to internal Image buffer.
+ *
+ * @see Image::ptrw()
+ */
+typedef uint8_t *(*GDExtensionInterfaceImagePtrw)(GDExtensionObjectPtr p_instance);
+
+/**
+ * @name image_ptr
+ * @since 4.3
+ *
+ * Returns read only pointer to internal Image buffer.
+ *
+ * @param p_instance A pointer to a Image object.
+ *
+ * @return Pointer to internal Image buffer.
+ *
+ * @see Image::ptr()
+ */
+typedef const uint8_t *(*GDExtensionInterfaceImagePtr)(GDExtensionObjectPtr p_instance);
+
 /* INTERFACE: WorkerThreadPool Utilities */
 
 /**
@@ -1962,32 +2024,6 @@ typedef uint8_t *(*GDExtensionInterfacePackedByteArrayOperatorIndex)(GDExtension
  * @return A const pointer to the requested byte.
  */
 typedef const uint8_t *(*GDExtensionInterfacePackedByteArrayOperatorIndexConst)(GDExtensionConstTypePtr p_self, GDExtensionInt p_index);
-
-/**
- * @name packed_color_array_operator_index
- * @since 4.1
- *
- * Gets a pointer to a color in a PackedColorArray.
- *
- * @param p_self A pointer to a PackedColorArray object.
- * @param p_index The index of the Color to get.
- *
- * @return A pointer to the requested Color.
- */
-typedef GDExtensionTypePtr (*GDExtensionInterfacePackedColorArrayOperatorIndex)(GDExtensionTypePtr p_self, GDExtensionInt p_index);
-
-/**
- * @name packed_color_array_operator_index_const
- * @since 4.1
- *
- * Gets a const pointer to a color in a PackedColorArray.
- *
- * @param p_self A const pointer to a const PackedColorArray object.
- * @param p_index The index of the Color to get.
- *
- * @return A const pointer to the requested Color.
- */
-typedef GDExtensionTypePtr (*GDExtensionInterfacePackedColorArrayOperatorIndexConst)(GDExtensionConstTypePtr p_self, GDExtensionInt p_index);
 
 /**
  * @name packed_float32_array_operator_index
@@ -2170,6 +2206,58 @@ typedef GDExtensionTypePtr (*GDExtensionInterfacePackedVector3ArrayOperatorIndex
  * @return A const pointer to the requested Vector3.
  */
 typedef GDExtensionTypePtr (*GDExtensionInterfacePackedVector3ArrayOperatorIndexConst)(GDExtensionConstTypePtr p_self, GDExtensionInt p_index);
+
+/**
+ * @name packed_vector4_array_operator_index
+ * @since 4.3
+ *
+ * Gets a pointer to a Vector4 in a PackedVector4Array.
+ *
+ * @param p_self A pointer to a PackedVector4Array object.
+ * @param p_index The index of the Vector4 to get.
+ *
+ * @return A pointer to the requested Vector4.
+ */
+typedef GDExtensionTypePtr (*GDExtensionInterfacePackedVector4ArrayOperatorIndex)(GDExtensionTypePtr p_self, GDExtensionInt p_index);
+
+/**
+ * @name packed_vector4_array_operator_index_const
+ * @since 4.3
+ *
+ * Gets a const pointer to a Vector4 in a PackedVector4Array.
+ *
+ * @param p_self A const pointer to a PackedVector4Array object.
+ * @param p_index The index of the Vector4 to get.
+ *
+ * @return A const pointer to the requested Vector4.
+ */
+typedef GDExtensionTypePtr (*GDExtensionInterfacePackedVector4ArrayOperatorIndexConst)(GDExtensionConstTypePtr p_self, GDExtensionInt p_index);
+
+/**
+ * @name packed_color_array_operator_index
+ * @since 4.1
+ *
+ * Gets a pointer to a color in a PackedColorArray.
+ *
+ * @param p_self A pointer to a PackedColorArray object.
+ * @param p_index The index of the Color to get.
+ *
+ * @return A pointer to the requested Color.
+ */
+typedef GDExtensionTypePtr (*GDExtensionInterfacePackedColorArrayOperatorIndex)(GDExtensionTypePtr p_self, GDExtensionInt p_index);
+
+/**
+ * @name packed_color_array_operator_index_const
+ * @since 4.1
+ *
+ * Gets a const pointer to a color in a PackedColorArray.
+ *
+ * @param p_self A const pointer to a PackedColorArray object.
+ * @param p_index The index of the Color to get.
+ *
+ * @return A const pointer to the requested Color.
+ */
+typedef GDExtensionTypePtr (*GDExtensionInterfacePackedColorArrayOperatorIndexConst)(GDExtensionConstTypePtr p_self, GDExtensionInt p_index);
 
 /**
  * @name array_operator_index
@@ -2848,7 +2936,7 @@ typedef void (*GDExtensionInterfaceEditorRemovePlugin)(GDExtensionConstStringNam
  *
  * The provided pointer can be immediately freed once the function returns.
  *
- * @param p_data A pointer to an UTF-8 encoded C string (null terminated).
+ * @param p_data A pointer to a UTF-8 encoded C string (null terminated).
  */
 typedef void (*GDExtensionsInterfaceEditorHelpLoadXmlFromUtf8Chars)(const char *p_data);
 
@@ -2860,7 +2948,7 @@ typedef void (*GDExtensionsInterfaceEditorHelpLoadXmlFromUtf8Chars)(const char *
  *
  * The provided pointer can be immediately freed once the function returns.
  *
- * @param p_data A pointer to an UTF-8 encoded C string.
+ * @param p_data A pointer to a UTF-8 encoded C string.
  * @param p_size The number of bytes (not code units).
  */
 typedef void (*GDExtensionsInterfaceEditorHelpLoadXmlFromUtf8CharsAndLen)(const char *p_data, GDExtensionInt p_size);

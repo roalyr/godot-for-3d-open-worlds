@@ -165,7 +165,7 @@ void QuickSettingsDialog::_set_setting_value(const String &p_setting, const Vari
 
 		if (!restart_required_button) {
 			restart_required_button = add_button(TTR("Restart Now"), !GLOBAL_GET("gui/common/swap_cancel_ok"));
-			restart_required_button->connect("pressed", callable_mp(this, &QuickSettingsDialog::_request_restart));
+			restart_required_button->connect(SceneStringName(pressed), callable_mp(this, &QuickSettingsDialog::_request_restart));
 		}
 	}
 }
@@ -181,7 +181,7 @@ void QuickSettingsDialog::update_size_limits(const Size2 &p_max_popup_size) {
 void QuickSettingsDialog::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_THEME_CHANGED: {
-			settings_list_panel->add_theme_style_override("panel", get_theme_stylebox(SNAME("Background"), EditorStringName(EditorStyles)));
+			settings_list_panel->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("Background"), EditorStringName(EditorStyles)));
 
 			restart_required_label->add_theme_color_override("font_color", get_theme_color(SNAME("warning_color"), EditorStringName(Editor)));
 			custom_theme_label->add_theme_color_override("font_color", get_theme_color(SNAME("font_placeholder_color"), EditorStringName(Editor)));

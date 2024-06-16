@@ -31,7 +31,6 @@
 #include "object.h"
 #include "object.compat.inc"
 
-#include "core/core_string_names.h"
 #include "core/extension/gdextension_manager.h"
 #include "core/io/resource.h"
 #include "core/object/class_db.h"
@@ -260,7 +259,7 @@ void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid
 		}
 	}
 
-	if (p_name == CoreStringNames::get_singleton()->_script) {
+	if (p_name == CoreStringName(script)) {
 		set_script(p_value);
 		if (r_valid) {
 			*r_valid = true;
@@ -351,7 +350,7 @@ Variant Object::get(const StringName &p_name, bool *r_valid) const {
 		}
 	}
 
-	if (p_name == CoreStringNames::get_singleton()->_script) {
+	if (p_name == CoreStringName(script)) {
 		ret = get_script();
 		if (r_valid) {
 			*r_valid = true;
@@ -672,7 +671,7 @@ Variant Object::_call_deferred_bind(const Variant **p_args, int p_argcount, Call
 }
 
 bool Object::has_method(const StringName &p_method) const {
-	if (p_method == CoreStringNames::get_singleton()->_free) {
+	if (p_method == CoreStringName(free_)) {
 		return true;
 	}
 
@@ -698,7 +697,7 @@ int Object::_get_method_argument_count_bind(const StringName &p_method) const {
 }
 
 int Object::get_method_argument_count(const StringName &p_method, bool *r_is_valid) const {
-	if (p_method == CoreStringNames::get_singleton()->_free) {
+	if (p_method == CoreStringName(free_)) {
 		if (r_is_valid) {
 			*r_is_valid = true;
 		}
@@ -787,7 +786,7 @@ Variant Object::callv(const StringName &p_method, const Array &p_args) {
 Variant Object::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
 	r_error.error = Callable::CallError::CALL_OK;
 
-	if (p_method == CoreStringNames::get_singleton()->_free) {
+	if (p_method == CoreStringName(free_)) {
 //free must be here, before anything, always ready
 #ifdef DEBUG_ENABLED
 		if (p_argcount != 0) {
@@ -850,7 +849,7 @@ Variant Object::callp(const StringName &p_method, const Variant **p_args, int p_
 Variant Object::call_const(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
 	r_error.error = Callable::CallError::CALL_OK;
 
-	if (p_method == CoreStringNames::get_singleton()->_free) {
+	if (p_method == CoreStringName(free_)) {
 		// Free is not const, so fail.
 		r_error.error = Callable::CallError::CALL_ERROR_METHOD_NOT_CONST;
 		return Variant();
@@ -924,6 +923,7 @@ void Object::notification(int p_notification, bool p_reversed) {
 }
 
 String Object::to_string() {
+	// Keep this method in sync with `Node::to_string`.
 	if (script_instance) {
 		bool valid;
 		String ret = script_instance->to_string(&valid);
@@ -979,7 +979,7 @@ void Object::set_script(const Variant &p_script) {
 	}
 
 	notify_property_list_changed(); //scripts may add variables, so refresh is desired
-	emit_signal(CoreStringNames::get_singleton()->script_changed);
+	emit_signal(CoreStringName(script_changed));
 }
 
 void Object::set_script_instance(ScriptInstance *p_instance) {
@@ -1302,9 +1302,8 @@ TypedArray<Dictionary> Object::_get_signal_connection_list(const StringName &p_s
 
 TypedArray<Dictionary> Object::_get_incoming_connections() const {
 	TypedArray<Dictionary> ret;
-	int connections_amount = connections.size();
-	for (int idx_conn = 0; idx_conn < connections_amount; idx_conn++) {
-		ret.push_back(connections[idx_conn]);
+	for (const Object::Connection &connection : connections) {
+		ret.push_back(connection);
 	}
 
 	return ret;
@@ -1655,7 +1654,7 @@ void Object::clear_internal_resource_paths() {
 }
 
 void Object::notify_property_list_changed() {
-	emit_signal(CoreStringNames::get_singleton()->property_list_changed);
+	emit_signal(CoreStringName(property_list_changed));
 }
 
 void Object::_bind_methods() {
@@ -2096,9 +2095,13 @@ Object::~Object() {
 		_extension_instance = nullptr;
 	}
 #ifdef TOOLS_ENABLED
-	else if (_instance_bindings != nullptr && Engine::get_singleton()->is_extension_reloading_enabled()) {
-		for (uint32_t i = 0; i < _instance_binding_count; i++) {
-			GDExtensionManager::get_singleton()->untrack_instance_binding(_instance_bindings[i].token, this);
+	else if (_instance_bindings != nullptr) {
+		Engine *engine = Engine::get_singleton();
+		GDExtensionManager *gdextension_manager = GDExtensionManager::get_singleton();
+		if (engine && gdextension_manager && engine->is_extension_reloading_enabled()) {
+			for (uint32_t i = 0; i < _instance_binding_count; i++) {
+				gdextension_manager->untrack_instance_binding(_instance_bindings[i].token, this);
+			}
 		}
 	}
 #endif
@@ -2308,9 +2311,9 @@ void ObjectDB::setup() {
 }
 
 void ObjectDB::cleanup() {
-	if (slot_count > 0) {
-		spin_lock.lock();
+	spin_lock.lock();
 
+	if (slot_count > 0) {
 		WARN_PRINT("ObjectDB instances leaked at exit (run with --verbose for details).");
 		if (OS::get_singleton()->is_stdout_verbose()) {
 			// Ensure calling the native classes because if a leaked instance has a script
@@ -2341,10 +2344,11 @@ void ObjectDB::cleanup() {
 			}
 			print_line("Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).");
 		}
-		spin_lock.unlock();
 	}
 
 	if (object_slots) {
 		memfree(object_slots);
 	}
+
+	spin_lock.unlock();
 }
