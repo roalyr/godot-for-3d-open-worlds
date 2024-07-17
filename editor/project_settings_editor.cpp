@@ -91,6 +91,10 @@ void ProjectSettingsEditor::update_plugins() {
 	plugin_settings->update_plugins();
 }
 
+void ProjectSettingsEditor::init_autoloads() {
+	autoload_settings->init_autoloads();
+}
+
 void ProjectSettingsEditor::_setting_edited(const String &p_name) {
 	queue_save();
 }
@@ -231,28 +235,17 @@ void ProjectSettingsEditor::_select_type(Variant::Type p_type) {
 }
 
 void ProjectSettingsEditor::shortcut_input(const Ref<InputEvent> &p_event) {
-	ERR_FAIL_COND(p_event.is_null());
-	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
-
 	const Ref<InputEventKey> k = p_event;
 	if (k.is_valid() && k->is_pressed()) {
 		bool handled = false;
 
 		if (ED_IS_SHORTCUT("ui_undo", p_event)) {
-			String action = undo_redo->get_current_action_name();
-			if (!action.is_empty()) {
-				EditorNode::get_log()->add_message(vformat(TTR("Undo: %s"), action), EditorLog::MSG_TYPE_EDITOR);
-			}
-			undo_redo->undo();
+			EditorNode::get_singleton()->undo();
 			handled = true;
 		}
 
 		if (ED_IS_SHORTCUT("ui_redo", p_event)) {
-			undo_redo->redo();
-			String action = undo_redo->get_current_action_name();
-			if (!action.is_empty()) {
-				EditorNode::get_log()->add_message(vformat(TTR("Redo: %s"), action), EditorLog::MSG_TYPE_EDITOR);
-			}
+			EditorNode::get_singleton()->redo();
 			handled = true;
 		}
 
@@ -589,7 +582,7 @@ void ProjectSettingsEditor::_update_theme() {
 	restart_close_button->set_icon(get_editor_theme_icon(SNAME("Close")));
 	restart_container->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SceneStringName(panel), SNAME("Tree")));
 	restart_icon->set_texture(get_editor_theme_icon(SNAME("StatusWarning")));
-	restart_label->add_theme_color_override("font_color", get_theme_color(SNAME("warning_color"), EditorStringName(Editor)));
+	restart_label->add_theme_color_override(SceneStringName(font_color), get_theme_color(SNAME("warning_color"), EditorStringName(Editor)));
 
 	type_box->clear();
 	for (int i = 0; i < Variant::VARIANT_MAX; i++) {
@@ -668,12 +661,12 @@ ProjectSettingsEditor::ProjectSettingsEditor(EditorData *p_data) {
 	property_box = memnew(LineEdit);
 	property_box->set_placeholder(TTR("Select a Setting or Type its Name"));
 	property_box->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	property_box->connect("text_changed", callable_mp(this, &ProjectSettingsEditor::_property_box_changed));
+	property_box->connect(SceneStringName(text_changed), callable_mp(this, &ProjectSettingsEditor::_property_box_changed));
 	custom_properties->add_child(property_box);
 
 	feature_box = memnew(OptionButton);
 	feature_box->set_custom_minimum_size(Size2(120, 0) * EDSCALE);
-	feature_box->connect("item_selected", callable_mp(this, &ProjectSettingsEditor::_feature_selected));
+	feature_box->connect(SceneStringName(item_selected), callable_mp(this, &ProjectSettingsEditor::_feature_selected));
 	custom_properties->add_child(feature_box);
 
 	type_box = memnew(OptionButton);

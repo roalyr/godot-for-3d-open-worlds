@@ -49,7 +49,7 @@ public:
 	static real_t p_z_far_stored;
 };
 
-struct _NO_DISCARD_ Projection {
+struct [[nodiscard]] Projection {
 	enum Planes {
 		PLANE_NEAR,
 		PLANE_FAR,

@@ -546,6 +546,11 @@ void GraphEdit::_graph_node_slot_updated(int p_index, Node *p_node) {
 	GraphNode *graph_node = Object::cast_to<GraphNode>(p_node);
 	ERR_FAIL_NULL(graph_node);
 
+	// Update all adjacent connections during the next redraw.
+	for (const Ref<Connection> &conn : connection_map[graph_node->get_name()]) {
+		conn->_cache.dirty = true;
+	}
+
 	minimap->queue_redraw();
 	queue_redraw();
 	connections_layer->queue_redraw();
@@ -782,7 +787,9 @@ Rect2 GraphEdit::_compute_shrinked_frame_rect(const GraphFrame *p_frame) {
 		return Rect2(p_frame->get_position_offset(), Size2());
 	}
 
-	min_point -= Size2(autoshrink_margin, autoshrink_margin);
+	const Size2 titlebar_size = p_frame->get_titlebar_size();
+
+	min_point -= Size2(autoshrink_margin, MAX(autoshrink_margin, titlebar_size.y));
 	max_point += Size2(autoshrink_margin, autoshrink_margin);
 
 	return Rect2(min_point, max_point - min_point);
@@ -2816,8 +2823,8 @@ GraphEdit::GraphEdit() {
 	v_scrollbar->set_min(-10000);
 	v_scrollbar->set_max(10000);
 
-	h_scrollbar->connect("value_changed", callable_mp(this, &GraphEdit::_scroll_moved));
-	v_scrollbar->connect("value_changed", callable_mp(this, &GraphEdit::_scroll_moved));
+	h_scrollbar->connect(SceneStringName(value_changed), callable_mp(this, &GraphEdit::_scroll_moved));
+	v_scrollbar->connect(SceneStringName(value_changed), callable_mp(this, &GraphEdit::_scroll_moved));
 
 	// Toolbar menu.
 
@@ -2893,7 +2900,7 @@ GraphEdit::GraphEdit() {
 	snapping_distance_spinbox->set_value(snapping_distance);
 	snapping_distance_spinbox->set_tooltip_text(ETR("Change the snapping distance."));
 	menu_hbox->add_child(snapping_distance_spinbox);
-	snapping_distance_spinbox->connect("value_changed", callable_mp(this, &GraphEdit::_snapping_distance_changed));
+	snapping_distance_spinbox->connect(SceneStringName(value_changed), callable_mp(this, &GraphEdit::_snapping_distance_changed));
 
 	// Extra controls.
 
