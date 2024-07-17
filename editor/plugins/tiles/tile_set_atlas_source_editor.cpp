@@ -651,7 +651,7 @@ void TileSetAtlasSourceEditor::_update_tile_data_editors() {
 	tile_data_editors_tree->add_theme_constant_override("v_separation", 1);
 	tile_data_editors_tree->add_theme_constant_override("h_separation", 3);
 
-	Color group_color = get_theme_color(SNAME("prop_category"), EditorStringName(Editor));
+	Color group_color = get_theme_color(SNAME("separator_color"), EditorStringName(Editor));
 
 	// List of editors.
 	// --- Rendering ---
@@ -929,7 +929,7 @@ void TileSetAtlasSourceEditor::_tile_data_editor_dropdown_button_draw() {
 				if (tile_data_editor_dropdown_button->has_focus()) {
 					clr = get_theme_color(SNAME("font_focus_color"));
 				} else {
-					clr = get_theme_color(SNAME("font_color"));
+					clr = get_theme_color(SceneStringName(font_color));
 				}
 		}
 	}
@@ -2451,6 +2451,8 @@ void TileSetAtlasSourceEditor::_notification(int p_what) {
 
 			resize_handle = get_editor_theme_icon(SNAME("EditorHandle"));
 			resize_handle_disabled = get_editor_theme_icon(SNAME("EditorHandleDisabled"));
+
+			tile_data_editors_tree->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SceneStringName(panel), "PopupPanel"));
 		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS: {
@@ -2595,7 +2597,7 @@ TileSetAtlasSourceEditor::TileSetAtlasSourceEditor() {
 	tile_data_editors_tree->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	tile_data_editors_tree->set_h_scroll_enabled(false);
 	tile_data_editors_tree->set_v_scroll_enabled(false);
-	tile_data_editors_tree->connect("item_selected", callable_mp(this, &TileSetAtlasSourceEditor::_tile_data_editors_tree_selected));
+	tile_data_editors_tree->connect(SceneStringName(item_selected), callable_mp(this, &TileSetAtlasSourceEditor::_tile_data_editors_tree_selected));
 	tile_data_editors_popup->add_child(tile_data_editors_tree);
 
 	tile_data_painting_editor_container = memnew(VBoxContainer);
@@ -2733,7 +2735,7 @@ TileSetAtlasSourceEditor::TileSetAtlasSourceEditor() {
 	confirm_auto_create_tiles->set_text(TTR("The atlas's texture was modified.\nWould you like to automatically create tiles in the atlas?"));
 	confirm_auto_create_tiles->set_ok_button_text(TTR("Yes"));
 	confirm_auto_create_tiles->add_cancel_button()->set_text(TTR("No"));
-	confirm_auto_create_tiles->connect("confirmed", callable_mp(this, &TileSetAtlasSourceEditor::_auto_create_tiles));
+	confirm_auto_create_tiles->connect(SceneStringName(confirmed), callable_mp(this, &TileSetAtlasSourceEditor::_auto_create_tiles));
 	confirm_auto_create_tiles->connect("canceled", callable_mp(this, &TileSetAtlasSourceEditor::_cancel_auto_create_tiles));
 	add_child(confirm_auto_create_tiles);
 
@@ -2820,13 +2822,15 @@ void EditorPropertyTilePolygon::update_property() {
 	ERR_FAIL_COND(atlas_tile_proxy_object->get_edited_tiles().is_empty());
 
 	Ref<TileSetAtlasSource> tile_set_atlas_source = atlas_tile_proxy_object->get_edited_tile_set_atlas_source();
-	generic_tile_polygon_editor->set_tile_set(Ref<TileSet>(tile_set_atlas_source->get_tile_set()));
+	Ref<TileSet> tile_set(tile_set_atlas_source->get_tile_set());
+
+	// Update the polyugon editor tile_set.
+	generic_tile_polygon_editor->set_tile_set(tile_set);
 
 	// Set the background
 	Vector2i coords = atlas_tile_proxy_object->get_edited_tiles().front()->get().tile;
 	int alternative = atlas_tile_proxy_object->get_edited_tiles().front()->get().alternative;
-	TileData *tile_data = tile_set_atlas_source->get_tile_data(coords, alternative);
-	generic_tile_polygon_editor->set_background(tile_set_atlas_source->get_texture(), tile_set_atlas_source->get_tile_texture_region(coords), tile_data->get_texture_origin(), tile_data->get_flip_h(), tile_data->get_flip_v(), tile_data->get_transpose(), tile_data->get_modulate());
+	generic_tile_polygon_editor->set_background_tile(*tile_set_atlas_source, coords, alternative);
 
 	// Reset the polygons.
 	generic_tile_polygon_editor->clear_polygons();

@@ -381,6 +381,8 @@ private:
 	void _deferred_internal_update();
 	void _internal_update(bool p_force_cleanup);
 
+	virtual void _physics_interpolated_changed() override;
+
 protected:
 	void _notification(int p_what);
 
@@ -391,6 +393,10 @@ protected:
 	virtual void _update_self_texture_repeat(RS::CanvasItemTextureRepeat p_texture_repeat) override;
 
 public:
+#ifdef TOOLS_ENABLED
+	virtual bool _edit_is_selected_on_click(const Point2 &p_point, double p_tolerance) const override;
+#endif
+
 	// TileMap node.
 	void set_as_tile_map_internal_node(int p_index);
 	int get_index_in_tile_map() const {

@@ -272,7 +272,7 @@ void ScriptEditorBase::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("request_help", PropertyInfo(Variant::STRING, "topic")));
 	ADD_SIGNAL(MethodInfo("request_open_script_at_line", PropertyInfo(Variant::OBJECT, "script"), PropertyInfo(Variant::INT, "line")));
 	ADD_SIGNAL(MethodInfo("request_save_history"));
-	ADD_SIGNAL(MethodInfo("request_save_previous_state", PropertyInfo(Variant::INT, "line")));
+	ADD_SIGNAL(MethodInfo("request_save_previous_state", PropertyInfo(Variant::DICTIONARY, "state")));
 	ADD_SIGNAL(MethodInfo("go_to_help", PropertyInfo(Variant::STRING, "what")));
 	ADD_SIGNAL(MethodInfo("search_in_files_requested", PropertyInfo(Variant::STRING, "text")));
 	ADD_SIGNAL(MethodInfo("replace_in_files_requested", PropertyInfo(Variant::STRING, "text")));
@@ -399,7 +399,7 @@ void ScriptEditorQuickOpen::_confirmed() {
 void ScriptEditorQuickOpen::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-			connect("confirmed", callable_mp(this, &ScriptEditorQuickOpen::_confirmed));
+			connect(SceneStringName(confirmed), callable_mp(this, &ScriptEditorQuickOpen::_confirmed));
 
 			search_box->set_clear_button_enabled(true);
 			[[fallthrough]];
@@ -409,7 +409,7 @@ void ScriptEditorQuickOpen::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-			disconnect("confirmed", callable_mp(this, &ScriptEditorQuickOpen::_confirmed));
+			disconnect(SceneStringName(confirmed), callable_mp(this, &ScriptEditorQuickOpen::_confirmed));
 		} break;
 	}
 }
@@ -423,7 +423,7 @@ ScriptEditorQuickOpen::ScriptEditorQuickOpen() {
 	add_child(vbc);
 	search_box = memnew(LineEdit);
 	vbc->add_margin_child(TTR("Search:"), search_box);
-	search_box->connect("text_changed", callable_mp(this, &ScriptEditorQuickOpen::_text_changed));
+	search_box->connect(SceneStringName(text_changed), callable_mp(this, &ScriptEditorQuickOpen::_text_changed));
 	search_box->connect(SceneStringName(gui_input), callable_mp(this, &ScriptEditorQuickOpen::_sbox_input));
 	search_options = memnew(Tree);
 	vbc->add_margin_child(TTR("Matches:"), search_options, true);
@@ -1012,8 +1012,6 @@ void ScriptEditor::_resave_scripts(const String &p_str) {
 			se->trim_final_newlines();
 		}
 
-		se->insert_final_newline();
-
 		if (convert_indent_on_save) {
 			se->convert_indent();
 		}
@@ -1410,8 +1408,6 @@ void ScriptEditor::_menu_option(int p_option) {
 					current->trim_final_newlines();
 				}
 
-				current->insert_final_newline();
-
 				if (convert_indent_on_save) {
 					current->convert_indent();
 				}
@@ -1759,10 +1755,10 @@ void ScriptEditor::_notification(int p_what) {
 			EditorNode::get_singleton()->connect("scene_saved", callable_mp(this, &ScriptEditor::_scene_saved_callback));
 			FileSystemDock::get_singleton()->connect("files_moved", callable_mp(this, &ScriptEditor::_files_moved));
 			FileSystemDock::get_singleton()->connect("file_removed", callable_mp(this, &ScriptEditor::_file_removed));
-			script_list->connect("item_selected", callable_mp(this, &ScriptEditor::_script_selected));
+			script_list->connect(SceneStringName(item_selected), callable_mp(this, &ScriptEditor::_script_selected));
 
-			members_overview->connect("item_selected", callable_mp(this, &ScriptEditor::_members_overview_selected));
-			help_overview->connect("item_selected", callable_mp(this, &ScriptEditor::_help_overview_selected));
+			members_overview->connect(SceneStringName(item_selected), callable_mp(this, &ScriptEditor::_members_overview_selected));
+			help_overview->connect(SceneStringName(item_selected), callable_mp(this, &ScriptEditor::_help_overview_selected));
 			script_split->connect("dragged", callable_mp(this, &ScriptEditor::_split_dragged));
 			list_split->connect("dragged", callable_mp(this, &ScriptEditor::_split_dragged));
 
@@ -2079,7 +2075,7 @@ void ScriptEditor::_update_script_colors() {
 	int hist_size = EDITOR_GET("text_editor/script_list/script_temperature_history_size");
 	Color hot_color = get_theme_color(SNAME("accent_color"), EditorStringName(Editor));
 	hot_color.set_s(hot_color.get_s() * 0.9);
-	Color cold_color = get_theme_color(SNAME("font_color"), EditorStringName(Editor));
+	Color cold_color = get_theme_color(SceneStringName(font_color), EditorStringName(Editor));
 
 	for (int i = 0; i < script_list->get_item_count(); i++) {
 		int c = script_list->get_item_metadata(i);
@@ -2614,8 +2610,6 @@ void ScriptEditor::save_current_script() {
 		current->trim_final_newlines();
 	}
 
-	current->insert_final_newline();
-
 	if (convert_indent_on_save) {
 		current->convert_indent();
 	}
@@ -2661,8 +2655,6 @@ void ScriptEditor::save_all_scripts() {
 		if (trim_final_newlines_on_save) {
 			se->trim_final_newlines();
 		}
-
-		se->insert_final_newline();
 
 		if (!se->is_unsaved()) {
 			continue;
@@ -2713,6 +2705,7 @@ void ScriptEditor::apply_scripts() const {
 		if (!se) {
 			continue;
 		}
+		se->insert_final_newline();
 		se->apply_code();
 	}
 }
@@ -2856,6 +2849,10 @@ void ScriptEditor::_add_callback(Object *p_obj, const String &p_function, const 
 
 		break;
 	}
+
+	// Move back to the previously edited node to reselect it in the Inspector and the NodeDock.
+	// We assume that the previous item is the node on which the callbacks were added.
+	EditorNode::get_singleton()->edit_previous_item();
 }
 
 void ScriptEditor::_save_editor_state(ScriptEditorBase *p_editor) {
@@ -4022,7 +4019,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 	filter_scripts = memnew(LineEdit);
 	filter_scripts->set_placeholder(TTR("Filter Scripts"));
 	filter_scripts->set_clear_button_enabled(true);
-	filter_scripts->connect("text_changed", callable_mp(this, &ScriptEditor::_filter_scripts_text_changed));
+	filter_scripts->connect(SceneStringName(text_changed), callable_mp(this, &ScriptEditor::_filter_scripts_text_changed));
 	scripts_vbox->add_child(filter_scripts);
 
 	script_list = memnew(ItemList);
@@ -4052,6 +4049,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 	filename = memnew(Label);
 	filename->set_clip_text(true);
 	filename->set_h_size_flags(SIZE_EXPAND_FILL);
+	filename->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
 	filename->add_theme_style_override(CoreStringName(normal), EditorNode::get_singleton()->get_editor_theme()->get_stylebox(CoreStringName(normal), SNAME("LineEdit")));
 	buttons_hbox->add_child(filename);
 
@@ -4067,7 +4065,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 	filter_methods = memnew(LineEdit);
 	filter_methods->set_placeholder(TTR("Filter Methods"));
 	filter_methods->set_clear_button_enabled(true);
-	filter_methods->connect("text_changed", callable_mp(this, &ScriptEditor::_filter_methods_text_changed));
+	filter_methods->connect(SceneStringName(text_changed), callable_mp(this, &ScriptEditor::_filter_methods_text_changed));
 	overview_vbox->add_child(filter_methods);
 
 	members_overview = memnew(ItemList);
@@ -4247,7 +4245,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 	erase_tab_confirm = memnew(ConfirmationDialog);
 	erase_tab_confirm->set_ok_button_text(TTR("Save"));
 	erase_tab_confirm->add_button(TTR("Discard"), DisplayServer::get_singleton()->get_swap_cancel_ok(), "discard");
-	erase_tab_confirm->connect("confirmed", callable_mp(this, &ScriptEditor::_close_current_tab).bind(true, true));
+	erase_tab_confirm->connect(SceneStringName(confirmed), callable_mp(this, &ScriptEditor::_close_current_tab).bind(true, true));
 	erase_tab_confirm->connect("custom_action", callable_mp(this, &ScriptEditor::_close_discard_current_tab));
 	add_child(erase_tab_confirm);
 
@@ -4284,7 +4282,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 		disk_changed_list->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 		disk_changed_list->set_v_size_flags(SIZE_EXPAND_FILL);
 
-		disk_changed->connect("confirmed", callable_mp(this, &ScriptEditor::reload_scripts).bind(false));
+		disk_changed->connect(SceneStringName(confirmed), callable_mp(this, &ScriptEditor::reload_scripts).bind(false));
 		disk_changed->set_ok_button_text(TTR("Discard local changes and reload"));
 
 		disk_changed->add_button(TTR("Keep local changes and overwrite"), !DisplayServer::get_singleton()->get_swap_cancel_ok(), "resave");

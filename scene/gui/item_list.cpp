@@ -733,7 +733,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 					select(i, select_mode == SELECT_SINGLE || !mb->is_command_or_control_pressed());
 
 					if (select_mode == SELECT_SINGLE) {
-						emit_signal(SNAME("item_selected"), i);
+						emit_signal(SceneStringName(item_selected), i);
 					} else {
 						emit_signal(SNAME("multi_selected"), i, true);
 					}
@@ -775,7 +775,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 							set_current(i);
 							ensure_current_is_visible();
 							if (select_mode == SELECT_SINGLE) {
-								emit_signal(SNAME("item_selected"), current);
+								emit_signal(SceneStringName(item_selected), current);
 							}
 
 							break;
@@ -798,7 +798,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 				set_current(next);
 				ensure_current_is_visible();
 				if (select_mode == SELECT_SINGLE) {
-					emit_signal(SNAME("item_selected"), current);
+					emit_signal(SceneStringName(item_selected), current);
 				}
 				accept_event();
 			}
@@ -813,7 +813,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 							set_current(i);
 							ensure_current_is_visible();
 							if (select_mode == SELECT_SINGLE) {
-								emit_signal(SNAME("item_selected"), current);
+								emit_signal(SceneStringName(item_selected), current);
 							}
 							break;
 						}
@@ -835,7 +835,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 				set_current(next);
 				ensure_current_is_visible();
 				if (select_mode == SELECT_SINGLE) {
-					emit_signal(SNAME("item_selected"), current);
+					emit_signal(SceneStringName(item_selected), current);
 				}
 				accept_event();
 			}
@@ -848,7 +848,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 					set_current(index);
 					ensure_current_is_visible();
 					if (select_mode == SELECT_SINGLE) {
-						emit_signal(SNAME("item_selected"), current);
+						emit_signal(SceneStringName(item_selected), current);
 					}
 					accept_event();
 					break;
@@ -863,7 +863,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 					set_current(index);
 					ensure_current_is_visible();
 					if (select_mode == SELECT_SINGLE) {
-						emit_signal(SNAME("item_selected"), current);
+						emit_signal(SceneStringName(item_selected), current);
 					}
 					accept_event();
 
@@ -886,7 +886,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 				set_current(next);
 				ensure_current_is_visible();
 				if (select_mode == SELECT_SINGLE) {
-					emit_signal(SNAME("item_selected"), current);
+					emit_signal(SceneStringName(item_selected), current);
 				}
 				accept_event();
 			}
@@ -906,7 +906,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 				set_current(next);
 				ensure_current_is_visible();
 				if (select_mode == SELECT_SINGLE) {
-					emit_signal(SNAME("item_selected"), current);
+					emit_signal(SceneStringName(item_selected), current);
 				}
 				accept_event();
 			}
@@ -962,7 +962,7 @@ void ItemList::gui_input(const Ref<InputEvent> &p_event) {
 						set_current(i);
 						ensure_current_is_visible();
 						if (select_mode == SELECT_SINGLE) {
-							emit_signal(SNAME("item_selected"), current);
+							emit_signal(SceneStringName(item_selected), current);
 						}
 						break;
 					}
@@ -1905,12 +1905,13 @@ void ItemList::_bind_methods() {
 	base_property_helper.register_property(PropertyInfo(Variant::OBJECT, "icon", PROPERTY_HINT_RESOURCE_TYPE, "Texture2D"), defaults.icon, &ItemList::set_item_icon, &ItemList::get_item_icon);
 	base_property_helper.register_property(PropertyInfo(Variant::BOOL, "selectable"), defaults.selectable, &ItemList::set_item_selectable, &ItemList::is_item_selectable);
 	base_property_helper.register_property(PropertyInfo(Variant::BOOL, "disabled"), defaults.disabled, &ItemList::set_item_disabled, &ItemList::is_item_disabled);
+	PropertyListHelper::register_base_helper(&base_property_helper);
 }
 
 ItemList::ItemList() {
 	scroll_bar = memnew(VScrollBar);
 	add_child(scroll_bar, false, INTERNAL_MODE_FRONT);
-	scroll_bar->connect("value_changed", callable_mp(this, &ItemList::_scroll_changed));
+	scroll_bar->connect(SceneStringName(value_changed), callable_mp(this, &ItemList::_scroll_changed));
 
 	connect(SceneStringName(mouse_exited), callable_mp(this, &ItemList::_mouse_exited));
 

@@ -132,12 +132,10 @@ Node *EditorSceneFormatImporterBlend::import_scene(const String &p_path, uint32_
 	}
 #endif
 
-	source_global = source_global.c_escape();
-
 	const String blend_basename = p_path.get_file().get_basename();
 	const String sink = ProjectSettings::get_singleton()->get_imported_files_path().path_join(
 			vformat("%s-%s.gltf", blend_basename, p_path.md5_text()));
-	const String sink_global = ProjectSettings::get_singleton()->globalize_path(sink).c_escape();
+	const String sink_global = ProjectSettings::get_singleton()->globalize_path(sink);
 
 	// Handle configuration options.
 
@@ -188,10 +186,18 @@ Node *EditorSceneFormatImporterBlend::import_scene(const String &p_path, uint32_
 	} else {
 		parameters_map["export_lights"] = false;
 	}
-	if (p_options.has(SNAME("blender/meshes/colors")) && p_options[SNAME("blender/meshes/colors")]) {
-		parameters_map["export_colors"] = true;
+	if (blender_major_version > 4 || (blender_major_version == 4 && blender_minor_version >= 2)) {
+		if (p_options.has(SNAME("blender/meshes/colors")) && p_options[SNAME("blender/meshes/colors")]) {
+			parameters_map["export_vertex_color"] = "MATERIAL";
+		} else {
+			parameters_map["export_vertex_color"] = "NONE";
+		}
 	} else {
-		parameters_map["export_colors"] = false;
+		if (p_options.has(SNAME("blender/meshes/colors")) && p_options[SNAME("blender/meshes/colors")]) {
+			parameters_map["export_colors"] = true;
+		} else {
+			parameters_map["export_colors"] = false;
+		}
 	}
 	if (p_options.has(SNAME("blender/nodes/visible"))) {
 		int32_t visible = p_options["blender/nodes/visible"];
@@ -395,10 +401,10 @@ void EditorFileSystemImportFormatSupportQueryBlend::_validate_path(String p_path
 	path_status->set_text(error);
 
 	if (success) {
-		path_status->add_theme_color_override("font_color", path_status->get_theme_color(SNAME("success_color"), EditorStringName(Editor)));
+		path_status->add_theme_color_override(SceneStringName(font_color), path_status->get_theme_color(SNAME("success_color"), EditorStringName(Editor)));
 		configure_blender_dialog->get_ok_button()->set_disabled(false);
 	} else {
-		path_status->add_theme_color_override("font_color", path_status->get_theme_color(SNAME("error_color"), EditorStringName(Editor)));
+		path_status->add_theme_color_override(SceneStringName(font_color), path_status->get_theme_color(SNAME("error_color"), EditorStringName(Editor)));
 		configure_blender_dialog->get_ok_button()->set_disabled(true);
 	}
 }
@@ -510,14 +516,14 @@ bool EditorFileSystemImportFormatSupportQueryBlend::query() {
 
 		configure_blender_dialog->add_child(vb);
 
-		blender_path->connect("text_changed", callable_mp(this, &EditorFileSystemImportFormatSupportQueryBlend::_validate_path));
+		blender_path->connect(SceneStringName(text_changed), callable_mp(this, &EditorFileSystemImportFormatSupportQueryBlend::_validate_path));
 
 		EditorNode::get_singleton()->get_gui_base()->add_child(configure_blender_dialog);
 
 		configure_blender_dialog->set_ok_button_text(TTR("Confirm Path"));
 		configure_blender_dialog->set_cancel_button_text(TTR("Disable '.blend' Import"));
 		configure_blender_dialog->get_cancel_button()->set_tooltip_text(TTR("Disables Blender '.blend' files import for this project. Can be re-enabled in Project Settings."));
-		configure_blender_dialog->connect("confirmed", callable_mp(this, &EditorFileSystemImportFormatSupportQueryBlend::_path_confirmed));
+		configure_blender_dialog->connect(SceneStringName(confirmed), callable_mp(this, &EditorFileSystemImportFormatSupportQueryBlend::_path_confirmed));
 
 		browse_dialog = memnew(EditorFileDialog);
 		browse_dialog->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
