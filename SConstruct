@@ -1025,13 +1025,12 @@ if env["ninja"]:
         Exit(255)
 
     SetOption("experimental", "ninja")
+    env.Tool("ninja")
 
     # By setting this we allow the user to run ninja by themselves with all
     # the flags they need, as apparently automatically running from scons
     # is way slower.
     SetOption("disable_execute_ninja", True)
-
-    env.Tool("ninja")
 
 # Threads
 if env["threads"]:
@@ -1057,9 +1056,9 @@ SConscript("platform/" + env["platform"] + "/SCsub")  # Build selected platform.
 
 # Microsoft Visual Studio Project Generation
 if env["vsproj"]:
+    methods.generate_cpp_hint_file("cpp.hint")
     env["CPPPATH"] = [Dir(path) for path in env["CPPPATH"]]
     methods.generate_vs_project(env, ARGUMENTS, env["vsproj_name"])
-    methods.generate_cpp_hint_file("cpp.hint")
 
 # Check for the existence of headers
 conf = Configure(env)

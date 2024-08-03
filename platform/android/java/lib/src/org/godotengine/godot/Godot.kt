@@ -73,6 +73,7 @@ import java.io.InputStream
 import java.lang.Exception
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Core component used to interface with the native layer of the engine.
@@ -126,6 +127,11 @@ class Godot(private val context: Context) : SensorEventListener {
 	val fileAccessHandler = FileAccessHandler(context)
 	val netUtils = GodotNetUtils(context)
 	private val commandLineFileParser = CommandLineFileParser()
+
+	/**
+	 * Task to run when the engine terminates.
+	 */
+	private val runOnTerminate = AtomicReference<Runnable>()
 
 	/**
 	 * Tracks whether [onCreate] was completed successfully.
@@ -577,10 +583,7 @@ class Godot(private val context: Context) : SensorEventListener {
 			plugin.onMainDestroy()
 		}
 
-		runOnRenderThread {
-			GodotLib.ondestroy()
-			forceQuit()
-		}
+		renderView?.onActivityDestroyed()
 	}
 
 	/**
@@ -628,26 +631,19 @@ class Godot(private val context: Context) : SensorEventListener {
 	private fun onGodotSetupCompleted() {
 		Log.v(TAG, "OnGodotSetupCompleted")
 
-		if (!isEditorBuild()) {
-			// These properties are defined after Godot setup completion, so we retrieve them here.
-			val longPressEnabled = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_long_press_as_right_click"))
-			val panScaleEnabled = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_pan_and_scale_gestures"))
-			val rotaryInputAxisValue = GodotLib.getGlobal("input_devices/pointing/android/rotary_input_scroll_axis")
+		// These properties are defined after Godot setup completion, so we retrieve them here.
+		val longPressEnabled = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_long_press_as_right_click"))
+		val panScaleEnabled = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/pointing/android/enable_pan_and_scale_gestures"))
+		val rotaryInputAxisValue = GodotLib.getGlobal("input_devices/pointing/android/rotary_input_scroll_axis")
 
-			val useInputBuffering = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/buffering/android/use_input_buffering"))
-			val useAccumulatedInput = java.lang.Boolean.parseBoolean(GodotLib.getGlobal("input_devices/buffering/android/use_accumulated_input"))
-			GodotLib.updateInputDispatchSettings(useAccumulatedInput, useInputBuffering)
-
-			runOnUiThread {
-				renderView?.inputHandler?.apply {
-					enableLongPress(longPressEnabled)
-					enablePanningAndScalingGestures(panScaleEnabled)
-					enableInputDispatchToRenderThread(!useInputBuffering && !useAccumulatedInput)
-					try {
-						setRotaryInputAxis(Integer.parseInt(rotaryInputAxisValue))
-					} catch (e: NumberFormatException) {
-						Log.w(TAG, e)
-					}
+		runOnUiThread {
+			renderView?.inputHandler?.apply {
+				enableLongPress(longPressEnabled)
+				enablePanningAndScalingGestures(panScaleEnabled)
+				try {
+					setRotaryInputAxis(Integer.parseInt(rotaryInputAxisValue))
+				} catch (e: NumberFormatException) {
+					Log.w(TAG, e)
 				}
 			}
 		}
@@ -668,6 +664,15 @@ class Godot(private val context: Context) : SensorEventListener {
 			plugin.onGodotMainLoopStarted()
 		}
 		primaryHost?.onGodotMainLoopStarted()
+	}
+
+	/**
+	 * Invoked on the render thread when the engine is about to terminate.
+	 */
+	@Keep
+	private fun onGodotTerminating() {
+		Log.v(TAG, "OnGodotTerminating")
+		runOnTerminate.get()?.run()
 	}
 
 	private fun restart() {
@@ -805,8 +810,28 @@ class Godot(private val context: Context) : SensorEventListener {
 		mClipboard.setPrimaryClip(clip)
 	}
 
-	fun forceQuit() {
-		forceQuit(0)
+	/**
+	 * Destroys the Godot Engine and kill the process it's running in.
+	 */
+	@JvmOverloads
+	fun destroyAndKillProcess(destroyRunnable: Runnable? = null) {
+		val host = primaryHost
+		val activity = host?.activity
+		if (host == null || activity == null) {
+			// Run the destroyRunnable right away as we are about to force quit.
+			destroyRunnable?.run()
+
+			// Fallback to force quit
+			forceQuit(0)
+			return
+		}
+
+		// Store the destroyRunnable so it can be run when the engine is terminating
+		runOnTerminate.set(destroyRunnable)
+
+		runOnUiThread {
+			onDestroy(host)
+		}
 	}
 
 	@Keep
@@ -821,11 +846,7 @@ class Godot(private val context: Context) : SensorEventListener {
 		} ?: return false
 	}
 
-	fun onBackPressed(host: GodotHost) {
-		if (host != primaryHost) {
-			return
-		}
-
+	fun onBackPressed() {
 		var shouldQuit = true
 		for (plugin in pluginRegistry.allPlugins) {
 			if (plugin.onMainBackPressed()) {

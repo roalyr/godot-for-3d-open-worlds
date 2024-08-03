@@ -1519,7 +1519,7 @@ Color DisplayServerX11::screen_get_pixel(const Point2i &p_position) const {
 			if (image) {
 				XColor c;
 				c.pixel = XGetPixel(image, 0, 0);
-				XFree(image);
+				XDestroyImage(image);
 				XQueryColor(x11_display, XDefaultColormap(x11_display, i), &c);
 				color = Color(float(c.red) / 65535.0, float(c.green) / 65535.0, float(c.blue) / 65535.0, 1.0);
 				break;
@@ -1637,11 +1637,12 @@ Ref<Image> DisplayServerX11::screen_get_image(int p_screen) const {
 				}
 			}
 		} else {
-			XFree(image);
-			ERR_FAIL_V_MSG(Ref<Image>(), vformat("XImage with RGB mask %x %x %x and depth %d is not supported.", (uint64_t)image->red_mask, (uint64_t)image->green_mask, (uint64_t)image->blue_mask, (int64_t)image->bits_per_pixel));
+			String msg = vformat("XImage with RGB mask %x %x %x and depth %d is not supported.", (uint64_t)image->red_mask, (uint64_t)image->green_mask, (uint64_t)image->blue_mask, (int64_t)image->bits_per_pixel);
+			XDestroyImage(image);
+			ERR_FAIL_V_MSG(Ref<Image>(), msg);
 		}
 		img = Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, img_data);
-		XFree(image);
+		XDestroyImage(image);
 	}
 
 	return img;
@@ -1734,7 +1735,7 @@ Vector<DisplayServer::WindowID> DisplayServerX11::get_window_list() const {
 	return ret;
 }
 
-DisplayServer::WindowID DisplayServerX11::create_sub_window(WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Rect2i &p_rect) {
+DisplayServer::WindowID DisplayServerX11::create_sub_window(WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Rect2i &p_rect, bool p_exclusive, WindowID p_transient_parent) {
 	_THREAD_SAFE_METHOD_
 
 	WindowID id = _create_window(p_mode, p_vsync_mode, p_flags, p_rect);
@@ -1748,6 +1749,11 @@ DisplayServer::WindowID DisplayServerX11::create_sub_window(WindowMode p_mode, V
 		rendering_device->screen_create(id);
 	}
 #endif
+
+	if (p_transient_parent != INVALID_WINDOW_ID) {
+		window_set_transient(id, p_transient_parent);
+	}
+
 	return id;
 }
 
