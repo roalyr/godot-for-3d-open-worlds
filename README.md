@@ -15,6 +15,7 @@ Implemented tweaks:
 * [Large World Coordinates](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html) are used when compiling (double precision floats).
 * Increased editor zoom out distance to galactic scale (depth buffer must be adjusted for such scales, see below).
 * Increased editor zoom increment for faster zooming.
+* Implemented tweaks to mobile rendering backend to fix possible precission-related issues.
 * This 4.x fork build DOES NOT implement hard-coded logarithmic depth buffer.
 Waiting for reverse-z depth buffer to be implemented and pulled: https://github.com/godotengine/godot/pull/88328
 
