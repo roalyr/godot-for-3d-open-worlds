@@ -7,6 +7,7 @@ export MINGW64_PREFIX="/usr/bin/x86_64-w64-mingw32-"
 # For incremental
 export SCONS_CACHE="./scons_cache/godot_4_scons_cache_windows";
 mkdir -p $SCONS_CACHE
+mkdir -p "./logs"
 
 ${MINGW32_PREFIX}gcc --version
 ${MINGW64_PREFIX}gcc --version
