@@ -7,6 +7,7 @@ export MINGW64_PREFIX="/usr/bin/x86_64-w64-mingw32-"
 # For incremental
 export SCONS_CACHE="./scons_cache/scons_cache_windows";
 mkdir -p $SCONS_CACHE
+mkdir -p "./logs"
 
 ${MINGW32_PREFIX}gcc --version
 ${MINGW64_PREFIX}gcc --version
@@ -27,14 +28,11 @@ ${MINGW64_PREFIX}gcc --version
 	echo
 
 # Editor (tools)
-scons -j2 tools=yes target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_64_tools_build.txt;
+scons -j2 tools=yes target=release_debug platform=windows debug_symbols=no bits=64 2>&1 | tee ./logs/scons_windows_64_tools_build.txt;
 
 # Template(s)
-scons -j2 tools=no target=release_debug debug_symbols=no platform=windows bits=64 2>&1 | tee ./logs/scons_windows_64_debug_build.txt;
+scons -j2 tools=no target=release_debug platform=windows debug_symbols=no bits=64 2>&1 | tee ./logs/scons_windows_64_debug_build.txt;
 
-# Removing debug symbols
-# strip ./bin/godot.windows.opt.tools.64.exe
-# strip ./bin/godot.windows.opt.debug.64.exe
 
 	echo
 	echo "          ==============================================="

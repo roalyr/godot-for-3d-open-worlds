@@ -1,8 +1,10 @@
 #!/bin/sh
 
 # For incremental
-export SCONS_CACHE="./scons_cache/scons_cache_x11_64";
+export SCONS_CACHE="./scons_cache/scons_cache_x11_x86_64";
 mkdir -p $SCONS_CACHE
+mkdir -p "./logs"
+
 
 # Reference buildroot and see if scons is used from there
 BUILDROOT_PATH="/home/roalyr/Buildroot/x86_64-godot-linux-gnu_sdk-buildroot/bin"
@@ -13,7 +15,7 @@ if [ "${BUILDROOT_PATH}/scons" = $WHICHSCONS ]
 then
 	echo
 	echo "          ==============================================="
-	echo "          |     USING BUILDROOT LINUX x86-64 64 bit     |"
+	echo "          |       USING BUILDROOT LINUX x86-64  bit     |"
 	echo "          ==============================================="
 	echo
 else
@@ -27,21 +29,15 @@ fi
 
 
 # Editor (tools)
-scons -j2 tools=yes target=release_debug debug_symbols=no platform=x11 bits=64 2>&1 | tee ./logs/scons_x11_86_64_tools_build.txt;
+scons -j2 tools=yes target=release_debug platform=x11 debug_symbols=no arch=x86_64 2>&1 | tee ./logs/scons_x11_x86_64_tools_build.txt;
 
 # Template(s)
-scons -j2 tools=no target=release_debug debug_symbols=no platform=x11 bits=64 2>&1 | tee ./logs/scons_x11_86_64_debug_build.txt;
+scons -j2 tools=no target=release_debug platform=x11 debug_symbols=no arch=x86_64 2>&1 | tee ./logs/scons_x11_x86_64_debug_build.txt;
 
-# Rename binaries
-mv ./bin/godot.x11.opt.tools.64 ./bin/godot.x11.opt.tools.x86_64
-mv ./bin/godot.x11.opt.debug.64 ./bin/godot.x11.opt.debug.x86_64
 
-# Removing debug symbols
-# strip ./bin/godot.x11.opt.tools.x86_64
-# strip ./bin/godot.x11.opt.debug.x86_64
 
 	echo
 	echo "          ==============================================="
-	echo "          |      DONE BUILDING LINUX x86-64 64 bit      |"
+	echo "          |        DONE BUILDING LINUX x86-64  bit      |"
 	echo "          ==============================================="
 	echo
