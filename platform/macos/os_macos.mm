@@ -230,7 +230,10 @@ Error OS_MacOS::open_dynamic_library(const String &p_path, void *&p_library_hand
 		path = get_framework_executable(get_executable_path().get_base_dir().path_join("../Frameworks").path_join(p_path.get_file()));
 	}
 
-	ERR_FAIL_COND_V(!FileAccess::exists(path), ERR_FILE_NOT_FOUND);
+	if (!FileAccess::exists(path)) {
+		// Try using path as is. macOS system libraries with `/usr/lib/*` path do not exist as physical files and are loaded from shared cache.
+		path = p_path;
+	}
 
 	p_library_handle = dlopen(path.utf8().get_data(), RTLD_NOW);
 	ERR_FAIL_NULL_V_MSG(p_library_handle, ERR_CANT_OPEN, vformat("Can't open dynamic library: %s. Error: %s.", p_path, dlerror()));
@@ -673,15 +676,6 @@ bool OS_MacOS::is_process_running(const ProcessID &p_pid) const {
 	}
 
 	return ![app isTerminated];
-}
-
-Error OS_MacOS::kill(const ProcessID &p_pid) {
-	NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:(pid_t)p_pid];
-	if (!app) {
-		return OS_Unix::kill(p_pid);
-	}
-
-	return [app forceTerminate] ? OK : ERR_INVALID_PARAMETER;
 }
 
 String OS_MacOS::get_unique_id() const {

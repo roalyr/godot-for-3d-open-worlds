@@ -620,6 +620,8 @@ void TabBar::_draw_tab(Ref<StyleBox> &p_tab_style, Color &p_font_color, int p_in
 		}
 
 		cb->draw(ci, Point2i(cb_rect.position.x + style->get_margin(SIDE_LEFT), cb_rect.position.y + style->get_margin(SIDE_TOP)));
+	} else {
+		tabs.write[p_index].cb_rect = Rect2();
 	}
 }
 
@@ -1248,6 +1250,7 @@ Variant TabBar::_handle_get_drag_data(const String &p_type, const Point2 &p_poin
 	}
 
 	Label *label = memnew(Label(get_tab_title(tab_over)));
+	label->set_auto_translate_mode(get_auto_translate_mode()); // Reflect how the title is displayed.
 	drag_preview->add_child(label);
 
 	set_drag_preview(drag_preview);

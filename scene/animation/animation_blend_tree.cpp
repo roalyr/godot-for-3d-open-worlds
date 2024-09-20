@@ -237,6 +237,7 @@ AnimationNode::NodeTimeInfo AnimationNodeAnimation::_process(const AnimationMixe
 			}
 			// Finished.
 			if (Animation::is_less_approx(prev_playback_time, anim_size) && Animation::is_greater_or_equal_approx(cur_playback_time, anim_size)) {
+				cur_playback_time = anim_size;
 				process_state->tree->call_deferred(SNAME("emit_signal"), SceneStringName(animation_finished), animation);
 			}
 		}
@@ -753,9 +754,6 @@ AnimationNode::NodeTimeInfo AnimationNodeAdd2::_process(const AnimationMixer::Pl
 	return nti;
 }
 
-void AnimationNodeAdd2::_bind_methods() {
-}
-
 AnimationNodeAdd2::AnimationNodeAdd2() {
 	add_input("in");
 	add_input("add");
@@ -797,9 +795,6 @@ AnimationNode::NodeTimeInfo AnimationNodeAdd3::_process(const AnimationMixer::Pl
 	blend_input(2, pi, FILTER_PASS, sync, p_test_only);
 
 	return nti;
-}
-
-void AnimationNodeAdd3::_bind_methods() {
 }
 
 AnimationNodeAdd3::AnimationNodeAdd3() {
@@ -844,9 +839,6 @@ bool AnimationNodeBlend2::has_filter() const {
 	return true;
 }
 
-void AnimationNodeBlend2::_bind_methods() {
-}
-
 AnimationNodeBlend2::AnimationNodeBlend2() {
 	add_input("in");
 	add_input("blend");
@@ -884,9 +876,6 @@ AnimationNode::NodeTimeInfo AnimationNodeBlend3::_process(const AnimationMixer::
 	NodeTimeInfo nti2 = blend_input(2, pi, FILTER_IGNORE, sync, p_test_only);
 
 	return amount > 0.5 ? nti2 : (amount < -0.5 ? nti0 : nti1); // Hacky but good enough.
-}
-
-void AnimationNodeBlend3::_bind_methods() {
 }
 
 AnimationNodeBlend3::AnimationNodeBlend3() {
@@ -931,9 +920,6 @@ AnimationNode::NodeTimeInfo AnimationNodeSub2::_process(const AnimationMixer::Pl
 	return blend_input(0, pi, FILTER_IGNORE, sync, p_test_only);
 }
 
-void AnimationNodeSub2::_bind_methods() {
-}
-
 AnimationNodeSub2::AnimationNodeSub2() {
 	add_input("in");
 	add_input("sub");
@@ -969,9 +955,6 @@ AnimationNode::NodeTimeInfo AnimationNodeTimeScale::_process(const AnimationMixe
 	}
 
 	return blend_input(0, pi, FILTER_IGNORE, true, p_test_only);
-}
-
-void AnimationNodeTimeScale::_bind_methods() {
 }
 
 AnimationNodeTimeScale::AnimationNodeTimeScale() {
@@ -1011,9 +994,6 @@ AnimationNode::NodeTimeInfo AnimationNodeTimeSeek::_process(const AnimationMixer
 	}
 
 	return blend_input(0, pi, FILTER_IGNORE, true, p_test_only);
-}
-
-void AnimationNodeTimeSeek::_bind_methods() {
 }
 
 AnimationNodeTimeSeek::AnimationNodeTimeSeek() {

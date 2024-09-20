@@ -204,25 +204,28 @@ void AnimationPlayer::_process_playback_data(PlaybackData &cd, double p_delta, f
 	}
 
 	double prev_pos = cd.pos; // The animation may be changed during process, so it is safer that the state is changed before process.
-	cd.pos = next_pos;
 
 	// End detection.
 	if (p_is_current) {
 		if (cd.from->animation->get_loop_mode() == Animation::LOOP_NONE) {
 			if (!backwards && Animation::is_less_or_equal_approx(prev_pos, len) && Math::is_equal_approx(next_pos, len)) {
 				// Playback finished.
+				next_pos = len; // Snap to the edge.
 				end_reached = true;
 				end_notify = Animation::is_less_approx(prev_pos, len); // Notify only if not already at the end.
 				p_blend = 1.0;
 			}
 			if (backwards && Animation::is_greater_or_equal_approx(prev_pos, 0) && Math::is_equal_approx(next_pos, 0)) {
 				// Playback finished.
+				next_pos = 0; // Snap to the edge.
 				end_reached = true;
 				end_notify = Animation::is_greater_approx(prev_pos, 0); // Notify only if not already at the beginning.
 				p_blend = 1.0;
 			}
 		}
 	}
+
+	cd.pos = next_pos;
 
 	PlaybackInfo pi;
 	if (p_started) {
@@ -901,7 +904,7 @@ void AnimationPlayer::_bind_methods() {
 	ADD_GROUP("Playback Options", "playback_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "playback_auto_capture"), "set_auto_capture", "is_auto_capture");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "playback_auto_capture_duration", PROPERTY_HINT_NONE, "suffix:s"), "set_auto_capture_duration", "get_auto_capture_duration");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "playback_auto_capture_transition_type", PROPERTY_HINT_ENUM, "Linear,Sine,Quint,Quart,Expo,Elastic,Cubic,Circ,Bounce,Back,Spring"), "set_auto_capture_transition_type", "get_auto_capture_transition_type");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "playback_auto_capture_transition_type", PROPERTY_HINT_ENUM, "Linear,Sine,Quint,Quart,Quad,Expo,Elastic,Cubic,Circ,Bounce,Back,Spring"), "set_auto_capture_transition_type", "get_auto_capture_transition_type");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "playback_auto_capture_ease_type", PROPERTY_HINT_ENUM, "In,Out,InOut,OutIn"), "set_auto_capture_ease_type", "get_auto_capture_ease_type");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "playback_default_blend_time", PROPERTY_HINT_RANGE, "0,4096,0.01,suffix:s"), "set_default_blend_time", "get_default_blend_time");
 

@@ -135,12 +135,22 @@ void GDScriptParserRef::clear() {
 
 GDScriptParserRef::~GDScriptParserRef() {
 	clear();
+
 	if (!abandoned) {
-		GDScriptCache::remove_parser(path);
+		MutexLock lock(GDScriptCache::singleton->mutex);
+		GDScriptCache::singleton->parser_map.erase(path);
 	}
 }
 
 GDScriptCache *GDScriptCache::singleton = nullptr;
+
+SafeBinaryMutex<GDScriptCache::BINARY_MUTEX_TAG> &_get_gdscript_cache_mutex() {
+	return GDScriptCache::mutex;
+}
+
+template <>
+thread_local SafeBinaryMutex<GDScriptCache::BINARY_MUTEX_TAG>::TLSData SafeBinaryMutex<GDScriptCache::BINARY_MUTEX_TAG>::tls_data(_get_gdscript_cache_mutex());
+SafeBinaryMutex<GDScriptCache::BINARY_MUTEX_TAG> GDScriptCache::mutex;
 
 void GDScriptCache::move_script(const String &p_from, const String &p_to) {
 	if (singleton == nullptr || p_from == p_to) {
@@ -153,15 +163,7 @@ void GDScriptCache::move_script(const String &p_from, const String &p_to) {
 		return;
 	}
 
-	if (singleton->parser_map.has(p_from) && !p_from.is_empty()) {
-		singleton->parser_map[p_to] = singleton->parser_map[p_from];
-	}
-	singleton->parser_map.erase(p_from);
-
-	if (singleton->parser_inverse_dependencies.has(p_from) && !p_from.is_empty()) {
-		singleton->parser_inverse_dependencies[p_to] = singleton->parser_inverse_dependencies[p_from];
-	}
-	singleton->parser_inverse_dependencies.erase(p_from);
+	remove_parser(p_from);
 
 	if (singleton->shallow_gdscript_cache.has(p_from) && !p_from.is_empty()) {
 		singleton->shallow_gdscript_cache[p_to] = singleton->shallow_gdscript_cache[p_from];
@@ -375,7 +377,7 @@ Ref<GDScript> GDScriptCache::get_full_script(const String &p_path, Error &r_erro
 
 	// Allowing lifting the lock might cause a script to be reloaded multiple times,
 	// which, as a last resort deadlock prevention strategy, is a good tradeoff.
-	uint32_t allowance_id = WorkerThreadPool::thread_enter_unlock_allowance_zone(&singleton->mutex);
+	uint32_t allowance_id = WorkerThreadPool::thread_enter_unlock_allowance_zone(singleton->mutex);
 	r_error = script->reload(true);
 	WorkerThreadPool::thread_exit_unlock_allowance_zone(allowance_id);
 	if (r_error) {
