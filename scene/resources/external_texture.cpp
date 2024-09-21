@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  editor_title_bar.h                                                    */
+/*  external_texture.cpp                                                  */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,26 +28,65 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef EDITOR_TITLE_BAR_H
-#define EDITOR_TITLE_BAR_H
+#include "external_texture.h"
 
-#include "scene/gui/box_container.h"
-#include "scene/main/window.h"
+#include "drivers/gles3/storage/texture_storage.h"
+#include "servers/rendering/rendering_server_globals.h"
 
-class EditorTitleBar : public HBoxContainer {
-	GDCLASS(EditorTitleBar, HBoxContainer);
+void ExternalTexture::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_size", "size"), &ExternalTexture::set_size);
+	ClassDB::bind_method(D_METHOD("get_external_texture_id"), &ExternalTexture::get_external_texture_id);
+	ClassDB::bind_method(D_METHOD("set_external_buffer_id", "external_buffer_id"), &ExternalTexture::set_external_buffer_id);
 
-	Point2i click_pos;
-	bool moving = false;
-	bool can_move = false;
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
+}
 
-protected:
-	virtual void gui_input(const Ref<InputEvent> &p_event) override;
-	static void _bind_methods() {}
+uint64_t ExternalTexture::get_external_texture_id() const {
+	return RenderingServer::get_singleton()->texture_get_native_handle(texture);
+}
 
-public:
-	void set_can_move_window(bool p_enabled);
-	bool get_can_move_window() const;
-};
+void ExternalTexture::set_size(const Size2 &p_size) {
+	if (p_size.width > 0 && p_size.height > 0 && p_size != size) {
+		size = p_size;
+		RenderingServer::get_singleton()->texture_external_update(texture, size.width, size.height, external_buffer);
+		emit_changed();
+	}
+}
 
-#endif // EDITOR_TITLE_BAR_H
+Size2 ExternalTexture::get_size() const {
+	return size;
+}
+
+void ExternalTexture::set_external_buffer_id(uint64_t p_external_buffer) {
+	if (p_external_buffer != external_buffer) {
+		external_buffer = p_external_buffer;
+		RenderingServer::get_singleton()->texture_external_update(texture, size.width, size.height, external_buffer);
+	}
+}
+
+int ExternalTexture::get_width() const {
+	return size.width;
+}
+
+int ExternalTexture::get_height() const {
+	return size.height;
+}
+
+bool ExternalTexture::has_alpha() const {
+	return false;
+}
+
+RID ExternalTexture::get_rid() const {
+	return texture;
+}
+
+ExternalTexture::ExternalTexture() {
+	texture = RenderingServer::get_singleton()->texture_external_create(size.width, size.height);
+}
+
+ExternalTexture::~ExternalTexture() {
+	if (texture.is_valid()) {
+		ERR_FAIL_NULL(RenderingServer::get_singleton());
+		RenderingServer::get_singleton()->free(texture);
+	}
+}

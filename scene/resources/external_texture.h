@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  editor_title_bar.h                                                    */
+/*  external_texture.h                                                    */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,26 +28,39 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef EDITOR_TITLE_BAR_H
-#define EDITOR_TITLE_BAR_H
+#ifndef EXTERNAL_TEXTURE_H
+#define EXTERNAL_TEXTURE_H
 
-#include "scene/gui/box_container.h"
-#include "scene/main/window.h"
+#include "scene/resources/texture.h"
 
-class EditorTitleBar : public HBoxContainer {
-	GDCLASS(EditorTitleBar, HBoxContainer);
+// External textures as defined by OES_EGL_image_external (GLES) or VK_ANDROID_external_memory_android_hardware_buffer (Vulkan).
+class ExternalTexture : public Texture2D {
+	GDCLASS(ExternalTexture, Texture2D);
 
-	Point2i click_pos;
-	bool moving = false;
-	bool can_move = false;
+private:
+	RID texture;
+	Size2 size = Size2(256, 256);
+	uint64_t external_buffer = 0;
 
 protected:
-	virtual void gui_input(const Ref<InputEvent> &p_event) override;
-	static void _bind_methods() {}
+	static void _bind_methods();
 
 public:
-	void set_can_move_window(bool p_enabled);
-	bool get_can_move_window() const;
+	uint64_t get_external_texture_id() const;
+
+	virtual Size2 get_size() const override;
+	void set_size(const Size2 &p_size);
+
+	void set_external_buffer_id(uint64_t p_external_buffer);
+
+	virtual int get_width() const override;
+	virtual int get_height() const override;
+
+	virtual RID get_rid() const override;
+	virtual bool has_alpha() const override;
+
+	ExternalTexture();
+	~ExternalTexture();
 };
 
-#endif // EDITOR_TITLE_BAR_H
+#endif // EXTERNAL_TEXTURE_H
