@@ -87,6 +87,8 @@ class TranslationServer : public Object {
 	Ref<Translation> tool_translation;
 	Ref<Translation> doc_translation;
 
+	mutable HashMap<String, int> locale_compare_cache;
+
 	bool enabled;
 
 	static TranslationServer *singleton;
@@ -122,6 +124,7 @@ public:
 
 	int compare_locales(const String &p_locale_a, const String &p_locale_b) const;
 	String standardize_locale(const String &p_locale) const;
+	String _standardize_locale(const String &p_locale, bool p_add_defaults) const;
 
 	Vector<String> get_all_languages() const;
 	String get_language_name(const String &p_language) const;
