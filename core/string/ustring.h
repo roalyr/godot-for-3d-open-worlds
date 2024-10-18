@@ -452,7 +452,7 @@ public:
 	String c_escape_multiline() const;
 	String c_unescape() const;
 	String json_escape() const;
-	Error parse_url(String &r_scheme, String &r_host, int &r_port, String &r_path) const;
+	Error parse_url(String &r_scheme, String &r_host, int &r_port, String &r_path, String &r_fragment) const;
 
 	String property_name_encode() const;
 
@@ -460,6 +460,7 @@ public:
 	static String get_invalid_node_name_characters(bool p_allow_internal = false);
 	String validate_node_name() const;
 	String validate_ascii_identifier() const;
+	String validate_unicode_identifier() const;
 	String validate_filename() const;
 
 	bool is_valid_ascii_identifier() const;

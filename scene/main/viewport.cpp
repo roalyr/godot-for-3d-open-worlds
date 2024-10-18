@@ -1400,7 +1400,7 @@ String Viewport::_gui_get_tooltip(Control *p_control, const Vector2 &p_pos, Cont
 	String tooltip;
 
 	while (p_control) {
-		tooltip = p_control->atr(p_control->get_tooltip(pos));
+		tooltip = p_control->get_tooltip(pos);
 
 		// Temporary solution for PopupMenus.
 		PopupMenu *menu = Object::cast_to<PopupMenu>(this);
@@ -1448,7 +1448,11 @@ void Viewport::_gui_show_tooltip() {
 			&tooltip_owner);
 	gui.tooltip_text = gui.tooltip_text.strip_edges();
 
-	if (gui.tooltip_text.is_empty()) {
+	// Controls can implement `make_custom_tooltip` to provide their own tooltip.
+	// This should be a Control node which will be added as child to a TooltipPanel.
+	Control *base_tooltip = tooltip_owner ? tooltip_owner->make_custom_tooltip(gui.tooltip_text) : nullptr;
+
+	if (gui.tooltip_text.is_empty() && !base_tooltip) {
 		return; // Nothing to show.
 	}
 
@@ -1469,10 +1473,6 @@ void Viewport::_gui_show_tooltip() {
 	// Ensure no opaque background behind the panel as its StyleBox can be partially transparent (e.g. corners).
 	panel->set_transparent_background(true);
 
-	// Controls can implement `make_custom_tooltip` to provide their own tooltip.
-	// This should be a Control node which will be added as child to a TooltipPanel.
-	Control *base_tooltip = tooltip_owner->make_custom_tooltip(gui.tooltip_text);
-
 	// If no custom tooltip is given, use a default implementation.
 	if (!base_tooltip) {
 		gui.tooltip_label = memnew(Label);
@@ -1483,6 +1483,7 @@ void Viewport::_gui_show_tooltip() {
 	}
 
 	base_tooltip->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+	base_tooltip->set_auto_translate_mode(tooltip_owner->get_tooltip_auto_translate_mode());
 
 	panel->set_transient(true);
 	panel->set_flag(Window::FLAG_NO_FOCUS, true);

@@ -31,7 +31,7 @@
 #include "project_settings_editor.h"
 
 #include "core/config/project_settings.h"
-#include "editor/editor_log.h"
+#include "editor/editor_inspector.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
@@ -104,9 +104,9 @@ void ProjectSettingsEditor::_update_advanced(bool p_is_advanced) {
 }
 
 void ProjectSettingsEditor::_advanced_toggled(bool p_button_pressed) {
-	EditorSettings::get_singleton()->set_project_metadata("project_settings", "advanced_mode", p_button_pressed);
+	EditorSettings::get_singleton()->set("_project_settings_advanced_mode", p_button_pressed);
+	EditorSettings::get_singleton()->save();
 	_update_advanced(p_button_pressed);
-	general_settings_inspector->set_restrict_to_basic_settings(!p_button_pressed);
 }
 
 void ProjectSettingsEditor::_setting_selected(const String &p_path) {
@@ -390,7 +390,7 @@ void ProjectSettingsEditor::_action_added(const String &p_name) {
 
 	Dictionary action;
 	action["events"] = Array();
-	action["deadzone"] = 0.5f;
+	action["deadzone"] = 0.2f;
 
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 	undo_redo->create_action(TTR("Add Input Action"));
@@ -688,6 +688,7 @@ ProjectSettingsEditor::ProjectSettingsEditor(EditorData *p_data) {
 	general_settings_inspector = memnew(SectionedInspector);
 	general_settings_inspector->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	general_settings_inspector->register_search_box(search_box);
+	general_settings_inspector->register_advanced_toggle(advanced);
 	general_settings_inspector->get_inspector()->set_use_filter(true);
 	general_settings_inspector->get_inspector()->connect("property_selected", callable_mp(this, &ProjectSettingsEditor::_setting_selected));
 	general_settings_inspector->get_inspector()->connect("property_edited", callable_mp(this, &ProjectSettingsEditor::_setting_edited));
@@ -768,14 +769,12 @@ ProjectSettingsEditor::ProjectSettingsEditor(EditorData *p_data) {
 	set_ok_button_text(TTR("Close"));
 	set_hide_on_ok(true);
 
-	bool use_advanced = EditorSettings::get_singleton()->get_project_metadata("project_settings", "advanced_mode", false);
-
+	bool use_advanced = EDITOR_DEF("_project_settings_advanced_mode", false);
 	if (use_advanced) {
-		advanced->set_pressed_no_signal(true);
+		advanced->set_pressed(true);
 	}
 
 	_update_advanced(use_advanced);
-	general_settings_inspector->set_restrict_to_basic_settings(!use_advanced);
 
 	import_defaults_editor = memnew(ImportDefaultsEditor);
 	import_defaults_editor->set_name(TTR("Import Defaults"));

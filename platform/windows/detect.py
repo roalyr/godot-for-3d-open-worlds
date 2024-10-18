@@ -390,8 +390,6 @@ def configure_msvc(env: "SConsEnvironment", vcvars_msvc_config):
         env.AppendUnique(CPPDEFINES=["R128_STDC_ONLY"])
         env.extra_suffix = ".llvm" + env.extra_suffix
 
-    env["MAXLINELENGTH"] = 8192  # Windows Vista and beyond, so always applicable.
-
     if env["silence_msvc"] and not env.GetOption("clean"):
         from tempfile import mkstemp
 
@@ -620,18 +618,16 @@ def configure_msvc(env: "SConsEnvironment", vcvars_msvc_config):
                 print("ThinLTO is only compatible with LLVM, use `use_llvm=yes` or `lto=full`.")
                 sys.exit(255)
 
-            env.Append(CCFLAGS=["-flto=thin"])
-            env.Append(LINKFLAGS=["-flto=thin"])
+            env.AppendUnique(CCFLAGS=["-flto=thin"])
         elif env["use_llvm"]:
-            env.Append(CCFLAGS=["-flto"])
-            env.Append(LINKFLAGS=["-flto"])
+            env.AppendUnique(CCFLAGS=["-flto"])
         else:
             env.AppendUnique(CCFLAGS=["/GL"])
-            env.AppendUnique(ARFLAGS=["/LTCG"])
-            if env["progress"]:
-                env.AppendUnique(LINKFLAGS=["/LTCG:STATUS"])
-            else:
-                env.AppendUnique(LINKFLAGS=["/LTCG"])
+        if env["progress"]:
+            env.AppendUnique(LINKFLAGS=["/LTCG:STATUS"])
+        else:
+            env.AppendUnique(LINKFLAGS=["/LTCG"])
+        env.AppendUnique(ARFLAGS=["/LTCG"])
 
     if vcvars_msvc_config:
         env.Prepend(CPPPATH=[p for p in str(os.getenv("INCLUDE")).split(";")])
@@ -666,7 +662,7 @@ def get_ar_version(env):
         print_warning("Couldn't check version of `ar`.")
         return ret
 
-    match = re.search(r"GNU ar \(GNU Binutils\) (\d+)\.(\d+)(?:\.(\d+))?", output)
+    match = re.search(r"GNU ar(?: \(GNU Binutils\)| version) (\d+)\.(\d+)(?:\.(\d+))?", output)
     if match:
         ret["major"] = int(match[1])
         ret["minor"] = int(match[2])
@@ -792,8 +788,9 @@ def configure_mingw(env: "SConsEnvironment"):
         env["CXX"] = mingw_bin_prefix + "g++"
         if try_cmd("as --version", env["mingw_prefix"], env["arch"]):
             env["AS"] = mingw_bin_prefix + "as"
-        if try_cmd("gcc-ar --version", env["mingw_prefix"], env["arch"]):
-            env["AR"] = mingw_bin_prefix + "gcc-ar"
+        ar = "ar" if os.name == "nt" else "gcc-ar"
+        if try_cmd(f"{ar} --version", env["mingw_prefix"], env["arch"]):
+            env["AR"] = mingw_bin_prefix + ar
         if try_cmd("gcc-ranlib --version", env["mingw_prefix"], env["arch"]):
             env["RANLIB"] = mingw_bin_prefix + "gcc-ranlib"
 

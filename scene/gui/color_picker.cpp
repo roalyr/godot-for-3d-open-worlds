@@ -33,8 +33,6 @@
 #include "core/input/input.h"
 #include "core/io/image.h"
 #include "core/math/color.h"
-#include "core/os/keyboard.h"
-#include "core/os/os.h"
 #include "scene/gui/color_mode.h"
 #include "scene/gui/margin_container.h"
 #include "scene/resources/image_texture.h"
@@ -42,7 +40,6 @@
 #include "scene/resources/style_box_texture.h"
 #include "scene/theme/theme_db.h"
 #include "servers/display_server.h"
-#include "thirdparty/misc/ok_color.h"
 #include "thirdparty/misc/ok_color_shader.h"
 
 List<Color> ColorPicker::preset_cache;
@@ -248,7 +245,21 @@ void ColorPicker::finish_shaders() {
 }
 
 void ColorPicker::set_focus_on_line_edit() {
-	callable_mp((Control *)c_text, &Control::grab_focus).call_deferred();
+	bool has_hardware_keyboard = true;
+#if defined(ANDROID_ENABLED) || defined(IOS_ENABLED)
+	has_hardware_keyboard = DisplayServer::get_singleton()->has_hardware_keyboard();
+#endif // ANDROID_ENABLED || IOS_ENABLED
+	if (has_hardware_keyboard) {
+		callable_mp((Control *)c_text, &Control::grab_focus).call_deferred();
+	} else {
+		// A hack to avoid showing the virtual keyboard when the ColorPicker window popups and
+		// no hardware keyboard is detected on Android and IOS.
+		// This will only focus the LineEdit without editing, the virtual keyboard will only be visible when
+		// we touch the LineEdit to enter edit mode.
+		callable_mp(c_text, &LineEdit::set_editable).call_deferred(false);
+		callable_mp((Control *)c_text, &Control::grab_focus).call_deferred();
+		callable_mp(c_text, &LineEdit::set_editable).call_deferred(true);
+	}
 }
 
 void ColorPicker::_update_controls() {
@@ -1567,7 +1578,7 @@ void ColorPicker::_pick_button_pressed_legacy() {
 
 		picker_preview_label = memnew(Label);
 		picker_preview->set_anchors_preset(Control::PRESET_CENTER_TOP);
-		picker_preview_label->set_text("Color Picking active");
+		picker_preview_label->set_text(ETR("Color Picking active"));
 		picker_preview->add_child(picker_preview_label);
 
 		picker_preview_style_box = (Ref<StyleBoxFlat>)memnew(StyleBoxFlat);
@@ -1905,7 +1916,7 @@ ColorPicker::ColorPicker() {
 		mode_popup->add_radio_check_item(modes[i]->get_name(), i);
 	}
 	mode_popup->add_separator();
-	mode_popup->add_check_item("Colorized Sliders", MODE_MAX);
+	mode_popup->add_check_item(ETR("Colorized Sliders"), MODE_MAX);
 	mode_popup->set_item_checked(current_mode, true);
 	mode_popup->set_item_checked(MODE_MAX + 1, true);
 	mode_popup->connect(SceneStringName(id_pressed), callable_mp(this, &ColorPicker::_set_mode_popup_value));
@@ -1933,7 +1944,7 @@ ColorPicker::ColorPicker() {
 	hex_hbc->set_alignment(ALIGNMENT_BEGIN);
 	vbr->add_child(hex_hbc);
 
-	hex_hbc->add_child(memnew(Label("Hex")));
+	hex_hbc->add_child(memnew(Label(ETR("Hex"))));
 
 	text_type = memnew(Button);
 	hex_hbc->add_child(text_type);
@@ -1997,8 +2008,7 @@ ColorPicker::ColorPicker() {
 
 	preset_group.instantiate();
 
-	btn_preset = memnew(Button);
-	btn_preset->set_text("Swatches");
+	btn_preset = memnew(Button(ETR("Swatches")));
 	btn_preset->set_flat(true);
 	btn_preset->set_toggle_mode(true);
 	btn_preset->set_focus_mode(FOCUS_NONE);
@@ -2014,8 +2024,7 @@ ColorPicker::ColorPicker() {
 
 	recent_preset_group.instantiate();
 
-	btn_recent_preset = memnew(Button);
-	btn_recent_preset->set_text("Recent Colors");
+	btn_recent_preset = memnew(Button(ETR("Recent Colors")));
 	btn_recent_preset->set_flat(true);
 	btn_recent_preset->set_toggle_mode(true);
 	btn_recent_preset->set_focus_mode(FOCUS_NONE);
