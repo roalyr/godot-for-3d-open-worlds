@@ -1,139 +1,111 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="1024"
-   height="1024"
-   id="svg3030"
-   version="1.1"
-   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
-   sodipodi:docname="icon.svg"
-   inkscape:export-filename="/home/akien/Projects/godot/godot.git/icon.png"
-   inkscape:export-xdpi="24"
-   inkscape:export-ydpi="24">
-  <defs
-     id="defs3032" />
-  <sodipodi:namedview
-     id="base"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageopacity="0.0"
-     inkscape:pageshadow="2"
-     inkscape:zoom="0.8359375"
-     inkscape:cx="512"
-     inkscape:cy="512"
-     inkscape:document-units="px"
-     inkscape:current-layer="layer1"
-     showgrid="false"
-     inkscape:window-width="1916"
-     inkscape:window-height="1025"
-     inkscape:window-x="1360"
-     inkscape:window-y="53"
-     inkscape:window-maximized="1"
-     inkscape:document-rotation="0" />
-  <metadata
-     id="metadata3035">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(0,-98.519719)">
-    <g
-       id="g78"
-       transform="matrix(4.162611,0,0,-4.162611,919.24059,771.67186)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c 0,0 -0.325,1.994 -0.515,1.976 l -36.182,-3.491 c -2.879,-0.278 -5.115,-2.574 -5.317,-5.459 l -0.994,-14.247 -27.992,-1.997 -1.904,12.912 c -0.424,2.872 -2.932,5.037 -5.835,5.037 h -38.188 c -2.902,0 -5.41,-2.165 -5.834,-5.037 l -1.905,-12.912 -27.992,1.997 -0.994,14.247 c -0.202,2.886 -2.438,5.182 -5.317,5.46 l -36.2,3.49 c -0.187,0.018 -0.324,-1.978 -0.511,-1.978 l -0.049,-7.83 30.658,-4.944 1.004,-14.374 c 0.203,-2.91 2.551,-5.263 5.463,-5.472 l 38.551,-2.75 c 0.146,-0.01 0.29,-0.016 0.434,-0.016 2.897,0 5.401,2.166 5.825,5.038 l 1.959,13.286 h 28.005 l 1.959,-13.286 c 0.423,-2.871 2.93,-5.037 5.831,-5.037 0.142,0 0.284,0.005 0.423,0.015 l 38.556,2.75 c 2.911,0.209 5.26,2.562 5.463,5.472 l 1.003,14.374 30.645,4.966 z"
-         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path80"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g82-3"
-       transform="matrix(4.162611,0,0,-4.162611,104.69892,525.90697)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 v -47.514 -6.035 -5.492 c 0.108,-0.001 0.216,-0.005 0.323,-0.015 l 36.196,-3.49 c 1.896,-0.183 3.382,-1.709 3.514,-3.609 l 1.116,-15.978 31.574,-2.253 2.175,14.747 c 0.282,1.912 1.922,3.329 3.856,3.329 h 38.188 c 1.933,0 3.573,-1.417 3.855,-3.329 l 2.175,-14.747 31.575,2.253 1.115,15.978 c 0.133,1.9 1.618,3.425 3.514,3.609 l 36.182,3.49 c 0.107,0.01 0.214,0.014 0.322,0.015 v 4.711 l 0.015,0.005 V 0 c 5.09692,6.4164715 9.92323,13.494208 13.621,19.449 -5.651,9.62 -12.575,18.217 -19.976,26.182 -6.864,-3.455 -13.531,-7.369 -19.828,-11.534 -3.151,3.132 -6.7,5.694 -10.186,8.372 -3.425,2.751 -7.285,4.768 -10.946,7.118 1.09,8.117 1.629,16.108 1.846,24.448 -9.446,4.754 -19.519,7.906 -29.708,10.17 -4.068,-6.837 -7.788,-14.241 -11.028,-21.479 -3.842,0.642 -7.702,0.88 -11.567,0.926 v 0.006 c -0.027,0 -0.052,-0.006 -0.075,-0.006 -0.024,0 -0.049,0.006 -0.073,0.006 V 63.652 C 93.903,63.606 90.046,63.368 86.203,62.726 82.965,69.964 79.247,77.368 75.173,84.205 64.989,81.941 54.915,78.789 45.47,74.035 45.686,65.695 46.225,57.704 47.318,49.587 43.65,47.237 39.795,45.22 36.369,42.469 32.888,39.791 29.333,37.229 26.181,34.097 19.884,38.262 13.219,42.176 6.353,45.631 -1.048,37.666 -7.968,29.069 -13.621,19.449 -9.1783421,12.475308 -4.4130298,5.4661124 0,0 Z"
-         style="fill:#478cbf;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.320312"
-         id="path84-6"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="cccccccccsssscccccccccccccccccccsccccccccccc" />
-    </g>
-    <g
-       id="g86-7"
-       transform="matrix(4.162611,0,0,-4.162611,784.07144,817.24284)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 -1.121,-16.063 c -0.135,-1.936 -1.675,-3.477 -3.611,-3.616 l -38.555,-2.751 c -0.094,-0.007 -0.188,-0.01 -0.281,-0.01 -1.916,0 -3.569,1.406 -3.852,3.33 l -2.211,14.994 H -81.09 l -2.211,-14.994 c -0.297,-2.018 -2.101,-3.469 -4.133,-3.32 l -38.555,2.751 c -1.936,0.139 -3.476,1.68 -3.611,3.616 L -130.721,0 -163.268,3.138 c 0.015,-3.498 0.06,-7.33 0.06,-8.093 0,-34.374 43.605,-50.896 97.781,-51.086 h 0.066 0.067 c 54.176,0.19 97.766,16.712 97.766,51.086 0,0.777 0.047,4.593 0.063,8.093 z"
-         style="fill:#478cbf;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path88-5"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g90-3"
-       transform="matrix(4.162611,0,0,-4.162611,389.21484,625.67104)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c 0,-12.052 -9.765,-21.815 -21.813,-21.815 -12.042,0 -21.81,9.763 -21.81,21.815 0,12.044 9.768,21.802 21.81,21.802 C -9.765,21.802 0,12.044 0,0"
-         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path92-5"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g94-6"
-       transform="matrix(4.162611,0,0,-4.162611,367.36686,631.05679)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c 0,-7.994 -6.479,-14.473 -14.479,-14.473 -7.996,0 -14.479,6.479 -14.479,14.473 0,7.994 6.483,14.479 14.479,14.479 C -6.479,14.479 0,7.994 0,0"
-         style="fill:#414042;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path96-2"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g98-9"
-       transform="matrix(4.162611,0,0,-4.162611,511.99336,724.73954)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c -3.878,0 -7.021,2.858 -7.021,6.381 v 20.081 c 0,3.52 3.143,6.381 7.021,6.381 3.878,0 7.028,-2.861 7.028,-6.381 V 6.381 C 7.028,2.858 3.878,0 0,0"
-         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path100-1"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g102-2"
-       transform="matrix(4.162611,0,0,-4.162611,634.78706,625.67104)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c 0,-12.052 9.765,-21.815 21.815,-21.815 12.041,0 21.808,9.763 21.808,21.815 0,12.044 -9.767,21.802 -21.808,21.802 C 9.765,21.802 0,12.044 0,0"
-         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path104-7"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="g106-0"
-       transform="matrix(4.162611,0,0,-4.162611,656.64056,631.05679)"
-       style="stroke-width:0.32031175">
-      <path
-         d="m 0,0 c 0,-7.994 6.477,-14.473 14.471,-14.473 8.002,0 14.479,6.479 14.479,14.473 0,7.994 -6.477,14.479 -14.479,14.479 C 6.477,14.479 0,7.994 0,0"
-         style="fill:#414042;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.32031175"
-         id="path108-9"
-         inkscape:connector-curvature="0" />
-    </g>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.2" width="271.2mm" height="271.2mm" viewBox="0 0 27120 27120" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:presentation="http://sun.com/xmlns/staroffice/presentation" xmlns:smil="http://www.w3.org/2001/SMIL20/" xmlns:anim="urn:oasis:names:tc:opendocument:xmlns:animation:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xml:space="preserve">
+ <defs class="ClipPathGroup">
+  <clipPath id="presentation_clip_path" clipPathUnits="userSpaceOnUse">
+   <rect x="0" y="0" width="27120" height="27120"/>
+  </clipPath>
+  <clipPath id="presentation_clip_path_shrink" clipPathUnits="userSpaceOnUse">
+   <rect x="27" y="27" width="27066" height="27066"/>
+  </clipPath>
+ </defs>
+ <defs class="TextShapeIndex">
+  <g ooo:slide="id1" ooo:id-list="id3 id4 id5 id6 id7 id8 id9 id10"/>
+ </defs>
+ <defs class="EmbeddedBulletChars">
+  <g id="bullet-char-template-57356" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z"/>
   </g>
+  <g id="bullet-char-template-57354" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z"/>
+  </g>
+  <g id="bullet-char-template-10146" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z"/>
+  </g>
+  <g id="bullet-char-template-10132" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z"/>
+  </g>
+  <g id="bullet-char-template-10007" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z"/>
+  </g>
+  <g id="bullet-char-template-10004" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z"/>
+  </g>
+  <g id="bullet-char-template-9679" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"/>
+  </g>
+  <g id="bullet-char-template-8226" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z"/>
+  </g>
+  <g id="bullet-char-template-8211" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z"/>
+  </g>
+  <g id="bullet-char-template-61548" transform="scale(0.00048828125,-0.00048828125)">
+   <path d="M 173,740 C 173,903 231,1043 346,1159 462,1274 601,1332 765,1332 928,1332 1067,1274 1183,1159 1299,1043 1357,903 1357,740 1357,577 1299,437 1183,322 1067,206 928,148 765,148 601,148 462,206 346,322 231,437 173,577 173,740 Z"/>
+  </g>
+ </defs>
+ <g>
+  <g id="id2" class="Master_Slide">
+   <g id="bg-id2" class="Background"/>
+   <g id="bo-id2" class="BackgroundObjects"/>
+  </g>
+ </g>
+ <g class="SlideGroup">
+  <g>
+   <g id="container-id1">
+    <g id="id1" class="Slide" clip-path="url(#presentation_clip_path)">
+     <g class="Page">
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id3">
+        <rect class="BoundingBox" stroke="none" fill="none" x="2777" y="17605" width="21564" height="4117"/>
+        <path fill="rgb(255,255,255)" stroke="none" d="M 24333,17822 C 24333,17822 24297,17603 24276,17605 L 20292,17989 C 19974,18020 19728,18273 19706,18590 L 19597,20159 16514,20379 16304,18957 C 16257,18641 15981,18402 15661,18402 L 11457,18402 C 11137,18402 10861,18641 10814,18957 L 10604,20379 7521,20159 7412,18590 C 7390,18272 7144,18020 6826,17989 L 2840,17605 C 2819,17603 2804,17822 2783,17822 L 2778,18685 6154,19229 6265,20812 C 6287,21133 6546,21392 6867,21415 L 11112,21718 C 11128,21719 11144,21720 11160,21720 11479,21720 11755,21481 11802,21165 L 12017,19701 15101,19701 15316,21165 C 15363,21481 15639,21719 15959,21719 15974,21719 15990,21719 16005,21718 L 20251,21415 C 20572,21392 20831,21133 20853,20812 L 20964,19229 24339,18682 24333,17822 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id4">
+        <rect class="BoundingBox" stroke="none" fill="none" x="1282" y="2046" width="24555" height="18569"/>
+        <path fill="rgb(184,115,64)" stroke="none" d="M 2783,11321 L 2783,16553 2783,17217 2783,17822 C 2795,17822 2807,17823 2819,17824 L 6805,18208 C 7014,18228 7178,18396 7192,18606 L 7315,20365 10792,20613 11032,18989 C 11063,18779 11244,18623 11457,18623 L 15661,18623 C 15874,18623 16055,18779 16086,18989 L 16326,20613 19803,20365 19926,18606 C 19940,18396 20104,18228 20313,18208 L 24298,17824 C 24309,17823 24321,17822 24333,17822 L 24333,17303 24335,17303 24335,11321 C 24896,10614 25428,9835 25835,9179 25212,8119 24450,7173 23635,6295 22879,6676 22145,7107 21451,7566 21104,7221 20713,6939 20329,6644 19952,6341 19527,6119 19124,5860 19244,4966 19303,4086 19327,3167 18287,2644 17177,2296 16055,2047 15607,2800 15198,3616 14841,4413 14418,4342 13992,4316 13567,4311 L 13567,4310 C 13564,4310 13561,4311 13559,4311 13557,4311 13554,4310 13552,4310 L 13552,4311 C 13125,4316 12700,4342 12277,4413 11920,3616 11511,2800 11062,2047 9941,2296 8831,2644 7791,3167 7815,4086 7874,4966 7995,5860 7591,6119 7166,6341 6789,6644 6405,6939 6014,7221 5667,7566 4973,7107 4239,6676 3483,6295 2668,7173 1906,8119 1283,9179 1772,9947 2297,10719 2783,11321 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id5">
+        <rect class="BoundingBox" stroke="none" fill="none" x="2776" y="18682" width="21566" height="6520"/>
+        <path fill="rgb(184,115,64)" stroke="none" d="M 20757,19028 L 20633,20797 C 20619,21010 20449,21180 20236,21195 L 15990,21498 C 15979,21499 15969,21499 15959,21499 15748,21499 15566,21344 15534,21133 L 15291,19481 11827,19481 11584,21133 C 11551,21355 11352,21515 11129,21498 L 6882,21195 C 6669,21180 6500,21010 6485,20797 L 6361,19028 2777,18682 C 2778,19068 2783,19490 2783,19574 2783,23359 7586,25179 13552,25200 L 13559,25200 13566,25200 C 19532,25179 24333,23359 24333,19574 24333,19488 24338,19068 24340,18682 L 20757,19028 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id6">
+        <rect class="BoundingBox" stroke="none" fill="none" x="5506" y="11558" width="4806" height="4806"/>
+        <path fill="rgb(255,255,255)" stroke="none" d="M 7909,16362 C 6582,16362 5507,15287 5507,13959 5507,12634 6582,11559 7909,11559 9235,11559 10311,12634 10311,13959 10311,15287 9235,16362 7909,16362 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id7">
+        <rect class="BoundingBox" stroke="none" fill="none" x="6543" y="12507" width="3191" height="3191"/>
+        <path fill="rgb(65,64,66)" stroke="none" d="M 8138,15696 C 7258,15696 6544,14983 6544,14102 6544,13222 7258,12508 8138,12508 9019,12508 9733,13222 9733,14102 9733,14983 9019,15696 8138,15696 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id8">
+        <rect class="BoundingBox" stroke="none" fill="none" x="12785" y="12963" width="1549" height="3619"/>
+        <path fill="rgb(255,255,255)" stroke="none" d="M 12786,15878 L 12786,13666 C 12786,13279 13132,12964 13559,12964 13985,12964 14332,13279 14332,13666 L 14332,15878 C 14332,16266 13985,16580 13559,16580 13132,16580 12786,16266 12786,15878 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id9">
+        <rect class="BoundingBox" stroke="none" fill="none" x="16807" y="11558" width="4806" height="4806"/>
+        <path fill="rgb(255,255,255)" stroke="none" d="M 19210,16362 C 20536,16362 21611,15287 21611,13959 21611,12634 20536,11559 19210,11559 17883,11559 16807,12634 16807,13959 16807,15287 17883,16362 19210,16362 Z"/>
+       </g>
+      </g>
+      <g class="com.sun.star.drawing.ClosedBezierShape">
+       <g id="id10">
+        <rect class="BoundingBox" stroke="none" fill="none" x="17385" y="12507" width="3191" height="3191"/>
+        <path fill="rgb(65,64,66)" stroke="none" d="M 18979,15696 C 19860,15696 20574,14983 20574,14102 20574,13222 19860,12508 18979,12508 18099,12508 17385,13222 17385,14102 17385,14983 18099,15696 18979,15696 Z"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
 </svg>
