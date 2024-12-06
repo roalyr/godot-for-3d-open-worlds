@@ -34,8 +34,13 @@ Files extracted from upstream source:
 ## certs
 
 - Upstream: Mozilla, via https://github.com/bagder/ca-bundle
-- Version: git (c5a419971b1bec220368c619aaafd0b818aa119f, 2024)
+- Version: git (4d3fe6683f651d96be1bbef316b201e9b33b274d, 2024),
+  generated from mozilla-release changeset b8ea2342548b8571e58f9176d9555ccdb5ec199f
 - License: MPL 2.0
+
+Files extracted from upstream source:
+
+- `ca-bundle.crt` renamed to `ca-certificates.crt`
 
 
 ## cvtt
@@ -278,7 +283,7 @@ Files extracted from upstream source:
 ## mbedtls
 
 - Upstream: https://github.com/Mbed-TLS/mbedtls
-- Version: 2.28.8 (5a764e5555c64337ed17444410269ff21cb617b1, 2024)
+- Version: 2.28.9 (5e146adef63b326b04282252639bebc2730939c6, 2024)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:
