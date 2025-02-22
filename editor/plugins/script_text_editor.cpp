@@ -456,6 +456,7 @@ void ScriptTextEditor::convert_indent() {
 
 void ScriptTextEditor::tag_saved_version() {
 	code_editor->get_text_editor()->tag_saved_version();
+	edited_file_data.last_modified_time = FileAccess::get_modified_time(edited_file_data.path);
 }
 
 void ScriptTextEditor::goto_line(int p_line, int p_column) {
@@ -1102,6 +1103,10 @@ void ScriptTextEditor::_validate_symbol(const String &p_symbol) {
 }
 
 void ScriptTextEditor::_show_symbol_tooltip(const String &p_symbol, int p_row, int p_column) {
+	if (!EDITOR_GET("text_editor/behavior/documentation/enable_tooltips").booleanize()) {
+		return;
+	}
+
 	if (p_symbol.begins_with("res://") || p_symbol.begins_with("uid://")) {
 		EditorHelpBitTooltip::show_tooltip(code_editor->get_text_editor(), "resource||" + p_symbol);
 		return;
@@ -1202,19 +1207,14 @@ void ScriptTextEditor::_show_symbol_tooltip(const String &p_symbol, int p_row, i
 		}
 	}
 
+	// NOTE: See also `ScriptEditor::_get_debug_tooltip()` for documentation tooltips disabled.
 	String debug_value = EditorDebuggerNode::get_singleton()->get_var_value(p_symbol);
 	if (!debug_value.is_empty()) {
 		constexpr int DISPLAY_LIMIT = 1024;
 		if (debug_value.size() > DISPLAY_LIMIT) {
 			debug_value = debug_value.left(DISPLAY_LIMIT) + "... " + TTR("(truncated)");
 		}
-		debug_value = debug_value.replace("[", "[lb]");
-
-		if (doc_symbol.is_empty()) {
-			debug_value = p_symbol + ": " + debug_value;
-		} else {
-			debug_value = TTR("Current value: ") + debug_value;
-		}
+		debug_value = TTR("Current value: ") + debug_value.replace("[", "[lb]");
 	}
 
 	if (!doc_symbol.is_empty() || !debug_value.is_empty()) {

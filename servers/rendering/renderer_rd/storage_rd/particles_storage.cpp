@@ -68,7 +68,7 @@ ParticlesStorage::ParticlesStorage() {
 
 		actions.renames["COLOR"] = "PARTICLE.color";
 		actions.renames["VELOCITY"] = "PARTICLE.velocity";
-		//actions.renames["MASS"] = "mass"; ?
+		actions.renames["MASS"] = "mass";
 		actions.renames["ACTIVE"] = "particle_active";
 		actions.renames["RESTART"] = "restart";
 		actions.renames["CUSTOM"] = "PARTICLE.custom";
@@ -1325,10 +1325,11 @@ void ParticlesStorage::particles_set_view_axis(RID p_particles, const Vector3 &p
 void ParticlesStorage::_particles_update_buffers(Particles *particles) {
 	uint32_t userdata_count = 0;
 
-	MaterialStorage::ShaderData *shader_data = MaterialStorage::get_singleton()->material_get_shader_data(particles->process_material);
-	if (shader_data) {
-		const ParticlesShaderData *particle_shader_data = static_cast<const ParticlesShaderData *>(shader_data);
-		userdata_count = particle_shader_data->userdata_count;
+	if (particles->process_material.is_valid()) {
+		ParticleProcessMaterialData *material_data = static_cast<ParticleProcessMaterialData *>(MaterialStorage::get_singleton()->material_get_data(particles->process_material, MaterialStorage::SHADER_TYPE_PARTICLES));
+		if (material_data && material_data->shader_data->version.is_valid() && material_data->shader_data->valid) {
+			userdata_count = material_data->shader_data->userdata_count;
+		}
 	}
 
 	bool uses_motion_vectors = RSG::viewport->get_num_viewports_with_motion_vectors() > 0 || (RendererCompositorStorage::get_singleton()->get_num_compositor_effects_with_motion_vectors() > 0);
@@ -1855,6 +1856,18 @@ void ParticlesStorage::particles_collision_set_cull_mask(RID p_particles_collisi
 	ParticlesCollision *particles_collision = particles_collision_owner.get_or_null(p_particles_collision);
 	ERR_FAIL_NULL(particles_collision);
 	particles_collision->cull_mask = p_cull_mask;
+}
+
+uint32_t ParticlesStorage::particles_collision_get_height_field_mask(RID p_particles_collision) const {
+	const ParticlesCollision *particles_collision = particles_collision_owner.get_or_null(p_particles_collision);
+	ERR_FAIL_NULL_V(particles_collision, false);
+	return particles_collision->heightfield_mask;
+}
+
+void ParticlesStorage::particles_collision_set_height_field_mask(RID p_particles_collision, uint32_t p_heightfield_mask) {
+	ParticlesCollision *particles_collision = particles_collision_owner.get_or_null(p_particles_collision);
+	ERR_FAIL_NULL(particles_collision);
+	particles_collision->heightfield_mask = p_heightfield_mask;
 }
 
 void ParticlesStorage::particles_collision_set_sphere_radius(RID p_particles_collision, real_t p_radius) {
