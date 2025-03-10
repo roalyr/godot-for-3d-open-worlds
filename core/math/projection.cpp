@@ -432,36 +432,12 @@ Vector2 Projection::get_viewport_half_extents() const {
 }
 
 Vector2 Projection::get_far_plane_half_extents() const {
-<<<<<<< HEAD
-	const real_t *matrix = (const real_t *)columns;
-	///////--- Far Plane ---///////
-	Plane far_plane = Plane(0.0, 0.0, -1.0, PZFarStorage::p_z_far_stored);
-
-	///////--- Right Plane ---///////
-	Plane right_plane = Plane(matrix[3] - matrix[0],
-			matrix[7] - matrix[4],
-			matrix[11] - matrix[8],
-			-matrix[15] + matrix[12]);
-	right_plane.normalize();
-
-	Plane top_plane = Plane(matrix[3] - matrix[1],
-			matrix[7] - matrix[5],
-			matrix[11] - matrix[9],
-			-matrix[15] + matrix[13]);
-	top_plane.normalize();
-
-	Vector3 res;
-	far_plane.intersect_3(right_plane, top_plane, &res);
-
-	return Vector2(res.x, res.y);
-=======
 	// NOTE: This assumes a symmetrical frustum, i.e. that :
 	// - the matrix is a projection across z-axis (i.e. is invertible and columns[0][1], [0][3], [1][0] and [1][3] == 0)
 	// - the projection plane is rectangular (i.e. columns[0][2] and [1][2] == 0 if columns[2][3] != 0)
 	// - there is no offset / skew (i.e. columns[2][0] == columns[2][1] == 0)
 	real_t w = -get_z_far() * columns[2][3] + columns[3][3];
 	return Vector2(w / columns[0][0], w / columns[1][1]);
->>>>>>> upstream/master
 }
 
 bool Projection::get_endpoints(const Transform3D &p_transform, Vector3 *p_8points) const {
