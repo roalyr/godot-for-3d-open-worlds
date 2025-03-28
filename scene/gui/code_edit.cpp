@@ -137,7 +137,7 @@ void CodeEdit::_notification(int p_what) {
 
 						Point2 round_ofs = hint_ofs + theme_cache.code_hint_style->get_offset() + Vector2(0, theme_cache.font->get_ascent(theme_cache.font_size) + font_height * i + yofs);
 						round_ofs = round_ofs.round();
-						draw_string(theme_cache.font, round_ofs, line.replace(String::chr(0xFFFF), ""), HORIZONTAL_ALIGNMENT_LEFT, -1, theme_cache.font_size, theme_cache.code_hint_color);
+						draw_string(theme_cache.font, round_ofs, line.remove_char(0xFFFF), HORIZONTAL_ALIGNMENT_LEFT, -1, theme_cache.font_size, theme_cache.code_hint_color);
 						if (end > 0) {
 							// Draw an underline for the currently edited function parameter.
 							const Vector2 b = hint_ofs + theme_cache.code_hint_style->get_offset() + Vector2(begin, font_height + font_height * i + yofs);
@@ -1872,7 +1872,7 @@ bool CodeEdit::is_line_code_region_start(int p_line) const {
 	if (is_in_string(p_line) != -1) {
 		return false;
 	}
-	Vector<String> split = get_line(p_line).strip_edges().split_spaces();
+	Vector<String> split = get_line(p_line).strip_edges().split_spaces(1);
 	return split.size() > 0 && split[0] == code_region_start_string;
 }
 
@@ -1884,7 +1884,7 @@ bool CodeEdit::is_line_code_region_end(int p_line) const {
 	if (is_in_string(p_line) != -1) {
 		return false;
 	}
-	Vector<String> split = get_line(p_line).strip_edges().split_spaces();
+	Vector<String> split = get_line(p_line).strip_edges().split_spaces(1);
 	return split.size() > 0 && split[0] == code_region_end_string;
 }
 

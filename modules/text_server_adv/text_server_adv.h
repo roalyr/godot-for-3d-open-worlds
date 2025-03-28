@@ -176,6 +176,10 @@ class TextServerAdvanced : public TextServerExtension {
 	mutable USpoofChecker *sc_spoof = nullptr;
 	mutable USpoofChecker *sc_conf = nullptr;
 
+	mutable HashMap<String, UBreakIterator *> line_break_iterators_per_language;
+
+	UBreakIterator *_create_line_break_iterator_for_locale(const String &p_language, UErrorCode *r_err) const;
+
 	// Font cache data.
 
 #ifdef MODULE_FREETYPE_ENABLED
@@ -404,7 +408,7 @@ class TextServerAdvanced : public TextServerExtension {
 	_FORCE_INLINE_ Variant::Type _get_tag_type(int64_t p_tag) const;
 	_FORCE_INLINE_ bool _get_tag_hidden(int64_t p_tag) const;
 	_FORCE_INLINE_ int _font_get_weight_by_name(const String &p_sty_name) const {
-		String sty_name = p_sty_name.replace(" ", "").replace("-", "");
+		String sty_name = p_sty_name.remove_chars(" -");
 		if (sty_name.contains("thin") || sty_name.contains("hairline")) {
 			return 100;
 		} else if (sty_name.contains("extralight") || sty_name.contains("ultralight")) {
@@ -431,7 +435,7 @@ class TextServerAdvanced : public TextServerExtension {
 		return 400;
 	}
 	_FORCE_INLINE_ int _font_get_stretch_by_name(const String &p_sty_name) const {
-		String sty_name = p_sty_name.replace(" ", "").replace("-", "");
+		String sty_name = p_sty_name.remove_chars(" -");
 		if (sty_name.contains("ultracondensed")) {
 			return 50;
 		} else if (sty_name.contains("extracondensed")) {
@@ -677,7 +681,7 @@ class TextServerAdvanced : public TextServerExtension {
 	Glyph _shape_single_glyph(ShapedTextDataAdvanced *p_sd, char32_t p_char, hb_script_t p_script, hb_direction_t p_direction, const RID &p_font, int64_t p_font_size);
 	_FORCE_INLINE_ RID _find_sys_font_for_text(const RID &p_fdef, const String &p_script_code, const String &p_language, const String &p_text);
 
-	_FORCE_INLINE_ void _add_featuers(const Dictionary &p_source, Vector<hb_feature_t> &r_ftrs);
+	_FORCE_INLINE_ void _add_features(const Dictionary &p_source, Vector<hb_feature_t> &r_ftrs);
 
 	Mutex ft_mutex;
 

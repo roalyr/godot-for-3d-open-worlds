@@ -2082,7 +2082,7 @@ void Tree::update_item_cell(TreeItem *p_item, int p_col) const {
 	}
 	p_item->cells.write[p_col].text_buf->add_string(valtext, font, font_size, p_item->cells[p_col].language);
 
-	BitField<TextServer::LineBreakFlag> break_flags = TextServer::BREAK_MANDATORY | TextServer::BREAK_TRIM_EDGE_SPACES;
+	BitField<TextServer::LineBreakFlag> break_flags = TextServer::BREAK_MANDATORY | TextServer::BREAK_TRIM_START_EDGE_SPACES | TextServer::BREAK_TRIM_END_EDGE_SPACES;
 	switch (p_item->cells.write[p_col].autowrap_mode) {
 		case TextServer::AUTOWRAP_OFF:
 			break;
@@ -2241,10 +2241,18 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 					}
 
 					if (p_item->cells[0].selected) {
-						if (has_focus()) {
-							theme_cache.selected_focus->draw(ci, row_rect);
+						if (is_row_hovered) {
+							if (has_focus()) {
+								theme_cache.hovered_selected_focus->draw(ci, row_rect);
+							} else {
+								theme_cache.hovered_selected->draw(ci, row_rect);
+							}
 						} else {
-							theme_cache.selected->draw(ci, row_rect);
+							if (has_focus()) {
+								theme_cache.selected_focus->draw(ci, row_rect);
+							} else {
+								theme_cache.selected->draw(ci, row_rect);
+							}
 						}
 					} else if (!drop_mode_flags) {
 						if (is_cell_button_hovered) {
@@ -2281,10 +2289,18 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 						r.position.x = get_size().width - r.position.x - r.size.x;
 					}
 					if (p_item->cells[i].selected) {
-						if (has_focus()) {
-							theme_cache.selected_focus->draw(ci, r);
+						if (is_cell_hovered) {
+							if (has_focus()) {
+								theme_cache.hovered_selected_focus->draw(ci, r);
+							} else {
+								theme_cache.hovered_selected->draw(ci, r);
+							}
 						} else {
-							theme_cache.selected->draw(ci, r);
+							if (has_focus()) {
+								theme_cache.selected_focus->draw(ci, r);
+							} else {
+								theme_cache.selected->draw(ci, r);
+							}
 						}
 					}
 				} else {
@@ -2347,7 +2363,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 			} else {
 				bool draw_as_hover = !drop_mode_flags && (select_mode == SELECT_ROW ? is_row_hovered : is_cell_hovered);
 				bool draw_as_hover_dim = draw_as_hover && is_cell_button_hovered;
-				cell_color = p_item->cells[i].selected ? theme_cache.font_selected_color : (draw_as_hover_dim ? theme_cache.font_hovered_dimmed_color : (draw_as_hover ? theme_cache.font_hovered_color : theme_cache.font_color));
+				cell_color = p_item->cells[i].selected && draw_as_hover ? theme_cache.font_hovered_selected_color : (p_item->cells[i].selected ? theme_cache.font_selected_color : (draw_as_hover_dim ? theme_cache.font_hovered_dimmed_color : (draw_as_hover ? theme_cache.font_hovered_color : theme_cache.font_color)));
 			}
 
 			Color font_outline_color = theme_cache.font_outline_color;
@@ -2528,14 +2544,14 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 				Point2i button_ofs = Point2i(ofs + item_width_with_buttons - button_size.width, p_pos.y) - theme_cache.offset + p_draw_ofs;
 
 				bool should_draw_pressed = cache.click_type == Cache::CLICK_BUTTON && cache.click_item == p_item && cache.click_column == i && cache.click_index == j && !p_item->cells[i].buttons[j].disabled;
-				bool should_draw_hovered = !should_draw_pressed && !drop_mode_flags && cache.hover_item == p_item && cache.hover_column == i && cache.hover_button_index_in_column == j && !p_item->cells[i].buttons[j].disabled;
+				bool should_draw_hovered = !drop_mode_flags && cache.hover_item == p_item && cache.hover_column == i && cache.hover_button_index_in_column == j && !p_item->cells[i].buttons[j].disabled;
 
 				if (should_draw_pressed || should_draw_hovered) {
 					Point2 od = button_ofs;
 					if (rtl) {
 						od.x = get_size().width - od.x - button_size.x;
 					}
-					if (should_draw_pressed) {
+					if (should_draw_pressed && should_draw_hovered) {
 						theme_cache.button_pressed->draw(get_canvas_item(), Rect2(od.x, od.y, button_size.width, MAX(button_size.height, label_h)));
 					} else {
 						theme_cache.button_hover->draw(get_canvas_item(), Rect2(od.x, od.y, button_size.width, MAX(button_size.height, label_h)));
@@ -2585,14 +2601,27 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 				arrow = theme_cache.arrow;
 			}
 
-			Point2 apos = p_pos + Point2i(0, (label_h - arrow->get_height()) / 2) - theme_cache.offset + p_draw_ofs;
-			apos.x += theme_cache.item_margin - arrow->get_width();
+			Size2 arrow_full_size = arrow->get_size();
 
-			if (rtl) {
-				apos.x = get_size().width - apos.x - arrow->get_width();
+			Point2 apos = p_pos + Point2i(0, (label_h - arrow_full_size.height) / 2) - theme_cache.offset + p_draw_ofs;
+			apos.x += theme_cache.item_margin - arrow_full_size.width;
+
+			Size2 arrow_draw_size = arrow_full_size;
+			int out_width = p_pos.x + theme_cache.item_margin - get_column_width(0);
+			if (out_width > 0) {
+				arrow_draw_size.width -= out_width;
 			}
 
-			arrow->draw(ci, apos);
+			if (arrow_draw_size.width > 0) {
+				Point2 src_pos = Point2();
+				if (rtl) {
+					apos.x = get_size().width - apos.x - arrow_draw_size.width;
+					src_pos = Point2(arrow_full_size.width - arrow_draw_size.width, 0);
+				}
+				Rect2 arrow_rect = Rect2(apos, arrow_draw_size);
+				Rect2 arrow_src_rect = Rect2(src_pos, arrow_draw_size);
+				arrow->draw_rect_region(ci, arrow_rect, arrow_src_rect);
+			}
 		}
 	}
 
@@ -2621,19 +2650,21 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 
 			// Draw relationship lines.
 			if (theme_cache.draw_relationship_lines > 0 && (!hide_root || c->parent != root) && c->is_visible_in_tree()) {
-				int root_ofs = children_pos.x + ((p_item->disable_folding || hide_folding) ? theme_cache.h_separation : theme_cache.item_margin);
 				int parent_ofs = p_pos.x + theme_cache.item_margin;
-				Point2i root_pos = Point2i(root_ofs, children_pos.y + child_self_height / 2) - theme_cache.offset + p_draw_ofs;
+				Point2i parent_pos = Point2i(parent_ofs - theme_cache.arrow->get_width() / 2, p_pos.y + label_h / 2 + theme_cache.arrow->get_height() / 2) - theme_cache.offset + p_draw_ofs;
 
+				int root_ofs = children_pos.x + ((p_item->disable_folding || hide_folding) ? theme_cache.h_separation : theme_cache.item_margin);
+				Point2i root_pos = Point2i(root_ofs, children_pos.y + child_self_height / 2) - theme_cache.offset + p_draw_ofs;
 				if (c->get_visible_child_count() > 0) {
 					root_pos -= Point2i(theme_cache.arrow->get_width(), 0);
 				}
+				root_pos.x = MIN(root_pos.x, get_column_width(0) + p_draw_ofs.x);
+
+				bool is_no_space = root_pos.x <= parent_pos.x;
 
 				float line_width = theme_cache.relationship_line_width * Math::round(theme_cache.base_scale);
 				float parent_line_width = theme_cache.parent_hl_line_width * Math::round(theme_cache.base_scale);
 				float children_line_width = theme_cache.children_hl_line_width * Math::round(theme_cache.base_scale);
-
-				Point2i parent_pos = Point2i(parent_ofs - theme_cache.arrow->get_width() / 2, p_pos.y + label_h / 2 + theme_cache.arrow->get_height() / 2) - theme_cache.offset + p_draw_ofs;
 
 				int more_prev_ofs = 0;
 
@@ -2646,10 +2677,12 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 					// Order of parts on this bend: the horizontal line first, then the vertical line.
 					if (_is_branch_selected(c)) {
 						// If this item or one of its children is selected, we draw the line using parent highlight style.
-						if (htotal >= 0) {
-							RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(parent_line_width / 2), root_pos.y), theme_cache.parent_hl_line_color, parent_line_width);
+						if (!is_no_space) {
+							if (htotal >= 0) {
+								RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(parent_line_width / 2), root_pos.y), theme_cache.parent_hl_line_color, parent_line_width);
+							}
+							RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 						}
-						RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 
 						more_prev_ofs = theme_cache.parent_hl_line_margin;
 						prev_hl_ofs = root_pos.y + Math::floor(parent_line_width / 2);
@@ -2657,33 +2690,41 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 						// If parent item is selected (but this item is not), we draw the line using children highlight style.
 						// Siblings of the selected branch can be drawn with a slight offset and their vertical line must appear as highlighted.
 						if (_is_sibling_branch_selected(c)) {
-							if (htotal >= 0) {
-								RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(parent_line_width / 2), root_pos.y), theme_cache.children_hl_line_color, children_line_width);
+							if (!is_no_space) {
+								if (htotal >= 0) {
+									RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(parent_line_width / 2), root_pos.y), theme_cache.children_hl_line_color, children_line_width);
+								}
+								RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 							}
-							RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 
 							prev_hl_ofs = root_pos.y + Math::floor(parent_line_width / 2);
 						} else {
-							if (htotal >= 0) {
-								RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(children_line_width / 2), root_pos.y), theme_cache.children_hl_line_color, children_line_width);
+							if (!is_no_space) {
+								if (htotal >= 0) {
+									RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(children_line_width / 2), root_pos.y), theme_cache.children_hl_line_color, children_line_width);
+								}
+								RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(children_line_width / 2)), Point2i(parent_pos.x, prev_ofs + Math::floor(children_line_width / 2)), theme_cache.children_hl_line_color, children_line_width);
 							}
-							RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(children_line_width / 2)), Point2i(parent_pos.x, prev_ofs + Math::floor(children_line_width / 2)), theme_cache.children_hl_line_color, children_line_width);
 						}
 					} else {
 						// If nothing of the above is true, we draw the line using normal style.
 						// Siblings of the selected branch can be drawn with a slight offset and their vertical line must appear as highlighted.
 						if (_is_sibling_branch_selected(c)) {
-							if (htotal >= 0) {
-								RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + theme_cache.parent_hl_line_margin, root_pos.y), theme_cache.relationship_line_color, line_width);
+							if (!is_no_space) {
+								if (htotal >= 0) {
+									RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + theme_cache.parent_hl_line_margin, root_pos.y), theme_cache.relationship_line_color, line_width);
+								}
+								RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 							}
-							RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(parent_line_width / 2)), Point2i(parent_pos.x, prev_hl_ofs), theme_cache.parent_hl_line_color, parent_line_width);
 
 							prev_hl_ofs = root_pos.y + Math::floor(parent_line_width / 2);
 						} else {
-							if (htotal >= 0) {
-								RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(line_width / 2), root_pos.y), theme_cache.relationship_line_color, line_width);
+							if (!is_no_space) {
+								if (htotal >= 0) {
+									RenderingServer::get_singleton()->canvas_item_add_line(ci, root_pos, Point2i(parent_pos.x + Math::floor(line_width / 2), root_pos.y), theme_cache.relationship_line_color, line_width);
+								}
+								RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(line_width / 2)), Point2i(parent_pos.x, prev_ofs + Math::floor(line_width / 2)), theme_cache.relationship_line_color, line_width);
 							}
-							RenderingServer::get_singleton()->canvas_item_add_line(ci, Point2i(parent_pos.x, root_pos.y + Math::floor(line_width / 2)), Point2i(parent_pos.x, prev_ofs + Math::floor(line_width / 2)), theme_cache.relationship_line_color, line_width);
 						}
 					}
 				}
@@ -3012,6 +3053,9 @@ int Tree::propagate_mouse_event(const Point2i &p_pos, int x_ofs, int y_ofs, int 
 						int icount = _count_selected_items(root);
 
 						if (select_mode == SELECT_MULTI && icount > 1 && p_button != MouseButton::RIGHT) {
+							if (!already_selected) {
+								select_single_item(p_item, root, col);
+							}
 							single_select_defer = p_item;
 							single_select_defer_column = col;
 						} else {
@@ -3713,7 +3757,7 @@ void Tree::gui_input(const Ref<InputEvent> &p_event) {
 			} else {
 				const TreeItem::Cell &c = popup_edited_item->cells[popup_edited_item_col];
 				float diff_y = -mm->get_relative().y;
-				diff_y = Math::pow(ABS(diff_y), 1.8f) * SIGN(diff_y);
+				diff_y = Math::pow(Math::abs(diff_y), 1.8f) * SIGN(diff_y);
 				diff_y *= 0.1;
 				range_drag_base = CLAMP(range_drag_base + c.step * diff_y, c.min, c.max);
 				popup_edited_item->set_range(popup_edited_item_col, range_drag_base);
@@ -3812,9 +3856,16 @@ void Tree::gui_input(const Ref<InputEvent> &p_event) {
 			}
 
 			if (cache.click_type == Cache::CLICK_BUTTON && cache.click_item != nullptr) {
-				// make sure in case of wrong reference after reconstructing whole TreeItems
+				// Make sure the reference is current in case TreeItems is reconstructed.
 				cache.click_item = get_item_at_position(cache.click_pos);
-				emit_signal("button_clicked", cache.click_item, cache.click_column, cache.click_id, mb->get_button_index());
+
+				// Only emit the event if the click is still within the button rect.
+				TreeItem *current_item;
+				int current_column, current_index, current_section;
+				_find_button_at_pos(mb->get_position(), current_item, current_column, current_index, current_section);
+				if (current_item == cache.click_item && current_column == cache.click_column && current_index == cache.click_index) {
+					emit_signal("button_clicked", cache.click_item, cache.click_column, cache.click_id, mb->get_button_index());
+				}
 			}
 
 			cache.click_type = Cache::CLICK_NONE;
@@ -4066,7 +4117,9 @@ bool Tree::edit_selected(bool p_force_edit) {
 		return false;
 	}
 
-	float popup_scale = popup_editor->is_embedded() ? 1.0 : popup_editor->get_parent_visible_window()->get_content_scale_factor();
+	Size2 scale = popup_editor->get_parent_viewport()->get_popup_base_transform().get_scale() * get_global_transform_with_canvas().get_scale();
+	real_t popup_scale = MIN(scale.x, scale.y);
+
 	Rect2 rect = _get_item_focus_rect(s);
 	rect.position *= popup_scale;
 	popup_edited_item = s;
@@ -4107,13 +4160,21 @@ bool Tree::edit_selected(bool p_force_edit) {
 		// "floor()" centers vertically.
 		Vector2 ofs(0, Math::floor((MAX(line_editor->get_minimum_size().height, rect.size.height - value_editor_height) - rect.size.height) / 2));
 
-		popup_rect.position = get_screen_position() + rect.position - ofs;
-		popup_rect.size = rect.size;
-
 		// Account for icon.
-		Size2 icon_size = _get_cell_icon_size(c) * popup_scale;
-		popup_rect.position.x += icon_size.x;
-		popup_rect.size.x -= icon_size.x;
+		real_t icon_ofs = 0;
+		if (c.icon.is_valid()) {
+			icon_ofs = _get_cell_icon_size(c).x * popup_scale + theme_cache.h_separation;
+		}
+
+		popup_rect.size = rect.size;
+		popup_rect.size.x -= icon_ofs;
+
+		popup_rect.position = rect.position - ofs;
+		popup_rect.position.x += icon_ofs;
+		if (cache.rtl) {
+			popup_rect.position.x = get_size().width - popup_rect.position.x - popup_rect.size.x;
+		}
+		popup_rect.position += get_screen_position();
 
 		line_editor->clear();
 		line_editor->set_text(c.mode == TreeItem::CELL_MODE_STRING ? c.text : String::num(c.val, Math::range_step_decimals(c.step)));
@@ -4362,15 +4423,15 @@ void Tree::_notification(int p_what) {
 			if (scrolling && get_rect().grow(theme_cache.scroll_border).has_point(mouse_position)) {
 				Point2 point;
 
-				if ((ABS(mouse_position.x) < ABS(mouse_position.x - get_size().width)) && (ABS(mouse_position.x) < theme_cache.scroll_border)) {
+				if ((Math::abs(mouse_position.x) < Math::abs(mouse_position.x - get_size().width)) && (Math::abs(mouse_position.x) < theme_cache.scroll_border)) {
 					point.x = mouse_position.x - theme_cache.scroll_border;
-				} else if (ABS(mouse_position.x - get_size().width) < theme_cache.scroll_border) {
+				} else if (Math::abs(mouse_position.x - get_size().width) < theme_cache.scroll_border) {
 					point.x = mouse_position.x - (get_size().width - theme_cache.scroll_border);
 				}
 
-				if ((ABS(mouse_position.y) < ABS(mouse_position.y - get_size().height)) && (ABS(mouse_position.y) < theme_cache.scroll_border)) {
+				if ((Math::abs(mouse_position.y) < Math::abs(mouse_position.y - get_size().height)) && (Math::abs(mouse_position.y) < theme_cache.scroll_border)) {
 					point.y = mouse_position.y - theme_cache.scroll_border;
-				} else if (ABS(mouse_position.y - get_size().height) < theme_cache.scroll_border) {
+				} else if (Math::abs(mouse_position.y - get_size().height) < theme_cache.scroll_border) {
 					point.y = mouse_position.y - (get_size().height - theme_cache.scroll_border);
 				}
 
@@ -5913,6 +5974,8 @@ void Tree::_bind_methods() {
 
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, hovered);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, hovered_dimmed);
+	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, hovered_selected);
+	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, hovered_selected_focus);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, selected);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, selected_focus);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, Tree, cursor);
@@ -5940,6 +6003,7 @@ void Tree::_bind_methods() {
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_color);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_hovered_color);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_hovered_dimmed_color);
+	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_hovered_selected_color);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_selected_color);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, font_disabled_color);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, Tree, drop_position_color);
