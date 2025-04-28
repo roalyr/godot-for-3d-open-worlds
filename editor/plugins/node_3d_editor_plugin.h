@@ -181,14 +181,12 @@ class Node3DEditorViewport : public Control {
 	};
 
 public:
-	enum {
-		GIZMO_BASE_LAYER = 27,
-		GIZMO_EDIT_LAYER = 26,
-		GIZMO_GRID_LAYER = 25,
-		MISC_TOOL_LAYER = 24,
+	static constexpr int32_t GIZMO_BASE_LAYER = 27;
+	static constexpr int32_t GIZMO_EDIT_LAYER = 26;
+	static constexpr int32_t GIZMO_GRID_LAYER = 25;
+	static constexpr int32_t MISC_TOOL_LAYER = 24;
 
-		FRAME_TIME_HISTORY = 20,
-	};
+	static constexpr int32_t FRAME_TIME_HISTORY = 20;
 
 	enum NavigationScheme {
 		NAVIGATION_GODOT = 0,
@@ -1048,7 +1046,7 @@ class Node3DEditorPlugin : public EditorPlugin {
 
 public:
 	Node3DEditor *get_spatial_editor() { return spatial_editor; }
-	virtual String get_plugin_name() const override { return "3D"; }
+	virtual String get_plugin_name() const override { return TTRC("3D"); }
 	bool has_main_screen() const override { return true; }
 	virtual void make_visible(bool p_visible) override;
 	virtual void edit(Object *p_object) override;

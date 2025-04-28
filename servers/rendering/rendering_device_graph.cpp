@@ -279,9 +279,12 @@ int32_t RenderingDeviceGraph::_add_to_write_list(int32_t p_command_index, Rect2i
 	return next_index;
 }
 
+// Ensures all commands are 8-byte aligned.
+#define GRAPH_ALIGN(x) (((x) + 7u) & 0xFFFFFFF8u)
+
 RenderingDeviceGraph::RecordedCommand *RenderingDeviceGraph::_allocate_command(uint32_t p_command_size, int32_t &r_command_index) {
 	uint32_t command_data_offset = command_data.size();
-	command_data_offset = STEPIFY(command_data_offset, 8);
+	command_data_offset = GRAPH_ALIGN(command_data_offset);
 	command_data_offsets.push_back(command_data_offset);
 	command_data.resize(command_data_offset + p_command_size);
 	r_command_index = command_count++;
@@ -292,12 +295,14 @@ RenderingDeviceGraph::RecordedCommand *RenderingDeviceGraph::_allocate_command(u
 
 RenderingDeviceGraph::DrawListInstruction *RenderingDeviceGraph::_allocate_draw_list_instruction(uint32_t p_instruction_size) {
 	uint32_t draw_list_data_offset = draw_instruction_list.data.size();
+	draw_list_data_offset = GRAPH_ALIGN(draw_list_data_offset);
 	draw_instruction_list.data.resize(draw_list_data_offset + p_instruction_size);
 	return reinterpret_cast<DrawListInstruction *>(&draw_instruction_list.data[draw_list_data_offset]);
 }
 
 RenderingDeviceGraph::ComputeListInstruction *RenderingDeviceGraph::_allocate_compute_list_instruction(uint32_t p_instruction_size) {
 	uint32_t compute_list_data_offset = compute_instruction_list.data.size();
+	compute_list_data_offset = GRAPH_ALIGN(compute_list_data_offset);
 	compute_instruction_list.data.resize(compute_list_data_offset + p_instruction_size);
 	return reinterpret_cast<ComputeListInstruction *>(&compute_instruction_list.data[compute_list_data_offset]);
 }
@@ -786,6 +791,8 @@ void RenderingDeviceGraph::_run_compute_list_command(RDD::CommandBufferID p_comm
 				DEV_ASSERT(false && "Unknown compute list instruction type.");
 				return;
 		}
+
+		instruction_data_cursor = GRAPH_ALIGN(instruction_data_cursor);
 	}
 }
 
@@ -925,6 +932,8 @@ void RenderingDeviceGraph::_run_draw_list_command(RDD::CommandBufferID p_command
 				DEV_ASSERT(false && "Unknown draw list instruction type.");
 				return;
 		}
+
+		instruction_data_cursor = GRAPH_ALIGN(instruction_data_cursor);
 	}
 }
 
@@ -1121,7 +1130,7 @@ void RenderingDeviceGraph::_run_label_command_change(RDD::CommandBufferID p_comm
 		Color label_color;
 		if (p_new_label_index >= 0) {
 			const char *label_chars = &command_label_chars[command_label_offsets[p_new_label_index]];
-			label_name.parse_utf8(label_chars);
+			label_name.append_utf8(label_chars);
 			label_color = command_label_colors[p_new_label_index];
 		} else if (p_use_label_for_empty) {
 			label_name = "Command graph";
@@ -1484,6 +1493,8 @@ void RenderingDeviceGraph::_print_draw_list(const uint8_t *p_instruction_data, u
 				DEV_ASSERT(false && "Unknown draw list instruction type.");
 				return;
 		}
+
+		instruction_data_cursor = GRAPH_ALIGN(instruction_data_cursor);
 	}
 }
 
@@ -1532,6 +1543,8 @@ void RenderingDeviceGraph::_print_compute_list(const uint8_t *p_instruction_data
 				DEV_ASSERT(false && "Unknown compute list instruction type.");
 				return;
 		}
+
+		instruction_data_cursor = GRAPH_ALIGN(instruction_data_cursor);
 	}
 }
 

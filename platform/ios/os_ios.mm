@@ -359,7 +359,7 @@ String OS_IOS::get_user_data_dir(const String &p_user_dir) const {
 	if (ret.is_empty()) {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 		if (paths && [paths count] >= 1) {
-			ret.parse_utf8([[paths firstObject] UTF8String]);
+			ret.append_utf8([[paths firstObject] UTF8String]);
 		}
 	}
 	return ret;
@@ -370,7 +370,7 @@ String OS_IOS::get_cache_path() const {
 	if (ret.is_empty()) {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		if (paths && [paths count] >= 1) {
-			ret.parse_utf8([[paths firstObject] UTF8String]);
+			ret.append_utf8([[paths firstObject] UTF8String]);
 		}
 	}
 	return ret;
@@ -393,11 +393,11 @@ String OS_IOS::get_locale() const {
 	NSString *preferredLanguage = [NSLocale preferredLanguages].firstObject;
 
 	if (preferredLanguage) {
-		return String::utf8([preferredLanguage UTF8String]).replace("-", "_");
+		return String::utf8([preferredLanguage UTF8String]).replace_char('-', '_');
 	}
 
 	NSString *localeIdentifier = [[NSLocale currentLocale] localeIdentifier];
-	return String::utf8([localeIdentifier UTF8String]).replace("-", "_");
+	return String::utf8([localeIdentifier UTF8String]).replace_char('-', '_');
 }
 
 String OS_IOS::get_unique_id() const {

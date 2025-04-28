@@ -2593,7 +2593,7 @@ RDD::CommandQueueFamilyID RenderingDeviceDriverVulkan::command_queue_family_get(
 		// Preferring a queue with less bits will get us closer to getting a queue that performs better for our requirements.
 		// For example, dedicated compute and transfer queues are usually indicated as such.
 		const VkQueueFlags option_queue_flags = queue_family_properties[i].queueFlags;
-		const bool includes_all_bits = (option_queue_flags & p_cmd_queue_family_bits) == p_cmd_queue_family_bits;
+		const bool includes_all_bits = p_cmd_queue_family_bits.get_shared(option_queue_flags) == p_cmd_queue_family_bits;
 		const bool prefer_less_bits = option_queue_flags < picked_queue_flags;
 		if (includes_all_bits && prefer_less_bits) {
 			picked_family_index = i;
@@ -3767,7 +3767,8 @@ RDD::ShaderID RenderingDeviceDriverVulkan::shader_create_from_bytecode(const Vec
 	read_offset += sizeof(uint32_t) * 4 + bin_data_size;
 
 	if (binary_data.shader_name_len) {
-		r_name.parse_utf8((const char *)(binptr + read_offset), binary_data.shader_name_len);
+		r_name.clear();
+		r_name.append_utf8((const char *)(binptr + read_offset), binary_data.shader_name_len);
 		read_offset += STEPIFY(binary_data.shader_name_len, 4);
 	}
 

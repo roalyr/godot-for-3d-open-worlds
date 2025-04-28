@@ -161,6 +161,8 @@ class GameView : public VBoxContainer {
 
 	void _update_debugger_buttons();
 
+	void _handle_shortcut_requested(int p_embed_action);
+	void _toggle_suspend_button();
 	void _suspend_button_toggled(bool p_pressed);
 
 	void _node_type_pressed(int p_option);
@@ -238,7 +240,7 @@ protected:
 	void _notification(int p_what);
 
 public:
-	virtual String get_plugin_name() const override { return "Game"; }
+	virtual String get_plugin_name() const override { return TTRC("Game"); }
 	bool has_main_screen() const override { return true; }
 	virtual void edit(Object *p_object) override {}
 	virtual bool handles(Object *p_object) const override { return false; }

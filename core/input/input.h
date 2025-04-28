@@ -78,14 +78,12 @@ public:
 		CURSOR_MAX
 	};
 
-	enum {
-		JOYPADS_MAX = 16,
-	};
+	static constexpr int32_t JOYPADS_MAX = 16;
 
 	typedef void (*EventDispatchFunc)(const Ref<InputEvent> &p_event);
 
 private:
-	BitField<MouseButtonMask> mouse_button_mask;
+	BitField<MouseButtonMask> mouse_button_mask = MouseButtonMask::NONE;
 
 	RBSet<Key> key_label_pressed;
 	RBSet<Key> physical_keys_pressed;
