@@ -118,7 +118,7 @@ void Spatial::_propagate_transform_changed(Spatial *p_origin) {
 #endif
 		get_tree()->xform_change_list.add(&xform_change);
 	}
-	data.dirty |= DIRTY_GLOBAL;
+	data.dirty |= DIRTY_GLOBAL | DIRTY_GLOBAL_INTERPOLATED;
 
 	data.children_lock--;
 }
@@ -174,13 +174,38 @@ void Spatial::_notification(int p_what) {
 				_propagate_merging_allowed(merging_allowed);
 			}
 
-			data.dirty |= DIRTY_GLOBAL; //global is always dirty upon entering a scene
+			data.dirty |= DIRTY_GLOBAL | DIRTY_GLOBAL_INTERPOLATED; //global is always dirty upon entering a scene
 			_notify_dirty();
 
 			notification(NOTIFICATION_ENTER_WORLD);
 
+			if (is_inside_tree() && get_tree()->is_physics_interpolation_enabled()) {
+				// Always reset FTI when entering tree
+				// and update the servers,
+				// both for interpolated and non-interpolated nodes,
+				// to ensure the server xforms are up to date.
+				fti_pump_xform();
+
+				// No need to interpolate as we are doing a reset.
+				data.global_transform_interpolated = get_global_transform();
+
+				// Make sure servers are up to date.
+				fti_update_servers_xform();
+
+				// As well as a reset based on the transform when adding, the user may change
+				// the transform during the first tick / frame, and we want to reset automatically
+				// at the end of the frame / tick (unless the user manually called `reset_physics_interpolation()`).
+				if (is_physics_interpolated()) {
+					get_tree()->get_scene_tree_fti().spatial_request_reset(this);
+				}
+			}
+
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
+			if (is_inside_tree()) {
+				get_tree()->get_scene_tree_fti().spatial_notify_delete(this);
+			}
+
 			notification(NOTIFICATION_EXIT_WORLD, true);
 			if (xform_change.in_list()) {
 				get_tree()->xform_change_list.remove(&xform_change);
@@ -252,6 +277,20 @@ void Spatial::_notification(int p_what) {
 			if (data.client_physics_interpolation_data) {
 				data.client_physics_interpolation_data->global_xform_prev = data.client_physics_interpolation_data->global_xform_curr;
 			}
+
+			// In most cases, nodes derived from Spatial will have to
+			// already have reset code available for SceneTreeFTI,
+			// so it makes sense for them to reuse this method
+			// rather than respond individually to NOTIFICATION_RESET_PHYSICS_INTERPOLATION,
+			// unless they need to perform specific tasks (like changing process modes).
+			fti_pump_xform();
+			fti_pump_property();
+		} break;
+
+		case NOTIFICATION_PAUSED: {
+			if (is_physics_interpolated_and_enabled()) {
+				data.local_transform_prev = get_transform();
+			}
 		} break;
 
 		default: {
@@ -281,7 +320,18 @@ void Spatial::set_global_rotation(const Vector3 &p_euler_rad) {
 	set_global_transform(transform);
 }
 
+void Spatial::fti_pump_xform() {
+	data.local_transform_prev = get_transform();
+}
+
+void Spatial::fti_notify_node_changed(bool p_transform_changed) {
+	if (is_inside_tree()) {
+		get_tree()->get_scene_tree_fti().spatial_notify_changed(*this, p_transform_changed);
+	}
+}
+
 void Spatial::set_transform(const Transform &p_transform) {
+	fti_notify_node_changed();
 	data.local_transform = p_transform;
 	data.dirty |= DIRTY_VECTORS;
 	data.dirty &= ~DIRTY_LOCAL;
@@ -404,14 +454,19 @@ Transform Spatial::_get_global_transform_interpolated(real_t p_interpolation_fra
 }
 
 Transform Spatial::get_global_transform_interpolated() {
+#if 1
 	// Pass through if physics interpolation is switched off.
 	// This is a convenience, as it allows you to easy turn off interpolation
 	// without changing any code.
-	if (!is_physics_interpolated_and_enabled()) {
-		return get_global_transform();
+	if (data.fti_global_xform_interp_set && is_physics_interpolated_and_enabled() && !Engine::get_singleton()->is_in_physics_frame() && is_visible_in_tree()) {
+		return data.global_transform_interpolated;
 	}
 
-	// If we are in the physics frame, the interpolated global transform is meaningless.
+	return get_global_transform();
+#else
+	// OLD METHOD - deprecated since moving to SceneTreeFTI,
+	// but leaving for reference and comparison for debugging.
+
 	// However, there is an exception, we may want to use this as a means of starting off the client
 	// interpolation pump if not already started (when _is_physics_interpolated_client_side() is false).
 	if (Engine::get_singleton()->is_in_physics_frame() && _is_physics_interpolated_client_side()) {
@@ -419,6 +474,7 @@ Transform Spatial::get_global_transform_interpolated() {
 	}
 
 	return _get_global_transform_interpolated(Engine::get_singleton()->get_physics_interpolation_fraction());
+#endif
 }
 
 Transform Spatial::get_global_transform() const {
@@ -484,6 +540,7 @@ Transform Spatial::get_relative_transform(const Node *p_parent) const {
 }
 
 void Spatial::set_translation(const Vector3 &p_translation) {
+	fti_notify_node_changed();
 	data.local_transform.origin = p_translation;
 	_change_notify("transform");
 	_propagate_transform_changed(this);
@@ -493,6 +550,7 @@ void Spatial::set_translation(const Vector3 &p_translation) {
 }
 
 void Spatial::set_rotation(const Vector3 &p_euler_rad) {
+	fti_notify_node_changed();
 	if (data.dirty & DIRTY_VECTORS) {
 		data.scale = data.local_transform.basis.get_scale();
 		data.dirty &= ~DIRTY_VECTORS;
@@ -512,6 +570,7 @@ void Spatial::set_rotation_degrees(const Vector3 &p_euler_deg) {
 }
 
 void Spatial::set_scale(const Vector3 &p_scale) {
+	fti_notify_node_changed();
 	if (data.dirty & DIRTY_VECTORS) {
 		data.rotation = data.local_transform.basis.get_rotation();
 		data.dirty &= ~DIRTY_VECTORS;
@@ -1061,6 +1120,14 @@ Spatial::Spatial() :
 	data.disable_scale = false;
 	data.vi_visible = true;
 	data.merging_allowed = true;
+
+	data.fti_on_frame_xform_list = false;
+	data.fti_on_frame_property_list = false;
+	data.fti_on_tick_xform_list = false;
+	data.fti_on_tick_property_list = false;
+	data.fti_global_xform_interp_set = false;
+	data.fti_frame_xform_force_update = false;
+
 	data.merging_mode = MERGING_MODE_INHERIT;
 
 	data.client_physics_interpolation_data = nullptr;
@@ -1077,4 +1144,8 @@ Spatial::Spatial() :
 
 Spatial::~Spatial() {
 	_disable_client_physics_interpolation();
+
+	if (is_inside_tree()) {
+		get_tree()->get_scene_tree_fti().spatial_notify_delete(this);
+	}
 }

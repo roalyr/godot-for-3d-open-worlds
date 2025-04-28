@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  bone_attachment.cpp                                                   */
+/*  interpolated_property.h                                               */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,90 +28,82 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "bone_attachment.h"
+#ifndef INTERPOLATED_PROPERTY_H
+#define INTERPOLATED_PROPERTY_H
 
-void BoneAttachment::_validate_property(PropertyInfo &property) const {
-	if (property.name == "bone_name") {
-		Skeleton *parent = Object::cast_to<Skeleton>(get_parent());
+struct Vector2;
 
-		if (parent) {
-			String names;
-			for (int i = 0; i < parent->get_bone_count(); i++) {
-				if (i > 0) {
-					names += ",";
-				}
-				names += parent->get_bone_name(i);
-			}
+namespace InterpolatedPropertyFuncs {
+float lerp(float p_a, float p_b, float p_fraction);
+Vector2 lerp(const Vector2 &p_a, const Vector2 &p_b, float p_fraction);
+} //namespace InterpolatedPropertyFuncs
 
-			property.hint = PROPERTY_HINT_ENUM;
-			property.hint_string = names;
-		} else {
-			property.hint = PROPERTY_HINT_NONE;
-			property.hint_string = "";
+// This class is intended to reduce the boiler plate involved to
+// support custom properties to be physics interpolated.
+
+template <class T>
+class InterpolatedProperty {
+	// Only needs interpolating / updating the servers when
+	// curr and prev are different.
+	bool _needs_interpolating = false;
+	T _interpolated;
+	T curr;
+	T prev;
+
+public:
+	// FTI depends on the constant flow between current values
+	// (on the current tick) and stored previous values (on the previous tick).
+	// These should be updated both on each tick, and also on resets.
+	void pump() {
+		prev = curr;
+		_needs_interpolating = false;
+	}
+	void reset() { pump(); }
+
+	void set_interpolated_value(const T &p_val) {
+		_interpolated = p_val;
+	}
+	const T &interpolated() const { return _interpolated; }
+	bool needs_interpolating() const { return _needs_interpolating; }
+
+	bool interpolate(float p_interpolation_fraction) {
+		if (_needs_interpolating) {
+			_interpolated = InterpolatedPropertyFuncs::lerp(prev, curr, p_interpolation_fraction);
+			return true;
 		}
-	}
-}
-
-void BoneAttachment::_check_bind() {
-	Skeleton *sk = Object::cast_to<Skeleton>(get_parent());
-	if (sk) {
-		int idx = sk->find_bone(bone_name);
-		if (idx != -1) {
-			sk->bind_child_node_to_bone(idx, this);
-			set_transform(sk->get_bone_global_pose(idx));
-			bound = true;
-		}
-	}
-}
-
-void BoneAttachment::_check_unbind() {
-	if (bound) {
-		Skeleton *sk = Object::cast_to<Skeleton>(get_parent());
-		if (sk) {
-			int idx = sk->find_bone(bone_name);
-			if (idx != -1) {
-				sk->unbind_child_node_from_bone(idx, this);
-			}
-		}
-		bound = false;
-	}
-}
-
-void BoneAttachment::set_bone_name(const String &p_name) {
-	if (is_inside_tree()) {
-		_check_unbind();
+		return false;
 	}
 
-	bone_name = p_name;
-
-	if (is_inside_tree()) {
-		_check_bind();
+	operator T() const {
+		return curr;
 	}
-}
 
-String BoneAttachment::get_bone_name() const {
-	return bone_name;
-}
-
-void BoneAttachment::_notification(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_ENTER_TREE: {
-			_check_bind();
-		} break;
-		case NOTIFICATION_EXIT_TREE: {
-			_check_unbind();
-		} break;
+	bool operator==(const T &p_o) const {
+		return p_o == curr;
 	}
-}
 
-BoneAttachment::BoneAttachment() {
-	set_physics_interpolation_mode(PHYSICS_INTERPOLATION_MODE_OFF);
-	bound = false;
-}
+	bool operator!=(const T &p_o) const {
+		return p_o != curr;
+	}
 
-void BoneAttachment::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_bone_name", "bone_name"), &BoneAttachment::set_bone_name);
-	ClassDB::bind_method(D_METHOD("get_bone_name"), &BoneAttachment::get_bone_name);
+	InterpolatedProperty &operator=(T p_val) {
+		curr = p_val;
+		_interpolated = p_val;
+		_needs_interpolating = true;
+		return *this;
+	}
+	InterpolatedProperty(T p_val) {
+		curr = p_val;
+		_interpolated = p_val;
+		pump();
+	}
+	InterpolatedProperty() {
+		// Ensure either the constructor is run,
+		// or the memory is zeroed if using a fundamental type.
+		_interpolated = T{};
+		curr = T{};
+		prev = T{};
+	}
+};
 
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "bone_name"), "set_bone_name", "get_bone_name");
-}
+#endif // INTERPOLATED_PROPERTY_H
