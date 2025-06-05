@@ -77,8 +77,6 @@ public:
 	bool is_ignoring_time_scale();
 
 	void release_connections();
-
-	SceneTreeTimer();
 };
 
 class SceneTree : public MainLoop {
@@ -229,7 +227,6 @@ private:
 
 	Group *add_to_group(const StringName &p_group, Node *p_node);
 	void remove_from_group(const StringName &p_group, Node *p_node);
-	void make_group_changed(const StringName &p_group);
 
 	void _process_group(ProcessGroup *p_group, bool p_physics);
 	void _process_groups_thread(uint32_t p_index, bool p_physics);

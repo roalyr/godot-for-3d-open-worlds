@@ -159,27 +159,38 @@ opts = Variables(customs, ARGUMENTS)
 
 # Target build options
 opts.Add((["platform", "p"], "Target platform (%s)" % "|".join(platform_list), ""))
-opts.Add(EnumVariable("target", "Compilation target", "editor", ("editor", "template_release", "template_debug")))
-opts.Add(EnumVariable("arch", "CPU architecture", "auto", ["auto"] + architectures, architecture_aliases))
+opts.Add(
+    EnumVariable(
+        "target", "Compilation target", "editor", ["editor", "template_release", "template_debug"], ignorecase=2
+    )
+)
+opts.Add(EnumVariable("arch", "CPU architecture", "auto", ["auto"] + architectures, architecture_aliases, ignorecase=2))
 opts.Add(BoolVariable("dev_build", "Developer build with dev-only debugging code (DEV_ENABLED)", False))
 opts.Add(
     EnumVariable(
         "optimize",
         "Optimization level (by default inferred from 'target' and 'dev_build')",
         "auto",
-        ("auto", "none", "custom", "debug", "speed", "speed_trace", "size", "size_extra"),
+        ["auto", "none", "custom", "debug", "speed", "speed_trace", "size", "size_extra"],
+        ignorecase=2,
     )
 )
 opts.Add(BoolVariable("debug_symbols", "Build with debugging symbols", False))
 opts.Add(BoolVariable("separate_debug_symbols", "Extract debugging symbols to a separate file", False))
 opts.Add(BoolVariable("debug_paths_relative", "Make file paths in debug symbols relative (if supported)", False))
-opts.Add(EnumVariable("lto", "Link-time optimization (production builds)", "none", ("none", "auto", "thin", "full")))
+opts.Add(
+    EnumVariable(
+        "lto", "Link-time optimization (production builds)", "none", ["none", "auto", "thin", "full"], ignorecase=2
+    )
+)
 opts.Add(BoolVariable("production", "Set defaults to build Godot for use in production", False))
 opts.Add(BoolVariable("threads", "Enable threading support", True))
 
 # Components
 opts.Add(BoolVariable("deprecated", "Enable compatibility code for deprecated and removed features", True))
-opts.Add(EnumVariable("precision", "Set the floating-point precision level", "single", ("single", "double")))
+opts.Add(
+    EnumVariable("precision", "Set the floating-point precision level", "single", ["single", "double"], ignorecase=2)
+)
 opts.Add(BoolVariable("minizip", "Enable ZIP archive support using minizip", True))
 opts.Add(BoolVariable("brotli", "Enable Brotli for decompression and WOFF2 fonts support", True))
 opts.Add(BoolVariable("xaudio2", "Enable the XAudio2 audio driver on supported platforms", False))
@@ -213,7 +224,9 @@ opts.Add(
 )
 opts.Add(BoolVariable("verbose", "Enable verbose output for the compilation", False))
 opts.Add(BoolVariable("progress", "Show a progress indicator during compilation", True))
-opts.Add(EnumVariable("warnings", "Level of compilation warnings", "all", ("extra", "all", "moderate", "no")))
+opts.Add(
+    EnumVariable("warnings", "Level of compilation warnings", "all", ["extra", "all", "moderate", "no"], ignorecase=2)
+)
 opts.Add(BoolVariable("werror", "Treat compiler warnings as errors", False))
 opts.Add("extra_suffix", "Custom extra suffix added to the base filename of all generated binary files", "")
 opts.Add("object_prefix", "Custom prefix added to the base filename of all generated object files", "")
@@ -263,6 +276,7 @@ opts.Add(BoolVariable("builtin_glslang", "Use the built-in glslang library", Tru
 opts.Add(BoolVariable("builtin_graphite", "Use the built-in Graphite library", True))
 opts.Add(BoolVariable("builtin_harfbuzz", "Use the built-in HarfBuzz library", True))
 opts.Add(BoolVariable("builtin_icu4c", "Use the built-in ICU library", True))
+opts.Add(BoolVariable("builtin_libjpeg_turbo", "Use the built-in libjpeg-turbo library", True))
 opts.Add(BoolVariable("builtin_libogg", "Use the built-in libogg library", True))
 opts.Add(BoolVariable("builtin_libpng", "Use the built-in libpng library", True))
 opts.Add(BoolVariable("builtin_libtheora", "Use the built-in libtheora library", True))
@@ -633,7 +647,11 @@ if env["scu_build"]:
 # are actually handled to change compile options, etc.
 detect.configure(env)
 
-print(f'Building for platform "{env["platform"]}", architecture "{env["arch"]}", target "{env["target"]}".')
+platform_string = env["platform"]
+if env.get("simulator"):
+    platform_string += " (simulator)"
+print(f'Building for platform "{platform_string}", architecture "{env["arch"]}", target "{env["target"]}".')
+
 if env.dev_build:
     print_info("Developer build, with debug optimization level and debug symbols (unless overridden).")
 
@@ -713,11 +731,25 @@ elif env.msvc:
         )
         Exit(255)
 
-# Default architecture flags.
-if env["arch"] == "x86_32":
-    if env.msvc:
+# Set x86 CPU instruction sets to use by the compiler's autovectorization.
+if env["arch"] == "x86_64":
+    # On 64-bit x86, enable SSE 4.2 and prior instruction sets (SSE3/SSSE3/SSE4/SSE4.1) to improve performance.
+    # This is supported on most CPUs released after 2009-2011 (Intel Nehalem, AMD Bulldozer).
+    # AVX and AVX2 aren't enabled because they aren't available on more recent low-end Intel CPUs.
+    if env.msvc and not methods.using_clang(env):
+        # https://stackoverflow.com/questions/64053597/how-do-i-enable-sse4-1-and-sse3-but-not-avx-in-msvc/69328426
+        env.Append(CCFLAGS=["/d2archSSE42"])
+    else:
+        # `-msse2` is implied when compiling for x86_64.
+        env.Append(CCFLAGS=["-msse4.2"])
+elif env["arch"] == "x86_32":
+    # Be more conservative with instruction sets on 32-bit x86 to improve compatibility.
+    # SSE and SSE2 are present on all CPUs that support 64-bit, even if running a 32-bit OS.
+    if env.msvc and not methods.using_clang(env):
         env.Append(CCFLAGS=["/arch:SSE2"])
     else:
+        # Use `-mfpmath=sse` to use SSE for floating-point math, which is more stable than x87.
+        # `-mstackrealign` is needed for it to work.
         env.Append(CCFLAGS=["-msse2", "-mfpmath=sse", "-mstackrealign"])
 
 # Explicitly specify colored output.
@@ -877,21 +909,24 @@ if env.msvc and not methods.using_clang(env):  # MSVC
         env.AppendUnique(LINKFLAGS=["/WX"])
 
 else:  # GCC, Clang
-    common_warnings = ["-Wenum-conversion"]
-
+    common_warnings = []
     if methods.using_gcc(env):
         common_warnings += ["-Wshadow", "-Wno-misleading-indentation"]
         if cc_version_major < 11:
             # Regression in GCC 9/10, spams so much in our variadic templates
             # that we need to outright disable it.
             common_warnings += ["-Wno-type-limits"]
-        if cc_version_major >= 12:  # False positives in our error macros, see GH-58747.
+        if cc_version_major == 12:
+            # Regression in GCC 12, false positives in our error macros, see GH-58747.
             common_warnings += ["-Wno-return-type"]
+        if cc_version_major >= 11:
+            common_warnings += ["-Wenum-conversion"]
     elif methods.using_clang(env) or methods.using_emcc(env):
         common_warnings += ["-Wshadow-field-in-constructor", "-Wshadow-uncaptured-local"]
         # We often implement `operator<` for structs of pointers as a requirement
         # for putting them in `Set` or `Map`. We don't mind about unreliable ordering.
         common_warnings += ["-Wno-ordered-compare-function-pointers"]
+        common_warnings += ["-Wenum-conversion"]
 
     # clang-cl will interpret `-Wall` as `-Weverything`, workaround with compatibility cast.
     env["WARNLEVEL"] = "-Wall" if not env.msvc else "-W3"

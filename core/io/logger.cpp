@@ -49,8 +49,6 @@ bool Logger::should_log(bool p_err) {
 	return (!p_err || CoreGlobals::print_error_enabled) && (p_err || CoreGlobals::print_line_enabled);
 }
 
-bool Logger::_flush_stdout_on_print = true;
-
 void Logger::set_flush_stdout_on_print(bool value) {
 	_flush_stdout_on_print = value;
 }
@@ -90,7 +88,9 @@ void Logger::log_error(const char *p_function, const char *p_file, int p_line, c
 	logf_error("   at: %s (%s:%i)\n", p_function, p_file, p_line);
 
 	for (const Ref<ScriptBacktrace> &backtrace : p_script_backtraces) {
-		logf_error("%s\n", backtrace->format(3).utf8().get_data());
+		if (!backtrace->is_empty()) {
+			logf_error("%s\n", backtrace->format(3).utf8().get_data());
+		}
 	}
 }
 

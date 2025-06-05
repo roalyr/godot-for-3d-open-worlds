@@ -359,11 +359,7 @@ void validate_property(const Context &p_context, const ExposedClass &p_class, co
 	if (getter && setter) {
 		const ArgumentData &setter_first_arg = setter->arguments.back()->get();
 		if (getter->return_type.name != setter_first_arg.type.name) {
-			// Special case for Node::set_name
-			bool whitelisted = getter->return_type.name == p_context.names_cache.string_name_type &&
-					setter_first_arg.type.name == p_context.names_cache.string_type;
-
-			TEST_FAIL_COND(!whitelisted,
+			TEST_FAIL(
 					"Return type from getter doesn't match first argument of setter, for property: '", p_class.name, ".", String(p_prop.name), "'.");
 		}
 	}
@@ -411,13 +407,13 @@ void validate_property(const Context &p_context, const ExposedClass &p_class, co
 }
 
 void validate_argument(const Context &p_context, const ExposedClass &p_class, const String &p_owner_name, const String &p_owner_type, const ArgumentData &p_arg) {
-#ifdef DEBUG_METHODS_ENABLED
+#ifdef DEBUG_ENABLED
 	TEST_COND((p_arg.name.is_empty() || p_arg.name.begins_with("_unnamed_arg")),
 			vformat("Unnamed argument in position %d of %s '%s.%s'.", p_arg.position, p_owner_type, p_class.name, p_owner_name));
 
 	TEST_FAIL_COND((p_arg.name != "@varargs@" && !p_arg.name.is_valid_ascii_identifier()),
 			vformat("Invalid argument name '%s' of %s '%s.%s'.", p_arg.name, p_owner_type, p_class.name, p_owner_name));
-#endif // DEBUG_METHODS_ENABLED
+#endif // DEBUG_ENABLED
 
 	const ExposedClass *arg_class = p_context.find_exposed_class(p_arg.type);
 	if (arg_class) {

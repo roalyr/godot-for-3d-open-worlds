@@ -30,11 +30,12 @@
 
 #pragma once
 
-#include "editor/add_metadata_dialog.h"
 #include "editor_property_name_processor.h"
 #include "scene/gui/box_container.h"
+#include "scene/gui/panel_container.h"
 #include "scene/gui/scroll_container.h"
 
+class AddMetadataDialog;
 class AcceptDialog;
 class Button;
 class ConfirmationDialog;
@@ -64,6 +65,7 @@ public:
 		MENU_COPY_VALUE,
 		MENU_PASTE_VALUE,
 		MENU_COPY_PROPERTY_PATH,
+		MENU_OVERRIDE_FOR_PROJECT,
 		MENU_FAVORITE_PROPERTY,
 		MENU_PIN_VALUE,
 		MENU_DELETE,
@@ -146,6 +148,7 @@ private:
 
 protected:
 	bool has_borders = false;
+	bool can_override = false;
 
 	void _notification(int p_what);
 	static void _bind_methods();
@@ -300,29 +303,36 @@ public:
 class EditorInspectorCategory : public Control {
 	GDCLASS(EditorInspectorCategory, Control);
 
-	friend class EditorInspector;
-
 	// Right-click context menu options.
 	enum ClassMenuOption {
 		MENU_OPEN_DOCS,
+		MENU_UNFAVORITE_ALL,
 	};
 
+	PropertyInfo info;
 	Ref<Texture2D> icon;
 	String label;
 	String doc_class_name;
 	PopupMenu *menu = nullptr;
 	bool is_favorite = false;
+	bool menu_icon_dirty = true;
 
 	void _handle_menu_option(int p_option);
+	void _popup_context_menu(const Point2i &p_position);
+	void _update_icon();
 
 protected:
+	static void _bind_methods();
+
 	void _notification(int p_what);
 	virtual void gui_input(const Ref<InputEvent> &p_event) override;
 
 	void _accessibility_action_menu(const Variant &p_data);
 
 public:
-	void set_as_favorite(EditorInspector *p_for_inspector);
+	void set_as_favorite();
+	void set_property_info(const PropertyInfo &p_info);
+	void set_doc_class_name(const String &p_name);
 
 	virtual Size2 get_minimum_size() const override;
 	virtual Control *make_custom_tooltip(const String &p_text) const override;
@@ -332,6 +342,8 @@ public:
 
 class EditorInspectorSection : public Container {
 	GDCLASS(EditorInspectorSection, Container);
+
+	friend class EditorInspector;
 
 	String label;
 	String section;
@@ -349,6 +361,8 @@ class EditorInspectorSection : public Container {
 
 	Rect2 check_rect;
 	bool check_hover = false;
+
+	bool hide_feature = false;
 
 	HashSet<StringName> revertable_properties;
 
@@ -382,11 +396,12 @@ public:
 	void fold();
 	void set_bg_color(const Color &p_bg_color);
 	void reset_timer();
-	void set_checkable(const String &p_related_check_property);
+	void set_checkable(const String &p_related_check_property, bool p_hide_feature);
 	void set_checked(bool p_checked);
 
 	bool has_revertable_properties() const;
 	void property_can_revert_changed(const String &p_path, bool p_can_revert);
+	void _property_edited(const String &p_property);
 
 	EditorInspectorSection();
 	~EditorInspectorSection();
@@ -547,7 +562,6 @@ public:
 class EditorInspector : public ScrollContainer {
 	GDCLASS(EditorInspector, ScrollContainer);
 
-	friend class EditorInspectorCategory;
 	friend class EditorPropertyResource;
 
 	enum {
@@ -556,15 +570,9 @@ class EditorInspector : public ScrollContainer {
 	static Ref<EditorInspectorPlugin> inspector_plugins[MAX_PLUGINS];
 	static int inspector_plugin_count;
 
-	// Right-click context menu options.
-	enum ClassMenuOption {
-		MENU_UNFAVORITE_ALL,
-	};
-
 	bool can_favorite = false;
 	PackedStringArray current_favorites;
 	VBoxContainer *favorites_section = nullptr;
-	EditorInspectorCategory *favorites_category = nullptr;
 	VBoxContainer *favorites_vbox = nullptr;
 	VBoxContainer *favorites_groups_vbox = nullptr;
 	HSeparator *favorites_separator = nullptr;
@@ -603,6 +611,7 @@ class EditorInspector : public ScrollContainer {
 	bool keying = false;
 	bool wide_editors = false;
 	bool deletable_properties = false;
+	bool mark_unsaved = true;
 
 	float refresh_countdown;
 	bool update_tree_pending = false;
@@ -678,8 +687,6 @@ class EditorInspector : public ScrollContainer {
 	void _add_meta_confirm();
 	void _show_add_meta_dialog();
 
-	void _handle_menu_option(int p_option);
-
 protected:
 	static void _bind_methods();
 	void _notification(int p_what);
@@ -703,6 +710,7 @@ public:
 
 	void set_keying(bool p_active);
 	void set_read_only(bool p_read_only);
+	void set_mark_unsaved(bool p_mark) { mark_unsaved = p_mark; }
 
 	EditorPropertyNameProcessor::Style get_property_name_style() const;
 	void set_property_name_style(EditorPropertyNameProcessor::Style p_style);

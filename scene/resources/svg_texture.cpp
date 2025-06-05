@@ -237,8 +237,6 @@ void SVGTexture::_clear() {
 
 void SVGTexture::_update_texture() {
 	_clear();
-	_ensure_scale(1.0);
-
 	emit_changed();
 }
 
@@ -252,10 +250,12 @@ Ref<Image> SVGTexture::get_image() const {
 }
 
 int SVGTexture::get_width() const {
+	_ensure_scale(1.0);
 	return size.x;
 }
 
 int SVGTexture::get_height() const {
+	_ensure_scale(1.0);
 	return size.y;
 }
 
@@ -342,7 +342,10 @@ void SVGTexture::set_size_override(const Size2i &p_size) {
 		return;
 	}
 	size_override = p_size;
-	size = base_size;
+	if (size_override.x == 0 || size_override.y == 0) {
+		_ensure_scale(1.0);
+		size = base_size;
+	}
 	if (size_override.x != 0) {
 		size.x = size_override.x;
 	}
@@ -377,7 +380,7 @@ void SVGTexture::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "_source", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_INTERNAL | PROPERTY_USAGE_STORAGE), "set_source", "get_source");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "base_scale", PROPERTY_HINT_RANGE, "0.01,10.0,0.01"), "set_base_scale", "get_base_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "saturation", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_saturation", "get_saturation");
-	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "color_map"), "set_color_map", "get_color_map");
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "color_map", PROPERTY_HINT_DICTIONARY_TYPE, "Color;Color"), "set_color_map", "get_color_map");
 }
 
 SVGTexture::~SVGTexture() {

@@ -101,17 +101,18 @@ static const char *token_names[] = {
 	"match", // MATCH,
 	"when", // WHEN,
 	// Keywords
+	"abstract", // ABSTRACT,
 	"as", // AS,
 	"assert", // ASSERT,
 	"await", // AWAIT,
 	"breakpoint", // BREAKPOINT,
 	"class", // CLASS,
 	"class_name", // CLASS_NAME,
-	"const", // CONST,
+	"const", // TK_CONST,
 	"enum", // ENUM,
 	"extends", // EXTENDS,
 	"func", // FUNC,
-	"in", // IN,
+	"in", // TK_IN,
 	"is", // IS,
 	"namespace", // NAMESPACE
 	"preload", // PRELOAD,
@@ -121,7 +122,7 @@ static const char *token_names[] = {
 	"super", // SUPER,
 	"trait", // TRAIT,
 	"var", // VAR,
-	"void", // VOID,
+	"void", // TK_VOID,
 	"yield", // YIELD,
 	// Punctuation
 	"[", // BRACKET_OPEN,
@@ -198,6 +199,7 @@ bool GDScriptTokenizer::Token::is_identifier() const {
 		case IDENTIFIER:
 		case MATCH: // Used in String.match().
 		case WHEN: // New keyword, avoid breaking existing code.
+		case ABSTRACT:
 		// Allow constants to be treated as regular identifiers.
 		case CONST_PI:
 		case CONST_INF:
@@ -213,6 +215,7 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 	// This is meant to allow keywords with the $ notation, but not as general identifiers.
 	switch (type) {
 		case IDENTIFIER:
+		case ABSTRACT:
 		case AND:
 		case AS:
 		case ASSERT:
@@ -221,7 +224,7 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 		case BREAKPOINT:
 		case CLASS_NAME:
 		case CLASS:
-		case CONST:
+		case TK_CONST:
 		case CONST_PI:
 		case CONST_INF:
 		case CONST_NAN:
@@ -234,7 +237,7 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 		case FOR:
 		case FUNC:
 		case IF:
-		case IN:
+		case TK_IN:
 		case IS:
 		case MATCH:
 		case NAMESPACE:
@@ -250,7 +253,7 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 		case TRAIT:
 		case UNDERSCORE:
 		case VAR:
-		case VOID:
+		case TK_VOID:
 		case WHILE:
 		case WHEN:
 		case YIELD:
@@ -326,9 +329,6 @@ char32_t GDScriptTokenizerText::_advance() {
 	_current++;
 	column++;
 	position++;
-	if (column > rightmost_column) {
-		rightmost_column = column;
-	}
 	if (unlikely(_is_at_end())) {
 		// Add extra newline even if it's not there, to satisfy the parser.
 		newline(true);
@@ -364,8 +364,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::make_token(Token::Type p_type) {
 	token.end_line = line;
 	token.start_column = start_column;
 	token.end_column = column;
-	token.leftmost_column = leftmost_column;
-	token.rightmost_column = rightmost_column;
 	token.source = String::utf32(Span(_start, _current - _start));
 
 	if (p_type != Token::ERROR && cursor_line > -1) {
@@ -495,6 +493,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::annotation() {
 
 #define KEYWORDS(KEYWORD_GROUP, KEYWORD)     \
 	KEYWORD_GROUP('a')                       \
+	KEYWORD("abstract", Token::ABSTRACT)     \
 	KEYWORD("as", Token::AS)                 \
 	KEYWORD("and", Token::AND)               \
 	KEYWORD("assert", Token::ASSERT)         \
@@ -505,7 +504,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::annotation() {
 	KEYWORD_GROUP('c')                       \
 	KEYWORD("class", Token::CLASS)           \
 	KEYWORD("class_name", Token::CLASS_NAME) \
-	KEYWORD("const", Token::CONST)           \
+	KEYWORD("const", Token::TK_CONST)        \
 	KEYWORD("continue", Token::CONTINUE)     \
 	KEYWORD_GROUP('e')                       \
 	KEYWORD("elif", Token::ELIF)             \
@@ -517,7 +516,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::annotation() {
 	KEYWORD("func", Token::FUNC)             \
 	KEYWORD_GROUP('i')                       \
 	KEYWORD("if", Token::IF)                 \
-	KEYWORD("in", Token::IN)                 \
+	KEYWORD("in", Token::TK_IN)              \
 	KEYWORD("is", Token::IS)                 \
 	KEYWORD_GROUP('m')                       \
 	KEYWORD("match", Token::MATCH)           \
@@ -540,7 +539,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::annotation() {
 	KEYWORD("trait", Token::TRAIT)           \
 	KEYWORD_GROUP('v')                       \
 	KEYWORD("var", Token::VAR)               \
-	KEYWORD("void", Token::VOID)             \
+	KEYWORD("void", Token::TK_VOID)          \
 	KEYWORD_GROUP('w')                       \
 	KEYWORD("while", Token::WHILE)           \
 	KEYWORD("when", Token::WHEN)             \
@@ -667,8 +666,6 @@ void GDScriptTokenizerText::newline(bool p_make_token) {
 		newline.end_line = line;
 		newline.start_column = column - 1;
 		newline.end_column = column;
-		newline.leftmost_column = newline.start_column;
-		newline.rightmost_column = newline.end_column;
 		pending_newline = true;
 		last_token = newline;
 		last_newline = newline;
@@ -677,7 +674,6 @@ void GDScriptTokenizerText::newline(bool p_make_token) {
 	// Increment line/column counters.
 	line++;
 	column = 1;
-	leftmost_column = 1;
 }
 
 GDScriptTokenizer::Token GDScriptTokenizerText::number() {
@@ -714,9 +710,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 	if (base != 10 && is_underscore(_peek())) { // Disallow `0x_` and `0b_`.
 		Token error = make_error(vformat(R"(Unexpected underscore after "0%c".)", _peek(-1)));
 		error.start_column = column;
-		error.leftmost_column = column;
 		error.end_column = column + 1;
-		error.rightmost_column = column + 1;
 		push_error(error);
 		has_error = true;
 	}
@@ -726,9 +720,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 			if (previous_was_underscore) {
 				Token error = make_error(R"(Multiple underscores cannot be adjacent in a numeric literal.)");
 				error.start_column = column;
-				error.leftmost_column = column;
 				error.end_column = column + 1;
-				error.rightmost_column = column + 1;
 				push_error(error);
 			}
 			previous_was_underscore = true;
@@ -746,25 +738,19 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 		} else if (base == 10) {
 			Token error = make_error("Cannot use a decimal point twice in a number.");
 			error.start_column = column;
-			error.leftmost_column = column;
 			error.end_column = column + 1;
-			error.rightmost_column = column + 1;
 			push_error(error);
 			has_error = true;
 		} else if (base == 16) {
 			Token error = make_error("Cannot use a decimal point in a hexadecimal number.");
 			error.start_column = column;
-			error.leftmost_column = column;
 			error.end_column = column + 1;
-			error.rightmost_column = column + 1;
 			push_error(error);
 			has_error = true;
 		} else {
 			Token error = make_error("Cannot use a decimal point in a binary number.");
 			error.start_column = column;
-			error.leftmost_column = column;
 			error.end_column = column + 1;
-			error.rightmost_column = column + 1;
 			push_error(error);
 			has_error = true;
 		}
@@ -775,9 +761,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 			if (is_underscore(_peek())) { // Disallow `10._`, but allow `10.`.
 				Token error = make_error(R"(Unexpected underscore after decimal point.)");
 				error.start_column = column;
-				error.leftmost_column = column;
 				error.end_column = column + 1;
-				error.rightmost_column = column + 1;
 				push_error(error);
 				has_error = true;
 			}
@@ -787,9 +771,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 					if (previous_was_underscore) {
 						Token error = make_error(R"(Multiple underscores cannot be adjacent in a numeric literal.)");
 						error.start_column = column;
-						error.leftmost_column = column;
 						error.end_column = column + 1;
-						error.rightmost_column = column + 1;
 						push_error(error);
 					}
 					previous_was_underscore = true;
@@ -812,9 +794,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 			if (!is_digit(_peek())) {
 				Token error = make_error(R"(Expected exponent value after "e".)");
 				error.start_column = column;
-				error.leftmost_column = column;
 				error.end_column = column + 1;
-				error.rightmost_column = column + 1;
 				push_error(error);
 			}
 			previous_was_underscore = false;
@@ -823,9 +803,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 					if (previous_was_underscore) {
 						Token error = make_error(R"(Multiple underscores cannot be adjacent in a numeric literal.)");
 						error.start_column = column;
-						error.leftmost_column = column;
 						error.end_column = column + 1;
-						error.rightmost_column = column + 1;
 						push_error(error);
 					}
 					previous_was_underscore = true;
@@ -841,9 +819,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 		// No digits in hex or bin literal.
 		Token error = make_error(vformat(R"(Expected %s digit after "0%c".)", (base == 16 ? "hexadecimal" : "binary"), (base == 16 ? 'x' : 'b')));
 		error.start_column = column;
-		error.leftmost_column = column;
 		error.end_column = column + 1;
-		error.rightmost_column = column + 1;
 		return error;
 	}
 
@@ -851,9 +827,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::number() {
 	if (!has_error && has_decimal && _peek() == '.' && _peek(1) != '.') {
 		Token error = make_error("Cannot use a decimal point twice in a number.");
 		error.start_column = column;
-		error.leftmost_column = column;
 		error.end_column = column + 1;
-		error.rightmost_column = column + 1;
 		push_error(error);
 		has_error = true;
 	} else if (is_unicode_identifier_start(_peek()) || is_unicode_identifier_continue(_peek())) {
@@ -932,9 +906,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 				error = make_error("Invisible text direction control character present in the string, escape it (\"\\u" + String::num_int64(ch, 16) + "\") to avoid confusion.");
 			}
 			error.start_column = column;
-			error.leftmost_column = error.start_column;
 			error.end_column = column + 1;
-			error.rightmost_column = error.end_column;
 			push_error(error);
 		}
 
@@ -1028,9 +1000,7 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 								// Make error, but keep parsing the string.
 								Token error = make_error("Invalid hexadecimal digit in unicode escape sequence.");
 								error.start_column = column;
-								error.leftmost_column = error.start_column;
 								error.end_column = column + 1;
-								error.rightmost_column = error.end_column;
 								push_error(error);
 								valid_escape = false;
 								break;
@@ -1059,7 +1029,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 					default:
 						Token error = make_error("Invalid escape in string.");
 						error.start_column = column - 2;
-						error.leftmost_column = error.start_column;
 						push_error(error);
 						valid_escape = false;
 						break;
@@ -1074,7 +1043,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 						} else {
 							Token error = make_error("Invalid UTF-16 sequence in string, unpaired lead surrogate.");
 							error.start_column = column - 2;
-							error.leftmost_column = error.start_column;
 							push_error(error);
 							valid_escape = false;
 							prev = 0;
@@ -1083,7 +1051,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 						if (prev == 0) {
 							Token error = make_error("Invalid UTF-16 sequence in string, unpaired trail surrogate.");
 							error.start_column = column - 2;
-							error.leftmost_column = error.start_column;
 							push_error(error);
 							valid_escape = false;
 						} else {
@@ -1094,7 +1061,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 					if (prev != 0) {
 						Token error = make_error("Invalid UTF-16 sequence in string, unpaired lead surrogate.");
 						error.start_column = prev_pos;
-						error.leftmost_column = error.start_column;
 						push_error(error);
 						prev = 0;
 					}
@@ -1108,7 +1074,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 			if (prev != 0) {
 				Token error = make_error("Invalid UTF-16 sequence in string, unpaired lead surrogate");
 				error.start_column = prev_pos;
-				error.leftmost_column = error.start_column;
 				push_error(error);
 				prev = 0;
 			}
@@ -1131,7 +1096,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 			if (prev != 0) {
 				Token error = make_error("Invalid UTF-16 sequence in string, unpaired lead surrogate");
 				error.start_column = prev_pos;
-				error.leftmost_column = error.start_column;
 				push_error(error);
 				prev = 0;
 			}
@@ -1145,7 +1109,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::string() {
 	if (prev != 0) {
 		Token error = make_error("Invalid UTF-16 sequence in string, unpaired lead surrogate");
 		error.start_column = prev_pos;
-		error.leftmost_column = error.start_column;
 		push_error(error);
 		prev = 0;
 	}
@@ -1269,8 +1232,6 @@ void GDScriptTokenizerText::check_indent() {
 			Token error = make_error("Mixed use of tabs and spaces for indentation.");
 			error.start_line = line;
 			error.start_column = 1;
-			error.leftmost_column = 1;
-			error.rightmost_column = column;
 			push_error(error);
 		}
 
@@ -1289,8 +1250,6 @@ void GDScriptTokenizerText::check_indent() {
 					_get_indent_char_name(current_indent_char), _get_indent_char_name(indent_char)));
 			error.start_line = line;
 			error.start_column = 1;
-			error.leftmost_column = 1;
-			error.rightmost_column = column;
 			push_error(error);
 		}
 
@@ -1324,9 +1283,7 @@ void GDScriptTokenizerText::check_indent() {
 				Token error = make_error("Unindent doesn't match the previous indentation level.");
 				error.start_line = line;
 				error.start_column = 1;
-				error.leftmost_column = 1;
 				error.end_column = column + 1;
-				error.rightmost_column = column + 1;
 				push_error(error);
 				// Still, we'll be lenient and keep going, so keep this level in the stack.
 				indent_stack.push_back(indent_count);
@@ -1427,14 +1384,11 @@ GDScriptTokenizer::Token GDScriptTokenizerText::scan() {
 	_start = _current;
 	start_line = line;
 	start_column = column;
-	leftmost_column = column;
-	rightmost_column = column;
 
 	if (pending_indents != 0) {
 		// Adjust position for indent.
 		_start -= start_column - 1;
 		start_column = 1;
-		leftmost_column = 1;
 		if (pending_indents > 0) {
 			// Indents.
 			pending_indents--;
@@ -1444,7 +1398,6 @@ GDScriptTokenizer::Token GDScriptTokenizerText::scan() {
 			pending_indents++;
 			Token dedent = make_token(Token::DEDENT);
 			dedent.end_column += 1;
-			dedent.rightmost_column += 1;
 			return dedent;
 		}
 	}

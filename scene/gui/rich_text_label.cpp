@@ -1091,13 +1091,20 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 				Color font_shadow_color = p_font_shadow_color;
 				bool txt_visible = (font_color.a != 0);
 				if (step == DRAW_STEP_OUTLINE && (outline_size <= 0 || font_outline_color.a == 0)) {
+					processed_glyphs_step += glyphs[i].repeat;
+					off_step.x += glyphs[i].advance * glyphs[i].repeat;
 					continue;
 				} else if (step == DRAW_STEP_SHADOW_OUTLINE && (font_shadow_color.a == 0 || p_shadow_outline_size <= 0)) {
+					processed_glyphs_step += glyphs[i].repeat;
+					off_step.x += glyphs[i].advance * glyphs[i].repeat;
 					continue;
 				} else if (step == DRAW_STEP_SHADOW && (font_shadow_color.a == 0)) {
+					processed_glyphs_step += glyphs[i].repeat;
+					off_step.x += glyphs[i].advance * glyphs[i].repeat;
 					continue;
 				} else if (step == DRAW_STEP_TEXT) {
-					bool has_ul = _find_underline(it);
+					Color user_ul_color = Color(0, 0, 0, 0);
+					bool has_ul = _find_underline(it, &user_ul_color);
 					if (!has_ul && underline_meta) {
 						ItemMeta *meta = nullptr;
 						if (_find_meta(it, nullptr, &meta) && meta) {
@@ -1115,20 +1122,25 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 						}
 					}
 					if (has_ul) {
-						if (ul_started && font_color != ul_color_prev) {
+						Color new_ul_color;
+						if (user_ul_color.a == 0.0) {
+							new_ul_color = font_color;
+							new_ul_color.a *= float(theme_cache.underline_alpha) / 100.0;
+						} else {
+							new_ul_color = user_ul_color;
+						}
+						if (ul_started && new_ul_color != ul_color_prev) {
 							float y_off = upos;
 							float underline_width = MAX(1.0, uth * theme_cache.base_scale);
 							draw_line(ul_start + Vector2(0, y_off), p_ofs + Vector2(off_step.x, off_step.y + y_off), ul_color, underline_width);
 							ul_start = p_ofs + Vector2(off_step.x, off_step.y);
-							ul_color_prev = font_color;
-							ul_color = font_color;
-							ul_color.a *= 0.5;
+							ul_color = new_ul_color;
+							ul_color_prev = new_ul_color;
 						} else if (!ul_started) {
 							ul_started = true;
 							ul_start = p_ofs + Vector2(off_step.x, off_step.y);
-							ul_color_prev = font_color;
-							ul_color = font_color;
-							ul_color.a *= 0.5;
+							ul_color = new_ul_color;
+							ul_color_prev = new_ul_color;
 						}
 					} else if (ul_started) {
 						ul_started = false;
@@ -1144,13 +1156,13 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 							dot_ul_start = p_ofs + Vector2(off_step.x, off_step.y);
 							dot_ul_color_prev = font_color;
 							dot_ul_color = font_color;
-							dot_ul_color.a *= 0.5;
+							dot_ul_color.a *= float(theme_cache.underline_alpha) / 100.0;
 						} else if (!dot_ul_started) {
 							dot_ul_started = true;
 							dot_ul_start = p_ofs + Vector2(off_step.x, off_step.y);
 							dot_ul_color_prev = font_color;
 							dot_ul_color = font_color;
-							dot_ul_color.a *= 0.5;
+							dot_ul_color.a *= float(theme_cache.underline_alpha) / 100.0;
 						}
 					} else if (dot_ul_started) {
 						dot_ul_started = false;
@@ -1158,21 +1170,27 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 						float underline_width = MAX(1.0, uth * theme_cache.base_scale);
 						draw_dashed_line(dot_ul_start + Vector2(0, y_off), p_ofs + Vector2(off_step.x, off_step.y + y_off), dot_ul_color, underline_width, MAX(2.0, underline_width * 2));
 					}
-					if (_find_strikethrough(it)) {
-						if (st_started && font_color != st_color_prev) {
+					Color user_st_color = Color(0, 0, 0, 0);
+					if (_find_strikethrough(it, &user_st_color)) {
+						Color new_st_color;
+						if (user_st_color.a == 0.0) {
+							new_st_color = font_color;
+							new_st_color.a *= float(theme_cache.strikethrough_alpha) / 100.0;
+						} else {
+							new_st_color = user_st_color;
+						}
+						if (st_started && new_st_color != st_color_prev) {
 							float y_off = -l_ascent + l_size.y / 2;
 							float underline_width = MAX(1.0, uth * theme_cache.base_scale);
 							draw_line(st_start + Vector2(0, y_off), p_ofs + Vector2(off_step.x, off_step.y + y_off), st_color, underline_width);
 							st_start = p_ofs + Vector2(off_step.x, off_step.y);
-							st_color_prev = font_color;
-							st_color = font_color;
-							st_color.a *= 0.5;
+							st_color = new_st_color;
+							st_color_prev = new_st_color;
 						} else if (!st_started) {
 							st_started = true;
 							st_start = p_ofs + Vector2(off_step.x, off_step.y);
-							st_color_prev = font_color;
-							st_color = font_color;
-							st_color.a *= 0.5;
+							st_color = new_st_color;
+							st_color_prev = new_st_color;
 						}
 					} else if (st_started) {
 						st_started = false;
@@ -1296,7 +1314,7 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 						} else if (item_fx->type == ITEM_RAINBOW) {
 							ItemRainbow *item_rainbow = static_cast<ItemRainbow *>(item_fx);
 
-							font_color = font_color.from_hsv(MAX(item_rainbow->frequency, 0) * Math::abs(item_rainbow->elapsed_time * item_rainbow->speed + ((p_ofs.x + off_step.x) / 50)), item_rainbow->saturation, item_rainbow->value, font_color.a);
+							font_color = font_color.from_ok_hsv(MAX(item_rainbow->frequency, 0) * Math::abs(item_rainbow->elapsed_time * item_rainbow->speed + ((p_ofs.x + off_step.x) / 50)), item_rainbow->saturation, item_rainbow->value, font_color.a);
 						} else if (item_fx->type == ITEM_PULSE) {
 							ItemPulse *item_pulse = static_cast<ItemPulse *>(item_fx);
 
@@ -1708,7 +1726,7 @@ float RichTextLabel::_find_click_in_line(ItemFrame *p_frame, int p_line, const V
 						} else if (!(glyphs[glyph_idx].flags & TextServer::GRAPHEME_IS_VIRTUAL)) {
 							// Hex code box.
 							Vector2 gl_size = TS->get_hex_code_box_size(glyphs[glyph_idx].font_size, glyphs[glyph_idx].index);
-							if (p_click.y >= baseline_y - gl_size.y * 0.9 && p_click.y <= baseline_y + gl_size.y * 0.2) {
+							if (p_click.y >= baseline_y - gl_size.y * 0.85 && p_click.y <= baseline_y + gl_size.y * 0.15) {
 								char_pos = glyphs[glyph_idx].start;
 								char_clicked = true;
 							}
@@ -2821,7 +2839,10 @@ void RichTextLabel::gui_input(const Ref<InputEvent> &p_event) {
 					handled = true;
 				}
 				if (k->is_action("ui_copy", true)) {
-					selection_copy();
+					const String txt = get_selected_text();
+					if (!txt.is_empty()) {
+						DisplayServer::get_singleton()->clipboard_set(txt);
+					}
 					handled = true;
 				}
 			}
@@ -3359,11 +3380,15 @@ Color RichTextLabel::_find_outline_color(Item *p_item, const Color &p_default_co
 	return p_default_color;
 }
 
-bool RichTextLabel::_find_underline(Item *p_item) {
+bool RichTextLabel::_find_underline(Item *p_item, Color *r_color) {
 	Item *item = p_item;
 
 	while (item) {
 		if (item->type == ITEM_UNDERLINE) {
+			if (r_color) {
+				ItemUnderline *ul = static_cast<ItemUnderline *>(item);
+				*r_color = ul->color;
+			}
 			return true;
 		}
 
@@ -3373,11 +3398,15 @@ bool RichTextLabel::_find_underline(Item *p_item) {
 	return false;
 }
 
-bool RichTextLabel::_find_strikethrough(Item *p_item) {
+bool RichTextLabel::_find_strikethrough(Item *p_item, Color *r_color) {
 	Item *item = p_item;
 
 	while (item) {
 		if (item->type == ITEM_STRIKETHROUGH) {
+			if (r_color) {
+				ItemStrikethrough *st = static_cast<ItemStrikethrough *>(item);
+				*r_color = st->color;
+			}
 			return true;
 		}
 
@@ -4393,24 +4422,26 @@ void RichTextLabel::push_outline_color(const Color &p_color) {
 	_add_item(item, true);
 }
 
-void RichTextLabel::push_underline() {
+void RichTextLabel::push_underline(const Color &p_color) {
 	_stop_thread();
 	MutexLock data_lock(data_mutex);
 
 	ERR_FAIL_COND(current->type == ITEM_TABLE);
 	ItemUnderline *item = memnew(ItemUnderline);
+	item->color = p_color;
 	item->owner = get_instance_id();
 	item->rid = items.make_rid(item);
 
 	_add_item(item, true);
 }
 
-void RichTextLabel::push_strikethrough() {
+void RichTextLabel::push_strikethrough(const Color &p_color) {
 	_stop_thread();
 	MutexLock data_lock(data_mutex);
 
 	ERR_FAIL_COND(current->type == ITEM_TABLE);
 	ItemStrikethrough *item = memnew(ItemStrikethrough);
+	item->color = p_color;
 	item->owner = get_instance_id();
 	item->rid = items.make_rid(item);
 
@@ -5283,15 +5314,33 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 			pos = brk_end + 1;
 			tag_stack.push_front("cell");
 		} else if (tag == "u") {
-			//use underline
 			push_underline();
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
+		} else if (tag.begins_with("u ")) {
+			Color color = Color(0, 0, 0, 0);
+			OptionMap::Iterator color_option = bbcode_options.find("color");
+			if (color_option) {
+				color = Color::from_string(color_option->value, color);
+			}
+
+			push_underline(color);
+			pos = brk_end + 1;
+			tag_stack.push_front("u");
 		} else if (tag == "s") {
-			//use strikethrough
 			push_strikethrough();
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
+		} else if (tag.begins_with("s ")) {
+			Color color = Color(0, 0, 0, 0);
+			OptionMap::Iterator color_option = bbcode_options.find("color");
+			if (color_option) {
+				color = Color::from_string(color_option->value, color);
+			}
+
+			push_strikethrough(color);
+			pos = brk_end + 1;
+			tag_stack.push_front("s");
 		} else if (tag.begins_with("char=")) {
 			int32_t char_code = _get_tag_value(tag).hex_to_int();
 			add_text(String::chr(char_code));
@@ -6634,14 +6683,6 @@ void RichTextLabel::deselect() {
 	queue_redraw();
 }
 
-void RichTextLabel::selection_copy() {
-	String txt = get_selected_text();
-
-	if (!txt.is_empty()) {
-		DisplayServer::get_singleton()->clipboard_set(txt);
-	}
-}
-
 void RichTextLabel::select_all() {
 	_validate_line_caches();
 
@@ -7161,8 +7202,8 @@ void RichTextLabel::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("push_meta", "data", "underline_mode", "tooltip"), &RichTextLabel::push_meta, DEFVAL(META_UNDERLINE_ALWAYS), DEFVAL(String()));
 	ClassDB::bind_method(D_METHOD("push_hint", "description"), &RichTextLabel::push_hint);
 	ClassDB::bind_method(D_METHOD("push_language", "language"), &RichTextLabel::push_language);
-	ClassDB::bind_method(D_METHOD("push_underline"), &RichTextLabel::push_underline);
-	ClassDB::bind_method(D_METHOD("push_strikethrough"), &RichTextLabel::push_strikethrough);
+	ClassDB::bind_method(D_METHOD("push_underline", "color"), &RichTextLabel::push_underline, DEFVAL(Color(0, 0, 0, 0)));
+	ClassDB::bind_method(D_METHOD("push_strikethrough", "color"), &RichTextLabel::push_strikethrough, DEFVAL(Color(0, 0, 0, 0)));
 	ClassDB::bind_method(D_METHOD("push_table", "columns", "inline_align", "align_to_row", "name"), &RichTextLabel::push_table, DEFVAL(INLINE_ALIGNMENT_TOP), DEFVAL(-1), DEFVAL(String()));
 	ClassDB::bind_method(D_METHOD("push_dropcap", "string", "font", "size", "dropcap_margins", "color", "outline_size", "outline_color"), &RichTextLabel::push_dropcap, DEFVAL(Rect2()), DEFVAL(Color(1, 1, 1)), DEFVAL(0), DEFVAL(Color(0, 0, 0, 0)));
 	ClassDB::bind_method(D_METHOD("set_table_column_expand", "column", "expand", "ratio", "shrink"), &RichTextLabel::set_table_column_expand, DEFVAL(1), DEFVAL(true));
@@ -7416,11 +7457,16 @@ void RichTextLabel::_bind_methods() {
 	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, text_highlight_h_padding);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, text_highlight_v_padding);
 
+	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, underline_alpha);
+	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, strikethrough_alpha);
+
 	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, table_h_separation);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_CONSTANT, RichTextLabel, table_v_separation);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, RichTextLabel, table_odd_row_bg);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, RichTextLabel, table_even_row_bg);
 	BIND_THEME_ITEM(Theme::DATA_TYPE_COLOR, RichTextLabel, table_border);
+
+	ADD_CLASS_DEPENDENCY("PopupMenu");
 }
 
 TextServer::VisibleCharactersBehavior RichTextLabel::get_visible_characters_behavior() const {
@@ -7618,7 +7664,14 @@ Key RichTextLabel::_get_menu_action_accelerator(const String &p_action) {
 void RichTextLabel::menu_option(int p_option) {
 	switch (p_option) {
 		case MENU_COPY: {
-			selection_copy();
+			String txt = get_selected_text();
+			if (txt.is_empty()) {
+				txt = get_parsed_text();
+			}
+
+			if (!txt.is_empty()) {
+				DisplayServer::get_singleton()->clipboard_set(txt);
+			}
 		} break;
 		case MENU_SELECT_ALL: {
 			select_all();

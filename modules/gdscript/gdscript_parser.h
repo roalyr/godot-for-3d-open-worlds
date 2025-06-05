@@ -339,7 +339,6 @@ public:
 		Type type = NONE;
 		int start_line = 0, end_line = 0;
 		int start_column = 0, end_column = 0;
-		int leftmost_column = 0, rightmost_column = 0;
 		Node *next = nullptr;
 		List<AnnotationNode *> annotations;
 
@@ -536,8 +535,8 @@ public:
 			bool resolved = false;
 			int64_t value = 0;
 			int line = 0;
-			int leftmost_column = 0;
-			int rightmost_column = 0;
+			int start_column = 0;
+			int end_column = 0;
 #ifdef TOOLS_ENABLED
 			MemberDocData doc_data;
 #endif // TOOLS_ENABLED
@@ -748,6 +747,7 @@ public:
 		ClassNode *outer = nullptr;
 		bool extends_used = false;
 		bool onready_used = false;
+		bool is_abstract = false;
 		bool has_static_data = false;
 		bool annotated_static_unload = false;
 		String extends_path;
@@ -1104,7 +1104,6 @@ public:
 
 			int start_line = 0, end_line = 0;
 			int start_column = 0, end_column = 0;
-			int leftmost_column = 0, rightmost_column = 0;
 
 			DataType get_datatype() const;
 			String get_name() const;
@@ -1120,8 +1119,6 @@ public:
 				end_line = p_constant->end_line;
 				start_column = p_constant->start_column;
 				end_column = p_constant->end_column;
-				leftmost_column = p_constant->leftmost_column;
-				rightmost_column = p_constant->rightmost_column;
 			}
 			Local(VariableNode *p_variable, FunctionNode *p_source_function) {
 				type = VARIABLE;
@@ -1133,8 +1130,6 @@ public:
 				end_line = p_variable->end_line;
 				start_column = p_variable->start_column;
 				end_column = p_variable->end_column;
-				leftmost_column = p_variable->leftmost_column;
-				rightmost_column = p_variable->rightmost_column;
 			}
 			Local(ParameterNode *p_parameter, FunctionNode *p_source_function) {
 				type = PARAMETER;
@@ -1146,8 +1141,6 @@ public:
 				end_line = p_parameter->end_line;
 				start_column = p_parameter->start_column;
 				end_column = p_parameter->end_column;
-				leftmost_column = p_parameter->leftmost_column;
-				rightmost_column = p_parameter->rightmost_column;
 			}
 			Local(IdentifierNode *p_identifier, FunctionNode *p_source_function) {
 				type = FOR_VARIABLE;
@@ -1159,8 +1152,6 @@ public:
 				end_line = p_identifier->end_line;
 				start_column = p_identifier->start_column;
 				end_column = p_identifier->end_column;
-				leftmost_column = p_identifier->leftmost_column;
-				rightmost_column = p_identifier->rightmost_column;
 			}
 		};
 		Local empty;
@@ -1463,6 +1454,14 @@ private:
 		return node;
 	}
 
+	SuiteNode *alloc_recovery_suite() {
+		SuiteNode *suite = alloc_recovery_node<SuiteNode>();
+		suite->parent_block = current_suite;
+		suite->parent_function = current_function;
+		suite->is_in_loop = current_suite->is_in_loop;
+		return suite;
+	}
+
 	void clear();
 	void push_error(const String &p_message, const Node *p_origin = nullptr);
 #ifdef DEBUG_ENABLED
@@ -1499,16 +1498,16 @@ private:
 
 	// Main blocks.
 	void parse_program();
-	ClassNode *parse_class(bool p_is_static);
+	ClassNode *parse_class(bool p_is_abstract, bool p_is_static);
 	void parse_class_name();
 	void parse_extends();
-	void parse_class_body(bool p_is_multiline);
+	void parse_class_body(bool p_is_abstract, bool p_is_multiline);
 	template <typename T>
-	void parse_class_member(T *(GDScriptParser::*p_parse_function)(bool), AnnotationInfo::TargetKind p_target, const String &p_member_kind, bool p_is_static = false);
-	SignalNode *parse_signal(bool p_is_static);
-	EnumNode *parse_enum(bool p_is_static);
+	void parse_class_member(T *(GDScriptParser::*p_parse_function)(bool, bool), AnnotationInfo::TargetKind p_target, const String &p_member_kind, bool p_is_abstract = false, bool p_is_static = false);
+	SignalNode *parse_signal(bool p_is_abstract, bool p_is_static);
+	EnumNode *parse_enum(bool p_is_abstract, bool p_is_static);
 	ParameterNode *parse_parameter();
-	FunctionNode *parse_function(bool p_is_static);
+	FunctionNode *parse_function(bool p_is_abstract, bool p_is_static);
 	void parse_function_signature(FunctionNode *p_function, SuiteNode *p_body, const String &p_type);
 	SuiteNode *parse_suite(const String &p_context, SuiteNode *p_suite = nullptr, bool p_for_lambda = false);
 	// Annotations
@@ -1532,12 +1531,12 @@ private:
 	bool rpc_annotation(AnnotationNode *p_annotation, Node *p_target, ClassNode *p_class);
 	// Statements.
 	Node *parse_statement();
-	VariableNode *parse_variable(bool p_is_static);
-	VariableNode *parse_variable(bool p_is_static, bool p_allow_property);
+	VariableNode *parse_variable(bool p_is_abstract, bool p_is_static);
+	VariableNode *parse_variable(bool p_is_abstract, bool p_is_static, bool p_allow_property);
 	VariableNode *parse_property(VariableNode *p_variable, bool p_need_indent);
 	void parse_property_getter(VariableNode *p_variable);
 	void parse_property_setter(VariableNode *p_variable);
-	ConstantNode *parse_constant(bool p_is_static);
+	ConstantNode *parse_constant(bool p_is_abstract, bool p_is_static);
 	AssertNode *parse_assert();
 	BreakNode *parse_break();
 	ContinueNode *parse_continue();

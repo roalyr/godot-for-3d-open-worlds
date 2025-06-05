@@ -39,6 +39,7 @@
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
 #include "editor/gui/editor_spin_slider.h"
+#include "editor/gui/editor_variant_type_selectors.h"
 #include "editor/inspector_dock.h"
 #include "editor/themes/editor_scale.h"
 #include "scene/gui/button.h"
@@ -749,21 +750,7 @@ Node *EditorPropertyArray::get_base_node() {
 
 void EditorPropertyArray::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_THEME_CHANGED:
-		case NOTIFICATION_ENTER_TREE: {
-			change_type->clear();
-			change_type->add_icon_item(get_editor_theme_icon(SNAME("Remove")), TTR("Remove Item"), Variant::VARIANT_MAX);
-			change_type->add_separator();
-			for (int i = 0; i < Variant::VARIANT_MAX; i++) {
-				if (i == Variant::CALLABLE || i == Variant::SIGNAL || i == Variant::RID) {
-					// These types can't be constructed or serialized properly, so skip them.
-					continue;
-				}
-
-				String type = Variant::get_type_name(Variant::Type(i));
-				change_type->add_icon_item(get_editor_theme_icon(type), type, i);
-			}
-
+		case NOTIFICATION_THEME_CHANGED: {
 			if (button_add_item) {
 				button_add_item->set_button_icon(get_editor_theme_icon(SNAME("Add")));
 			}
@@ -865,6 +852,14 @@ void EditorPropertyArray::setup(Variant::Type p_array_type, const String &p_hint
 
 			subtype_hint_string = p_hint_string.substr(hint_subtype_separator + 1);
 			subtype = Variant::Type(subtype_string.to_int());
+		} else {
+			subtype = Variant::get_type_by_name(p_hint_string);
+
+			if (subtype == Variant::VARIANT_MAX) {
+				subtype = Variant::OBJECT;
+				subtype_hint = PROPERTY_HINT_RESOURCE_TYPE;
+				subtype_hint_string = p_hint_string;
+			}
 		}
 	}
 }
@@ -970,7 +965,7 @@ EditorPropertyArray::EditorPropertyArray() {
 	add_child(edit);
 	add_focusable(edit);
 
-	change_type = memnew(PopupMenu);
+	change_type = memnew(EditorVariantTypePopupMenu(true));
 	add_child(change_type);
 	change_type->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyArray::_change_type_menu));
 	changing_type_index = -1;
@@ -1155,12 +1150,21 @@ void EditorPropertyDictionary::setup(PropertyHint p_hint, const String &p_hint_s
 
 			key_subtype_hint_string = key.substr(hint_key_subtype_separator + 1);
 			key_subtype = Variant::Type(key_subtype_string.to_int());
+		} else {
+			key_subtype = Variant::get_type_by_name(key);
 
-			Variant new_key = object->get_new_item_key();
-			VariantInternal::initialize(&new_key, key_subtype);
-			object->set_new_item_key(new_key);
+			if (key_subtype == Variant::VARIANT_MAX) {
+				key_subtype = Variant::OBJECT;
+				key_subtype_hint = PROPERTY_HINT_RESOURCE_TYPE;
+				key_subtype_hint_string = key;
+			}
 		}
+
+		Variant new_key = object->get_new_item_key();
+		VariantInternal::initialize(&new_key, key_subtype);
+		object->set_new_item_key(new_key);
 	}
+
 	if (types.size() > 1 && !types[1].is_empty()) {
 		String value = types[1];
 		int hint_value_subtype_separator = value.find_char(':');
@@ -1174,11 +1178,19 @@ void EditorPropertyDictionary::setup(PropertyHint p_hint, const String &p_hint_s
 
 			value_subtype_hint_string = value.substr(hint_value_subtype_separator + 1);
 			value_subtype = Variant::Type(value_subtype_string.to_int());
+		} else {
+			value_subtype = Variant::get_type_by_name(value);
 
-			Variant new_value = object->get_new_item_value();
-			VariantInternal::initialize(&new_value, value_subtype);
-			object->set_new_item_value(new_value);
+			if (value_subtype == Variant::VARIANT_MAX) {
+				value_subtype = Variant::OBJECT;
+				value_subtype_hint = PROPERTY_HINT_RESOURCE_TYPE;
+				value_subtype_hint_string = value;
+			}
 		}
+
+		Variant new_value = object->get_new_item_value();
+		VariantInternal::initialize(&new_value, value_subtype);
+		object->set_new_item_value(new_value);
 	}
 }
 
@@ -1363,7 +1375,7 @@ void EditorPropertyDictionary::update_property() {
 
 			Variant::Type value_type;
 
-			if (dict.is_typed_value() && slot.prop_key) {
+			if (dict.is_typed_value() && value_subtype != Variant::NIL && slot.prop_key) {
 				value_type = value_subtype;
 			} else {
 				value_type = value.get_type();
@@ -1440,21 +1452,7 @@ void EditorPropertyDictionary::_object_id_selected(const StringName &p_property,
 
 void EditorPropertyDictionary::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_THEME_CHANGED:
-		case NOTIFICATION_ENTER_TREE: {
-			change_type->clear();
-			change_type->add_icon_item(get_editor_theme_icon(SNAME("Remove")), TTR("Remove Item"), Variant::VARIANT_MAX);
-			change_type->add_separator();
-			for (int i = 0; i < Variant::VARIANT_MAX; i++) {
-				if (i == Variant::CALLABLE || i == Variant::SIGNAL || i == Variant::RID) {
-					// These types can't be constructed or serialized properly, so skip them.
-					continue;
-				}
-
-				String type = Variant::get_type_name(Variant::Type(i));
-				change_type->add_icon_item(get_editor_theme_icon(type), type, i);
-			}
-
+		case NOTIFICATION_THEME_CHANGED: {
 			if (button_add_item) {
 				button_add_item->set_button_icon(get_editor_theme_icon(SNAME("Add")));
 				add_panel->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SNAME("DictionaryAddItem")));
@@ -1509,7 +1507,7 @@ EditorPropertyDictionary::EditorPropertyDictionary() {
 	container = nullptr;
 	button_add_item = nullptr;
 	paginator = nullptr;
-	change_type = memnew(PopupMenu);
+	change_type = memnew(EditorVariantTypePopupMenu(true));
 	add_child(change_type);
 	change_type->connect(SceneStringName(id_pressed), callable_mp(this, &EditorPropertyDictionary::_change_type_menu));
 	changing_type_index = EditorPropertyDictionaryObject::NOT_CHANGING_TYPE;
@@ -1688,8 +1686,7 @@ void EditorPropertyLocalizableString::_object_id_selected(const StringName &p_pr
 
 void EditorPropertyLocalizableString::_notification(int p_what) {
 	switch (p_what) {
-		case NOTIFICATION_THEME_CHANGED:
-		case NOTIFICATION_ENTER_TREE: {
+		case NOTIFICATION_THEME_CHANGED: {
 			if (button_add_item) {
 				button_add_item->set_button_icon(get_editor_theme_icon(SNAME("Add")));
 			}

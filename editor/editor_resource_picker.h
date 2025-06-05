@@ -56,6 +56,7 @@ class EditorResourcePicker : public HBoxContainer {
 	Button *assign_button = nullptr;
 	TextureRect *preview_rect = nullptr;
 	Button *edit_button = nullptr;
+	Button *quick_load_button = nullptr;
 	EditorFileDialog *file_dialog = nullptr;
 
 	ConfirmationDialog *duplicate_resources_dialog = nullptr;
@@ -74,6 +75,7 @@ class EditorResourcePicker : public HBoxContainer {
 		OBJ_MENU_SAVE_AS,
 		OBJ_MENU_COPY,
 		OBJ_MENU_PASTE,
+		OBJ_MENU_PASTE_AS_UNIQUE,
 		OBJ_MENU_SHOW_IN_FILE_SYSTEM,
 
 		TYPE_BASE_ID = 100,

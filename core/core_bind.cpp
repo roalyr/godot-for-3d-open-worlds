@@ -46,8 +46,6 @@ namespace CoreBind {
 
 ////// ResourceLoader //////
 
-ResourceLoader *ResourceLoader::singleton = nullptr;
-
 Error ResourceLoader::load_threaded_request(const String &p_path, const String &p_type_hint, bool p_use_sub_threads, CacheMode p_cache_mode) {
 	return ::ResourceLoader::load_threaded_request(p_path, p_type_hint, p_use_sub_threads, ResourceFormatLoader::CacheMode(p_cache_mode));
 }
@@ -194,8 +192,6 @@ void ResourceSaver::remove_resource_format_saver(Ref<ResourceFormatSaver> p_form
 ResourceUID::ID ResourceSaver::get_resource_id_for_path(const String &p_path, bool p_generate) {
 	return ::ResourceSaver::get_resource_id_for_path(p_path, p_generate);
 }
-
-ResourceSaver *ResourceSaver::singleton = nullptr;
 
 void ResourceSaver::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("save", "resource", "path", "flags"), &ResourceSaver::save, DEFVAL(""), DEFVAL((uint32_t)FLAG_NONE));
@@ -441,6 +437,14 @@ int OS::create_instance(const Vector<String> &p_arguments) {
 	return pid;
 }
 
+Error OS::open_with_program(const String &p_program_path, const Vector<String> &p_paths) {
+	List<String> paths;
+	for (const String &path : p_paths) {
+		paths.push_back(path);
+	}
+	return ::OS::get_singleton()->open_with_program(p_program_path, paths);
+}
+
 int OS::create_process(const String &p_path, const Vector<String> &p_arguments, bool p_open_console) {
 	List<String> args;
 	for (const String &arg : p_arguments) {
@@ -665,7 +669,7 @@ bool OS::is_debug_build() const {
 	return true;
 #else
 	return false;
-#endif
+#endif // DEBUG_ENABLED
 }
 
 String OS::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
@@ -722,8 +726,6 @@ void OS::remove_logger(const Ref<Logger> &p_logger) {
 	logger_bind->loggers.erase(p_logger);
 }
 
-OS *OS::singleton = nullptr;
-
 void OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_entropy", "size"), &OS::get_entropy);
 	ClassDB::bind_method(D_METHOD("get_system_ca_certificates"), &OS::get_system_ca_certificates);
@@ -761,6 +763,7 @@ void OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("execute_with_pipe", "path", "arguments", "blocking"), &OS::execute_with_pipe, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("create_process", "path", "arguments", "open_console"), &OS::create_process, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("create_instance", "arguments"), &OS::create_instance);
+	ClassDB::bind_method(D_METHOD("open_with_program", "program_path", "paths"), &OS::open_with_program);
 	ClassDB::bind_method(D_METHOD("kill", "pid"), &OS::kill);
 	ClassDB::bind_method(D_METHOD("shell_open", "uri"), &OS::shell_open);
 	ClassDB::bind_method(D_METHOD("shell_show_in_file_manager", "file_or_dir_path", "open_folder"), &OS::shell_show_in_file_manager, DEFVAL(true));
@@ -876,8 +879,6 @@ OS::~OS() {
 }
 
 ////// Geometry2D //////
-
-Geometry2D *Geometry2D::singleton = nullptr;
 
 Geometry2D *Geometry2D::get_singleton() {
 	return singleton;
@@ -1138,8 +1139,6 @@ void Geometry2D::_bind_methods() {
 
 ////// Geometry3D //////
 
-Geometry3D *Geometry3D::singleton = nullptr;
-
 Geometry3D *Geometry3D::get_singleton() {
 	return singleton;
 }
@@ -1281,8 +1280,6 @@ void Geometry3D::_bind_methods() {
 }
 
 ////// Marshalls //////
-
-Marshalls *Marshalls::singleton = nullptr;
 
 Marshalls *Marshalls::get_singleton() {
 	return singleton;
@@ -1681,13 +1678,13 @@ TypedArray<Dictionary> ClassDB::class_get_method_list(const StringName &p_class,
 	TypedArray<Dictionary> ret;
 
 	for (const MethodInfo &E : methods) {
-#ifdef DEBUG_METHODS_ENABLED
+#ifdef DEBUG_ENABLED
 		ret.push_back(E.operator Dictionary());
 #else
 		Dictionary dict;
 		dict["name"] = E.name;
 		ret.push_back(dict);
-#endif
+#endif // DEBUG_ENABLED
 	}
 
 	return ret;
@@ -2128,8 +2125,6 @@ void Engine::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "physics_jitter_fix"), "set_physics_jitter_fix", "get_physics_jitter_fix");
 }
 
-Engine *Engine::singleton = nullptr;
-
 ////// EngineDebugger //////
 
 bool EngineDebugger::is_active() {
@@ -2274,8 +2269,6 @@ EngineDebugger::~EngineDebugger() {
 	}
 	captures.clear();
 }
-
-EngineDebugger *EngineDebugger::singleton = nullptr;
 
 void EngineDebugger::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_active"), &EngineDebugger::is_active);

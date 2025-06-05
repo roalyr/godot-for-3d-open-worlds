@@ -77,8 +77,8 @@
 #define GLTF_IMPORT_DISCARD_MESHES_AND_MATERIALS 32
 #define GLTF_IMPORT_FORCE_DISABLE_MESH_COMPRESSION 64
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 constexpr int COMPONENT_COUNT_FOR_ACCESSOR_TYPE[7] = {
 	1, 2, 3, 4, 4, 9, 16
@@ -3337,13 +3337,13 @@ Error GLTFDocument::_parse_meshes(Ref<GLTFState> p_state) {
 
 				const int *indices_w = indices.ptrw();
 				Vector<bool> used_indices;
-				used_indices.resize_zeroed(orig_vertex_num);
+				used_indices.resize_initialized(orig_vertex_num);
 				bool *used_w = used_indices.ptrw();
 				for (int idx_i = 0; idx_i < is; idx_i++) {
 					ERR_FAIL_INDEX_V(indices_w[idx_i], orig_vertex_num, ERR_INVALID_DATA);
 					used_w[indices_w[idx_i]] = true;
 				}
-				indices_rev_mapping.resize_zeroed(orig_vertex_num);
+				indices_rev_mapping.resize_initialized(orig_vertex_num);
 				int *rev_w = indices_rev_mapping.ptrw();
 				vertex_num = 0;
 				for (int vert_i = 0; vert_i < orig_vertex_num; vert_i++) {
@@ -5962,6 +5962,9 @@ void GLTFDocument::_convert_scene_node(Ref<GLTFState> p_state, Node *p_current, 
 	} else if (Object::cast_to<AnimationPlayer>(p_current)) {
 		AnimationPlayer *animation_player = Object::cast_to<AnimationPlayer>(p_current);
 		p_state->animation_players.push_back(animation_player);
+		if (animation_player->get_child_count() == 0) {
+			gltf_node->set_parent(-2); // Don't export AnimationPlayer nodes as glTF nodes (unless they have children).
+		}
 	}
 	for (Ref<GLTFDocumentExtension> ext : document_extensions) {
 		ERR_CONTINUE(ext.is_null());

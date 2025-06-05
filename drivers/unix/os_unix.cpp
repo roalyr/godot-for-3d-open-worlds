@@ -69,19 +69,18 @@
 #endif
 
 #include <dlfcn.h>
-#include <errno.h>
 #include <poll.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
+#include <cerrno>
+#include <csignal>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 #ifndef RTLD_DEEPBIND
 #define RTLD_DEEPBIND 0
@@ -132,6 +131,8 @@ static void _setup_clock() {
 }
 #endif
 
+struct sigaction old_action;
+
 static void handle_interrupt(int sig) {
 	if (!EngineDebugger::is_active()) {
 		return;
@@ -139,6 +140,11 @@ static void handle_interrupt(int sig) {
 
 	EngineDebugger::get_script_debugger()->set_depth(-1);
 	EngineDebugger::get_script_debugger()->set_lines_left(1);
+
+	// Ensure we call the old action if it was configured.
+	if (old_action.sa_handler && old_action.sa_handler != SIG_IGN && old_action.sa_handler != SIG_DFL) {
+		old_action.sa_handler(sig);
+	}
 }
 
 void OS_Unix::initialize_debugging() {
@@ -146,7 +152,7 @@ void OS_Unix::initialize_debugging() {
 		struct sigaction action;
 		memset(&action, 0, sizeof(action));
 		action.sa_handler = handle_interrupt;
-		sigaction(SIGINT, &action, nullptr);
+		sigaction(SIGINT, &action, &old_action);
 	}
 }
 
@@ -805,10 +811,14 @@ Dictionary OS_Unix::execute_with_pipe(const String &p_path, const List<String> &
 #endif
 }
 
-int OS_Unix::_wait_for_pid_completion(const pid_t p_pid, int *r_status, int p_options) {
+int OS_Unix::_wait_for_pid_completion(const pid_t p_pid, int *r_status, int p_options, pid_t *r_pid) {
 	while (true) {
-		if (waitpid(p_pid, r_status, p_options) != -1) {
+		pid_t pid = waitpid(p_pid, r_status, p_options);
+		if (pid != -1) {
 			// Thread exited normally.
+			if (r_pid) {
+				*r_pid = pid;
+			}
 			return 0;
 		}
 		const int error = errno;
@@ -832,10 +842,14 @@ bool OS_Unix::_check_pid_is_running(const pid_t p_pid, int *r_status) const {
 		return false;
 	}
 
+	pid_t pid = -1;
 	int status = 0;
-	const int result = _wait_for_pid_completion(p_pid, &status, WNOHANG);
+	const int result = _wait_for_pid_completion(p_pid, &status, WNOHANG, &pid);
 	if (result == 0) {
 		// Thread is still running.
+		if (pi && pid == p_pid) {
+			pi->exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : status;
+		}
 		return true;
 	}
 
@@ -846,7 +860,9 @@ bool OS_Unix::_check_pid_is_running(const pid_t p_pid, int *r_status) const {
 
 	if (pi) {
 		pi->is_running = false;
-		pi->exit_code = status;
+		if (pid == p_pid) {
+			pi->exit_code = status;
+		}
 	}
 
 	if (r_status) {
@@ -1229,7 +1245,9 @@ void UnixTerminalLogger::log_error(const char *p_function, const char *p_file, i
 	logf_error("%s%sat: %s (%s:%i)%s\n", gray, indent, p_function, p_file, p_line, reset);
 
 	for (const Ref<ScriptBacktrace> &backtrace : p_script_backtraces) {
-		logf_error("%s%s%s\n", gray, backtrace->format(strlen(indent)).utf8().get_data(), reset);
+		if (!backtrace->is_empty()) {
+			logf_error("%s%s%s\n", gray, backtrace->format(strlen(indent)).utf8().get_data(), reset);
+		}
 	}
 }
 

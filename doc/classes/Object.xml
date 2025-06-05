@@ -198,6 +198,7 @@
 			<param index="0" name="iter" type="Variant" />
 			<description>
 				Returns the current iterable value. [param iter] stores the iteration state, but unlike [method _iter_init] and [method _iter_next] the state is supposed to be read-only, so there is no [Array] wrapper.
+				[b]Tip:[/b] In GDScript, you can use a subtype of [Variant] as the return type for [method _iter_get]. The specified type will be used to set the type of the iterator variable in [code]for[/code] loops, enhancing type safety.
 			</description>
 		</method>
 		<method name="_iter_init" qualifiers="virtual">
@@ -554,7 +555,7 @@
 		<method name="free" keywords="delete, remove, kill, die">
 			<return type="void" />
 			<description>
-				Deletes the object from memory. Pre-existing references to the object become invalid, and any attempt to access them will result in a run-time error. Checking the references with [method @GlobalScope.is_instance_valid] will return [code]false[/code].
+				Deletes the object from memory. Pre-existing references to the object become invalid, and any attempt to access them will result in a runtime error. Checking the references with [method @GlobalScope.is_instance_valid] will return [code]false[/code]. This is equivalent to the [code]memdelete[/code] function in GDExtension C++.
 			</description>
 		</method>
 		<method name="get" qualifiers="const">
@@ -1037,6 +1038,9 @@
 		</constant>
 		<constant name="CONNECT_REFERENCE_COUNTED" value="8" enum="ConnectFlags">
 			Reference-counted connections can be assigned to the same [Callable] multiple times. Each disconnection decreases the internal counter. The signal fully disconnects only when the counter reaches 0.
+		</constant>
+		<constant name="CONNECT_APPEND_SOURCE_OBJECT" value="16" enum="ConnectFlags">
+			The source object is automatically bound when a [PackedScene] is instantiated. If this flag bit is enabled, the source object will be appended right after the original arguments of the signal.
 		</constant>
 	</constants>
 </class>

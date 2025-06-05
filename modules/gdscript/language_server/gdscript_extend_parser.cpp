@@ -403,8 +403,8 @@ void ExtendGDScriptParser::parse_class_symbol(const GDScriptParser::ClassNode *p
 				symbol.name = m.enum_value.identifier->name;
 				symbol.kind = LSP::SymbolKind::EnumMember;
 				symbol.deprecated = false;
-				symbol.range.start = GodotPosition(m.enum_value.line, m.enum_value.leftmost_column).to_lsp(lines);
-				symbol.range.end = GodotPosition(m.enum_value.line, m.enum_value.rightmost_column).to_lsp(lines);
+				symbol.range.start = GodotPosition(m.enum_value.line, m.enum_value.start_column).to_lsp(lines);
+				symbol.range.end = GodotPosition(m.enum_value.line, m.enum_value.end_column).to_lsp(lines);
 				symbol.selectionRange = range_of_node(m.enum_value.identifier);
 				symbol.documentation = m.enum_value.doc_data.description;
 				symbol.uri = uri;
@@ -439,8 +439,8 @@ void ExtendGDScriptParser::parse_class_symbol(const GDScriptParser::ClassNode *p
 					child.name = value.identifier->name;
 					child.kind = LSP::SymbolKind::EnumMember;
 					child.deprecated = false;
-					child.range.start = GodotPosition(value.line, value.leftmost_column).to_lsp(lines);
-					child.range.end = GodotPosition(value.line, value.rightmost_column).to_lsp(lines);
+					child.range.start = GodotPosition(value.line, value.start_column).to_lsp(lines);
+					child.range.end = GodotPosition(value.line, value.end_column).to_lsp(lines);
 					child.selectionRange = range_of_node(value.identifier);
 					child.documentation = value.doc_data.description;
 					child.uri = uri;
@@ -712,9 +712,9 @@ String ExtendGDScriptParser::get_identifier_under_position(const LSP::Position &
 	LSP::Position pos = p_position;
 	if (
 			pos.character >= line.length() // Cursor at end of line.
-			|| (!is_ascii_identifier_char(line[pos.character]) // Not on valid identifier char.
+			|| (!is_unicode_identifier_continue(line[pos.character]) // Not on valid identifier char.
 					   && (pos.character > 0 // Not line start -> there is a prev char.
-								  && is_ascii_identifier_char(line[pos.character - 1]) // Prev is valid identifier char.
+								  && is_unicode_identifier_continue(line[pos.character - 1]) // Prev is valid identifier char.
 								  ))) {
 		pos.character--;
 	}
@@ -723,7 +723,7 @@ String ExtendGDScriptParser::get_identifier_under_position(const LSP::Position &
 	for (int c = pos.character; c >= 0; c--) {
 		start_pos = c;
 		char32_t ch = line[c];
-		bool valid_char = is_ascii_identifier_char(ch);
+		bool valid_char = is_unicode_identifier_continue(ch);
 		if (!valid_char) {
 			break;
 		}
@@ -732,11 +732,15 @@ String ExtendGDScriptParser::get_identifier_under_position(const LSP::Position &
 	int end_pos = pos.character;
 	for (int c = pos.character; c < line.length(); c++) {
 		char32_t ch = line[c];
-		bool valid_char = is_ascii_identifier_char(ch);
+		bool valid_char = is_unicode_identifier_continue(ch);
 		if (!valid_char) {
 			break;
 		}
 		end_pos = c;
+	}
+
+	if (!is_unicode_identifier_start(line[start_pos + 1])) {
+		return "";
 	}
 
 	if (start_pos < end_pos) {

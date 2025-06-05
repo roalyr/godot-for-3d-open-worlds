@@ -43,6 +43,8 @@
 #include "core/variant/variant.h"
 #include "core/version_generated.gen.h"
 
+#include "thirdparty/grisu2/grisu2.h"
+
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS // to disable build-time warning which suggested to use strcpy_s instead strcpy
 #endif
@@ -741,11 +743,6 @@ signed char String::filenocasecmp_to(const String &p_str) const {
 	}
 
 	return naturalnocasecmp_to_base(this_str, that_str);
-}
-
-const char32_t *String::get_data() const {
-	static const char32_t zero = 0;
-	return size() ? &operator[](0) : &zero;
 }
 
 String String::_separate_compound_words() const {
@@ -1656,28 +1653,18 @@ String String::num_scientific(double p_num) {
 	if (Math::is_nan(p_num) || Math::is_inf(p_num)) {
 		return num(p_num, 0);
 	}
+	char buffer[256];
+	char *last = grisu2::to_chars(buffer, p_num);
+	return String::ascii(Span(buffer, last - buffer));
+}
 
-	char buf[256];
-
-#if defined(__GNUC__) || defined(_MSC_VER)
-
-#if defined(__MINGW32__) && defined(_TWO_DIGIT_EXPONENT) && !defined(_UCRT)
-	// MinGW requires _set_output_format() to conform to C99 output for printf
-	unsigned int old_exponent_format = _set_output_format(_TWO_DIGIT_EXPONENT);
-#endif
-	snprintf(buf, 256, "%lg", p_num);
-
-#if defined(__MINGW32__) && defined(_TWO_DIGIT_EXPONENT) && !defined(_UCRT)
-	_set_output_format(old_exponent_format);
-#endif
-
-#else
-	sprintf(buf, "%.16lg", p_num);
-#endif
-
-	buf[255] = 0;
-
-	return buf;
+String String::num_scientific(float p_num) {
+	if (Math::is_nan(p_num) || Math::is_inf(p_num)) {
+		return num(p_num, 0);
+	}
+	char buffer[256];
+	char *last = grisu2::to_chars(buffer, p_num);
+	return String::ascii(Span(buffer, last - buffer));
 }
 
 String String::md5(const uint8_t *p_md5) {
@@ -1788,13 +1775,6 @@ Error String::append_ascii(const Span<char> &p_range) {
 	}
 	*dst = _null;
 	return decode_failed ? ERR_INVALID_DATA : OK;
-}
-
-String String::utf8(const char *p_utf8, int p_len) {
-	String ret;
-	ret.append_utf8(p_utf8, p_len);
-
-	return ret;
 }
 
 Error String::append_utf8(const char *p_utf8, int p_len, bool p_skip_cr) {
@@ -2064,13 +2044,6 @@ CharString String::utf8(Vector<uint8_t> *r_ch_length_map) const {
 	*cdst = 0; //trailing zero
 
 	return utf8s;
-}
-
-String String::utf16(const char16_t *p_utf16, int p_len) {
-	String ret;
-	ret.append_utf16(p_utf16, p_len, true);
-
-	return ret;
 }
 
 Error String::append_utf16(const char16_t *p_utf16, int p_len, bool p_default_little_endian) {
@@ -3843,34 +3816,28 @@ bool String::matchn(const String &p_wildcard) const {
 }
 
 String String::format(const Variant &values, const String &placeholder) const {
-	String new_string = String(ptr());
+	String new_string = *this;
 
 	if (values.get_type() == Variant::ARRAY) {
 		Array values_arr = values;
 
 		for (int i = 0; i < values_arr.size(); i++) {
-			String i_as_str = String::num_int64(i);
-
 			if (values_arr[i].get_type() == Variant::ARRAY) { //Array in Array structure [["name","RobotGuy"],[0,"godot"],["strength",9000.91]]
 				Array value_arr = values_arr[i];
 
 				if (value_arr.size() == 2) {
-					Variant v_key = value_arr[0];
-					String key = v_key;
-
-					Variant v_val = value_arr[1];
-					String val = v_val;
+					String key = value_arr[0];
+					String val = value_arr[1];
 
 					new_string = new_string.replace(placeholder.replace("_", key), val);
 				} else {
-					ERR_PRINT(String("STRING.format Inner Array size != 2 ").ascii().get_data());
+					ERR_PRINT(vformat("Invalid format: the inner Array at index %d needs to contain only 2 elements, as a key-value pair.", i).ascii().get_data());
 				}
 			} else { //Array structure ["RobotGuy","Logis","rookie"]
-				Variant v_val = values_arr[i];
-				String val = v_val;
+				String val = values_arr[i];
 
 				if (placeholder.contains_char('_')) {
-					new_string = new_string.replace(placeholder.replace("_", i_as_str), val);
+					new_string = new_string.replace(placeholder.replace("_", String::num_int64(i)), val);
 				} else {
 					new_string = new_string.replace_first(placeholder, val);
 				}

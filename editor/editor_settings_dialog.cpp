@@ -30,6 +30,7 @@
 
 #include "editor_settings_dialog.h"
 
+#include "core/config/project_settings.h"
 #include "core/input/input_map.h"
 #include "core/os/keyboard.h"
 #include "editor/debugger/editor_debugger_node.h"
@@ -44,6 +45,7 @@
 #include "editor/event_listener_line_edit.h"
 #include "editor/input_event_configuration_dialog.h"
 #include "editor/plugins/node_3d_editor_plugin.h"
+#include "editor/project_settings_editor.h"
 #include "editor/themes/editor_scale.h"
 #include "editor/themes/editor_theme_manager.h"
 #include "scene/gui/check_button.h"
@@ -239,6 +241,8 @@ void EditorSettingsDialog::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_READY: {
+			EditorSettingsPropertyWrapper::restart_request_callback = callable_mp(this, &EditorSettingsDialog::_editor_restart_request);
+
 			EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 			undo_redo->get_or_create_history(EditorUndoRedoManager::GLOBAL_HISTORY).undo_redo->set_method_notify_callback(EditorDebuggerNode::_methods_changed, nullptr);
 			undo_redo->get_or_create_history(EditorUndoRedoManager::GLOBAL_HISTORY).undo_redo->set_property_notify_callback(EditorDebuggerNode::_properties_changed, nullptr);
@@ -881,7 +885,7 @@ void EditorSettingsDialog::_bind_methods() {
 }
 
 EditorSettingsDialog::EditorSettingsDialog() {
-	set_title(TTR("Editor Settings"));
+	set_title(TTRC("Editor Settings"));
 	set_clamp_to_embedder(true);
 
 	tabs = memnew(TabContainer);
@@ -893,19 +897,20 @@ EditorSettingsDialog::EditorSettingsDialog() {
 
 	tab_general = memnew(VBoxContainer);
 	tabs->add_child(tab_general);
-	tab_general->set_name(TTR("General"));
+	tab_general->set_name(TTRC("General"));
 
 	HBoxContainer *hbc = memnew(HBoxContainer);
 	hbc->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	tab_general->add_child(hbc);
 
 	search_box = memnew(LineEdit);
-	search_box->set_placeholder(TTR("Filter Settings"));
+	search_box->set_placeholder(TTRC("Filter Settings"));
 	search_box->set_accessibility_name(TTRC("Filter Settings"));
+	search_box->set_virtual_keyboard_show_on_focus(false);
 	search_box->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	hbc->add_child(search_box);
 
-	advanced_switch = memnew(CheckButton(TTR("Advanced Settings")));
+	advanced_switch = memnew(CheckButton(TTRC("Advanced Settings")));
 	hbc->add_child(advanced_switch);
 
 	bool use_advanced = EDITOR_DEF("_editor_settings_advanced_mode", false);
@@ -914,12 +919,17 @@ EditorSettingsDialog::EditorSettingsDialog() {
 
 	inspector = memnew(SectionedInspector);
 	inspector->get_inspector()->set_use_filter(true);
+	inspector->get_inspector()->set_mark_unsaved(false);
 	inspector->register_search_box(search_box);
 	inspector->register_advanced_toggle(advanced_switch);
 	inspector->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	tab_general->add_child(inspector);
 	inspector->get_inspector()->connect("property_edited", callable_mp(this, &EditorSettingsDialog::_settings_property_edited));
 	inspector->get_inspector()->connect("restart_requested", callable_mp(this, &EditorSettingsDialog::_editor_restart_request));
+
+	if (EDITOR_GET("interface/touchscreen/enable_touch_optimizations")) {
+		inspector->set_touch_dragger_enabled(true);
+	}
 
 	restart_container = memnew(PanelContainer);
 	tab_general->add_child(restart_container);
@@ -930,13 +940,13 @@ EditorSettingsDialog::EditorSettingsDialog() {
 	restart_hb->add_child(restart_icon);
 	restart_label = memnew(Label);
 	restart_label->set_focus_mode(Control::FOCUS_ACCESSIBILITY);
-	restart_label->set_text(TTR("The editor must be restarted for changes to take effect."));
+	restart_label->set_text(TTRC("The editor must be restarted for changes to take effect."));
 	restart_hb->add_child(restart_label);
 	restart_hb->add_spacer();
 	Button *restart_button = memnew(Button);
 	restart_button->connect(SceneStringName(pressed), callable_mp(this, &EditorSettingsDialog::_editor_restart));
 	restart_hb->add_child(restart_button);
-	restart_button->set_text(TTR("Save & Restart"));
+	restart_button->set_text(TTRC("Save & Restart"));
 	restart_close_button = memnew(Button);
 	restart_close_button->set_accessibility_name(TTRC("Close"));
 	restart_close_button->set_flat(true);
@@ -949,14 +959,14 @@ EditorSettingsDialog::EditorSettingsDialog() {
 	tab_shortcuts = memnew(VBoxContainer);
 
 	tabs->add_child(tab_shortcuts);
-	tab_shortcuts->set_name(TTR("Shortcuts"));
+	tab_shortcuts->set_name(TTRC("Shortcuts"));
 
 	HBoxContainer *top_hbox = memnew(HBoxContainer);
 	top_hbox->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	tab_shortcuts->add_child(top_hbox);
 
 	shortcut_search_box = memnew(LineEdit);
-	shortcut_search_box->set_placeholder(TTR("Filter by Name"));
+	shortcut_search_box->set_placeholder(TTRC("Filter by Name"));
 	shortcut_search_box->set_accessibility_name(TTRC("Filter by Name"));
 	shortcut_search_box->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	top_hbox->add_child(shortcut_search_box);
@@ -972,8 +982,8 @@ EditorSettingsDialog::EditorSettingsDialog() {
 	top_hbox->add_child(shortcut_search_by_event);
 
 	clear_all_search = memnew(Button);
-	clear_all_search->set_text(TTR("Clear All"));
-	clear_all_search->set_tooltip_text(TTR("Clear all search filters."));
+	clear_all_search->set_text(TTRC("Clear All"));
+	clear_all_search->set_tooltip_text(TTRC("Clear all search filters."));
 	clear_all_search->connect(SceneStringName(pressed), callable_mp(shortcut_search_box, &LineEdit::clear));
 	clear_all_search->connect(SceneStringName(pressed), callable_mp(shortcut_search_by_event, &EventListenerLineEdit::clear_event));
 	top_hbox->add_child(clear_all_search);
@@ -1006,5 +1016,122 @@ EditorSettingsDialog::EditorSettingsDialog() {
 	timer->set_one_shot(true);
 	add_child(timer);
 	EditorSettings::get_singleton()->connect("settings_changed", callable_mp(this, &EditorSettingsDialog::_settings_changed));
-	set_ok_button_text(TTR("Close"));
+	set_ok_button_text(TTRC("Close"));
+
+	Ref<EditorSettingsInspectorPlugin> plugin;
+	plugin.instantiate();
+	plugin->inspector = inspector;
+	EditorInspector::add_inspector_plugin(plugin);
+}
+
+void EditorSettingsPropertyWrapper::_update_override() {
+	// Don't allow overriding theme properties, because it causes problems. Overriding Project Manager settings makes no sense.
+	// TODO: Find a better way to define exception prefixes (if the list happens to grow).
+	if (property.begins_with("interface/theme") || property.begins_with("project_manager")) {
+		can_override = false;
+		return;
+	}
+
+	const bool has_override = ProjectSettings::get_singleton()->has_editor_setting_override(property);
+	if (has_override) {
+		const Variant override_value = EDITOR_GET(property);
+		override_label->set_text(vformat(TTR("Overridden in project: %s"), override_value));
+		// In case the text is too long and trimmed.
+		override_label->set_tooltip_text(override_value);
+	}
+	override_info->set_visible(has_override);
+	can_override = !has_override;
+}
+
+void EditorSettingsPropertyWrapper::_create_override() {
+	ProjectSettings::get_singleton()->set_editor_setting_override(property, EDITOR_GET(property));
+	ProjectSettings::get_singleton()->save();
+	_update_override();
+}
+
+void EditorSettingsPropertyWrapper::_remove_override() {
+	ProjectSettings::get_singleton()->set_editor_setting_override(property, Variant());
+	ProjectSettings::get_singleton()->save();
+	EditorSettings::get_singleton()->mark_setting_changed(property);
+	EditorNode::get_singleton()->notify_settings_overrides_changed();
+	_update_override();
+
+	if (requires_restart) {
+		restart_request_callback.call();
+	}
+}
+
+void EditorSettingsPropertyWrapper::_notification(int p_what) {
+	if (p_what == NOTIFICATION_THEME_CHANGED) {
+		goto_button->set_button_icon(get_editor_theme_icon(SNAME("MethodOverride")));
+		remove_button->set_button_icon(get_editor_theme_icon(SNAME("Close")));
+	}
+}
+
+void EditorSettingsPropertyWrapper::update_property() {
+	editor_property->update_property();
+}
+
+void EditorSettingsPropertyWrapper::setup(const String &p_property, EditorProperty *p_editor_property, bool p_requires_restart) {
+	requires_restart = p_requires_restart;
+
+	property = p_property;
+	container = memnew(VBoxContainer);
+
+	editor_property = p_editor_property;
+	editor_property->set_h_size_flags(SIZE_EXPAND_FILL);
+	container->add_child(editor_property);
+
+	override_info = memnew(HBoxContainer);
+	override_info->hide();
+	container->add_child(override_info);
+
+	override_label = memnew(Label);
+	override_label->set_text_overrun_behavior(TextServer::OVERRUN_TRIM_ELLIPSIS);
+	override_label->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
+	override_label->set_mouse_filter(MOUSE_FILTER_STOP); // For tooltip.
+	override_label->set_h_size_flags(SIZE_EXPAND_FILL);
+	override_info->add_child(override_label);
+
+	goto_button = memnew(Button);
+	goto_button->set_tooltip_text(TTRC("Go to the override in the Project Settings."));
+	override_info->add_child(goto_button);
+	goto_button->connect(SceneStringName(pressed), callable_mp(EditorNode::get_singleton(), &EditorNode::open_setting_override).bind(property), CONNECT_DEFERRED);
+
+	remove_button = memnew(Button);
+	remove_button->set_tooltip_text(TTRC("Remove this override."));
+	override_info->add_child(remove_button);
+	remove_button->connect(SceneStringName(pressed), callable_mp(this, &EditorSettingsPropertyWrapper::_remove_override));
+
+	add_child(container);
+	_update_override();
+
+	connect(SNAME("property_overridden"), callable_mp(this, &EditorSettingsPropertyWrapper::_create_override));
+	editor_property->connect("property_changed", callable_mp((EditorProperty *)this, &EditorProperty::emit_changed));
+}
+
+bool EditorSettingsInspectorPlugin::can_handle(Object *p_object) {
+	return p_object && p_object->is_class("SectionedInspectorFilter") && p_object != current_object;
+}
+
+bool EditorSettingsInspectorPlugin::parse_property(Object *p_object, const Variant::Type p_type, const String &p_path, const PropertyHint p_hint, const String &p_hint_text, const BitField<PropertyUsageFlags> p_usage, const bool p_wide) {
+	if (!p_object->is_class("SectionedInspectorFilter")) {
+		return false;
+	}
+
+	const String property = inspector->get_full_item_path(p_path);
+	if (!EditorSettings::get_singleton()->has_setting(property)) {
+		return false;
+	}
+	current_object = p_object;
+
+	EditorSettingsPropertyWrapper *editor = memnew(EditorSettingsPropertyWrapper);
+	EditorProperty *real_property = inspector->get_inspector()->instantiate_property_editor(p_object, p_type, p_path, p_hint, p_hint_text, p_usage, p_wide);
+	real_property->set_object_and_property(p_object, p_path);
+	real_property->set_name_split_ratio(0.0);
+	editor->setup(property, real_property, bool(p_usage & PROPERTY_USAGE_RESTART_IF_CHANGED));
+
+	add_property_editor(p_path, editor);
+	current_object = nullptr;
+	return true;
 }

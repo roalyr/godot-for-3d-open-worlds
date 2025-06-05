@@ -47,6 +47,8 @@ SAFE_NUMERIC_TYPE_PUN_GUARANTEES(uint32_t)
 class Node : public Object {
 	GDCLASS(Node, Object);
 
+	friend class SceneTreeFTI;
+
 protected:
 	// During group processing, these are thread-safe.
 	// Outside group processing, these avoid the cost of sync by working as plain primitive types.
@@ -174,7 +176,7 @@ private:
 		mutable int internal_children_back_count_cache = 0;
 		mutable int external_children_count_cache = 0;
 		mutable int index = -1; // relative to front, normal or back.
-		int depth = -1;
+		int32_t depth = -1;
 		int blocked = 0; // Safeguard that throws an error when attempting to modify the tree in a harmful way while being traversed.
 		StringName name;
 		SceneTree *tree = nullptr;
@@ -208,7 +210,7 @@ private:
 		void *process_group = nullptr; // to avoid cyclic dependency
 
 		int multiplayer_authority = 1; // Server by default.
-		Variant rpc_config = Dictionary();
+		Variant rpc_config;
 
 		// Variables used to properly sort the node when processing, ignored otherwise.
 		int process_priority = 0;
@@ -254,7 +256,6 @@ private:
 		bool display_folded : 1;
 		bool editable_instance : 1;
 
-		bool inside_tree : 1;
 		bool ready_notified : 1;
 		bool ready_first : 1;
 
@@ -377,6 +378,7 @@ protected:
 
 	void _set_use_identity_transform(bool p_enable) { data.use_identity_transform = p_enable; }
 	bool _is_using_identity_transform() const { return data.use_identity_transform; }
+	int32_t _get_scene_tree_depth() const { return data.depth; }
 
 	//call from SceneTree
 	void _call_input(const Ref<InputEvent> &p_event);
@@ -385,6 +387,10 @@ protected:
 	void _call_unhandled_key_input(const Ref<InputEvent> &p_event);
 
 	void _validate_property(PropertyInfo &p_property) const;
+
+	Variant _get_node_rpc_config_bind() const {
+		return get_node_rpc_config().duplicate(true);
+	}
 
 protected:
 	virtual bool _uses_signal_mutex() const override { return false; } // Node uses thread guards instead.
@@ -409,6 +415,12 @@ protected:
 
 	GDVIRTUAL0RC(RID, _get_focused_accessibility_element)
 	GDVIRTUAL1RC(String, _get_accessibility_container_name, const Node *)
+
+#ifndef DISABLE_DEPRECATED
+	void _set_name_bind_compat_76560(const String &p_name);
+	Variant _get_rpc_config_bind_compat_106848() const;
+	static void _bind_compatibility_methods();
+#endif
 
 public:
 	enum {
@@ -473,7 +485,7 @@ public:
 
 	StringName get_name() const;
 	String get_description() const;
-	void set_name(const String &p_name);
+	void set_name(const StringName &p_name);
 
 	InternalMode get_internal_mode() const;
 
@@ -504,7 +516,7 @@ public:
 		return data.tree;
 	}
 
-	_FORCE_INLINE_ bool is_inside_tree() const { return data.inside_tree; }
+	_FORCE_INLINE_ bool is_inside_tree() const { return data.tree; }
 	bool is_internal() const { return data.internal_mode != INTERNAL_MODE_DISABLED; }
 
 	bool is_ancestor_of(const Node *p_node) const;
@@ -642,7 +654,7 @@ public:
 			// No thread processing.
 			// Only accessible if node is outside the scene tree
 			// or access will happen from a node-safe thread.
-			return !data.inside_tree || is_current_thread_safe_for_nodes();
+			return !data.tree || is_current_thread_safe_for_nodes();
 		} else {
 			// Thread processing.
 			return current_process_thread_group == data.process_thread_group_owner;
@@ -654,7 +666,7 @@ public:
 			// No thread processing.
 			// Only accessible if node is outside the scene tree
 			// or access will happen from a node-safe thread.
-			return is_current_thread_safe_for_nodes() || unlikely(!data.inside_tree);
+			return is_current_thread_safe_for_nodes() || unlikely(!data.tree);
 		} else {
 			// Thread processing.
 			return true;
@@ -742,6 +754,7 @@ public:
 	ProcessThreadGroup get_process_thread_group() const;
 
 	static void print_orphan_nodes();
+	static TypedArray<int> get_orphan_node_ids();
 
 #ifdef TOOLS_ENABLED
 	String validate_child_name(Node *p_child);
@@ -778,7 +791,7 @@ public:
 	bool is_multiplayer_authority() const;
 
 	void rpc_config(const StringName &p_method, const Variant &p_config); // config a local method for RPC
-	Variant get_rpc_config() const;
+	const Variant get_node_rpc_config() const;
 
 	template <typename... VarArgs>
 	Error rpc(const StringName &p_method, VarArgs... p_args);

@@ -31,7 +31,7 @@ def get_opts():
         ("osxcross_sdk", "OSXCross SDK version", "darwin16"),
         ("MACOS_SDK_PATH", "Path to the macOS SDK", ""),
         ("vulkan_sdk_path", "Path to the Vulkan SDK", ""),
-        EnumVariable("macports_clang", "Build using Clang from MacPorts", "no", ("no", "5.0", "devel")),
+        EnumVariable("macports_clang", "Build using Clang from MacPorts", "no", ["no", "5.0", "devel"], ignorecase=2),
         BoolVariable("use_ubsan", "Use LLVM/GCC compiler undefined behavior sanitizer (UBSAN)", False),
         BoolVariable("use_asan", "Use LLVM/GCC compiler address sanitizer (ASAN)", False),
         BoolVariable("use_tsan", "Use LLVM/GCC compiler thread sanitizer (TSAN)", False),
@@ -231,6 +231,8 @@ def configure(env: "SConsEnvironment"):
             "Security",
             "-framework",
             "UniformTypeIdentifiers",
+            "-framework",
+            "IOSurface",
         ]
     )
     env.Append(LIBS=["pthread", "z"])
@@ -245,7 +247,6 @@ def configure(env: "SConsEnvironment"):
             env.Append(LINKFLAGS=["-lANGLE.macos." + env["arch"]])
             env.Append(LINKFLAGS=["-lEGL.macos." + env["arch"]])
             env.Append(LINKFLAGS=["-lGLES.macos." + env["arch"]])
-            extra_frameworks.add("IOSurface")
         env.Prepend(CPPEXTPATH=["#thirdparty/angle/include"])
 
     env.Append(LINKFLAGS=["-rpath", "@executable_path/../Frameworks", "-rpath", "@executable_path"])
@@ -264,7 +265,6 @@ def configure(env: "SConsEnvironment"):
     if env["vulkan"]:
         env.AppendUnique(CPPDEFINES=["VULKAN_ENABLED", "RD_ENABLED"])
         extra_frameworks.add("Metal")
-        extra_frameworks.add("IOSurface")
         if not env["use_volk"]:
             env.Append(LINKFLAGS=["-lMoltenVK"])
 
