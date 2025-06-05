@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  mono_gc_handle.h                                                      */
+/*  scene_tree_fti_tests.h                                                */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,52 +28,24 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef MONO_GC_HANDLE_H
-#define MONO_GC_HANDLE_H
+#ifndef SCENE_TREE_FTI_TESTS_H
+#define SCENE_TREE_FTI_TESTS_H
 
-#include <mono/jit/jit.h>
+class Spatial;
+class Node;
+class Transform;
+class SceneTreeFTI;
 
-#include "core/reference.h"
+class SceneTreeFTITests {
+	SceneTreeFTI &_fti;
 
-namespace gdmono {
-
-class MonoGCHandle : public Reference {
-	GDCLASS(MonoGCHandle, Reference);
-
-	bool released;
-	bool weak;
-	uint32_t handle;
+	void debug_verify_failed(const Spatial *p_spatial, const Transform &p_test);
 
 public:
-	enum HandleType {
-		STRONG_HANDLE,
-		WEAK_HANDLE
-	};
+	void update_dirty_spatials(Node *p_node, uint32_t p_current_half_frame, float p_interpolation_fraction, bool p_active, const Transform *p_parent_global_xform = nullptr, int p_depth = 0);
+	void frame_update(Node *p_root, uint32_t p_half_frame, float p_interpolation_fraction);
 
-	static uint32_t new_strong_handle(MonoObject *p_object);
-	static uint32_t new_strong_handle_pinned(MonoObject *p_object);
-	static uint32_t new_weak_handle(MonoObject *p_object);
-	static void free_handle(uint32_t p_gchandle);
-
-	static Ref<MonoGCHandle> create_strong(MonoObject *p_object);
-	static Ref<MonoGCHandle> create_weak(MonoObject *p_object);
-
-	_FORCE_INLINE_ bool is_released() { return released; }
-	_FORCE_INLINE_ bool is_weak() { return weak; }
-
-	_FORCE_INLINE_ MonoObject *get_target() const { return released ? NULL : mono_gchandle_get_target(handle); }
-
-	_FORCE_INLINE_ void set_handle(uint32_t p_handle, HandleType p_handle_type) {
-		released = false;
-		weak = p_handle_type == WEAK_HANDLE;
-		handle = p_handle;
-	}
-	void release();
-
-	MonoGCHandle(uint32_t p_handle, HandleType p_handle_type);
-	~MonoGCHandle();
+	SceneTreeFTITests(SceneTreeFTI &p_fti);
 };
 
-} // namespace gdmono
-
-#endif // MONO_GC_HANDLE_H
+#endif // SCENE_TREE_FTI_TESTS_H

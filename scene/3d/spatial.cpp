@@ -285,6 +285,10 @@ void Spatial::_notification(int p_what) {
 			// unless they need to perform specific tasks (like changing process modes).
 			fti_pump_xform();
 			fti_pump_property();
+
+			// Detect whether we are using an identity transform.
+			// This is an optimization for faster tree transform concatenation.
+			data.fti_is_identity_xform = data.local_transform == Transform();
 		} break;
 
 		case NOTIFICATION_PAUSED: {
@@ -331,7 +335,6 @@ void Spatial::fti_notify_node_changed(bool p_transform_changed) {
 }
 
 void Spatial::set_transform(const Transform &p_transform) {
-	fti_notify_node_changed();
 	data.local_transform = p_transform;
 	data.dirty |= DIRTY_VECTORS;
 	data.dirty &= ~DIRTY_LOCAL;
@@ -343,6 +346,7 @@ void Spatial::set_transform(const Transform &p_transform) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_global_transform(const Transform &p_transform) {
@@ -540,17 +544,16 @@ Transform Spatial::get_relative_transform(const Node *p_parent) const {
 }
 
 void Spatial::set_translation(const Vector3 &p_translation) {
-	fti_notify_node_changed();
 	data.local_transform.origin = p_translation;
 	_change_notify("transform");
 	_propagate_transform_changed(this);
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_rotation(const Vector3 &p_euler_rad) {
-	fti_notify_node_changed();
 	if (data.dirty & DIRTY_VECTORS) {
 		data.scale = data.local_transform.basis.get_scale();
 		data.dirty &= ~DIRTY_VECTORS;
@@ -563,6 +566,7 @@ void Spatial::set_rotation(const Vector3 &p_euler_rad) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 void Spatial::set_rotation_degrees(const Vector3 &p_euler_deg) {
@@ -570,7 +574,6 @@ void Spatial::set_rotation_degrees(const Vector3 &p_euler_deg) {
 }
 
 void Spatial::set_scale(const Vector3 &p_scale) {
-	fti_notify_node_changed();
 	if (data.dirty & DIRTY_VECTORS) {
 		data.rotation = data.local_transform.basis.get_rotation();
 		data.dirty &= ~DIRTY_VECTORS;
@@ -583,6 +586,7 @@ void Spatial::set_scale(const Vector3 &p_scale) {
 	if (data.notify_local_transform) {
 		notification(NOTIFICATION_LOCAL_TRANSFORM_CHANGED);
 	}
+	fti_notify_node_changed();
 }
 
 Vector3 Spatial::get_translation() const {
@@ -1127,6 +1131,8 @@ Spatial::Spatial() :
 	data.fti_on_tick_property_list = false;
 	data.fti_global_xform_interp_set = false;
 	data.fti_frame_xform_force_update = false;
+	data.fti_is_identity_xform = false;
+	data.fti_processed = false;
 
 	data.merging_mode = MERGING_MODE_INHERIT;
 
