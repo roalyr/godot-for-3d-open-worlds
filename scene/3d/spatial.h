@@ -56,6 +56,8 @@ class Spatial : public Node {
 	friend class SceneTreeFTITests;
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::SPATIAL;
+
 	enum MergingMode : unsigned int {
 		MERGING_MODE_INHERIT,
 		MERGING_MODE_OFF,
@@ -111,16 +113,12 @@ private:
 		bool toplevel : 1;
 		bool inside_world : 1;
 
-		// this is cached, and only currently kept up to date in visual instances
-		// this is set if a visual instance is
-		// (a) in the tree AND (b) visible via is_visible_in_tree() call
-		bool vi_visible : 1;
-
 		bool ignore_notification : 1;
 		bool notify_local_transform : 1;
 		bool notify_transform : 1;
 
 		bool visible : 1;
+		bool visible_in_tree : 1;
 		bool disable_scale : 1;
 
 		// Scene tree interpolation
@@ -137,8 +135,12 @@ private:
 
 		int children_lock;
 		Spatial *parent;
-		List<Spatial *> children;
-		List<Spatial *>::Element *C;
+
+		// An unordered vector of `Spatial` children only.
+		// This is a subset of the `Node::children`, purely
+		// an optimization for faster traversal.
+		LocalVector<Spatial *> spatial_children;
+		uint32_t index_in_parent = UINT32_MAX;
 
 		float lod_range = 10.0f;
 		ClientPhysicsInterpolationData *client_physics_interpolation_data;
@@ -155,15 +157,15 @@ private:
 	void _notify_dirty();
 	void _propagate_transform_changed(Spatial *p_origin);
 
+	void _update_visible_in_tree();
+	bool _is_visible_in_tree_reference() const;
+	void _propagate_visible_in_tree(bool p_visible_in_tree);
 	void _propagate_visibility_changed();
 	void _propagate_merging_allowed(bool p_merging_allowed);
 
 protected:
 	_FORCE_INLINE_ void set_ignore_transform_notification(bool p_ignore) { data.ignore_notification = p_ignore; }
 	_FORCE_INLINE_ void _update_local_transform() const;
-
-	void _set_vi_visible(bool p_visible);
-	bool _is_vi_visible() const { return data.vi_visible; }
 
 	Transform _get_global_transform_interpolated(real_t p_interpolation_fraction);
 	const Transform &_get_cached_global_transform_interpolated() const { return data.global_transform_interpolated; }
@@ -293,7 +295,15 @@ public:
 	bool is_visible() const;
 	void show();
 	void hide();
-	bool is_visible_in_tree() const;
+	bool is_visible_in_tree() const {
+#if DEV_ENABLED
+		// As this is newly introduced, regression test the old method against the new in DEV builds.
+		// If no regressions, this can be removed after a beta.
+		bool visible = _is_visible_in_tree_reference();
+		ERR_FAIL_COND_V_MSG(data.visible_in_tree != visible, visible, "is_visible_in_tree regression detected, recovering.");
+#endif
+		return data.visible_in_tree;
+	}
 
 	void force_update_transform();
 

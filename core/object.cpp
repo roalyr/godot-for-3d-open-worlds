@@ -648,7 +648,7 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 
 	_get_property_listv(p_list, p_reversed);
 
-	if (!is_class("Script")) { // can still be set, but this is for userfriendlyness
+	if (!derives_from<Script>()) { // can still be set, but this is for userfriendlyness
 		p_list->push_back(PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT));
 	}
 	if (!metadata.empty()) {
@@ -743,7 +743,7 @@ static void _test_call_error(const StringName &p_func, const Variant::CallError 
 void Object::call_multilevel(const StringName &p_method, const Variant **p_args, int p_argcount) {
 	if (p_method == CoreStringNames::get_singleton()->_free) {
 #ifdef DEBUG_ENABLED
-		ERR_FAIL_COND_MSG(Object::cast_to<Reference>(this), "Can't 'free' a reference.");
+		ERR_FAIL_COND_MSG(this->is_reference(), "Can't 'free' a reference.");
 
 		ERR_FAIL_COND_MSG(_lock_index.get() > 1, "Object is locked and can't be freed.");
 #endif
@@ -877,7 +877,7 @@ Variant Object::call(const StringName &p_method, const Variant **p_args, int p_a
 			r_error.error = Variant::CallError::CALL_ERROR_TOO_MANY_ARGUMENTS;
 			return Variant();
 		}
-		if (Object::cast_to<Reference>(this)) {
+		if (this->is_reference()) {
 			r_error.argument = 0;
 			r_error.error = Variant::CallError::CALL_ERROR_INVALID_METHOD;
 			ERR_FAIL_V_MSG(Variant(), "Can't 'free' a reference.");
@@ -1937,6 +1937,7 @@ Object::Object() {
 	_can_translate = true;
 	_is_queued_for_deletion = false;
 	_emitting = false;
+	_ancestry = 0;
 	memset(_script_instance_bindings, 0, sizeof(void *) * MAX_SCRIPT_INSTANCE_BINDINGS);
 	script_instance = nullptr;
 	_rc.store(nullptr, std::memory_order_release);

@@ -49,6 +49,7 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
+#include "servers/audio_server.h"
 #include "servers/navigation_server.h"
 #include "servers/physics_2d_server.h"
 #include "servers/physics_server.h"
@@ -106,6 +107,9 @@ SceneTreeTimer::SceneTreeTimer() {
 	time_left = 0;
 	process_pause = true;
 }
+
+bool SceneTree::_physics_interpolation_enabled = false;
+bool SceneTree::_physics_interpolation_enabled_in_project = false;
 
 // This should be called once per physics tick, to make sure the transform previous and current
 // is kept up to date on the few spatials that are using client side physics interpolation
@@ -526,7 +530,10 @@ void SceneTree::init() {
 }
 
 void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
-	// disallow interpolation in editor
+	// This version is for use in editor.
+	_physics_interpolation_enabled_in_project = p_enabled;
+
+	// We never want interpolation in the editor.
 	if (Engine::get_singleton()->is_editor_hint()) {
 		p_enabled = false;
 	}
@@ -544,10 +551,6 @@ void SceneTree::set_physics_interpolation_enabled(bool p_enabled) {
 	if (root) {
 		root->reset_physics_interpolation();
 	}
-}
-
-bool SceneTree::is_physics_interpolation_enabled() const {
-	return _physics_interpolation_enabled;
 }
 
 void SceneTree::client_physics_interpolation_add_spatial(SelfList<Spatial> *p_elem) {
@@ -850,6 +853,8 @@ void SceneTree::_notification(int p_notification) {
 		} break;
 
 		case NOTIFICATION_WM_FOCUS_IN: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_FOCUS_LOSS, false);
+
 			InputDefault *id = Object::cast_to<InputDefault>(Input::get_singleton());
 			if (id) {
 				id->ensure_touch_mouse_raised();
@@ -870,16 +875,25 @@ void SceneTree::_notification(int p_notification) {
 			get_root()->propagate_notification(p_notification);
 
 		} break;
+		case NOTIFICATION_WM_FOCUS_OUT: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_FOCUS_LOSS, true);
+			get_root()->propagate_notification(p_notification);
+		} break;
+		case NOTIFICATION_APP_PAUSED: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_PAUSED, true);
+			get_root()->propagate_notification(p_notification);
+		} break;
+		case NOTIFICATION_APP_RESUMED: {
+			AudioDriverManager::set_mute_flag(AudioDriverManager::MUTE_FLAG_PAUSED, false);
+			get_root()->propagate_notification(p_notification);
+		} break;
 
 		case NOTIFICATION_OS_MEMORY_WARNING:
 		case NOTIFICATION_OS_IME_UPDATE:
 		case NOTIFICATION_WM_MOUSE_ENTER:
 		case NOTIFICATION_WM_MOUSE_EXIT:
-		case NOTIFICATION_WM_FOCUS_OUT:
 		case NOTIFICATION_WM_ABOUT:
-		case NOTIFICATION_CRASH:
-		case NOTIFICATION_APP_RESUMED:
-		case NOTIFICATION_APP_PAUSED: {
+		case NOTIFICATION_CRASH: {
 			get_root()->propagate_notification(p_notification);
 		} break;
 
@@ -2322,7 +2336,6 @@ SceneTree::SceneTree() {
 	call_lock = 0;
 	root_lock = 0;
 	node_count = 0;
-	_physics_interpolation_enabled = false;
 
 	//create with mainloop
 

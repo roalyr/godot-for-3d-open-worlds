@@ -247,7 +247,7 @@ public:
 		insert(i, p_val);
 	}
 
-	operator Vector<T>() const {
+	explicit operator Vector<T>() const {
 		Vector<T> ret;
 		ret.resize(size());
 		T *w = ret.ptrw();
@@ -255,7 +255,7 @@ public:
 		return ret;
 	}
 
-	operator PoolVector<T>() const {
+	explicit operator PoolVector<T>() const {
 		PoolVector<T> pl;
 		if (size()) {
 			pl.resize(size());

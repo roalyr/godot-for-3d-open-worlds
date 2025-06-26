@@ -48,6 +48,8 @@ class Node : public Object {
 	OBJ_CATEGORY("Nodes");
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::NODE;
+
 	// N.B. Any enum stored as a bitfield should
 	// be specified as UNSIGNED to work around
 	// some compilers trying to store it as signed,
@@ -107,7 +109,7 @@ private:
 
 		Node *parent;
 		Node *owner;
-		Vector<Node *> children; // list of children
+		LocalVectori<Node *> children; // list of children
 		HashMap<StringName, Node *> owned_unique_nodes;
 		bool unique_name_in_owner = false;
 
@@ -459,7 +461,7 @@ public:
 	void set_physics_interpolation_mode(PhysicsInterpolationMode p_mode);
 	PhysicsInterpolationMode get_physics_interpolation_mode() const { return data.physics_interpolation_mode; }
 	_FORCE_INLINE_ bool is_physics_interpolated() const { return data.physics_interpolated; }
-	_FORCE_INLINE_ bool is_physics_interpolated_and_enabled() const { return is_inside_tree() && get_tree()->is_physics_interpolation_enabled() && is_physics_interpolated(); }
+	_FORCE_INLINE_ bool is_physics_interpolated_and_enabled() const { return SceneTree::is_fti_enabled() && is_physics_interpolated(); }
 	void reset_physics_interpolation();
 
 	uint32_t get_canvas_parent_id() const { return data.canvas_parent_id; }

@@ -48,6 +48,8 @@ class CanvasItemMaterial : public Material {
 	GDCLASS(CanvasItemMaterial, Material);
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::CANVAS_ITEM;
+
 	enum BlendMode {
 		BLEND_MODE_MIX,
 		BLEND_MODE_ADD,
@@ -186,8 +188,13 @@ private:
 	Color modulate;
 	Color self_modulate;
 
-	List<CanvasItem *> children_items;
-	List<CanvasItem *>::Element *C;
+	struct Data {
+		// An unordered vector of `CanvasItem` children only.
+		// This is a subset of the `Node::children`, purely
+		// an optimization for faster traversal.
+		LocalVector<CanvasItem *> canvas_item_children;
+		uint32_t index_in_parent = UINT32_MAX;
+	} data;
 
 	int light_mask;
 

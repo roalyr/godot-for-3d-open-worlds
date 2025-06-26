@@ -115,6 +115,8 @@ protected:
 	Dictionary _get_script_constant_map();
 
 public:
+	static constexpr AncestralClass static_ancestral_class = AncestralClass::SCRIPT;
+
 	virtual bool can_instance() const = 0;
 
 	virtual Ref<Script> get_base_script() const = 0; //for script inheritance
@@ -155,7 +157,9 @@ public:
 
 	virtual bool is_placeholder_fallback_enabled() const { return false; }
 
-	Script() {}
+	Script() {
+		_define_ancestry(AncestralClass::SCRIPT);
+	}
 };
 
 class ScriptInstance {

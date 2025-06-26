@@ -194,7 +194,7 @@ void SceneTreeFTI::_update_request_resets() {
 	for (uint32_t n = 0; n < data.request_reset_list.size(); n++) {
 		Spatial *s = data.request_reset_list[n];
 		if (s->_is_physics_interpolation_reset_requested()) {
-			if (s->_is_vi_visible() && !s->_is_using_identity_transform()) {
+			if (s->is_visible_in_tree() && !s->_is_using_identity_transform()) {
 				s->notification(Spatial::NOTIFICATION_RESET_PHYSICS_INTERPOLATION);
 			}
 
@@ -288,7 +288,12 @@ void SceneTreeFTI::_create_depth_lists() {
 			}
 #endif
 
+			// Prevent being added to the dest_list twice when on
+			// the frame_xform_list AND the frame_xform_list_forced.
 			if ((l == 0) && s->data.fti_frame_xform_force_update) {
+#ifdef GODOT_SCENE_TREE_FTI_EXTRA_CHECKS
+				DEV_ASSERT(data.frame_xform_list_forced.find(s) != -1);
+#endif
 				continue;
 			}
 
@@ -563,11 +568,6 @@ void SceneTreeFTI::_update_dirty_spatials(Node *p_node, uint32_t p_current_half_
 		// Upload to VisualServer the interpolated global xform.
 		s->fti_update_servers_xform();
 
-		// Only do this at most for one frame,
-		// it is used to catch objects being removed from the tick lists
-		// that have a deferred frame update.
-		s->data.fti_frame_xform_force_update = false;
-
 		// Ensure branches are only processed once on each traversal.
 		s->data.fti_processed = true;
 
@@ -675,17 +675,7 @@ void SceneTreeFTI::frame_update(Node *p_root, bool p_frame_start) {
 					continue;
 				}
 
-				// The first node requires a recursive visibility check
-				// up the tree, because `is_visible()` only returns the node
-				// local flag.
-				if (Object::cast_to<VisualInstance>(s)) {
-					if (!s->_is_vi_visible()) {
-#ifdef DEBUG_ENABLED
-						skipped++;
-#endif
-						continue;
-					}
-				} else if (!s->is_visible_in_tree()) {
+				if (!s->is_visible_in_tree()) {
 #ifdef DEBUG_ENABLED
 					skipped++;
 #endif
@@ -706,6 +696,17 @@ void SceneTreeFTI::frame_update(Node *p_root, bool p_frame_start) {
 
 #endif //  not GODOT_SCENE_TREE_FTI_VERIFY
 
+	// In theory we could clear the `force_update` flags from the nodes in the traversal.
+	// The problem is that hidden nodes are not recursed into, therefore the flags would
+	// never get cleared and could get out of sync with the forced list.
+	// So instead we are clearing them here manually.
+	// This is not ideal in terms of cache coherence so perhaps another method can be
+	// explored in future.
+	uint32_t forced_list_size = data.frame_xform_list_forced.size();
+	for (uint32_t n = 0; n < forced_list_size; n++) {
+		Spatial *s = data.frame_xform_list_forced[n];
+		s->data.fti_frame_xform_force_update = false;
+	}
 	data.frame_xform_list_forced.clear();
 
 	if (!p_frame_start && data.periodic_debug_log) {

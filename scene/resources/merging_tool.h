@@ -67,7 +67,7 @@ public:
 	static bool merge_meshes(MeshInstance &r_dest_mi, Vector<MeshInstance *> p_list, bool p_use_global_space, bool p_check_compatibility);
 
 	// Join all surfaces into one ubermesh.
-	static bool join_meshes(MeshInstance &r_dest_mi, Vector<MeshInstance *> p_list);
+	static bool join_meshes(MeshInstance &r_dest_mi, LocalVector<MeshInstance *> p_list);
 
 	// Adds a surface from one mesh to another.
 	static bool join_mesh_surface(const MeshInstance &p_source_mi, uint32_t p_source_surface_id, MeshInstance &r_dest_mi);
@@ -109,8 +109,8 @@ private:
 	static bool _is_mergeable_with_common(const MeshInstance &p_mi, const MeshInstance &p_other);
 	static bool _is_shadow_mergeable(const MeshInstance &p_mi);
 	static bool _is_material_opaque(const Ref<Material> &p_mat);
-	static bool _ensure_indices_valid(LocalVector<int> &r_indices, const PoolVector<Vector3> &p_verts);
-	static bool _check_for_valid_indices(const LocalVector<int> &p_inds, const PoolVector<Vector3> &p_verts, LocalVector<int> *r_inds);
+	static bool _ensure_indices_valid(LocalVector<int> &r_indices, const LocalVector<Vector3> &p_verts);
+	static bool _check_for_valid_indices(const LocalVector<int> &p_inds, const LocalVector<Vector3> &p_verts, LocalVector<int> *r_inds);
 	static bool _triangle_is_degenerate(const Vector3 &p_a, const Vector3 &p_b, const Vector3 &p_c, real_t p_epsilon);
 	static int _clean_mesh_surface(const String &p_source_name, const Transform &p_xform, Ref<Mesh> &p_rmesh, int p_surface_id, Ref<ArrayMesh> r_dest_mesh);
 	static void _copy_geometry_instance_settings(const GeometryInstance &p_source, MeshInstance &r_dest, bool p_copy_transform);
