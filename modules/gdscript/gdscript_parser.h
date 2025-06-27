@@ -851,8 +851,10 @@ public:
 		IdentifierNode *identifier = nullptr;
 		Vector<ParameterNode *> parameters;
 		HashMap<StringName, int> parameters_indices;
+		ParameterNode *rest_parameter = nullptr;
 		TypeNode *return_type = nullptr;
 		SuiteNode *body = nullptr;
+		bool is_abstract = false;
 		bool is_static = false; // For lambdas it's determined in the analyzer.
 		bool is_coroutine = false;
 		Variant rpc_config;
@@ -862,10 +864,13 @@ public:
 #ifdef TOOLS_ENABLED
 		MemberDocData doc_data;
 		int min_local_doc_line = 0;
+		String signature; // For autocompletion.
 #endif // TOOLS_ENABLED
 
 		bool resolved_signature = false;
 		bool resolved_body = false;
+
+		_FORCE_INLINE_ bool is_vararg() const { return rest_parameter != nullptr; }
 
 		FunctionNode() {
 			type = FUNCTION;
@@ -1501,14 +1506,14 @@ private:
 	ClassNode *parse_class(bool p_is_abstract, bool p_is_static);
 	void parse_class_name();
 	void parse_extends();
-	void parse_class_body(bool p_is_abstract, bool p_is_multiline);
+	void parse_class_body(bool p_first_is_abstract, bool p_is_multiline);
 	template <typename T>
 	void parse_class_member(T *(GDScriptParser::*p_parse_function)(bool, bool), AnnotationInfo::TargetKind p_target, const String &p_member_kind, bool p_is_abstract = false, bool p_is_static = false);
 	SignalNode *parse_signal(bool p_is_abstract, bool p_is_static);
 	EnumNode *parse_enum(bool p_is_abstract, bool p_is_static);
 	ParameterNode *parse_parameter();
 	FunctionNode *parse_function(bool p_is_abstract, bool p_is_static);
-	void parse_function_signature(FunctionNode *p_function, SuiteNode *p_body, const String &p_type);
+	void parse_function_signature(FunctionNode *p_function, SuiteNode *p_body, const String &p_type, int p_signature_start);
 	SuiteNode *parse_suite(const String &p_context, SuiteNode *p_suite = nullptr, bool p_for_lambda = false);
 	// Annotations
 	AnnotationNode *parse_annotation(uint32_t p_valid_targets);

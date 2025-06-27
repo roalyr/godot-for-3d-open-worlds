@@ -135,6 +135,7 @@ static const char *token_names[] = {
 	";", // SEMICOLON,
 	".", // PERIOD,
 	"..", // PERIOD_PERIOD,
+	"...", // PERIOD_PERIOD_PERIOD,
 	":", // COLON,
 	"$", // DOLLAR,
 	"->", // FORWARD_ARROW,
@@ -270,12 +271,9 @@ String GDScriptTokenizer::get_token_name(Token::Type p_token_type) {
 
 void GDScriptTokenizerText::set_source_code(const String &p_source_code) {
 	source = p_source_code;
-	if (source.is_empty()) {
-		_source = U"";
-	} else {
-		_source = source.ptr();
-	}
+	_source = source.get_data();
 	_current = _source;
+	_start = _source;
 	line = 1;
 	column = 1;
 	length = p_source_code.length();
@@ -1501,6 +1499,10 @@ GDScriptTokenizer::Token GDScriptTokenizerText::scan() {
 		case '.':
 			if (_peek() == '.') {
 				_advance();
+				if (_peek() == '.') {
+					_advance();
+					return make_token(Token::PERIOD_PERIOD_PERIOD);
+				}
 				return make_token(Token::PERIOD_PERIOD);
 			} else if (is_digit(_peek())) {
 				// Number starting with '.'.

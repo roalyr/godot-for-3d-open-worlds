@@ -182,7 +182,7 @@ void EditorQuickOpenDialog::_search_box_text_changed(const String &p_query) {
 
 void style_button(Button *p_button) {
 	p_button->set_flat(true);
-	p_button->set_focus_mode(Control::FOCUS_NONE);
+	p_button->set_focus_mode(Control::FOCUS_ACCESSIBILITY);
 	p_button->set_default_cursor_shape(Control::CURSOR_POINTING_HAND);
 }
 
@@ -265,7 +265,7 @@ QuickOpenResultContainer::QuickOpenResultContainer() {
 		fuzzy_search_toggle = memnew(CheckButton);
 		style_button(fuzzy_search_toggle);
 		fuzzy_search_toggle->set_text(TTR("Fuzzy Search"));
-		fuzzy_search_toggle->set_tooltip_text(TTRC("Include inexact matches or matches starting in the middle of a filename, instead of only exact matches from the beginning."));
+		fuzzy_search_toggle->set_tooltip_text(TTRC("Include approximate matches."));
 		fuzzy_search_toggle->connect(SceneStringName(toggled), callable_mp(this, &QuickOpenResultContainer::_toggle_fuzzy_search));
 		bottom_bar->add_child(fuzzy_search_toggle);
 

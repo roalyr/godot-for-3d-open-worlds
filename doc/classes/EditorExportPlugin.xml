@@ -202,20 +202,20 @@
 				Return a [Dictionary] of override values for export options, that will be used instead of user-provided values. Overridden options will be hidden from the user interface.
 				[codeblock]
 				class MyExportPlugin extends EditorExportPlugin:
-				    func _get_name() -&gt; String:
-				        return "MyExportPlugin"
+					func _get_name() -&gt; String:
+						return "MyExportPlugin"
 
-				    func _supports_platform(platform) -&gt; bool:
-				        if platform is EditorExportPlatformPC:
-				            # Run on all desktop platforms including Windows, MacOS and Linux.
-				            return true
-				        return false
+					func _supports_platform(platform) -&gt; bool:
+						if platform is EditorExportPlatformPC:
+							# Run on all desktop platforms including Windows, MacOS and Linux.
+							return true
+						return false
 
-				    func _get_export_options_overrides(platform) -&gt; Dictionary:
-				        # Override "Embed PCK" to always be enabled.
-				        return {
-				            "binary_format/embed_pck": true,
-				        }
+					func _get_export_options_overrides(platform) -&gt; Dictionary:
+						# Override "Embed PCK" to always be enabled.
+						return {
+							"binary_format/embed_pck": true,
+						}
 				[/codeblock]
 			</description>
 		</method>
@@ -230,7 +230,7 @@
 			<return type="bool" />
 			<param index="0" name="platform" type="EditorExportPlatform" />
 			<description>
-				Return [code]true[/code], if the result of [method _get_export_options] has changed and the export options of preset corresponding to [param platform] should be updated.
+				Return [code]true[/code] if the result of [method _get_export_options] has changed and the export options of the preset corresponding to [param platform] should be updated.
 			</description>
 		</method>
 		<method name="_supports_platform" qualifiers="virtual const">

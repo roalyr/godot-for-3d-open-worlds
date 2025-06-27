@@ -130,6 +130,10 @@ bool ShaderBakerExportPlugin::_begin_customize_resources(const Ref<EditorExportP
 		renderer_features.set_flag(RenderingShaderLibrary::FEATURE_VRS_BIT);
 	}
 
+	// Both FP16 and FP32 variants should be included.
+	renderer_features.set_flag(RenderingShaderLibrary::FEATURE_FP16_BIT);
+	renderer_features.set_flag(RenderingShaderLibrary::FEATURE_FP32_BIT);
+
 	RendererSceneRenderRD::get_singleton()->enable_features(renderer_features);
 
 	// Included all shaders created by renderers and effects.
@@ -240,9 +244,12 @@ void ShaderBakerExportPlugin::_end_customize_resources() {
 		if (cache_list_access.is_valid()) {
 			String cache_list_line;
 			while (cache_list_line = cache_list_access->get_line(), !cache_list_line.is_empty()) {
-				PackedByteArray cache_file_bytes = FileAccess::get_file_as_bytes(shader_cache_export_path.path_join(cache_list_line));
-				if (!cache_file_bytes.is_empty()) {
-					add_file(shader_cache_user_dir.path_join(cache_list_line), cache_file_bytes, false);
+				// Only add if it wasn't already added.
+				if (!shader_paths_processed.has(cache_list_line)) {
+					PackedByteArray cache_file_bytes = FileAccess::get_file_as_bytes(shader_cache_export_path.path_join(cache_list_line));
+					if (!cache_file_bytes.is_empty()) {
+						add_file(shader_cache_user_dir.path_join(cache_list_line), cache_file_bytes, false);
+					}
 				}
 
 				shader_paths_processed.erase(cache_list_line);

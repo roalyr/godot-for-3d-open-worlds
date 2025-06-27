@@ -120,7 +120,7 @@ Files extracted from upstream source:
 ## clipper2
 
 - Upstream: https://github.com/AngusJohnson/Clipper2
-- Version: 1.5.3 (fa165fe8364b7d0e5d5db2182369b8c82348f4ea, 2025)
+- Version: 1.5.4 (ef88ee97c0e759792e43a2b2d8072def6c9244e8, 2025)
 - License: BSL 1.0
 
 Files extracted from upstream source:
@@ -187,13 +187,17 @@ Patches:
 ## doctest
 
 - Upstream: https://github.com/onqtam/doctest
-- Version: 2.4.11 (ae7a13539fb71f270b87eb2e874fbac80bc8dda2, 2023)
+- Version: 2.4.12 (1da23a3e8119ec5cce4f9388e91b065e20bf06f5, 2025)
 - License: MIT
 
 Files extracted from upstream source:
 
 - `doctest/doctest.h` as `doctest.h`
 - `LICENSE.txt`
+
+Patches:
+
+- `0001-ciso646-version.patch` (GH-105913)
 
 
 ## embree
@@ -432,7 +436,7 @@ Patches:
 ## harfbuzz
 
 - Upstream: https://github.com/harfbuzz/harfbuzz
-- Version: 10.4.0 (3ef8709829a5884517ad91a97b32b9435b2f20d1, 2025)
+- Version: 11.2.1 (33a3f8de60dcad7535f14f07d6710144548853ac, 2025)
 - License: MIT
 
 Files extracted from upstream source:
@@ -441,6 +445,20 @@ Files extracted from upstream source:
 - From the `src` folder, recursively:
   - All the `.cc`, `.h`, `.hh` files
   - Except `main.cc`, `harfbuzz*.cc`, `failing-alloc.c`, `test*.cc`, `hb-wasm*.*`, `wasm/*`
+
+
+## hidapi
+
+- Upstream: https://github.com/libsdl-org/SDL/tree/main/src/hidapi
+- Version: 0.14.0 (8d604353a53853fa56d1bdce0363535605ca868f, 2025)
+- License: BSD-3-Clause
+
+Files extracted from upstream source:
+
+- See `thirdparty/sdl/update-sdl.sh`
+
+The source code of this library is being bundled with SDL's source code files.
+The files of hidapi are stored in `thirdparty/sdl/hidapi/` folder.
 
 
 ## icu4c
@@ -504,7 +522,7 @@ Patches:
 ## libjpeg-turbo
 
 - Upstream: https://github.com/libjpeg-turbo/libjpeg-turbo
-- Version: git (20ade4dea9589515a69793e447a6c6220b464535, 2024)
+- Version: 3.1.0 (20ade4dea9589515a69793e447a6c6220b464535, 2024)
 - License: BSD-3-Clause and IJG
 
 Files extracted from upstream source:
@@ -520,19 +538,20 @@ Patches:
 - `0002-disable-16bitlossless.patch` (GH-104347)
 - `0003-remove-bmp-ppm-support.patch` (GH-104347)
 
+
 ## libktx
 
 - Upstream: https://github.com/KhronosGroup/KTX-Software
-- Version: 4.3.2 (91ace88675ac59a97e55d0378a6602a9ae6b98bd, 2024)
-- License: Apache-2.0
+- Version: 4.4.0 (beef80159525d9fb7abb8645ea85f4c4f6842e8f, 2025)
+- License: Apache 2.0
 
 Files extracted from upstream source:
 
 - `LICENSE.md`
-- `include/`
-- `lib/dfdutils/LICENSE.adoc` as `LICENSE.dfdutils.adoc` (in root)
-- `lib/dfdutils/LICENSES/Apache-2.0.txt` as `Apache-2.0.txt` (in root)
-- `lib/dfdutils/{KHR/,dfd.h,colourspaces.c,createdfd.c,interpretdfd.c,printdfd.c,queries.c,dfd2vk.inl,vk2dfd.*}`
+- `include/` minus `.clang-format`
+- `external/dfdutils/LICENSE.adoc` as `LICENSE.dfdutils.adoc` (in root)
+- `external/dfdutils/LICENSES/Apache-2.0.txt` as `Apache-2.0.txt` (in root)
+- `external/dfdutils/{KHR/,dfd.h,colourspaces.c,createdfd.c,interpretdfd.c,printdfd.c,queries.c,dfd2vk.inl,vk2dfd.*}`
 - `lib/{basis_sgd.h,formatsize.h,gl_format.h,ktxint.h,uthash.h,vk_format.h,vkformat_enum.h,checkheader.c,swap.c,hashlist.c,vkformat_check.c,vkformat_typesize.c,basis_transcode.cpp,miniz_wrapper.cpp,filestream.*,memstream.*,texture*}`
 - `other_include/KHR/`
 - `utils/unused.h`
@@ -560,7 +579,7 @@ Files extracted from upstream source:
 ## libpng
 
 - Upstream: http://libpng.org/pub/png/libpng.html
-- Version: 1.6.47 (872555f4ba910252783af1507f9e7fe1653be252, 2025)
+- Version: 1.6.48 (ea127968204cc5d10f3fc9250c306b9e8cbd9b80, 2025)
 - License: libpng/zlib
 
 Files extracted from upstream source:
@@ -574,7 +593,7 @@ Files extracted from upstream source:
 ## libtheora
 
 - Upstream: https://www.theora.org
-- Version: git (7180717276af1ebc7da15c83162d6c5d6203aabf, 2020)
+- Version: 1.2.0 (8e4808736e9c181b971306cc3f05df9e61354004, 2025)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -712,7 +731,7 @@ Patches:
 ## miniupnpc
 
 - Upstream: https://github.com/miniupnp/miniupnp
-- Version: 2.2.8 (b55145ec095652289a59c33603f3abafee898273, 2024)
+- Version: 2.3.3 (bf4215a7574f88aa55859db9db00e3ae58cf42d6, 2025)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -833,7 +852,7 @@ Collection of single-file libraries used in Godot components.
 ## msdfgen
 
 - Upstream: https://github.com/Chlumsky/msdfgen
-- Version: 1.12 (85e8b3d47b3d1a42e4a5ebda0a24fb1cc2e669e0, 2024)
+- Version: 1.12.1 (6574da1310df433c97ca0fddcab7e463c31e58f8, 2025)
 - License: MIT
 
 Files extracted from the upstream source:
@@ -846,7 +865,7 @@ Files extracted from the upstream source:
 ## openxr
 
 - Upstream: https://github.com/KhronosGroup/OpenXR-SDK
-- Version: 1.1.47 (858912260ca616f4c23f7fb61c89228c353eb124, 2025)
+- Version: 1.1.49 (977f6675bc0057d5a54ed290cb5c71c699b1c0ab, 2025)
 - License: Apache 2.0
 
 Files extracted from upstream source:
@@ -869,10 +888,6 @@ Exclude:
 - All following files (and their `.license` files):
   `*.{def,expsym,in,json,map,pom,rc,txt}`
 - All dotfiles
-
-Patches:
-
-- `0001-glad-egl.patch` (GH-98824)
 
 
 ## pcre2
@@ -929,6 +944,37 @@ and solve conflicts and also enrich the feature set originally
 proposed by these libraries and better integrate them with Godot.
 
 
+## smaa
+
+- Upstream: https://github.com/iryoku/smaa
+- Version: git (71c806a838bdd7d517df19192a20f0c61b3ca29d, 2013)
+- License: MIT
+
+Files extracted from upstream source:
+
+- `LICENSE`
+- Textures generated using the Python scripts in the `Scripts` folder
+
+
+## sdl
+
+- Upstream: https://github.com/libsdl-org/SDL
+- Version: 3.2.14 (8d604353a53853fa56d1bdce0363535605ca868f, 2025)
+- License: Zlib
+
+Files extracted from upstream source:
+
+- See `thirdparty/sdl/update-sdl.sh`
+
+Patches:
+
+- `0001-remove-unnecessary-subsystems.patch` (GH-106218)
+- `0002-msvc-constants-fpstrict.patch` (GH-106218)
+
+The SDL source code folder includes `hidapi` library inside of folder `thirdparty/sdl/hidapi/`.
+Its version and license is described in this file under `hidapi`.
+
+
 ## spirv-cross
 
 - Upstream: https://github.com/KhronosGroup/SPIRV-Cross
@@ -966,6 +1012,19 @@ Patches:
 - `0002-zero-size-for-sc-sized-arrays.patch` (GH-94985)
 
 
+## swappy-frame-pacing
+
+- Upstream: https://android.googlesource.com/platform/frameworks/opt/gamesdk/ via https://github.com/godotengine/godot-swappy
+- Version: git (1198bb06b041e2df5d42cc5cf18fac81fcefa03f, 2025)
+- License: Apache 2.0
+
+Files extracted from upstream source:
+
+- `include/common/`
+- `include/swappy/{swappy_common.h,swappyVk.h}`
+- `LICENSE`
+
+
 ## thorvg
 
 - Upstream: https://github.com/thorvg/thorvg
@@ -1000,7 +1059,7 @@ Patches:
 ## ufbx
 
 - Upstream: https://github.com/ufbx/ufbx
-- Version: 0.18.2 (5b5494b9b6c2cdb0fc0ae873bdbf8718cdeb85af, 2025)
+- Version: 0.20.0 (a63ff0a47485328880b3300e7bcdf01413343a45, 2025)
 - License: MIT
 
 Files extracted from upstream source:

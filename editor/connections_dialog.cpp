@@ -290,7 +290,7 @@ List<MethodInfo> ConnectDialog::_filter_method_list(const List<MethodInfo> &p_me
 
 	LocalVector<Pair<Variant::Type, StringName>> effective_args;
 	int unbind = get_unbinds();
-	effective_args.reserve(p_signal.arguments.size() - unbind);
+	effective_args.reserve(MAX(p_signal.arguments.size() - unbind, 0));
 	for (int64_t i = 0; i < p_signal.arguments.size() - unbind; i++) {
 		PropertyInfo pi = p_signal.arguments[i];
 		effective_args.push_back(Pair(pi.type, pi.class_name));
@@ -314,12 +314,15 @@ List<MethodInfo> ConnectDialog::_filter_method_list(const List<MethodInfo> &p_me
 		}
 
 		if (check_signal) {
-			if (mi.arguments.size() != effective_args.size()) {
+			const unsigned min_argc = mi.arguments.size() - mi.default_arguments.size();
+			const unsigned max_argc = (mi.flags & METHOD_FLAG_VARARG) ? UINT_MAX : mi.arguments.size();
+
+			if (effective_args.size() < min_argc || effective_args.size() > max_argc) {
 				continue;
 			}
 
 			bool type_mismatch = false;
-			for (int64_t i = 0; i < mi.arguments.size(); ++i) {
+			for (int64_t i = 0; i < effective_args.size() && i < mi.arguments.size(); ++i) {
 				Variant::Type stype = effective_args[i].first;
 				Variant::Type mtype = mi.arguments[i].type;
 
@@ -609,8 +612,12 @@ String ConnectDialog::get_signature(const MethodInfo &p_method, PackedStringArra
 		String arg_name = pi.name.is_empty() ? "arg" + itos(i) : pi.name;
 		signature.append(arg_name + ": " + type_name);
 		if (r_arg_names) {
-			r_arg_names->push_back(arg_name + ":" + type_name);
+			r_arg_names->push_back(arg_name + ": " + type_name);
 		}
+	}
+
+	if (p_method.flags & METHOD_FLAG_VARARG) {
+		signature.append(p_method.arguments.is_empty() ? "..." : ", ...");
 	}
 
 	signature.append(")");
@@ -742,7 +749,7 @@ ConnectDialog::ConnectDialog() {
 	vbc_left->set_custom_minimum_size(Vector2(400 * EDSCALE, 0));
 
 	from_signal = memnew(LineEdit);
-	from_signal->set_accessibility_name(TTRC("From Signal"));
+	from_signal->set_accessibility_name(TTRC("From Signal:"));
 	vbc_left->add_margin_child(TTR("From Signal:"), from_signal);
 	from_signal->set_editable(false);
 
@@ -857,14 +864,14 @@ ConnectDialog::ConnectDialog() {
 	vbc_right->add_margin_child(TTR("Add Extra Call Argument:"), add_bind_hb);
 
 	bind_editor = memnew(EditorInspector);
-	bind_editor->set_accessibility_name(TTRC("Extra Call Arguments"));
+	bind_editor->set_accessibility_name(TTRC("Extra Call Arguments:"));
 	bind_controls.push_back(bind_editor);
 
 	vbc_right->add_margin_child(TTR("Extra Call Arguments:"), bind_editor, true);
 
 	unbind_count = memnew(SpinBox);
 	unbind_count->set_tooltip_text(TTR("Allows to drop arguments sent by signal emitter."));
-	unbind_count->set_accessibility_name(TTRC("Unbind Signal Arguments"));
+	unbind_count->set_accessibility_name(TTRC("Unbind Signal Arguments:"));
 	unbind_count->connect(SceneStringName(value_changed), callable_mp(this, &ConnectDialog::_unbind_count_changed));
 
 	vbc_right->add_margin_child(TTR("Unbind Signal Arguments:"), unbind_count);
@@ -924,7 +931,7 @@ ConnectDialog::~ConnectDialog() {
 
 Control *ConnectionsDockTree::make_custom_tooltip(const String &p_text) const {
 	// If it's not a doc tooltip, fallback to the default one.
-	if (p_text.is_empty() || p_text.contains("::")) {
+	if (p_text.is_empty() || p_text.contains(" :: ")) {
 		return nullptr;
 	}
 
@@ -1044,7 +1051,7 @@ void ConnectionsDock::_make_or_edit_connection() {
 		}
 
 		for (int i = 0; i < cd.binds.size(); i++) {
-			script_function_args.push_back("extra_arg_" + itos(i) + ":" + Variant::get_type_name(cd.binds[i].get_type()));
+			script_function_args.push_back("extra_arg_" + itos(i) + ": " + Variant::get_type_name(cd.binds[i].get_type()));
 		}
 
 		EditorNode::get_singleton()->emit_signal(SNAME("script_add_function_request"), target, cd.method, script_function_args);
@@ -1182,9 +1189,9 @@ bool ConnectionsDock::_is_connection_inherited(Connection &p_connection) {
  * Open connection dialog with TreeItem data to CREATE a brand-new connection.
  */
 void ConnectionsDock::_open_connection_dialog(TreeItem &p_item) {
-	Dictionary sinfo = p_item.get_metadata(0);
-	String signal_name = sinfo["name"];
-	PackedStringArray signal_args = sinfo["args"];
+	const Dictionary sinfo = p_item.get_metadata(0);
+	const StringName signal_name = sinfo["name"];
+	const PackedStringArray signal_args = sinfo["args"];
 
 	Node *dst_node = selected_node->get_owner() ? selected_node->get_owner() : selected_node;
 	if (!dst_node || dst_node->get_script().is_null()) {
@@ -1193,12 +1200,12 @@ void ConnectionsDock::_open_connection_dialog(TreeItem &p_item) {
 
 	ConnectDialog::ConnectionData cd;
 	cd.source = selected_node;
-	cd.signal = StringName(signal_name);
+	cd.signal = signal_name;
 	cd.target = dst_node;
 	cd.method = ConnectDialog::generate_method_callback_name(cd.source, signal_name, cd.target);
 	connect_dialog->init(cd, signal_args);
 	connect_dialog->set_title(TTR("Connect a Signal to a Method"));
-	connect_dialog->popup_dialog(signal_name + "(" + String(", ").join(signal_args) + ")");
+	connect_dialog->popup_dialog(signal_name.operator String() + "(" + String(", ").join(signal_args) + ")");
 }
 
 /*
@@ -1215,12 +1222,12 @@ void ConnectionsDock::_open_edit_connection_dialog(TreeItem &p_item) {
 	Node *dst = Object::cast_to<Node>(cd.target);
 
 	if (src && dst) {
-		const String &signal_name_ref = cd.signal;
-		PackedStringArray signal_args = signal_item->get_metadata(0).operator Dictionary()["args"];
+		const StringName &signal_name = cd.signal;
+		const PackedStringArray signal_args = signal_item->get_metadata(0).operator Dictionary()["args"];
 
-		connect_dialog->set_title(vformat(TTR("Edit Connection: '%s'"), cd.signal));
-		connect_dialog->popup_dialog(signal_name_ref);
 		connect_dialog->init(cd, signal_args, true);
+		connect_dialog->set_title(vformat(TTR("Edit Connection: '%s'"), cd.signal));
+		connect_dialog->popup_dialog(signal_name.operator String() + "(" + String(", ").join(signal_args) + ")");
 	}
 }
 
