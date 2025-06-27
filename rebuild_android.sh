@@ -4,8 +4,8 @@
 export ANDROID_SDK_ROOT="$HOME/Android/Sdk";
 
 # For incremental
-export SCONS_CACHE="./scons_cache/godot_4_scons_cache_android";
-mkdir -p $SCONS_CACHE
+#export SCONS_CACHE="./scons_cache/godot_4_scons_cache_android";
+#mkdir -p $SCONS_CACHE
 mkdir -p "./logs"
 
 	echo

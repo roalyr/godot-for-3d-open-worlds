@@ -1,12 +1,12 @@
 #!/bin/sh
 
 # For incremental
-export SCONS_CACHE="./scons_cache/godot_4_scons_cache_linux_arm32";
-mkdir -p $SCONS_CACHE
+#export SCONS_CACHE="./scons_cache/godot_4_scons_cache_linux_arm32";
+#mkdir -p $SCONS_CACHE
 mkdir -p "./logs"
 
 # Reference buildroot and see if scons is used from there
-BUILDROOT_PATH="/home/roalyr/Buildroot/arm-godot-linux-gnueabihf_sdk-buildroot/bin"
+BUILDROOT_PATH="$HOME/Buildroot/arm-godot-linux-gnueabihf_sdk-buildroot/bin"
 PATH=$BUILDROOT_PATH:$PATH 
 WHICHSCONS=$(which scons)
 
