@@ -1,0 +1,11 @@
+Built from:
+
+commit 1198bb06b041e2df5d42cc5cf18fac81fcefa03f (HEAD, m/android-games-sdk, aosp/master, aosp/main)
+Author: Oleh Kuznetsov <okuznetsov@google.com>
+Date:   Fri Jan 31 13:47:11 2025 +0000
+
+    Fix GameActivity getLocale* functions.
+    
+    Fixes: 340906533
+    Test: ./build.sh tests
+    Change-Id: Idffd4355eb90f06d9029076032b0328d842db890
