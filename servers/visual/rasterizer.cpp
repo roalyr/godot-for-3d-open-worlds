@@ -91,6 +91,9 @@ void RasterizerStorage::update_interpolation_tick(bool p_process) {
 
 			// make sure are updated one more time to ensure the AABBs are correct
 			//_instance_queue_update(instance, true);
+
+			// Update the actual stable buffer to the backend.
+			_multimesh_set_as_bulk_array(rid, mmi->_data_interpolated);
 		}
 
 		if (!mmi) {
@@ -487,6 +490,20 @@ void RasterizerStorage::multimesh_instance_reset_physics_interpolation(RID p_mul
 		for (int n = 0; n < mmi->_stride; n++) {
 			w[start + n] = r[start + n];
 		}
+	}
+}
+
+void RasterizerStorage::multimesh_instances_reset_physics_interpolation(RID p_multimesh) {
+	MMInterpolator *mmi = _multimesh_get_interpolator(p_multimesh);
+	if (mmi && mmi->_data_curr.size()) {
+		// We don't want to invoke COW here, so copy the data directly.
+		ERR_FAIL_COND(mmi->_data_prev.size() != mmi->_data_curr.size());
+		PoolVector<float>::Read read = mmi->_data_curr.read();
+		PoolVector<float>::Write write = mmi->_data_prev.write();
+
+		const float *r = read.ptr();
+		float *w = write.ptr();
+		memcpy(w, r, sizeof(float) * mmi->_data_curr.size());
 	}
 }
 
