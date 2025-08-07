@@ -71,9 +71,9 @@
 #include "editor/scene/3d/gizmos/physics/shape_cast_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/physics/soft_body_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/physics/spring_arm_3d_gizmo_plugin.h"
-#include "editor/scene/3d/gizmos/physics/spring_bone_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/physics/vehicle_body_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/reflection_probe_gizmo_plugin.h"
+#include "editor/scene/3d/gizmos/spring_bone_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/sprite_base_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/visible_on_screen_notifier_3d_gizmo_plugin.h"
 #include "editor/scene/3d/gizmos/voxel_gi_gizmo_plugin.h"
@@ -316,6 +316,10 @@ void ViewportRotationControl::_notification(int p_what) {
 		case NOTIFICATION_MOUSE_EXIT: {
 			focused_axis = -2;
 			queue_redraw();
+		} break;
+
+		case NOTIFICATION_WM_WINDOW_FOCUS_OUT: {
+			gizmo_activated = false;
 		} break;
 	}
 }
@@ -8043,7 +8047,35 @@ void Node3DEditor::_selection_changed() {
 		selected->update_gizmos();
 		selected = nullptr;
 	}
+
+	// Ensure gizmo updates are performed when the selection changes
+	// outside of the 3D view (see GH-106713).
+	if (!is_visible()) {
+		const List<Node *> &top_selected = editor_selection->get_top_selected_node_list();
+		if (top_selected.size() == 1) {
+			Node3D *new_selected = Object::cast_to<Node3D>(top_selected.back()->get());
+			if (new_selected != selected) {
+				gizmos_dirty = true;
+			}
+		}
+	}
+
 	update_transform_gizmo();
+}
+
+void Node3DEditor::refresh_dirty_gizmos() {
+	if (!gizmos_dirty) {
+		return;
+	}
+
+	const List<Node *> &top_selected = editor_selection->get_top_selected_node_list();
+	if (top_selected.size() == 1) {
+		Node3D *new_selected = Object::cast_to<Node3D>(top_selected.back()->get());
+		if (new_selected != selected) {
+			edit(new_selected);
+		}
+	}
+	gizmos_dirty = false;
 }
 
 void Node3DEditor::_refresh_menu_icons() {
@@ -9843,7 +9875,7 @@ void Node3DEditorPlugin::make_visible(bool p_visible) {
 		spatial_editor->show();
 		spatial_editor->set_process(true);
 		spatial_editor->set_physics_process(true);
-
+		spatial_editor->refresh_dirty_gizmos();
 	} else {
 		spatial_editor->hide();
 		spatial_editor->set_process(false);
